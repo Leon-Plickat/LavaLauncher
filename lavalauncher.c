@@ -21,6 +21,7 @@
 #include<stdlib.h>
 #include<stdbool.h>
 #include<unistd.h>
+#include<string.h>
 
 #include<wayland-server.h>
 #include<wayland-client-protocol.h>
@@ -137,6 +138,20 @@ static void add_button(struct Lava_data *data, const char *arg)
 
 static void set_position(struct Lava_data *data, const char *arg)
 {
+	if (! strcmp(arg, "top"))
+		data->position = POSITION_TOP;
+	else if (! strcmp(arg, "right"))
+		data->position = POSITION_RIGHT;
+	else if (! strcmp(arg, "bottom"))
+		data->position = POSITION_BOTTOM;
+	else if (! strcmp(arg, "left"))
+		data->position = POSITION_LEFT;
+	else
+	{
+		fputs("Possible positions are 'top', 'right', 'bottom' and 'left'.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
 	return;
 }
 

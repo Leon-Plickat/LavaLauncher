@@ -62,7 +62,7 @@ struct Lava_data
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 	struct wl_surface             *surface;
-	structzwlr_layer_surface_v1   *layer_surface;
+	struct zwlr_layer_surface_v1  *layer_surface;
 
 	int32_t scale;
 

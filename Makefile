@@ -1,3 +1,4 @@
+WAYLAND_PROTOCOLS=$(shell pkg-config --variable=pkgdatadir wayland-protocols)
 WAYLAND_SCANNER=$(shell pkg-config --variable=wayland_scanner wayland-scanner)
 
 LIBS=\
@@ -21,14 +22,29 @@ lib/wlr-layer-shell-unstable-v1-client-protocol.h: lib/wlr-layer-shell-unstable-
 lib/wlr-layer-shell-unstable-v1-client-protocol.c: lib/wlr-layer-shell-unstable-v1.xml
 	$(WAYLAND_SCANNER) private-code lib/wlr-layer-shell-unstable-v1.xml $@
 
-lavalauncher: lavalauncher.c lib/wlr-layer-shell-unstable-v1-client-protocol.h lib/wlr-layer-shell-unstable-v1-client-protocol.c
+lib/xdg-output-unstable-v1-client-protocol.h:
+	$(WAYLAND_SCANNER) server-header $(WAYLAND_PROTOCOLS)/unstable/xdg-output/xdg-output-unstable-v1.xml $@
+
+lib/xdg-output-unstable-v1-client-protocol.c:
+	$(WAYLAND_SCANNER) private-code $(WAYLAND_PROTOCOLS)/unstable/xdg-output/xdg-output-unstable-v1.xml $@
+
+lavalauncher:\
+	lavalauncher.c \
+	lib/wlr-layer-shell-unstable-v1-client-protocol.h \
+	lib/wlr-layer-shell-unstable-v1-client-protocol.c \
+	lib/xdg-output-unstable-v1-client-protocol.h \
+	lib/xdg-output-unstable-v1-client-protocol.c
 	$(CC) $(CFLAGS) \
 		-g \
 		-o $@ $< \
 		$(LIBS)
 
 clean:
-	rm -f lavalauncher lib/wlr-layer-shell-unstable-v1-client-protocol.h lib/wlr-layer-shell-unstable-v1-client-protocol.c
+	rm -f lavalauncher \
+		lib/wlr-layer-shell-unstable-v1-client-protocol.h \
+		lib/wlr-layer-shell-unstable-v1-client-protocol.c \
+		lib/xdg-output-unstable-v1-client-protocol.h \
+		lib/xdg-output-unstable-v1-client-protocol.c
 
 .DEFAULT_GOAL=lavalauncher
 .PHONY: clean

@@ -1,3 +1,5 @@
 lib/wlr-layer-shell-unstable-v1-client-protocol.h
 lib/wlr-layer-shell-unstable-v1-client-protocol.c
+lib/xdg-output-unstable-v1-client-protocol.h
+lib/xdg-output-unstable-v1-client-protocol.c
 lavalauncher

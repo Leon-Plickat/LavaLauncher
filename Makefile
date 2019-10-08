@@ -1,3 +1,7 @@
+PREFIX = /usr/local
+BINPREFIX = $(PREFIX)/bin
+MANPREFIX = $(PREFIX)/share/man
+
 WAYLAND_PROTOCOLS=$(shell pkg-config --variable=pkgdatadir wayland-protocols)
 WAYLAND_SCANNER=$(shell pkg-config --variable=wayland_scanner wayland-scanner)
 
@@ -38,6 +42,14 @@ lavalauncher:\
 		-g \
 		-o $@ $< \
 		$(LIBS)
+
+install: lavalauncher lavalauncher.1
+	install -D -m 755 lavalauncher $(BINPREFIX)/lavalauncher
+	install -D -m 644 lavalauncher.1 $(MANPREFIX)/man1/lavalauncher.1
+
+uninstall:
+	$(RM) $(BINPREFIX)/lavalauncher
+	$(RM) $(MANPREFIX)/man1/lavalauncher.1
 
 clean:
 	rm -f lavalauncher \

@@ -1,0 +1,58 @@
+.TH lavalauncher 1 lavalauncher-0.1
+.SH NAME
+LavaLauncher - A simple launcher for Wayland desktops
+
+
+.SH DESCRIPTION
+LavaLauncher serves a single purpose: Letting the user execute shell commands
+by clicking on icons on a dynamically sized bar, placed at one of the screen
+edges. That's it; Not more, not less.
+.P
+The Wayland compositor must implement the Layer-Shell for LavaLauncher to work.
+If LavaLauncher is displayed but wont respond to clicks, chances are that the
+compositor you are using only displays Layer-Shell surfaces but does not forward
+events to them.
+
+
+.SH SYNOPSIS
+.B lavalauncher
+.RB [ \-b <path>:<command> ]
+.RB [ \-p <top|right|bottom|left> ]
+.RB [ \-s <size> ]
+.RB [ \-S <size> ]
+.RB [ \-c <colour> ]
+.RB [ \-C <colour> ]
+.RB [ \-h ]
+
+
+.SH OPTIONS
+.TP
+.B \-b <path>:<command>
+Add a button. Path is the path to an image file. Command is the shell command
+executed when the user clicks on the button.
+.TP
+.B \-p <top|right|bottom|left>
+Position of the bar.
+.TP
+.B \-s <size>
+Width of the bar in pixel.
+.TP
+.B \-S <size>
+Width of the border in pixel.
+.TP
+.B \-c <colour>
+Colour of the bar in the format #RRGGBBAA.
+.TP
+.B \-C <colour>
+Colour of the border in the format #RRGGBBAA.
+.TP
+.B \-h
+Display a helpful help message and exit.
+
+
+.SH CONTRIBUTING
+Contributions are welcome. Please send your patches or bug reports via email.
+
+
+.SH AUTHORS
+Leon Plickat <leonhenrik.plickat@stud.uni-goettingen.de>

@@ -70,11 +70,16 @@ struct Lava_data
 	struct wl_list seats;
 	struct wl_list buttons;
 
+	int button_amount;
+
 	enum Bar_position position;
 	int               bar_width;
 	int               border_width;
 	float             bar_colour[4];
 	float             border_colour[4];
+
+	int w;
+	int h;
 };
 
 
@@ -199,11 +204,32 @@ int main (int argc, char *argv[])
 			case 'C': set_border_colour (&data, optarg); break;
 		}
 
-	if (! wl_list_length(&(data.buttons)))
+	data.button_amount = wl_list_length(&(data.buttons));
+	if (! data.button_amount)
 	{
 		fputs("No buttons defined!\n", stderr);
 		return EXIT_FAILURE;
 	}
+
+	/* Calculating the size of the bar. At the "docking" edge no border will
+	 * be drawn. Later, when outputs are added and the surface(s) are drawn,
+	 * we will check whether the dimensions actually fit into the output(s).
+	 * If they do not fit, we simply exit. That makes it unneccessary to
+	 * implement complicated resizing functions; If the bar is to large, it
+	 * simply is the users fault.
+	 */
+	if ( data.position == POSITION_LEFT || data.position == POSITION_RIGHT )
+	{
+		data.w = data.bar_width + data.border_width;
+		data.h = (data.button_amount * data.bar_width) + (2 * data.border_width);
+	}
+	else if ( data.position == POSITION_TOP || data.position == POSITION_BOTTOM )
+	{
+		data.w = (data.button_amount * data.bar_width) + (2 * data.border_width);
+		data.h = data.bar_width + data.border_width;
+	}
+	else /* Unexpeted error */
+		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;
 }

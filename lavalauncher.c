@@ -174,23 +174,30 @@ static void exec_cmd (const char *cmd)
 	}
 }
 
+static void sensible_defaults (struct Lava_data *data)
+{
+	data->position         = POSITION_LEFT;
+	data->bar_width        = 80;
+	data->border_width     = 2;
+	data->bar_colour[0]    = 0.0f;
+	data->bar_colour[1]    = 0.0f;
+	data->bar_colour[2]    = 0.0f;
+	data->bar_colour[3]    = 1.0f;
+	data->border_colour[0] = 1.0f;
+	data->border_colour[1] = 1.0f;
+	data->border_colour[2] = 1.0f;
+	data->border_colour[3] = 1.0f;
+}
+
 int main (int argc, char *argv[])
 {
-	/* Init data struct with sensible defaults */
 	struct Lava_data data = {0};
 	wl_list_init(&(data.buttons));
-	data.position         = POSITION_LEFT;
-	data.bar_width        = 80;
-	data.border_width     = 2;
-	data.bar_colour[0]    = 0.0f;
-	data.bar_colour[1]    = 0.0f;
-	data.bar_colour[2]    = 0.0f;
-	data.bar_colour[3]    = 1.0f;
-	data.border_colour[0] = 1.0f;
-	data.border_colour[1] = 1.0f;
-	data.border_colour[2] = 1.0f;
-	data.border_colour[3] = 1.0f;
 
+	/* Init data struct with sensible defaults. */
+	sensible_defaults(&data);
+
+	/* Handle command flags. */
 	for (int c; (c = getopt(argc, argv, "b:p:s:S:c:C:h")) != -1 ;)
 		switch (c)
 		{
@@ -204,6 +211,7 @@ int main (int argc, char *argv[])
 			case 'C': set_border_colour (&data, optarg); break;
 		}
 
+	/* Count buttons. If none are defined, exit. */
 	data.button_amount = wl_list_length(&(data.buttons));
 	if (! data.button_amount)
 	{

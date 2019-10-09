@@ -236,7 +236,7 @@ int main (int argc, char *argv[])
 	/* Calculating the size of the bar. At the "docking" edge no border will
 	 * be drawn. Later, when outputs are added and the surface(s) are drawn,
 	 * we will check whether the dimensions actually fit into the output(s).
-	 * If they do not fit, we simply exit. That makes it unneccessary to
+	 * If they do not fit, we simply exit. That makes it unnecessary to
 	 * implement complicated resizing functions; If the bar is to large, it
 	 * simply is the users fault.
 	 */

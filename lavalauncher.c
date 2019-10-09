@@ -129,7 +129,7 @@ char *separate_string_at_delimiter (char *str, char delim)
 /* This function turns a colour string of the format #RRGGBBAA to usable RGBA
  * values.
  */
-void hex_to_rgba (char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
+void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
 {
 	unsigned int r = 0, g = 0, b = 0, a = 0;
 
@@ -222,12 +222,32 @@ static void set_border_size(struct Lava_data *data, const char *arg)
 
 static void set_bar_colour(struct Lava_data *data, const char *arg)
 {
-	return;
+	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
+	{
+		fputs("Bad colour configuration.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	hex_to_rgba(arg,
+			&(data->bar_colour[0]),
+			&(data->bar_colour[1]),
+			&(data->bar_colour[2]),
+			&(data->bar_colour[3]));
 }
 
 static void set_border_colour(struct Lava_data *data, const char *arg)
 {
-	return;
+	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
+	{
+		fputs("Bad colour configuration.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	hex_to_rgba(arg,
+			&(data->border_colour[0]),
+			&(data->border_colour[1]),
+			&(data->border_colour[2]),
+			&(data->border_colour[3]));
 }
 
 static void sensible_defaults (struct Lava_data *data)

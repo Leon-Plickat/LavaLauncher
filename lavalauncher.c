@@ -31,6 +31,8 @@
 #include"wlr-layer-shell-unstable-v1-client-protocol.h"
 #include"xdg-output-unstable-v1-client-protocol.h"
 
+#define SHELL "/bin/sh"
+
 static const char usage[] = "LavaLauncher -- Version 0.1-WIP\n"
                             "\n"
                             "Usage: lavalauncher [options...]\n"
@@ -84,6 +86,14 @@ struct Lava_data
 	int h;
 };
 
+struct Lava_button
+{
+	struct wl_list link;
+
+	const char *img_path;
+	const char *cmd;
+};
+
 
 
 /* This function separates a string at a given delimiter, by turning the
@@ -116,6 +126,9 @@ char *separate_string_at_delimiter (char *str, char delim)
 	return stringrunner;
 }
 
+/* This function turns a colour string of the format #RRGGBBAA to usable RGBA
+ * values.
+ */
 void hex_to_rgba (char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
 {
 	unsigned int r = 0, g = 0, b = 0, a = 0;
@@ -132,9 +145,40 @@ void hex_to_rgba (char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
 	*c_a = a / 255.0f;
 }
 
-static void add_button(struct Lava_data *data, const char *arg)
+/* This function executes the given command with SHELL. */
+static void exec_cmd (const char *cmd)
 {
-	return;
+	if (! fork())
+	{
+		setsid();
+		execl(SHELL, SHELL, "-c", cmd, (char *)NULL);
+		exit(EXIT_SUCCESS);
+	}
+}
+
+/* This function adds a button struct to the button list. */
+static void add_button(struct Lava_data *data, char *arg)
+{
+	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
+	{
+		fputs("Bad configuration.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	char *cmd = separate_string_at_delimiter(arg, ':');
+	if ( cmd == NULL )
+	{
+		fputs("Bad configuration.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	/* *arg is now the image path and *cmd the shell command. */
+
+	struct Lava_button *new_button = calloc(1, sizeof(struct Lava_button));
+	new_button->img_path = arg;
+	new_button->cmd      = cmd;
+
+	wl_list_insert(&data->buttons, &new_button->link);
 }
 
 static void set_position(struct Lava_data *data, const char *arg)
@@ -172,20 +216,6 @@ static void set_bar_colour(struct Lava_data *data, const char *arg)
 static void set_border_colour(struct Lava_data *data, const char *arg)
 {
 	return;
-}
-
-static void exec_cmd (const char *cmd)
-{
-	if (! fork())
-	{
-		setsid();
-		execl("/bin/sh",
-				"/bin/sh",
-				"-c",
-				cmd,
-				(char *)NULL);
-		exit(0);
-	}
 }
 
 static void sensible_defaults (struct Lava_data *data)
@@ -232,6 +262,8 @@ int main (int argc, char *argv[])
 		fputs("No buttons defined!\n", stderr);
 		return EXIT_FAILURE;
 	}
+	//else
+	//	fprintf(stderr, "Buttons: %d\n", data.button_amount); // TODO: Remove this DEBUG message
 
 	/* Calculating the size of the bar. At the "docking" edge no border will
 	 * be drawn. Later, when outputs are added and the surface(s) are drawn,

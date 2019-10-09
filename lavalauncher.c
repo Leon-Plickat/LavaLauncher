@@ -267,7 +267,7 @@ int main (int argc, char *argv[])
 	//for (;;) { }
 
 	/* Sever connection to Wayland server. */
-	wl_display_terminate(data.display);
+	wl_display_disconnect(data.display);
 
 	return EXIT_SUCCESS;
 }

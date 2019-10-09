@@ -7,6 +7,7 @@ WAYLAND_SCANNER=$(shell pkg-config --variable=wayland_scanner wayland-scanner)
 
 LIBS=\
 	 $(shell pkg-config --cflags --libs wayland-server) \
+	 $(shell pkg-config --cflags --libs wayland-client) \
 	 $(shell pkg-config --cflags --libs cairo)
 
 CFLAGS=\

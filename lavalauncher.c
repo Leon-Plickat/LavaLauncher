@@ -22,6 +22,7 @@
 #include<stdbool.h>
 #include<unistd.h>
 #include<string.h>
+#include<assert.h>
 
 #include<wayland-server.h>
 #include<wayland-client-protocol.h>
@@ -151,8 +152,6 @@ static void set_position(struct Lava_data *data, const char *arg)
 		fputs("Possible positions are 'top', 'right', 'bottom' and 'left'.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-
-	return;
 }
 
 static void set_bar_size(struct Lava_data *data, const char *arg)
@@ -253,6 +252,22 @@ int main (int argc, char *argv[])
 	}
 	else /* Unexpeted error */
 		return EXIT_FAILURE;
+
+	/* Connect to Wayland server. */
+	const char *wayland_display = getenv("WAYLAND_DISPLAY");
+	data.display = wl_display_connect(wayland_display);
+	assert(data.display);
+	if ( data.display == NULL || wayland_display == NULL )
+	{
+		fputs("Can not connect to a Wayland server.\n", stderr);
+		return EXIT_FAILURE;
+	}
+
+	/* TODO: Main Loop */
+	//for (;;) { }
+
+	/* Sever connection to Wayland server. */
+	wl_display_terminate(data.display);
 
 	return EXIT_SUCCESS;
 }

@@ -274,8 +274,6 @@ int main (int argc, char *argv[])
 		fputs("No buttons defined!\n", stderr);
 		return EXIT_FAILURE;
 	}
-	//else
-	//	fprintf(stderr, "Buttons: %d\n", data.button_amount); // TODO: Remove this DEBUG message
 
 	/* Calculating the size of the bar. At the "docking" edge no border will
 	 * be drawn. Later, when outputs are added and the surface(s) are drawn,

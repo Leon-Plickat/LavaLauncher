@@ -161,14 +161,14 @@ static void add_button(struct Lava_data *data, char *arg)
 {
 	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
 	{
-		fputs("Bad configuration.\n", stderr);
+		fputs("Bad button configuration.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
 	char *cmd = separate_string_at_delimiter(arg, ':');
 	if ( cmd == NULL )
 	{
-		fputs("Bad configuration.\n", stderr);
+		fputs("Bad button configuration.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -200,12 +200,24 @@ static void set_position(struct Lava_data *data, const char *arg)
 
 static void set_bar_size(struct Lava_data *data, const char *arg)
 {
-	return;
+	data->bar_width = atoi(arg);
+
+	if ( data->bar_width <= 0 )
+	{
+		fputs("Bar width must be greater than zero.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
 }
 
 static void set_border_size(struct Lava_data *data, const char *arg)
 {
-	return;
+	data->border_width = atoi(arg);
+
+	if ( data->border_width < 0 )
+	{
+		fputs("Border width must be equal to or greater than zero.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
 }
 
 static void set_bar_colour(struct Lava_data *data, const char *arg)

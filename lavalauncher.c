@@ -47,6 +47,7 @@ static const char usage[] = "LavaLauncher -- Version 0.1-WIP\n"
                             "  -c <colour>                 Background colour.\n"
                             "  -C <colour>                 Border colour.\n"
                             "  -h                          Display this help text and exit.\n"
+                            "  -v                          Verbose output.\n"
                             "\n"
                             "Buttons are displayed in the order in which they are given.\n"
                             "Commands will be executed with sh(1).\n"
@@ -84,10 +85,11 @@ struct Lava_data
 	float             bar_colour[4];
 	float             border_colour[4];
 
-	int w;
-	int h;
+	uint32_t w;
+	uint32_t h;
 
 	bool loop;
+	bool verbose;
 };
 
 struct Lava_output
@@ -131,18 +133,62 @@ struct Lava_button
 /* No-Op function. */
 static void noop () {}
 
-static void layer_surface_handle_configure (void *data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h)
+static void layer_surface_handle_configure (void *raw_data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h)
 {
+	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_data   *data   = output->data;
+
+	if (data->verbose)
+		fprintf(stderr, "Received configure request for layer surface.\nRequested width: %d\nRequested height: %d\n", w, h);
+
+	if ( w == 0 || h == 0 )
+	{
+		if (data->verbose)
+			fputs("Compositor gave us free reign over window size.\n", stderr);
+		zwlr_layer_surface_v1_set_size(surface, data->w, data->h);
+	}
+	else if ( w == data->w || h == data->h )
+	{
+		if (data->verbose)
+			fputs("Requested size is fine.\n", stderr);
+	}
+	else
+	{
+		fputs("Compositor does not allow surface of needed size.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
+
+	wl_surface_commit(output->wl_surface);
+
+	// TODO Is this needed here?
+	//      Maybe use a global commit function in the loop with bool dirty?
+	if ( wl_display_roundtrip(data->display) == -1 )
+	{
+		fputs("Roundtrip failed.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+}
+
+static void layer_surface_handle_closed (void *raw_data, struct zwlr_layer_surface_v1 *surface)
+{
+	struct Lava_data *data = (struct Lava_data *)raw_data;
+	if (data->verbose)
+		fputs("Layer surface has been closed.\n", stderr);
+	data->loop = false;
 }
 
 static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 	.configure = layer_surface_handle_configure,
-	.closed    = noop
+	.closed    = layer_surface_handle_closed
 };
 
 static void create_bar (struct Lava_data *data, struct Lava_output *output)
 {
+	if (data->verbose)
+		fputs("Creating bar.\n", stderr);
+
 	output->wl_surface = wl_compositor_create_surface(data->compositor);
 	if ( output->wl_surface == NULL )
 	{
@@ -190,7 +236,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 
 	zwlr_layer_surface_v1_add_listener(output->layer_surface,
 			&layer_surface_listener,
-			output->layer_surface);
+			output);
 
 	wl_surface_commit(output->wl_surface);
 
@@ -217,9 +263,13 @@ static const struct wl_pointer_listener pointer_listener = {
 	.axis   = noop
 };
 
-static void seat_handle_capabilities (void *data, struct wl_seat *wl_seat, uint32_t capabilities)
+static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat, uint32_t capabilities)
 {
-	struct Lava_seat *seat = (struct Lava_seat *)data;
+	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
+	struct Lava_data *data = seat->data;
+
+	if (data->verbose)
+		fputs("Handling seat capabilities.\n", stderr);
 
 	if ( seat->pointer.wl_pointer != NULL )
 	{
@@ -233,6 +283,8 @@ static void seat_handle_capabilities (void *data, struct wl_seat *wl_seat, uint3
 		wl_pointer_add_listener(seat->pointer.wl_pointer,
 				&pointer_listener,
 				seat);
+		if (data->verbose)
+			fputs("Seat has WL_SEAT_CAPABILITY_POINTER.\n", stderr);
 	}
 	else
 		fputs("Compositor seat does not have pointer capabilities.\n"
@@ -246,16 +298,24 @@ static const struct wl_seat_listener seat_listener = {
 	.name         = noop
 };
 
-static void output_handle_geometry (void *data, struct wl_output *wl_output, int32_t x, int32_t y, int32_t phy_width, int32_t phy_height, int32_t subpixel, const char *make, const char *model, int32_t transform)
+static void output_handle_geometry (void *raw_data, struct wl_output *wl_output, int32_t x, int32_t y, int32_t phy_width, int32_t phy_height, int32_t subpixel, const char *make, const char *model, int32_t transform)
 {
-	struct Lava_output *output = (struct Lava_output *)data;
+	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_data   *data   = output->data;
 	output->subpixel           = subpixel;
+
+	if (data->verbose)
+		fputs("Output updated geometry.\n", stderr);
 }
 
-static void output_handle_scale (void *data, struct wl_output *wl_output, int32_t factor)
+static void output_handle_scale (void *raw_data, struct wl_output *wl_output, int32_t factor)
 {
-	struct Lava_output *output = (struct Lava_output *)data;
+	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_data   *data   = output->data;
 	output->scale              = (int)factor;
+
+	if (data->verbose)
+		fputs("Output updated scale.\n", stderr);
 }
 
 static const struct wl_output_listener output_listener = {
@@ -270,23 +330,37 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 	struct Lava_data *data = (struct Lava_data *)raw_data;
 
 	if (! strcmp(interface, wl_compositor_interface.name))
+	{
+		if (data->verbose)
+			fputs("Get wl_compositor.\n", stderr);
 		data->compositor = wl_registry_bind(registry,
 				name,
 				&wl_compositor_interface,
 				4);
+	}
 	else if (! strcmp(interface, wl_shm_interface.name))
+	{
+		if (data->verbose)
+			fputs("Get wl_shm.\n", stderr);
 		data->shm = wl_registry_bind(registry,
 				name,
 				&wl_shm_interface,
 				1);
+	}
 	else if (! strcmp(interface, zwlr_layer_shell_v1_interface.name))
+	{
+		if (data->verbose)
+			fputs("Get zwlr_layer_shell_v1.\n", stderr);
 		data->layer_shell = wl_registry_bind(registry,
 				name,
 				&zwlr_layer_shell_v1_interface,
 				1);
+	}
 	else if (! strcmp(interface, wl_seat_interface.name))
 	{
-		/* New seat. */
+		if (data->verbose)
+			fputs("Adding seat.\n", stderr);
+
 		struct wl_seat *wl_seat = wl_registry_bind(registry,
 				name,
 				&wl_seat_interface,
@@ -304,7 +378,9 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 	}
 	else if (! strcmp(interface, wl_output_interface.name))
 	{
-		/* New output. */
+		if (data->verbose)
+			fputs("Adding output.\n", stderr);
+
 		struct wl_output *wl_output = wl_registry_bind(registry,
 				name,
 				&wl_output_interface,
@@ -333,18 +409,20 @@ static void registry_handle_global_remove (void *raw_data, struct wl_registry *r
 	struct Lava_data   *data = (struct Lava_data *)raw_data;
 	struct Lava_output *op1;
 	struct Lava_output *op2;
+
+	if (data->verbose)
+		fputs("Global remove.\n", stderr);
+
 	wl_list_for_each_safe(op1, op2, &data->outputs, link)
 	{
 		if ( op1->global_name == name )
 		{
-			//if ( op1->data->surface_output == op1 )
-			//	op1->data->surface_output == NULL;
-			//if ( op1->data->layer_surface_output == op1 )
-			//	op1->data->layer_surface_output == NULL;
 			wl_list_remove(&op1->link);
-			//if ( op1->xdg_output != NULL )
-			//	zxdg_output_v1_destroy(op1->xdg_output);
 			wl_output_destroy(op1->wl_output);
+			if ( op1->layer_surface != NULL )
+				zwlr_layer_surface_v1_destroy(op1->layer_surface);
+			if ( op1->wl_surface != NULL )
+				wl_surface_destroy(op1->wl_surface);
 			free(op1->name);
 			free(op1);
 			break;
@@ -359,11 +437,16 @@ static const struct wl_registry_listener registry_listener = {
 
 static void init_wayland (struct Lava_data *data)
 {
+	if (data->verbose)
+		fputs("Init Wayland.\n", stderr);
+
 	/* Init lists. */
 	wl_list_init(&data->outputs);
 	wl_list_init(&data->seats);
 
 	/* Connect to Wayland server. */
+	if (data->verbose)
+		fputs("Connecting to server.\n", stderr);
 	const char *wayland_display = getenv("WAYLAND_DISPLAY");
 	data->display = wl_display_connect(wayland_display);
 	assert(data->display);
@@ -374,6 +457,8 @@ static void init_wayland (struct Lava_data *data)
 	}
 
 	/* Get registry and add listeners. */
+	if (data->verbose)
+		fputs("Get wl_registry.\n", stderr);
 	data->registry = wl_display_get_registry(data->display);
 	if ( data->registry == NULL )
 	{
@@ -425,6 +510,9 @@ static void init_wayland (struct Lava_data *data)
 
 static void deinit_wayland (struct Lava_data *data)
 {
+	if (data->verbose)
+		fputs("Deinit Wayland.\nDestroying outputs.\n", stderr);
+
 	struct Lava_output *op_1;
 	struct Lava_output *op_2;
 	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
@@ -439,6 +527,9 @@ static void deinit_wayland (struct Lava_data *data)
 		free(op_1);
 	}
 
+	if (data->verbose)
+		fputs("Destroying seats.\n", stderr);
+
 	struct Lava_seat *st_1;
 	struct Lava_seat *st_2;
 	wl_list_for_each_safe(st_1, st_2, &data->seats, link)
@@ -450,6 +541,9 @@ static void deinit_wayland (struct Lava_data *data)
 		free(st_1);
 	}
 
+	if (data->verbose)
+		fputs("Destroying buttons.\n", stderr);
+
 	struct Lava_button *bt_1;
 	struct Lava_button *bt_2;
 	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
@@ -459,10 +553,17 @@ static void deinit_wayland (struct Lava_data *data)
 		free(bt_1);
 	}
 
+	if (data->verbose)
+		fputs("Destroying wlr_layer_shell_v1, wl_compositor, wl_shm anf wl_registry.\n", stderr);
+
 	zwlr_layer_shell_v1_destroy(data->layer_shell);
 	wl_compositor_destroy(data->compositor);
 	wl_shm_destroy(data->shm);
 	wl_registry_destroy(data->registry);
+
+	if (data->verbose)
+		fputs("Diconnecting from server.\n", stderr);
+
 	wl_display_disconnect(data->display);
 }
 
@@ -516,8 +617,11 @@ void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_
 }
 
 /* This function executes the given command with SHELL. */
-static void exec_cmd (const char *cmd)
+static void exec_cmd (struct Lava_data *data, const char *cmd)
 {
+	if (data->verbose)
+		fprintf(stderr, "Executing: %s\n", cmd);
+
 	if (! fork())
 	{
 		setsid();
@@ -624,6 +728,9 @@ static void config_set_border_colour(struct Lava_data *data, const char *arg)
 
 static void main_loop (struct Lava_data *data)
 {
+	if (data->verbose)
+		fputs("Starting main loop.\n", stderr);
+
 	struct pollfd fds = (struct pollfd) {
 		.fd     = wl_display_get_fd(data->display),
 		.events = POLLIN
@@ -688,7 +795,7 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
-	for (int c; (c = getopt(argc, argv, "b:p:s:S:c:C:h")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "b:p:s:S:c:C:hv")) != -1 ;)
 		switch (c)
 		{
 			/* Weirdly formatted for readability. */
@@ -699,6 +806,7 @@ int main (int argc, char *argv[])
 			case 'S': config_set_border_size   (&data, optarg); break;
 			case 'c': config_set_bar_colour    (&data, optarg); break;
 			case 'C': config_set_border_colour (&data, optarg); break;
+			case 'v': data.verbose = true;                      break;
 		}
 
 	/* Count buttons. If none are defined, exit. */
@@ -709,6 +817,9 @@ int main (int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	if (data.verbose)
+		fputs("LavaLauncher Version 0.1\n", stderr);
+
 	/* Calculating the size of the bar. At the "docking" edge no border will
 	 * be drawn. Later, when outputs are added and the surface(s) are drawn,
 	 * we will check whether the dimensions actually fit into the output(s).
@@ -718,20 +829,26 @@ int main (int argc, char *argv[])
 	 */
 	if ( data.position == POSITION_LEFT || data.position == POSITION_RIGHT )
 	{
-		data.w = data.bar_width + data.border_width;
-		data.h = (data.button_amount * data.bar_width) + (2 * data.border_width);
+		data.w = (uint32_t)(data.bar_width + data.border_width);
+		data.h = (uint32_t)((data.button_amount * data.bar_width) + (2 * data.border_width));
 	}
 	else if ( data.position == POSITION_TOP || data.position == POSITION_BOTTOM )
 	{
-		data.w = (data.button_amount * data.bar_width) + (2 * data.border_width);
-		data.h = data.bar_width + data.border_width;
+		data.w = (uint32_t)((data.button_amount * data.bar_width) + (2 * data.border_width));
+		data.h = (uint32_t)(data.bar_width + data.border_width);
 	}
 	else /* Unexpeted error */
 		return EXIT_FAILURE;
 
+	if (data.verbose)
+		fprintf(stderr, "Buttons: %d\nWidth: %d\nHeight: %d\n", data.button_amount, data.w, data.h);
+
 	init_wayland(&data);
 	main_loop(&data);
 	deinit_wayland(&data);
+
+	if (data.verbose)
+		fputs("Exiting.\n", stderr);
 
 	return EXIT_SUCCESS;
 }

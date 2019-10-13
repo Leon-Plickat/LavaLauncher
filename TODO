@@ -1,5 +1,5 @@
 # Todo
-* Add a bar surface for each output
+* Draw stuff to the bar surfaces
 * Handle mouse button events
 * -P padding between images and border of bar
 * -a aligment of bar on screen edge: start, center, end

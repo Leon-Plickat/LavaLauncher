@@ -69,8 +69,6 @@ struct Lava_data
 	struct wl_shm                 *shm;
 	struct zwlr_layer_shell_v1    *layer_shell;
 	//struct zxdg_output_manager_v1 *xdg_output_manager; // TODO ??? XXX
-	struct wl_surface             *wl_surface;
-	struct zwlr_layer_surface_v1  *layer_surface;
 
 	int32_t scale;
 
@@ -94,14 +92,16 @@ struct Lava_data
 
 struct Lava_output
 {
-	struct wl_list           link;
-	struct Lava_data        *data;
-	uint32_t                 global_name;
-	struct wl_output        *wl_output;
-//	struct zxdg_output_v1   *xdg_output;
-	char                    *name;
-	enum wl_output_subpixel  subpixel;
-	int32_t                  scale;
+	struct wl_list                 link;
+	struct Lava_data              *data;
+	uint32_t                       global_name;
+	struct wl_output              *wl_output;
+//	struct zxdg_output_v1         *xdg_output;
+	char                          *name;
+	enum wl_output_subpixel        subpixel;
+	int32_t                        scale;
+	struct wl_surface             *wl_surface;
+	struct zwlr_layer_surface_v1  *layer_surface;
 };
 
 struct Lava_seat
@@ -130,6 +130,75 @@ struct Lava_button
 
 /* No-Op function. */
 static void noop () {}
+
+static void layer_surface_handle_configure (void *data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h)
+{
+	zwlr_layer_surface_v1_ack_configure(surface, serial);
+}
+
+static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
+	.configure = layer_surface_handle_configure,
+	.closed    = noop
+};
+
+static void create_bar (struct Lava_data *data, struct Lava_output *output)
+{
+	output->wl_surface = wl_compositor_create_surface(data->compositor);
+	if ( output->wl_surface == NULL )
+	{
+		fputs("Compositor did not create wl_surface.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	output->layer_surface = zwlr_layer_shell_v1_get_layer_surface(data->layer_shell,
+			output->wl_surface,
+			output->wl_output,
+			ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM,
+			"LavaLauncher");
+	if ( output->layer_surface == NULL )
+	{
+		fputs("Compositor did not create layer_surface.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	zwlr_layer_surface_v1_set_size(output->layer_surface, data->w, data->h);
+	switch (data->position)
+	{
+		case POSITION_TOP:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
+			break;
+
+		case POSITION_RIGHT:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+			break;
+
+		case POSITION_BOTTOM:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+			break;
+
+		case POSITION_LEFT:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
+			break;
+	}
+
+	zwlr_layer_surface_v1_add_listener(output->layer_surface,
+			&layer_surface_listener,
+			output->layer_surface);
+
+	wl_surface_commit(output->wl_surface);
+
+	if ( wl_display_roundtrip(data->display) == -1 )
+	{
+		fputs("Roundtrip failed.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	// TODO draw stuff to surface and damage it
+}
 
 // TODO
 static void pointer_handle_motion () {}
@@ -210,10 +279,11 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 	else if (! strcmp(interface, zwlr_layer_shell_v1_interface.name))
 		data->layer_shell = wl_registry_bind(registry,
 				name,
-				&wl_shm_interface,
+				&zwlr_layer_shell_v1_interface,
 				1);
 	else if (! strcmp(interface, wl_seat_interface.name))
 	{
+		/* New seat. */
 		struct wl_seat *wl_seat = wl_registry_bind(registry,
 				name,
 				&wl_seat_interface,
@@ -231,6 +301,7 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 	}
 	else if (! strcmp(interface, wl_output_interface.name))
 	{
+		/* New output. */
 		struct wl_output *wl_output = wl_registry_bind(registry,
 				name,
 				&wl_output_interface,
@@ -249,7 +320,7 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		wl_output_set_user_data(wl_output, output);
 		wl_output_add_listener(wl_output, &output_listener, output);
 		// get_xdg_output(output); // TODO what does this do?
-		// TODO: create bar surface
+		create_bar(data, output);
 	}
 	// TODO maybe test for zxdg_output_manager_v1_interface ?
 }
@@ -351,17 +422,16 @@ static void init_wayland (struct Lava_data *data)
 
 static void deinit_wayland (struct Lava_data *data)
 {
-	if ( data->layer_surface != NULL )
-		zwlr_layer_surface_v1_destroy(data->layer_surface);
-	if ( data->wl_surface != NULL )
-		wl_surface_destroy(data->wl_surface);
-
 	struct Lava_output *op_1;
 	struct Lava_output *op_2;
 	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
 	{
 		wl_list_remove(&op_1->link);
 		wl_output_destroy(op_1->wl_output);
+		if ( op_1->layer_surface != NULL )
+			zwlr_layer_surface_v1_destroy(op_1->layer_surface);
+		if ( op_1->wl_surface != NULL )
+			wl_surface_destroy(op_1->wl_surface);
 		free(op_1->name);
 		free(op_1);
 	}
@@ -375,6 +445,15 @@ static void deinit_wayland (struct Lava_data *data)
 		if (st_1->pointer.wl_pointer)
 			wl_pointer_release(st_1->pointer.wl_pointer);
 		free(st_1);
+	}
+
+	struct Lava_button *bt_1;
+	struct Lava_button *bt_2;
+	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
+	{
+		wl_list_remove(&bt_1->link);
+		// TODO free command and image path
+		free(bt_1);
 	}
 
 	zwlr_layer_shell_v1_destroy(data->layer_shell);

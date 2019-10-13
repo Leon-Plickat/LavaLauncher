@@ -184,6 +184,9 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
 			break;
 	}
+	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface, -1); // TODO find the best zone
+
+	// TODO zwlr_layer_surface_v1_set_margin() might be nice
 
 	zwlr_layer_surface_v1_add_listener(output->layer_surface,
 			&layer_surface_listener,
@@ -315,7 +318,7 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		output->data        = data;
 		output->global_name = name;
 		output->wl_output   = wl_output;
-		output->scale       = 1; // TODO ?
+		output->scale       = 1;
 		wl_list_insert(&data->outputs, &output->link);
 		wl_output_set_user_data(wl_output, output);
 		wl_output_add_listener(wl_output, &output_listener, output);
@@ -526,6 +529,8 @@ static void exec_cmd (const char *cmd)
 /* This function adds a button struct to the button list. */
 static void config_add_button(struct Lava_data *data, char *arg)
 {
+	// TODO this sucks, do better
+
 	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
 	{
 		fputs("Bad button configuration.\n", stderr);

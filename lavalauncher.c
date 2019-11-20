@@ -213,24 +213,31 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 		case POSITION_TOP:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
 					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
+			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+					data->h);
 			break;
 
 		case POSITION_RIGHT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
 					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+					data->w);
 			break;
 
 		case POSITION_BOTTOM:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
 					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+					data->h);
 			break;
 
 		case POSITION_LEFT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
 					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
+			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+					data->w);
 			break;
 	}
-	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface, -1); // TODO find the best zone
 
 	// TODO zwlr_layer_surface_v1_set_margin() might be nice
 
@@ -821,11 +828,7 @@ int main (int argc, char *argv[])
 		fputs("LavaLauncher Version 0.1\n", stderr);
 
 	/* Calculating the size of the bar. At the "docking" edge no border will
-	 * be drawn. Later, when outputs are added and the surface(s) are drawn,
-	 * we will check whether the dimensions actually fit into the output(s).
-	 * If they do not fit, we simply exit. That makes it unnecessary to
-	 * implement complicated resizing functions; If the bar is to large, it
-	 * simply is the users fault.
+	 * be drawn.
 	 */
 	if ( data.position == POSITION_LEFT || data.position == POSITION_RIGHT )
 	{

@@ -34,9 +34,12 @@ Some compositors, like sway, do not respect the exclusive area of layer surfaces
 that are only anchored to less then three sides. Aggressive anchoring will
 always anchor the bar surface to three sides to work around this.
 .TP
-.B \-b <path>:<command>
+.B \-b <path> <command>
 Add a button. Path is the path to an image file. Command is the shell command
 executed when the user clicks on the button.
+.TP
+.B \-l <overlay|top|bottom|background>
+Layer the bar surface.
 .TP
 .B \-p <top|right|bottom|left>
 Position of the bar.
@@ -62,8 +65,8 @@ Verbose output.
 
 .SH EXAMPLE
 lavalauncher
-\-b /home/leon/.config/icons/firefox.png:firefox
-\-b /home/leon/.config/icons/glenda.png:acme
+\-b /home/leon/.config/icons/firefox.png firefox
+\-b /home/leon/.config/icons/glenda.png acme
 \-p bottom
 \-s 80
 \-S 2

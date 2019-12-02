@@ -27,13 +27,12 @@ this program you will need a C compiler and an implementation of `make`.
 [this](https://git-send-email.io/) link to learn how to set up git for sending
 emails.
 
-For larger contributions, especially for radical changes, I highly recommend you
-to ask me if I will actually include your change(s), *before* working on your
-patch.
+For larger contributions, especially for radical changes, I highly recommend
+that you ask me if I will actually include your commit *before* working on it.
 
 You are strongly invited to add your name to the copyright header of the files
-you changed and to the authors sections in the man page and README, if you feel
-like you made an important contribution.
+you changed and to the authors sections in the man page and README if you made
+an important contribution.
 
 
 ## Licensing
@@ -42,8 +41,6 @@ LavaLauncher is licensed under the GPLv3.
 
 The contents of the `lib/` directory are licensed differently. See the header
 of the files for more information.
-
-This is a *Free Software* project, **not** an *Open Source* project.
 
 
 ## Authors

@@ -36,22 +36,21 @@
 
 #define SHELL "/bin/sh"
 
-static const char usage[] = "LavaLauncher -- Version 0.1-WIP\n"
-                            "\n"
-                            "Usage: lavalauncher [options...]\n"
-                            "\n"
-                            "  -b <path>:<command>         Add a button.\n"
-                            "  -p <top|bottom|left|right>  Position of the bar.\n"
-                            "  -s <size>                   Width of the bar.\n"
-                            "  -S <size>                   Width of the border.\n"
-                            "  -c <colour>                 Background colour.\n"
-                            "  -C <colour>                 Border colour.\n"
-                            "  -h                          Display this help text and exit.\n"
-                            "  -v                          Verbose output.\n"
-                            "\n"
-                            "Buttons are displayed in the order in which they are given.\n"
+static const char usage[] = "LavaLauncher -- Version 0.1-WIP\n\n"
+                            "Usage: lavalauncher [options...]\n\n"
+                            "  -a                                 Aggressive anchoring.\n"
+                            "  -b <path> <command>                Add a button.\n"
+                            "  -c <colour>                        Background colour.\n"
+                            "  -C <colour>                        Border colour.\n"
+                            "  -h                                 Display this help text and exit.\n"
+                            "  -l <overlay|top|bottom|background> Layer of the bar surface.\n"
+                            "  -p <top|bottom|left|right>         Position of the bar.\n"
+                            "  -s <size>                          Width of the bar.\n"
+                            "  -S <size>                          Width of the border.\n"
+                            "  -v                                 Verbose output.\n\n"
+                            "Buttons are displayed in the order in which they are declared.\n"
                             "Commands will be executed with sh(1).\n"
-                            "Colours are expected to be in the format #RRGGBBAA\n"
+                            "Colours are expected to be in the format #RRGGBBAA.\n"
                             "Sizes are expected to be in pixels.\n";
 
 enum Bar_position
@@ -78,6 +77,8 @@ struct Lava_data
 	struct wl_list buttons;
 
 	int button_amount;
+
+	enum zwlr_layer_shell_v1_layer layer;
 
 	enum Bar_position position;
 	bool              aggressive_anchor;
@@ -134,18 +135,24 @@ struct Lava_button
 /* No-Op function. */
 static void noop () {}
 
-static void layer_surface_handle_configure (void *raw_data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h)
+static void layer_surface_handle_configure (void *raw_data,
+		struct zwlr_layer_surface_v1 *surface,
+		uint32_t serial,
+		uint32_t w, uint32_t h)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	struct Lava_data   *data   = output->data;
 
 	if (data->verbose)
-		fprintf(stderr, "Received configure request for layer surface.\nRequested width: %d\nRequested height: %d\n", w, h);
+		fprintf(stderr, "Received configure request for layer surface.\n"
+				"Requested width: %d\nRequested height: %d\n",
+				w, h);
 
 	if ( w == 0 || h == 0 )
 	{
 		if (data->verbose)
-			fputs("Compositor gave us free reign over window size.\n", stderr);
+			fputs("Compositor gave us free reign over window size.\n",
+					stderr);
 		zwlr_layer_surface_v1_set_size(surface, data->w, data->h);
 	}
 	else if ( w == data->w || h == data->h )
@@ -155,7 +162,8 @@ static void layer_surface_handle_configure (void *raw_data, struct zwlr_layer_su
 	}
 	else
 	{
-		fputs("Compositor does not allow surface of needed size.\n", stderr);
+		fputs("Compositor does not allow surface of needed size.\n",
+				stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -172,7 +180,8 @@ static void layer_surface_handle_configure (void *raw_data, struct zwlr_layer_su
 	}
 }
 
-static void layer_surface_handle_closed (void *raw_data, struct zwlr_layer_surface_v1 *surface)
+static void layer_surface_handle_closed (void *raw_data,
+		struct zwlr_layer_surface_v1 *surface)
 {
 	struct Lava_data *data = (struct Lava_data *)raw_data;
 	if (data->verbose)
@@ -197,10 +206,11 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 		exit(EXIT_FAILURE);
 	}
 
-	output->layer_surface = zwlr_layer_shell_v1_get_layer_surface(data->layer_shell,
+	output->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
+			data->layer_shell,
 			output->wl_surface,
 			output->wl_output,
-			ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM,
+			data->layer,
 			"LavaLauncher");
 	if ( output->layer_surface == NULL )
 	{
@@ -214,7 +224,9 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 		case POSITION_TOP:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
 					data->aggressive_anchor
-					? ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+					? ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->h);
@@ -223,7 +235,9 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 		case POSITION_RIGHT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
 					data->aggressive_anchor
-					? ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+					? ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->w);
@@ -232,7 +246,9 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 		case POSITION_BOTTOM:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
 					data->aggressive_anchor
-					? ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+					? ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->h);
@@ -241,7 +257,9 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 		case POSITION_LEFT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
 					data->aggressive_anchor
-					? ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+					? ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->w);
@@ -279,7 +297,9 @@ static const struct wl_pointer_listener pointer_listener = {
 	.axis   = noop
 };
 
-static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat, uint32_t capabilities)
+static void seat_handle_capabilities (void *raw_data,
+		struct wl_seat *wl_seat,
+		uint32_t capabilities)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
 	struct Lava_data *data = seat->data;
@@ -314,7 +334,14 @@ static const struct wl_seat_listener seat_listener = {
 	.name         = noop
 };
 
-static void output_handle_geometry (void *raw_data, struct wl_output *wl_output, int32_t x, int32_t y, int32_t phy_width, int32_t phy_height, int32_t subpixel, const char *make, const char *model, int32_t transform)
+static void output_handle_geometry (void *raw_data,
+		struct wl_output *wl_output,
+		int32_t x, int32_t y,
+		int32_t phy_width, int32_t phy_height,
+		int32_t subpixel,
+		const char *make,
+		const char *model,
+		int32_t transform)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	struct Lava_data   *data   = output->data;
@@ -341,7 +368,11 @@ static const struct wl_output_listener output_listener = {
 	.scale    = output_handle_scale
 };
 
-static void registry_handle_global (void *raw_data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version)
+static void registry_handle_global (void *raw_data,
+		struct wl_registry *registry,
+		uint32_t name,
+		const char *interface,
+		uint32_t version)
 {
 	struct Lava_data *data = (struct Lava_data *)raw_data;
 
@@ -420,7 +451,9 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 	// TODO maybe test for zxdg_output_manager_v1_interface ?
 }
 
-static void registry_handle_global_remove (void *raw_data, struct wl_registry *registry, uint32_t name)
+static void registry_handle_global_remove (void *raw_data,
+		struct wl_registry *registry,
+		uint32_t name)
 {
 	struct Lava_data   *data = (struct Lava_data *)raw_data;
 	struct Lava_output *op1;
@@ -494,7 +527,8 @@ static void init_wayland (struct Lava_data *data)
 	/* Testing compatibilities. */
 	if ( data->compositor == NULL )
 	{
-		fputs("Wayland compositor does not support wl_compositor.\n", stderr);
+		fputs("Wayland compositor does not support wl_compositor.\n",
+				stderr);
 		exit(EXIT_FAILURE);
 	}
 	if ( data->shm == NULL )
@@ -504,7 +538,8 @@ static void init_wayland (struct Lava_data *data)
 	}
 	if ( data->layer_shell == NULL )
 	{
-		fputs("Wayland compositor does not support zwlr_layer_shell_v1.\n", stderr);
+		fputs("Wayland compositor does not support zwlr_layer_shell_v1.\n",
+				stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -565,12 +600,13 @@ static void deinit_wayland (struct Lava_data *data)
 	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
 	{
 		wl_list_remove(&bt_1->link);
-		// TODO free command and image path
 		free(bt_1);
 	}
 
 	if (data->verbose)
-		fputs("Destroying wlr_layer_shell_v1, wl_compositor, wl_shm anf wl_registry.\n", stderr);
+		fputs("Destroying wlr_layer_shell_v1, wl_compositor,"
+				"wl_shm and wl_registry.\n",
+				stderr);
 
 	zwlr_layer_shell_v1_destroy(data->layer_shell);
 	wl_compositor_destroy(data->compositor);
@@ -583,35 +619,6 @@ static void deinit_wayland (struct Lava_data *data)
 	wl_display_disconnect(data->display);
 }
 
-/* This function separates a string at a given delimiter, by turning the
- * delimiter into '\0'. The pointer to the second new string is returned, while
- * the pointer to the original string is now the pointer to the first new
- * string. If the delimiter is not found or no second string after the delimiter
- * exists, NULL is returned.
- */
-char *separate_string_at_delimiter (char *str, char delim)
-{
-	char *stringrunner = str;
-
-	for (;;)
-	{
-		if ( *stringrunner == '\0' )
-			return NULL;
-
-		if ( *stringrunner == delim )
-			break;
-
-		stringrunner++;
-	}
-
-	*stringrunner = '\0';
-	stringrunner++;
-
-	if ( *stringrunner == '\0' )
-		return NULL;
-
-	return stringrunner;
-}
 
 /* This function turns a colour string of the format #RRGGBBAA to usable RGBA
  * values.
@@ -622,7 +629,8 @@ void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_
 
 	if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a) )
 	{
-		fputs("Colour codes are expected to use the format #RRGGBBAA\n", stderr);
+		fputs("Colour codes are expected to use the format #RRGGBBAA\n",
+				stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -647,30 +655,31 @@ static void exec_cmd (struct Lava_data *data, const char *cmd)
 }
 
 /* This function adds a button struct to the button list. */
-static void config_add_button(struct Lava_data *data, char *arg)
+static void config_add_button(struct Lava_data *data, char *path, char *cmd)
 {
-	// TODO this sucks, do better
-
-	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
-	{
-		fputs("Bad button configuration.\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-
-	char *cmd = separate_string_at_delimiter(arg, ':');
-	if ( cmd == NULL )
-	{
-		fputs("Bad button configuration.\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-
-	/* *arg is now the image path and *cmd the shell command. */
-
 	struct Lava_button *new_button = calloc(1, sizeof(struct Lava_button));
-	new_button->img_path = arg;
+	new_button->img_path = path;
 	new_button->cmd      = cmd;
-
 	wl_list_insert(&data->buttons, &new_button->link);
+}
+
+static void config_set_layer(struct Lava_data *data, const char *arg)
+{
+	if (! strcmp(arg, "overlay"))
+		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
+	else if (! strcmp(arg, "top"))
+		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_TOP;
+	else if (! strcmp(arg, "bottom"))
+		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
+	else if (! strcmp(arg, "background"))
+		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
+	else
+	{
+		fputs("Possible layers are 'overlay', 'top',"
+				"'bottom' and 'background'.\n",
+				stderr);
+		exit(EXIT_FAILURE);
+	}
 }
 
 static void config_set_position(struct Lava_data *data, const char *arg)
@@ -685,7 +694,9 @@ static void config_set_position(struct Lava_data *data, const char *arg)
 		data->position = POSITION_LEFT;
 	else
 	{
-		fputs("Possible positions are 'top', 'right', 'bottom' and 'left'.\n", stderr);
+		fputs("Possible positions are 'top', 'right',"
+				"'bottom' and 'left'.\n",
+				stderr);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -707,7 +718,8 @@ static void config_set_border_size(struct Lava_data *data, const char *arg)
 
 	if ( data->border_width < 0 )
 	{
-		fputs("Border width must be equal to or greater than zero.\n", stderr);
+		fputs("Border width must be equal to or greater than zero.\n",
+				stderr);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -761,7 +773,8 @@ static void main_loop (struct Lava_data *data)
 		{
 			if ( wl_display_flush(data->display) == -1  && errno != EAGAIN )
 			{
-				fprintf(stderr, "wl_display_flush: %s\n", strerror(errno));
+				fprintf(stderr, "wl_display_flush: %s\n",
+						strerror(errno));
 				break;
 			}
 		} while ( errno == EAGAIN );
@@ -776,12 +789,14 @@ static void main_loop (struct Lava_data *data)
 		/* Handle event. */
 		if ( fds.revents & POLLIN && wl_display_dispatch(data->display) == -1 )
 		{
-			fprintf(stderr, "wl_display_dispatch: %s\n", strerror(errno));
+			fprintf(stderr, "wl_display_dispatch: %s\n",
+					strerror(errno));
 			break;
 		}
 		if ( fds.revents & POLLOUT && wl_display_flush(data->display) == -1 )
 		{
-			fprintf(stderr, "wl_display_flush: %s\n", strerror(errno));
+			fprintf(stderr, "wl_display_flush: %s\n",
+					strerror(errno));
 			break;
 		}
 	}
@@ -789,17 +804,20 @@ static void main_loop (struct Lava_data *data)
 
 static void sensible_defaults (struct Lava_data *data)
 {
-	data->position         = POSITION_LEFT;
-	data->bar_width        = 80;
-	data->border_width     = 2;
-	data->bar_colour[0]    = 0.0f;
-	data->bar_colour[1]    = 0.0f;
-	data->bar_colour[2]    = 0.0f;
-	data->bar_colour[3]    = 1.0f;
-	data->border_colour[0] = 1.0f;
-	data->border_colour[1] = 1.0f;
-	data->border_colour[2] = 1.0f;
-	data->border_colour[3] = 1.0f;
+	data->position          = POSITION_LEFT;
+	data->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
+	data->bar_width         = 80;
+	data->border_width      = 2;
+	data->bar_colour[0]     = 0.0f;
+	data->bar_colour[1]     = 0.0f;
+	data->bar_colour[2]     = 0.0f;
+	data->bar_colour[3]     = 1.0f;
+	data->border_colour[0]  = 1.0f;
+	data->border_colour[1]  = 1.0f;
+	data->border_colour[2]  = 1.0f;
+	data->border_colour[3]  = 1.0f;
+	data->verbose           = false;
+	data->aggressive_anchor = false;
 }
 
 int main (int argc, char *argv[])
@@ -811,19 +829,20 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
-	for (int c; (c = getopt(argc, argv, "ab:p:s:S:c:C:hv")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "ab:l:p:s:S:c:C:hv")) != -1 ;)
 		switch (c)
 		{
 			/* Weirdly formatted for readability. */
+			case 'v': data.verbose           = true; break;
+			case 'a': data.aggressive_anchor = true; break;
 			case 'h': fputs                    (usage, stderr); return EXIT_SUCCESS;
-			case 'b': config_add_button        (&data, optarg); break;
+			case 'b': config_add_button        (&data, argv[optind-1], argv[optind]); optind++; break;
+			case 'l': config_set_layer         (&data, optarg); break;
 			case 'p': config_set_position      (&data, optarg); break;
 			case 's': config_set_bar_size      (&data, optarg); break;
 			case 'S': config_set_border_size   (&data, optarg); break;
 			case 'c': config_set_bar_colour    (&data, optarg); break;
 			case 'C': config_set_border_colour (&data, optarg); break;
-			case 'a': data.aggressive_anchor = true;            break;
-			case 'v': data.verbose = true;                      break;
 		}
 
 	/* Count buttons. If none are defined, exit. */
@@ -843,18 +862,21 @@ int main (int argc, char *argv[])
 	if ( data.position == POSITION_LEFT || data.position == POSITION_RIGHT )
 	{
 		data.w = (uint32_t)(data.bar_width + data.border_width);
-		data.h = (uint32_t)((data.button_amount * data.bar_width) + (2 * data.border_width));
+		data.h = (uint32_t)((data.button_amount * data.bar_width)
+				+ (2 * data.border_width));
 	}
 	else if ( data.position == POSITION_TOP || data.position == POSITION_BOTTOM )
 	{
-		data.w = (uint32_t)((data.button_amount * data.bar_width) + (2 * data.border_width));
+		data.w = (uint32_t)((data.button_amount * data.bar_width)
+				+ (2 * data.border_width));
 		data.h = (uint32_t)(data.bar_width + data.border_width);
 	}
 	else /* Unexpeted error */
 		return EXIT_FAILURE;
 
 	if (data.verbose)
-		fprintf(stderr, "Buttons: %d\nWidth: %d\nHeight: %d\n", data.button_amount, data.w, data.h);
+		fprintf(stderr, "Buttons: %d\nWidth: %d\nHeight: %d\n",
+				data.button_amount, data.w, data.h);
 
 	init_wayland(&data);
 	main_loop(&data);

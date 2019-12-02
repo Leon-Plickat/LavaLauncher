@@ -80,6 +80,7 @@ struct Lava_data
 	int button_amount;
 
 	enum Bar_position position;
+	bool              aggressive_anchor;
 	int               bar_width;
 	int               border_width;
 	float             bar_colour[4];
@@ -212,28 +213,36 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	{
 		case POSITION_TOP:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
+					data->aggressive_anchor
+					? ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+					: ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->h);
 			break;
 
 		case POSITION_RIGHT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+					data->aggressive_anchor
+					? ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+					: ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->w);
 			break;
 
 		case POSITION_BOTTOM:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+					data->aggressive_anchor
+					? ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+					: ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->h);
 			break;
 
 		case POSITION_LEFT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
+					data->aggressive_anchor
+					? ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+					: ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->w);
 			break;
@@ -802,7 +811,7 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
-	for (int c; (c = getopt(argc, argv, "b:p:s:S:c:C:hv")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "ab:p:s:S:c:C:hv")) != -1 ;)
 		switch (c)
 		{
 			/* Weirdly formatted for readability. */
@@ -813,6 +822,7 @@ int main (int argc, char *argv[])
 			case 'S': config_set_border_size   (&data, optarg); break;
 			case 'c': config_set_bar_colour    (&data, optarg); break;
 			case 'C': config_set_border_colour (&data, optarg); break;
+			case 'a': data.aggressive_anchor = true;            break;
 			case 'v': data.verbose = true;                      break;
 		}
 

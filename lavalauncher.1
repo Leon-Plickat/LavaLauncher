@@ -28,6 +28,12 @@ events to them.
 
 .SH OPTIONS
 .TP
+.B \-a
+Enable aggressive anchoring.
+Some compositors, like sway, do not respect the exclusive area of layer surfaces
+that are only anchored to less then three sides. Aggressive anchoring will
+always anchor the bar surface to three sides to work around this.
+.TP
 .B \-b <path>:<command>
 Add a button. Path is the path to an image file. Command is the shell command
 executed when the user clicks on the button.

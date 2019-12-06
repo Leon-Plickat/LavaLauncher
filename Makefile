@@ -1,13 +1,15 @@
-PREFIX = /usr/local
+PREFIX    = /usr/local
 BINPREFIX = $(PREFIX)/bin
 MANPREFIX = $(PREFIX)/share/man
 
-WAYLAND_PROTOCOLS=$(shell pkg-config --variable=pkgdatadir wayland-protocols)
-WAYLAND_SCANNER=$(shell pkg-config --variable=wayland_scanner wayland-scanner)
+WAYLAND_PROTOCOLS = $(shell pkg-config --variable=pkgdatadir wayland-protocols)
+WAYLAND_SCANNER   = $(shell pkg-config --variable=wayland_scanner wayland-scanner)
 
 LIBS=\
-	 $(shell pkg-config --cflags --libs wayland-client) \
-	 $(shell pkg-config --cflags --libs wayland-protocols)
+	 $(shell pkg-config --libs wayland-client) \
+	 $(shell pkg-config --libs wayland-protocols) \
+	 $(shell pkg-config --libs cairo) \
+	 -lrt
 
 CFLAGS=\
        -std=c11 \
@@ -18,36 +20,48 @@ CFLAGS=\
        -Wno-unused-variable \
        -Wno-unused-function \
        -Wno-unused-parameter \
-       -Ilib
+       -Ilib/wayland-protocols \
+       -Ilib/pool-buffer \
+       $(shell pkg-config --cflags wayland-client) \
+       $(shell pkg-config --cflags wayland-protocols) \
+       $(shell pkg-config --cflags cairo)
 
-lib/wlr-layer-shell-unstable-v1-client-protocol.h: lib/wlr-layer-shell-unstable-v1.xml
-	$(WAYLAND_SCANNER) client-header lib/wlr-layer-shell-unstable-v1.xml $@
+lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h: lib/wayland-protocols/wlr-layer-shell-unstable-v1.xml
+	$(WAYLAND_SCANNER) client-header $< $@
 
-lib/wlr-layer-shell-unstable-v1-protocol.c: lib/wlr-layer-shell-unstable-v1.xml
-	$(WAYLAND_SCANNER) private-code lib/wlr-layer-shell-unstable-v1.xml $@
+lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c: lib/wayland-protocols/wlr-layer-shell-unstable-v1.xml
+	$(WAYLAND_SCANNER) private-code $< $@
 
-lib/xdg-shell-client-protocol.h:
+lib/wayland-protocols/xdg-shell-client-protocol.h:
 	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
 
-lib/xdg-shell-protocol.c:
+lib/wayland-protocols/xdg-shell-protocol.c:
 	$(WAYLAND_SCANNER) private-code $(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
 
-lavalauncher:\
-	lavalauncher.c \
-	lib/wlr-layer-shell-unstable-v1-client-protocol.h \
-	lib/wlr-layer-shell-unstable-v1-protocol.c \
-	lib/xdg-shell-client-protocol.h \
-	lib/xdg-shell-protocol.c
-	$(CC) $(CFLAGS) \
-		-g \
-		-o $@ $< \
-		lib/wlr-layer-shell-unstable-v1-protocol.c \
-		lib/xdg-shell-protocol.c \
-		$(LIBS)
+pool-buffer.o: lib/pool-buffer/pool-buffer.c lib/pool-buffer/pool-buffer.h
+	$(CC) $(CFLAGS) -c $<
 
-install: lavalauncher lavalauncher.1
+config.o: src/config.c src/config.h \
+	lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h
+	$(CC) $(CFLAGS) -c $<
+
+draw.o: src/draw.c src/draw.h
+	$(CC) $(CFLAGS) -c $<
+
+lavalauncher.o: src/lavalauncher.c src/lavalauncher.h \
+	lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h \
+	lib/wayland-protocols/xdg-shell-client-protocol.h \
+	lib/pool-buffer/pool-buffer.h
+	$(CC) $(CFLAGS) -c $<
+
+lavalauncher: lavalauncher.o pool-buffer.o config.o draw.o \
+	lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c \
+	lib/wayland-protocols/xdg-shell-protocol.c
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+install: lavalauncher doc/lavalauncher.1
 	install -D -m 755 lavalauncher $(BINPREFIX)/lavalauncher
-	install -D -m 644 lavalauncher.1 $(MANPREFIX)/man1/lavalauncher.1
+	install -D -m 644 doc/lavalauncher.1 $(MANPREFIX)/man1/lavalauncher.1
 
 uninstall:
 	$(RM) $(BINPREFIX)/lavalauncher
@@ -55,10 +69,14 @@ uninstall:
 
 clean:
 	rm -f lavalauncher \
-		lib/wlr-layer-shell-unstable-v1-client-protocol.h \
-		lib/wlr-layer-shell-unstable-v1-protocol.c \
-		lib/xdg-shell-client-protocol.h \
-		lib/xdg-shell-protocol.c
+		lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h \
+		lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c \
+		lib/wayland-protocols/xdg-shell-client-protocol.h \
+		lib/wayland-protocols/xdg-shell-protocol.c \
+		pool-buffer.o \
+		lavalauncher.o \
+		config.o \
+		draw.o
 
 .DEFAULT_GOAL=lavalauncher
 .PHONY: clean

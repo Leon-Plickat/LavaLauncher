@@ -1,5 +1,9 @@
-lib/wlr-layer-shell-unstable-v1-client-protocol.h
-lib/wlr-layer-shell-unstable-v1-protocol.c
-lib/xdg-shell-client-protocol.h
-lib/xdg-shell-protocol.c
+draw.o
+pool-buffer.o
+lavalauncher.o
+config.o
+lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h
+lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c
+lib/wayland-protocols/xdg-shell-client-protocol.h
+lib/wayland-protocols/xdg-shell-protocol.c
 lavalauncher

@@ -5,7 +5,7 @@ A simple launcher for Wayland.
 
 This program serves a single purpose: Letting the user execute shell commands
 by clicking on icons on a dynamically sized bar, placed at one of the screen
-edges. That's it; Not more, not less.
+edges.
 
 LavaLauncher is configured entirely via command flags.
 
@@ -34,13 +34,19 @@ You are strongly invited to add your name to the copyright header of the files
 you changed and to the authors sections in the man page and README if you made
 an important contribution.
 
+Your changes will be licensed under the same license as the file(s) you modified.
+
 
 ## Licensing
 
 LavaLauncher is licensed under the GPLv3.
 
-The contents of the `lib/` directory are licensed differently. See the header
-of the files for more information.
+The contents of the `lib/wayland-protocols` directory are licensed differently.
+See the header of the files for more information.
+
+The contents of the `lib/pool-buffer` directory are licensed under the MIT
+license. The copyright of these files belongs to emersion. The files were copied
+from the project "slurp" and slightly modified to work with LavaLauncher.
 
 
 ## Authors

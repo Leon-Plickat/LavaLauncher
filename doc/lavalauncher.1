@@ -6,7 +6,7 @@ LavaLauncher - A simple launcher for Wayland desktops
 .SH DESCRIPTION
 LavaLauncher serves a single purpose: Letting the user execute shell commands
 by clicking on icons on a dynamically sized bar, placed at one of the screen
-edges. That's it; Not more, not less.
+edges.
 .P
 The Wayland compositor must implement the Layer-Shell for LavaLauncher to work.
 If LavaLauncher is displayed but wont respond to clicks, chances are that the
@@ -16,14 +16,7 @@ events to them.
 
 .SH SYNOPSIS
 .B lavalauncher
-.RB [ \-b <path>:<command> ]
-.RB [ \-p <top|right|bottom|left> ]
-.RB [ \-s <size> ]
-.RB [ \-S <size> ]
-.RB [ \-c <colour> ]
-.RB [ \-C <colour> ]
-.RB [ \-h ]
-.RB [ \-v ]
+.RB [options...]
 
 
 .SH OPTIONS

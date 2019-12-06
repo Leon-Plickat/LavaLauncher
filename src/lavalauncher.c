@@ -29,9 +29,14 @@
 #include<wayland-server.h>
 #include<wayland-client.h>
 #include<wayland-client-protocol.h>
-//#include<cairo/cairo.h>
+#include<cairo/cairo.h>
+
+#include"lavalauncher.h"
+#include"config.h"
+#include"draw.h"
 
 #include"wlr-layer-shell-unstable-v1-client-protocol.h"
+#include"pool-buffer.h"
 #include"xdg-shell-client-protocol.h"
 
 #define SHELL "/bin/sh"
@@ -52,85 +57,6 @@ static const char usage[] = "LavaLauncher -- Version 0.1-WIP\n\n"
                             "Commands will be executed with sh(1).\n"
                             "Colours are expected to be in the format #RRGGBBAA.\n"
                             "Sizes are expected to be in pixels.\n";
-
-enum Bar_position
-{
-	POSITION_TOP = 0,
-	POSITION_RIGHT,
-	POSITION_BOTTOM,
-	POSITION_LEFT
-};
-
-struct Lava_data
-{
-	struct wl_display             *display;
-	struct wl_registry            *registry;
-	struct wl_compositor          *compositor;
-	struct wl_shm                 *shm;
-	struct zwlr_layer_shell_v1    *layer_shell;
-	//struct zxdg_output_manager_v1 *xdg_output_manager; // TODO ??? XXX
-
-	int32_t scale;
-
-	struct wl_list outputs;
-	struct wl_list seats;
-	struct wl_list buttons;
-
-	int button_amount;
-
-	enum zwlr_layer_shell_v1_layer layer;
-
-	enum Bar_position position;
-	bool              aggressive_anchor;
-	int               bar_width;
-	int               border_width;
-	float             bar_colour[4];
-	float             border_colour[4];
-
-	uint32_t w;
-	uint32_t h;
-
-	bool loop;
-	bool verbose;
-};
-
-struct Lava_output
-{
-	struct wl_list                 link;
-	struct Lava_data              *data;
-	uint32_t                       global_name;
-	struct wl_output              *wl_output;
-//	struct zxdg_output_v1         *xdg_output;
-	char                          *name;
-	enum wl_output_subpixel        subpixel;
-	int32_t                        scale;
-	struct wl_surface             *wl_surface;
-	struct zwlr_layer_surface_v1  *layer_surface;
-};
-
-struct Lava_seat
-{
-	struct wl_list    link;
-	struct Lava_data *data;
-	struct wl_seat   *wl_seat;
-
-	struct
-	{
-		struct wl_pointer *wl_pointer;
-		int32_t            x;
-		int32_t            y;
-	} pointer;
-};
-
-struct Lava_button
-{
-	struct wl_list link;
-
-	const char *img_path;
-	const char *cmd;
-};
-
-
 
 /* No-Op function. */
 static void noop () {}
@@ -169,8 +95,11 @@ static void layer_surface_handle_configure (void *raw_data,
 
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 
-	wl_surface_commit(output->wl_surface);
+	render_bar_frame(data, output); // TODO XXX FIXME IMPLEMENTME
 
+	//wl_surface_commit(output->wl_surface);
+
+	/*
 	// TODO Is this needed here?
 	//      Maybe use a global commit function in the loop with bool dirty?
 	if ( wl_display_roundtrip(data->display) == -1 )
@@ -178,11 +107,13 @@ static void layer_surface_handle_configure (void *raw_data,
 		fputs("Roundtrip failed.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
+	*/
 }
 
 static void layer_surface_handle_closed (void *raw_data,
 		struct zwlr_layer_surface_v1 *surface)
 {
+	// TODO free all the things
 	struct Lava_data *data = (struct Lava_data *)raw_data;
 	if (data->verbose)
 		fputs("Layer surface has been closed.\n", stderr);
@@ -219,6 +150,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	}
 
 	zwlr_layer_surface_v1_set_size(output->layer_surface, data->w, data->h);
+
 	switch (data->position)
 	{
 		case POSITION_TOP:
@@ -274,13 +206,13 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 
 	wl_surface_commit(output->wl_surface);
 
+	/*
 	if ( wl_display_roundtrip(data->display) == -1 )
 	{
 		fputs("Roundtrip failed.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-
-	// TODO draw stuff to surface and damage it
+	*/
 }
 
 // TODO
@@ -351,6 +283,15 @@ static void output_handle_geometry (void *raw_data,
 		fputs("Output updated geometry.\n", stderr);
 }
 
+static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
+		uint32_t flags, int32_t width, int32_t height, int32_t refresh)
+{
+	struct Lava_output *output = (struct Lava_output *)raw_data;
+
+	output->w = width;
+	output->h = height;
+}
+
 static void output_handle_scale (void *raw_data, struct wl_output *wl_output, int32_t factor)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
@@ -363,7 +304,7 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output, in
 
 static const struct wl_output_listener output_listener = {
 	.geometry = output_handle_geometry,
-	.mode     = noop,
+	.mode     = output_handle_mode,
 	.done     = noop,
 	.scale    = output_handle_scale
 };
@@ -619,27 +560,6 @@ static void deinit_wayland (struct Lava_data *data)
 	wl_display_disconnect(data->display);
 }
 
-
-/* This function turns a colour string of the format #RRGGBBAA to usable RGBA
- * values.
- */
-void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
-{
-	unsigned int r = 0, g = 0, b = 0, a = 0;
-
-	if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a) )
-	{
-		fputs("Colour codes are expected to use the format #RRGGBBAA\n",
-				stderr);
-		exit(EXIT_FAILURE);
-	}
-
-	*c_r = r / 255.0f;
-	*c_g = g / 255.0f;
-	*c_b = b / 255.0f;
-	*c_a = a / 255.0f;
-}
-
 /* This function executes the given command with SHELL. */
 static void exec_cmd (struct Lava_data *data, const char *cmd)
 {
@@ -652,106 +572,6 @@ static void exec_cmd (struct Lava_data *data, const char *cmd)
 		execl(SHELL, SHELL, "-c", cmd, (char *)NULL);
 		exit(EXIT_SUCCESS);
 	}
-}
-
-/* This function adds a button struct to the button list. */
-static void config_add_button(struct Lava_data *data, char *path, char *cmd)
-{
-	struct Lava_button *new_button = calloc(1, sizeof(struct Lava_button));
-	new_button->img_path = path;
-	new_button->cmd      = cmd;
-	wl_list_insert(&data->buttons, &new_button->link);
-}
-
-static void config_set_layer(struct Lava_data *data, const char *arg)
-{
-	if (! strcmp(arg, "overlay"))
-		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
-	else if (! strcmp(arg, "top"))
-		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_TOP;
-	else if (! strcmp(arg, "bottom"))
-		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
-	else if (! strcmp(arg, "background"))
-		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
-	else
-	{
-		fputs("Possible layers are 'overlay', 'top',"
-				"'bottom' and 'background'.\n",
-				stderr);
-		exit(EXIT_FAILURE);
-	}
-}
-
-static void config_set_position(struct Lava_data *data, const char *arg)
-{
-	if (! strcmp(arg, "top"))
-		data->position = POSITION_TOP;
-	else if (! strcmp(arg, "right"))
-		data->position = POSITION_RIGHT;
-	else if (! strcmp(arg, "bottom"))
-		data->position = POSITION_BOTTOM;
-	else if (! strcmp(arg, "left"))
-		data->position = POSITION_LEFT;
-	else
-	{
-		fputs("Possible positions are 'top', 'right',"
-				"'bottom' and 'left'.\n",
-				stderr);
-		exit(EXIT_FAILURE);
-	}
-}
-
-static void config_set_bar_size(struct Lava_data *data, const char *arg)
-{
-	data->bar_width = atoi(arg);
-
-	if ( data->bar_width <= 0 )
-	{
-		fputs("Bar width must be greater than zero.\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-}
-
-static void config_set_border_size(struct Lava_data *data, const char *arg)
-{
-	data->border_width = atoi(arg);
-
-	if ( data->border_width < 0 )
-	{
-		fputs("Border width must be equal to or greater than zero.\n",
-				stderr);
-		exit(EXIT_FAILURE);
-	}
-}
-
-static void config_set_bar_colour(struct Lava_data *data, const char *arg)
-{
-	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
-	{
-		fputs("Bad colour configuration.\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-
-	hex_to_rgba(arg,
-			&(data->bar_colour[0]),
-			&(data->bar_colour[1]),
-			&(data->bar_colour[2]),
-			&(data->bar_colour[3]));
-}
-
-static void config_set_border_colour(struct Lava_data *data, const char *arg)
-{
-	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
-	{
-		fputs("Bad colour configuration.\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-
-	hex_to_rgba(arg,
-			&(data->border_colour[0]),
-			&(data->border_colour[1]),
-			&(data->border_colour[2]),
-			&(data->border_colour[3]));
 }
 
 static void main_loop (struct Lava_data *data)
@@ -800,24 +620,6 @@ static void main_loop (struct Lava_data *data)
 			break;
 		}
 	}
-}
-
-static void sensible_defaults (struct Lava_data *data)
-{
-	data->position          = POSITION_LEFT;
-	data->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
-	data->bar_width         = 80;
-	data->border_width      = 2;
-	data->bar_colour[0]     = 0.0f;
-	data->bar_colour[1]     = 0.0f;
-	data->bar_colour[2]     = 0.0f;
-	data->bar_colour[3]     = 1.0f;
-	data->border_colour[0]  = 1.0f;
-	data->border_colour[1]  = 1.0f;
-	data->border_colour[2]  = 1.0f;
-	data->border_colour[3]  = 1.0f;
-	data->verbose           = false;
-	data->aggressive_anchor = false;
 }
 
 int main (int argc, char *argv[])

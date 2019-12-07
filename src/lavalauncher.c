@@ -204,6 +204,16 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	*/
 }
 
+static void exec_cmd (const char *cmd)
+{
+	if (! fork())
+	{
+		setsid();
+		execl(SHELL, SHELL, "-c", cmd, (char *)NULL);
+		exit(EXIT_SUCCESS);
+	}
+}
+
 static struct Lava_button *button_from_ordinate (struct Lava_data *data, int ordinate)
 {
 	int i = data->border_width + data->bar_width;
@@ -259,7 +269,10 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	if (seat->data->verbose)
 		fprintf(stderr, " cmd=%s\n", bar_button->cmd);
 
-	// TODO execute button command
+	if (! strcmp(bar_button->cmd, "exit"))
+		seat->data->loop = false;
+	else
+		exec_cmd(bar_button->cmd);
 }
 
 static const struct wl_pointer_listener pointer_listener = {
@@ -621,20 +634,6 @@ static void deinit_wayland (struct Lava_data *data)
 		fputs("Diconnecting from server.\n", stderr);
 
 	wl_display_disconnect(data->display);
-}
-
-/* This function executes the given command with SHELL. */
-static void exec_cmd (struct Lava_data *data, const char *cmd)
-{
-	if (data->verbose)
-		fprintf(stderr, "Executing: %s\n", cmd);
-
-	if (! fork())
-	{
-		setsid();
-		execl(SHELL, SHELL, "-c", cmd, (char *)NULL);
-		exit(EXIT_SUCCESS);
-	}
 }
 
 static void main_loop (struct Lava_data *data)

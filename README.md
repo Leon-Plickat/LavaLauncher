@@ -1,6 +1,8 @@
 # LavaLauncher
 ## Description
 
+<img src="https://git.sr.ht/~leon_plickat/lavalauncher/blob/master/.meta/example.jpg">
+
 A simple launcher for Wayland.
 
 This program serves a single purpose: Letting the user execute shell commands

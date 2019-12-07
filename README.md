@@ -9,13 +9,15 @@ This program serves a single purpose: Letting the user execute shell commands
 by clicking on icons on a dynamically sized bar, placed at one of the screen
 edges.
 
-LavaLauncher is configured entirely via command flags.
+LavaLauncher is configured entirely via command flags. See the manpage for
+details and an example.
 
 
 ## Building
 
-LavaLauncher depends on Wayland, the Wayland Layer Shell and Cairo. To build
-this program you will need a C compiler and an implementation of `make`.
+LavaLauncher depends on Wayland, Wayland protocols and Cairo. To build
+this program you will need a C compiler and a GNU compatible implementation of
+`make`.
 
     git clone https://git.sr.ht/~leon_plickat/lavalauncher
     cd lavalauncher
@@ -26,18 +28,25 @@ this program you will need a C compiler and an implementation of `make`.
 ## Contributing
 
 **Contributions are welcome!** You can send your patches via email to the
-[mailing list](mailto:~leon_plickat/lavalauncher@lists.sr.ht). See
-[this](https://git-send-email.io/) link to learn how to set up git for sending
-emails.
+mailing list. See [this](https://git-send-email.io/) helpful link to learn how
+to send emails with git.
 
-For larger contributions, especially for radical changes, I highly recommend
-that you ask me if I will actually include your commit *before* working on it.
+For larger contributions, especially for radical changes, I highly recommend you
+to ask me whether I will include your commit *before* you start investing time
+into it.
 
 You are strongly invited to add your name to the copyright header of the files
 you changed and to the authors sections in the man page and README if you made
 an important contribution.
 
 Your changes will be licensed under the same license as the file(s) you modified.
+
+
+## Mailinglist
+
+The mailinglist is for bug reports, contributions, feedback and getting help.
+
+[~leon_plickat/lavalauncher@lists.sr.ht](mailto:~leon_plickat/lavalauncher@lists.sr.ht)
 
 
 ## Licensing

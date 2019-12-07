@@ -25,11 +25,18 @@ events to them.
 Enable aggressive anchoring.
 Some compositors, like sway, do not respect the exclusive area of layer surfaces
 that are only anchored to less then three sides. Aggressive anchoring will
-always anchor the bar surface to three sides to work around this.
+always anchor the bar surface to three sides to work around this. Be aware that
+this causes some compositors to believe that LavaLauncher uses the entire width
+or height of the screen.
 .TP
 .B \-b <path> <command>
-Add a button. Path is the path to an image file. Command is the shell command
-executed when the user clicks on the button.
+Add a button. Path is the path to a PNG image file. It is recommended to use
+square images. Command is the shell command executed when the user clicks on the
+button. If the given command is "exit", LavaLauncher will exit. LavaLauncher
+being able to close itself means that a user can launch instances that are
+meant to be temporary, which opens up many interesting possibilities, like
+having a main bar which launches smaller bars as sub-menus, or using
+LavaLauncher as a menu for scripted actions.
 .TP
 .B \-c <colour>
 Colour of the bar in the format #RRGGBBAA.
@@ -68,7 +75,7 @@ lavalauncher
 
 
 .SH MAILINGLIST
-You can send bug reports / fixes, patches and user feedback to the mailinglist.
+You can send bug reports, patches and feedback to the mailinglist.
 
 .B <~leon_plickat/lavalauncher@lists.sr.ht>
 

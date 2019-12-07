@@ -204,16 +204,68 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	*/
 }
 
-// TODO
-static void pointer_handle_motion () {}
+static struct Lava_button *button_from_ordinate (struct Lava_data *data, int ordinate)
+{
+	int i = data->border_width + data->bar_width;
+	struct Lava_button *bt_1, *bt_2;
+	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
+	{
+		if ( ordinate < i )
+			return bt_1;
+		i += data->bar_width;
+	}
+	return NULL;
+}
 
-// TODO
-static void pointer_handle_button () {}
+static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
+		uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y)
+{
+	struct Lava_seat *seat = data;
+	seat->pointer.x = wl_fixed_to_int(surface_x);
+	seat->pointer.y = wl_fixed_to_int(surface_y);
+}
+
+static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer,
+		uint32_t serial, uint32_t time, uint32_t button,
+		uint32_t button_state)
+{
+	struct Lava_seat *seat = raw_data;
+
+	if ( button_state != WL_POINTER_BUTTON_STATE_PRESSED )
+		return;
+
+	if (seat->data->verbose)
+		fprintf(stderr, "Click! x=%d y=%d",
+				seat->pointer.x, seat->pointer.y);
+
+	struct Lava_button *bar_button;
+
+	switch (seat->data->position)
+	{
+		case POSITION_TOP:
+		case POSITION_BOTTOM:
+			bar_button = button_from_ordinate(seat->data, seat->pointer.x);
+			break;
+
+		case POSITION_LEFT:
+		case POSITION_RIGHT:
+			bar_button = button_from_ordinate(seat->data, seat->pointer.y);
+			break;
+	}
+
+	if ( bar_button == NULL )
+		return;
+
+	if (seat->data->verbose)
+		fprintf(stderr, " cmd=%s\n", bar_button->cmd);
+
+	// TODO execute button command
+}
 
 static const struct wl_pointer_listener pointer_listener = {
 	.enter  = noop,
 	.leave  = noop,
-	.motion = pointer_handle_motion, //TODO: maybe noop
+	.motion = pointer_handle_motion,
 	.button = pointer_handle_button,
 	.axis   = noop
 };

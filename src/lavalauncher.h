@@ -25,6 +25,12 @@
 #include"wlr-layer-shell-unstable-v1-client-protocol.h"
 #include"pool-buffer.h"
 
+enum Orientation
+{
+	ORIENTATION_VERTICAL = 0,
+	ORIENTATION_HORIZONTAL
+};
+
 enum Bar_position
 {
 	POSITION_TOP = 0,

@@ -72,30 +72,20 @@ static void layer_surface_handle_configure (void *raw_data,
 	struct Lava_data   *data   = output->data;
 
 	if (data->verbose)
-		fprintf(stderr, "Received configure request for layer surface.\n"
-				"Requested width: %d\nRequested height: %d\n",
-				w, h);
+		fprintf(stderr, "Layer surface configure request"
+				" w=%d h=%d serial=%d\n", w, h, serial);
 
-	if ( w == 0 || h == 0 )
+	if ( w == data->w && h == data->h )
 	{
 		if (data->verbose)
-			fputs("Compositor gave us free reign over window size.\n",
-					stderr);
-		zwlr_layer_surface_v1_set_size(surface, data->w, data->h);
+			fputs("Requested size equals needed size.\n", stderr);
+		zwlr_layer_surface_v1_ack_configure(surface, serial);
 	}
-	else if ( w == data->w || h == data->h )
+	else if (data->verbose)
 	{
-		if (data->verbose)
-			fputs("Requested size is fine.\n", stderr);
-	}
-	else
-	{
-		fputs("Compositor does not allow surface of needed size.\n",
+		fputs("Requested size does not equal needed size, ignoring.\n",
 				stderr);
-		exit(EXIT_FAILURE);
 	}
-
-	zwlr_layer_surface_v1_ack_configure(surface, serial);
 
 	render_bar_frame(data, output);
 }
@@ -187,21 +177,11 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 			break;
 	}
 
-	// TODO zwlr_layer_surface_v1_set_margin() might be nice
-
 	zwlr_layer_surface_v1_add_listener(output->layer_surface,
 			&layer_surface_listener,
 			output);
 
 	wl_surface_commit(output->wl_surface);
-
-	/*
-	if ( wl_display_roundtrip(data->display) == -1 )
-	{
-		fputs("Roundtrip failed.\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-	*/
 }
 
 static void exec_cmd (const char *cmd)
@@ -337,11 +317,24 @@ static void output_handle_geometry (void *raw_data,
 		fputs("Output updated geometry.\n", stderr);
 }
 
+static int min (int a, int b)
+{
+	if ( a > b )
+		return b;
+	else
+		return a;
+}
+
 static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 		uint32_t flags, int32_t width, int32_t height, int32_t refresh)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	struct Lava_data   *data   = output->data;
+
+	if (data->verbose)
+		fprintf(stderr, "Output update mode w=%d h=%d"
+				" refresh=%d flags=%d\n",
+				width, height, refresh, flags);
 
 	output->w = width;
 	output->h = height;
@@ -349,25 +342,33 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 	/* Center the bar for aggressive_anchor, as anchoring it to three sides
 	 * will place it as close to the origin (0, 0) as possible.
 	 */
+	/* The min() is an ugly workaround, as a margin larger than the surface
+	 * itself causes weird behaviour. TODO FIXME
+	 */
 	if (data->aggressive_anchor)
 	{
 		if (data->verbose)
-			fputs("Centering bar.\n", stderr);
+			fputs("Centering bar", stderr);
 
+		int margin;
 		switch (data->position)
 		{
 			case POSITION_TOP:
 			case POSITION_BOTTOM:
+				margin = (width / 2) - (data->w / 2);
 				zwlr_layer_surface_v1_set_margin(output->layer_surface,
-						0, 0, 0, (width - data->w) / 2);
+						0, 0, 0, min(margin, data->w));
 				break;
 
 			case POSITION_LEFT:
 			case POSITION_RIGHT:
+				margin = (height / 2) - (data->h / 2);
 				zwlr_layer_surface_v1_set_margin(output->layer_surface,
-						(height - data->h) / 2, 0, 0, 0);
+						min(margin, data->h), 0, 0, 0);
 				break;
 		}
+		if (data->verbose)
+			fprintf(stderr, " margin=%d\n", margin);
 	}
 }
 
@@ -465,10 +466,8 @@ static void registry_handle_global (void *raw_data,
 		wl_list_insert(&data->outputs, &output->link);
 		wl_output_set_user_data(wl_output, output);
 		wl_output_add_listener(wl_output, &output_listener, output);
-		// get_xdg_output(output); // TODO what does this do?
 		create_bar(data, output);
 	}
-	// TODO maybe test for zxdg_output_manager_v1_interface ?
 }
 
 static void registry_handle_global_remove (void *raw_data,
@@ -562,21 +561,6 @@ static void init_wayland (struct Lava_data *data)
 				stderr);
 		exit(EXIT_FAILURE);
 	}
-
-	// TODO: Not needed? We don't want to configure outputs...
-	//if ( data->xdg_output_manager != NULL )
-	//{
-	//	struct Lava_output *op;
-	//	wl_list_for_each(op, &data->outputs, link)
-	//	{
-	//		get_xdg_output(op);
-	//	}
-	//	if ( wl_display_roundtrip(data->display) == -1 )
-	//	{
-	//		fputs("Roundtrip failed.\n", stderr);
-	//		exit(EXIT_FAILURE);
-	//	}
-	//}
 }
 
 static void deinit_wayland (struct Lava_data *data)
@@ -743,8 +727,8 @@ int main (int argc, char *argv[])
 	}
 
 	if (data.verbose)
-		fprintf(stderr, "Buttons: %d\nWidth: %d\nHeight: %d\n",
-				data.button_amount, data.w, data.h);
+		fprintf(stderr, "Bar w=%d h=%d buttons=%d\n",
+				data.w, data.h, data.button_amount);
 
 	init_wayland(&data);
 	main_loop(&data);

@@ -28,7 +28,7 @@
 #include"draw.h"
 
 static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data,
-		enum Draw_direction direction)
+		enum Orientation orientation)
 {
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
@@ -76,9 +76,9 @@ static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data,
 		cairo_restore(cairo);
 
 
-		if ( direction == DRAW_DIRECTION_HORIZONTAL )
+		if ( orientation == ORIENTATION_HORIZONTAL )
 			x += data->bar_width;
-		else if (direction == DRAW_DIRECTION_VERTICAL )
+		else if (orientation == ORIENTATION_VERTICAL )
 			y += data->bar_width;
 	}
 }
@@ -139,7 +139,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					data->border_width, 0,
 					data->w - 2 * data->border_width, data->border_width);
-			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_HORIZONTAL);
+			cairo_draw_bar_icons(cairo, data, ORIENTATION_HORIZONTAL);
 			break;
 
 		case POSITION_TOP:
@@ -159,7 +159,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					data->border_width, data->h - data->border_width,
 					data->w - 2 * data->border_width, data->border_width);
-			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_HORIZONTAL);
+			cairo_draw_bar_icons(cairo, data, ORIENTATION_HORIZONTAL);
 			break;
 
 		case POSITION_LEFT:
@@ -179,7 +179,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					data->w - data->border_width, data->border_width,
 					data->border_width, data->h - 2 * data->border_width);
-			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_VERTICAL);
+			cairo_draw_bar_icons(cairo, data, ORIENTATION_VERTICAL);
 			break;
 
 		case POSITION_RIGHT:
@@ -199,7 +199,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					0, data->border_width,
 					data->border_width, data->h - 2 * data->border_width);
-			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_VERTICAL);
+			cairo_draw_bar_icons(cairo, data, ORIENTATION_VERTICAL);
 			break;
 	}
 

@@ -21,9 +21,10 @@ this program you will need a C compiler and an implementation of `make`.
     sudo make install
 
 
-## Contributions
+## Contributing
 
-**Contributions are welcome!** You can send your patches via email. See
+**Contributions are welcome!** You can send your patches via email to the
+[mailing list](mailto:~leon_plickat/lavalauncher@lists.sr.ht). See
 [this](https://git-send-email.io/) link to learn how to set up git for sending
 emails.
 

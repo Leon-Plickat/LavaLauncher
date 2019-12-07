@@ -103,7 +103,6 @@ static void layer_surface_handle_configure (void *raw_data,
 static void layer_surface_handle_closed (void *raw_data,
 		struct zwlr_layer_surface_v1 *surface)
 {
-	// TODO free all the things
 	struct Lava_data *data = (struct Lava_data *)raw_data;
 	if (data->verbose)
 		fputs("Layer surface has been closed.\n", stderr);
@@ -277,9 +276,34 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 		uint32_t flags, int32_t width, int32_t height, int32_t refresh)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_data   *data   = output->data;
 
 	output->w = width;
 	output->h = height;
+
+	/* Center the bar for aggressive_anchor, as anchoring it to three sides
+	 * will place it as close to the origin (0, 0) as possible.
+	 */
+	if (data->aggressive_anchor)
+	{
+		if (data->verbose)
+			fputs("Centering bar.\n", stderr);
+
+		switch (data->position)
+		{
+			case POSITION_TOP:
+			case POSITION_BOTTOM:
+				zwlr_layer_surface_v1_set_margin(output->layer_surface,
+						0, 0, 0, (width - data->w) / 2);
+				break;
+
+			case POSITION_LEFT:
+			case POSITION_RIGHT:
+				zwlr_layer_surface_v1_set_margin(output->layer_surface,
+						(height - data->h) / 2, 0, 0, 0);
+				break;
+		}
+	}
 }
 
 static void output_handle_scale (void *raw_data, struct wl_output *wl_output, int32_t factor)

@@ -118,7 +118,6 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	if (data->verbose)
 		fputs("Drawing bar.\n", stderr);
 
-	int attach_x = 0, attach_y = 0;
 	// cairo_move_to(); + cairo_line_to(); + cairo_close_path(); + cairo_fill();
 	/* Draw the bar. */
 	switch (data->position)
@@ -141,8 +140,6 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_width, 0,
 					data->w - 2 * data->border_width, data->border_width);
 			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_HORIZONTAL);
-			if (data->aggressive_anchor)
-				attach_x = (output->w - data->w) / 2;
 			break;
 
 		case POSITION_TOP:
@@ -163,8 +160,6 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_width, data->h - data->border_width,
 					data->w - 2 * data->border_width, data->border_width);
 			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_HORIZONTAL);
-			if (data->aggressive_anchor)
-				attach_x = (output->w - data->w) / 2;
 			break;
 
 		case POSITION_LEFT:
@@ -185,8 +180,6 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->w - data->border_width, data->border_width,
 					data->border_width, data->h - 2 * data->border_width);
 			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_VERTICAL);
-			if (data->aggressive_anchor)
-				attach_y = (output->h - data->h) / 2;
 			break;
 
 		case POSITION_RIGHT:
@@ -207,8 +200,6 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					0, data->border_width,
 					data->border_width, data->h - 2 * data->border_width);
 			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_VERTICAL);
-			if (data->aggressive_anchor)
-				attach_y = (output->h - data->h) / 2;
 			break;
 	}
 
@@ -216,9 +207,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 		fputs("Scaling, attaching, damaging and committing surface.\n", stderr);
 
 	wl_surface_set_buffer_scale(output->wl_surface, output->scale);
-	wl_surface_attach(output->wl_surface,
-			output->current_buffer->buffer,
-			attach_x, attach_y); // This is probably wrong. TODO FIXME XXX
+	wl_surface_attach(output->wl_surface, output->current_buffer->buffer, 0, 0);
 	wl_surface_damage_buffer(output->wl_surface, 0, 0, INT32_MAX, INT32_MAX);
 	wl_surface_commit(output->wl_surface);
 }

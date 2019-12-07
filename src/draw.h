@@ -22,6 +22,12 @@
 #define _POSIX_C_SOURCE 200112L
 #include"lavalauncher.h"
 
+enum Draw_direction
+{
+	DRAW_DIRECTION_VERTICAL = 0,
+	DRAW_DIRECTION_HORIZONTAL
+};
+
 void render_bar_frame (struct Lava_data *data, struct Lava_output *output);
 
 #endif

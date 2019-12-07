@@ -56,7 +56,9 @@ static const char usage[] = "LavaLauncher -- Version 0.1-WIP\n\n"
                             "Buttons are displayed in the order in which they are declared.\n"
                             "Commands will be executed with sh(1).\n"
                             "Colours are expected to be in the format #RRGGBBAA.\n"
-                            "Sizes are expected to be in pixels.\n";
+                            "Sizes are expected to be in pixels.\n\n"
+                            "You can send bug reports, contributions and user feedback to the mailinglist:\n"
+                            "<~leon_plickat/lavalauncher@lists.sr.ht>\n";
 
 /* No-Op function. */
 static void noop () {}
@@ -95,19 +97,7 @@ static void layer_surface_handle_configure (void *raw_data,
 
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 
-	render_bar_frame(data, output); // TODO XXX FIXME IMPLEMENTME
-
-	//wl_surface_commit(output->wl_surface);
-
-	/*
-	// TODO Is this needed here?
-	//      Maybe use a global commit function in the loop with bool dirty?
-	if ( wl_display_roundtrip(data->display) == -1 )
-	{
-		fputs("Roundtrip failed.\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-	*/
+	render_bar_frame(data, output);
 }
 
 static void layer_surface_handle_closed (void *raw_data,
@@ -505,8 +495,7 @@ static void deinit_wayland (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Deinit Wayland.\nDestroying outputs.\n", stderr);
 
-	struct Lava_output *op_1;
-	struct Lava_output *op_2;
+	struct Lava_output *op_1, *op_2;
 	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
 	{
 		wl_list_remove(&op_1->link);
@@ -522,8 +511,7 @@ static void deinit_wayland (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Destroying seats.\n", stderr);
 
-	struct Lava_seat *st_1;
-	struct Lava_seat *st_2;
+	struct Lava_seat *st_1, *st_2;
 	wl_list_for_each_safe(st_1, st_2, &data->seats, link)
 	{
 		wl_list_remove(&st_1->link);
@@ -536,8 +524,7 @@ static void deinit_wayland (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Destroying buttons.\n", stderr);
 
-	struct Lava_button *bt_1;
-	struct Lava_button *bt_2;
+	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
 	{
 		wl_list_remove(&bt_1->link);
@@ -645,6 +632,8 @@ int main (int argc, char *argv[])
 			case 'S': config_set_border_size   (&data, optarg); break;
 			case 'c': config_set_bar_colour    (&data, optarg); break;
 			case 'C': config_set_border_colour (&data, optarg); break;
+			default:
+				  return EXIT_FAILURE;
 		}
 
 	/* Count buttons. If none are defined, exit. */
@@ -661,20 +650,22 @@ int main (int argc, char *argv[])
 	/* Calculating the size of the bar. At the "docking" edge no border will
 	 * be drawn.
 	 */
-	if ( data.position == POSITION_LEFT || data.position == POSITION_RIGHT )
+	switch (data.position)
 	{
-		data.w = (uint32_t)(data.bar_width + data.border_width);
-		data.h = (uint32_t)((data.button_amount * data.bar_width)
-				+ (2 * data.border_width));
+		case POSITION_LEFT:
+		case POSITION_RIGHT:
+			data.w = (uint32_t)(data.bar_width + data.border_width);
+			data.h = (uint32_t)((data.button_amount * data.bar_width)
+					+ (2 * data.border_width));
+			break;
+
+		case POSITION_TOP:
+		case POSITION_BOTTOM:
+			data.w = (uint32_t)((data.button_amount * data.bar_width)
+					+ (2 * data.border_width));
+			data.h = (uint32_t)(data.bar_width + data.border_width);
+			break;
 	}
-	else if ( data.position == POSITION_TOP || data.position == POSITION_BOTTOM )
-	{
-		data.w = (uint32_t)((data.button_amount * data.bar_width)
-				+ (2 * data.border_width));
-		data.h = (uint32_t)(data.bar_width + data.border_width);
-	}
-	else /* Unexpeted error */
-		return EXIT_FAILURE;
 
 	if (data.verbose)
 		fprintf(stderr, "Buttons: %d\nWidth: %d\nHeight: %d\n",

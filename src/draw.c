@@ -19,9 +19,69 @@
 #define _POSIX_C_SOURCE 200112L
 #include<stdio.h>
 #include<stdbool.h>
+#include<stdlib.h>
+#include<unistd.h>
 #include<cairo/cairo.h>
+#include<wayland-server.h>
 
 #include"lavalauncher.h"
+#include"draw.h"
+
+static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data,
+		enum Draw_direction direction)
+{
+	if (data->verbose)
+		fputs("Drawing icons.\n", stderr);
+
+	cairo_surface_t *image = NULL;
+
+	int x = 0, y = 0;
+
+	switch (data->position)
+	{
+		case POSITION_BOTTOM:
+			x += data->border_width;
+			y += data->border_width;
+			break;
+
+		case POSITION_TOP:
+			x += data->border_width;
+			break;
+
+		case POSITION_LEFT:
+			y += data->border_width;
+			break;
+
+		case POSITION_RIGHT:
+			y += data->border_width;
+			x += data->border_width;
+			break;
+	}
+
+	float w, h;
+	struct Lava_button *bt_1, *bt_2;
+	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
+	{
+		cairo_save(cairo);
+
+		image = cairo_image_surface_create_from_png(bt_1->img_path);
+		w = cairo_image_surface_get_width (image);
+		h = cairo_image_surface_get_height (image);
+		cairo_translate(cairo, x, y);
+		cairo_scale(cairo, data->bar_width / w, data->bar_width / h);
+		cairo_set_source_surface(cairo, image, 0, 0);
+		cairo_paint(cairo);
+		cairo_surface_destroy(image);
+
+		cairo_restore(cairo);
+
+
+		if ( direction == DRAW_DIRECTION_HORIZONTAL )
+			x += data->bar_width;
+		else if (direction == DRAW_DIRECTION_VERTICAL )
+			y += data->bar_width;
+	}
+}
 
 static void cairo_draw_coloured_rectangle (cairo_t *cairo, float colour[4],
 		int x, int y,
@@ -80,6 +140,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					data->border_width, 0,
 					data->w - 2 * data->border_width, data->border_width);
+			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_HORIZONTAL);
 			if (data->aggressive_anchor)
 				attach_x = (output->w - data->w) / 2;
 			break;
@@ -101,6 +162,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					data->border_width, data->h - data->border_width,
 					data->w - 2 * data->border_width, data->border_width);
+			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_HORIZONTAL);
 			if (data->aggressive_anchor)
 				attach_x = (output->w - data->w) / 2;
 			break;
@@ -122,6 +184,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					data->w - data->border_width, data->border_width,
 					data->border_width, data->h - 2 * data->border_width);
+			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_VERTICAL);
 			if (data->aggressive_anchor)
 				attach_y = (output->h - data->h) / 2;
 			break;
@@ -143,6 +206,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					0, data->border_width,
 					data->border_width, data->h - 2 * data->border_width);
+			cairo_draw_bar_icons(cairo, data, DRAW_DIRECTION_VERTICAL);
 			if (data->aggressive_anchor)
 				attach_y = (output->h - data->h) / 2;
 			break;

@@ -27,8 +27,7 @@
 #include"lavalauncher.h"
 #include"draw.h"
 
-static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data,
-		enum Orientation orientation)
+static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data)
 {
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
@@ -36,25 +35,23 @@ static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data,
 	cairo_surface_t *image = NULL;
 
 	int x = 0, y = 0;
+	enum Orientation orientation;
 
 	switch (data->position)
 	{
+		case POSITION_CENTER:
 		case POSITION_BOTTOM:
-			x += data->border_width;
 			y += data->border_width;
-			break;
-
 		case POSITION_TOP:
 			x += data->border_width;
-			break;
-
-		case POSITION_LEFT:
-			y += data->border_width;
+			orientation = ORIENTATION_HORIZONTAL;
 			break;
 
 		case POSITION_RIGHT:
-			y += data->border_width;
 			x += data->border_width;
+		case POSITION_LEFT:
+			y += data->border_width;
+			orientation = ORIENTATION_VERTICAL;
 			break;
 	}
 
@@ -118,7 +115,6 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	if (data->verbose)
 		fputs("Drawing bar.\n", stderr);
 
-	// cairo_move_to(); + cairo_line_to(); + cairo_close_path(); + cairo_fill();
 	/* Draw the bar. */
 	switch (data->position)
 	{
@@ -139,7 +135,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					data->border_width, 0,
 					data->w - 2 * data->border_width, data->border_width);
-			cairo_draw_bar_icons(cairo, data, ORIENTATION_HORIZONTAL);
+			cairo_draw_bar_icons(cairo, data);
 			break;
 
 		case POSITION_TOP:
@@ -159,7 +155,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					data->border_width, data->h - data->border_width,
 					data->w - 2 * data->border_width, data->border_width);
-			cairo_draw_bar_icons(cairo, data, ORIENTATION_HORIZONTAL);
+			cairo_draw_bar_icons(cairo, data);
 			break;
 
 		case POSITION_LEFT:
@@ -179,7 +175,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					data->w - data->border_width, data->border_width,
 					data->border_width, data->h - 2 * data->border_width);
-			cairo_draw_bar_icons(cairo, data, ORIENTATION_VERTICAL);
+			cairo_draw_bar_icons(cairo, data);
 			break;
 
 		case POSITION_RIGHT:
@@ -199,7 +195,31 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->border_colour,
 					0, data->border_width,
 					data->border_width, data->h - 2 * data->border_width);
-			cairo_draw_bar_icons(cairo, data, ORIENTATION_VERTICAL);
+			cairo_draw_bar_icons(cairo, data);
+			break;
+
+		case POSITION_CENTER:
+			cairo_draw_coloured_rectangle(cairo,
+					data->bar_colour,
+					data->border_width, data->border_width,
+					data->w - 2 * data->border_width, data->h - 2 * data->border_width);
+			cairo_draw_coloured_rectangle(cairo,
+					data->border_colour,
+					0, 0,
+					data->border_width, data->h);
+			cairo_draw_coloured_rectangle(cairo,
+					data->border_colour,
+					data->w - data->border_width, 0,
+					data->border_width, data->h);
+			cairo_draw_coloured_rectangle(cairo,
+					data->border_colour,
+					data->border_width, 0,
+					data->w - 2 * data->border_width, data->border_width);
+			cairo_draw_coloured_rectangle(cairo,
+					data->border_colour,
+					data->border_width, data->bar_width + data->border_width,
+					data->w - 2 * data->border_width, data->border_width);
+			cairo_draw_bar_icons(cairo, data);
 			break;
 	}
 

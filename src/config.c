@@ -100,10 +100,12 @@ void config_set_position(struct Lava_data *data, const char *arg)
 		data->position = POSITION_BOTTOM;
 	else if (! strcmp(arg, "left"))
 		data->position = POSITION_LEFT;
+	else if (! strcmp(arg, "center"))
+		data->position = POSITION_CENTER;
 	else
 	{
 		fputs("Possible positions are 'top', 'right',"
-				"'bottom' and 'left'.\n",
+				"'bottom','left' and 'center'.\n",
 				stderr);
 		exit(EXIT_FAILURE);
 	}

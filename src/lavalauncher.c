@@ -49,7 +49,7 @@ static const char usage[] = "LavaLauncher -- Version 1.0\n\n"
                             "  -C <colour>                        Border colour.\n"
                             "  -h                                 Display this help text and exit.\n"
                             "  -l <overlay|top|bottom|background> Layer of the bar surface.\n"
-                            "  -p <top|bottom|left|right>         Position of the bar.\n"
+                            "  -p <top|bottom|left|right|center>  Position of the bar.\n"
                             "  -s <size>                          Width of the bar.\n"
                             "  -S <size>                          Width of the border.\n"
                             "  -v                                 Verbose output.\n\n"
@@ -175,6 +175,9 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->w);
 			break;
+
+		case POSITION_CENTER:
+			break;
 	}
 
 	zwlr_layer_surface_v1_add_listener(output->layer_surface,
@@ -234,6 +237,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	{
 		case POSITION_TOP:
 		case POSITION_BOTTOM:
+		case POSITION_CENTER:
 			bar_button = button_from_ordinate(seat->data, seat->pointer.x);
 			break;
 
@@ -350,7 +354,7 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 		if (data->verbose)
 			fputs("Centering bar", stderr);
 
-		int margin;
+		int margin = 0;
 		switch (data->position)
 		{
 			case POSITION_TOP:
@@ -366,6 +370,13 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 				zwlr_layer_surface_v1_set_margin(output->layer_surface,
 						min(margin, data->h), 0, 0, 0);
 				break;
+
+			case POSITION_CENTER:
+				/* Should never be reached, as aggressive_anchor
+				 * will always be false for POSITION_CENTER
+				 * (see main)
+				 */
+				return;
 		}
 		if (data->verbose)
 			fprintf(stderr, " margin=%d\n", margin);
@@ -723,6 +734,13 @@ int main (int argc, char *argv[])
 			data.w = (uint32_t)((data.button_amount * data.bar_width)
 					+ (2 * data.border_width));
 			data.h = (uint32_t)(data.bar_width + data.border_width);
+			break;
+
+		case POSITION_CENTER:
+			data.aggressive_anchor = false;
+			data.w = (uint32_t)((data.button_amount * data.bar_width)
+					+ (2 * data.border_width));
+			data.h = (uint32_t)(data.bar_width + (2 * data.border_width));
 			break;
 	}
 

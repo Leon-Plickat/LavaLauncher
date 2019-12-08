@@ -1,3 +1,5 @@
 # Todo
 * Fix bug causing aggresive_anchor to massively fail for small bars
+* Additional 'return' command that causes LavaLauncher to exit with a given number,
+  which might be interesting for scripting
 * Different background when hovering over icon

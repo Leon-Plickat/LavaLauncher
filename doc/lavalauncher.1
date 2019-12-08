@@ -1,4 +1,4 @@
-.TH lavalauncher 1 lavalauncher-0.1
+.TH lavalauncher 1 lavalauncher-1.0
 .SH NAME
 LavaLauncher - A simple launcher for Wayland desktops
 
@@ -52,16 +52,19 @@ Colour of the border in the format #RRGGBBAA.
 Display a helpful help message and exit.
 .TP
 .B \-l <overlay|top|bottom|background>
-Layer the bar surface.
+Layer of the bar surface. Typically, bottom and background will be underneath
+regular windows, while top and overlay will be above them.
 .TP
 .B \-p <top|right|bottom|left>
 Position of the bar.
 .TP
 .B \-s <size>
-Width of the bar in pixel.
+Size of the bar in pixels. Size in this case is the height of the bar orthogonal
+to the screen edge it is anchored to. All icons will be drawn as squares with
+the bar size as width and height.
 .TP
 .B \-S <size>
-Width of the border in pixel.
+Size of the border in pixels.
 .TP
 .B \-v
 Verbose output.

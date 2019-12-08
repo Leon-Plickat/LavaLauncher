@@ -30,7 +30,8 @@ this causes some compositors to believe that LavaLauncher uses the entire width
 or height of the screen. This feature makes use of layer surface margins for
 centering the bar. The margin of a layer surface can apparently not be larger
 than the layer surfaces length parallel to it, so when the bar is small the
-centering might not work correctly.
+centering might not work correctly. Aggressive anchoring will be disabled if
+the position of the bar is 'center'.
 
 .TP
 .B \-b <path> <command>
@@ -55,7 +56,7 @@ Display a helpful help message and exit.
 Layer of the bar surface. Typically, bottom and background will be underneath
 regular windows, while top and overlay will be above them.
 .TP
-.B \-p <top|right|bottom|left>
+.B \-p <top|right|bottom|left|center>
 Position of the bar.
 .TP
 .B \-s <size>

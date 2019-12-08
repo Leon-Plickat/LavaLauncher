@@ -7,7 +7,7 @@ A simple launcher for Wayland.
 
 This program serves a single purpose: Letting the user execute shell commands
 by clicking on icons on a dynamically sized bar, placed at one of the screen
-edges.
+edges or in the center.
 
 LavaLauncher is configured entirely via command flags. See the manpage for
 details and an example.

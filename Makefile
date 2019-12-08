@@ -20,6 +20,7 @@ CFLAGS=\
        -Wno-unused-variable \
        -Wno-unused-function \
        -Wno-unused-parameter \
+       -Wno-implicit-fallthrough \
        -Ilib/wayland-protocols \
        -Ilib/pool-buffer \
        $(shell pkg-config --cflags wayland-client) \

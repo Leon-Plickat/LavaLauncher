@@ -43,7 +43,7 @@ void sensible_defaults (struct Lava_data *data)
 	data->border_colour[2]  = 1.0f;
 	data->border_colour[3]  = 1.0f;
 	data->verbose           = false;
-	data->aggressive_anchor = false;
+	data->mode              = MODE_DEFAULT;
 	data->x_offset          = 0;
 	data->y_offset          = 0;
 }
@@ -87,6 +87,25 @@ void config_set_layer(struct Lava_data *data, const char *arg)
 	{
 		fputs("Possible layers are 'overlay', 'top',"
 				"'bottom' and 'background'.\n",
+				stderr);
+		exit(EXIT_FAILURE);
+	}
+}
+
+void config_set_mode(struct Lava_data *data, const char *arg)
+{
+	if (! strcmp(arg, "default"))
+		data->mode = MODE_DEFAULT;
+	else if (! strcmp(arg, "aggressive"))
+		data->mode = MODE_AGGRESSIVE;
+	else if (! strcmp(arg, "full"))
+		data->mode = MODE_FULL;
+	else if (! strcmp(arg, "full-center"))
+		data->mode = MODE_FULL_CENTER;
+	else
+	{
+		fputs("Possible modes are 'default', 'aggressive',"
+				"'full' and 'full-center'.\n",
 				stderr);
 		exit(EXIT_FAILURE);
 	}

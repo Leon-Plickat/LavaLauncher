@@ -35,25 +35,45 @@ static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data)
 	cairo_surface_t *image = NULL;
 
 	int x = data->x_offset, y = data->y_offset;
-	enum Orientation orientation;
+	enum Bar_orientation orientation;
 
-	switch (data->position)
-	{
-		case POSITION_CENTER:
-		case POSITION_BOTTOM:
-			y += data->border_width;
-		case POSITION_TOP:
-			x += data->border_width;
-			orientation = ORIENTATION_HORIZONTAL;
-			break;
+	if ( data->mode == MODE_DEFAULT || data->mode == MODE_AGGRESSIVE )
+		switch (data->position)
+		{
+			case POSITION_CENTER:
+			case POSITION_BOTTOM:
+				y += data->border_width;
+			case POSITION_TOP:
+				x += data->border_width;
+				orientation = ORIENTATION_HORIZONTAL;
+				break;
 
-		case POSITION_RIGHT:
-			x += data->border_width;
-		case POSITION_LEFT:
-			y += data->border_width;
-			orientation = ORIENTATION_VERTICAL;
-			break;
-	}
+			case POSITION_RIGHT:
+				x += data->border_width;
+			case POSITION_LEFT:
+				y += data->border_width;
+				orientation = ORIENTATION_VERTICAL;
+				break;
+		}
+	else
+		switch (data->position)
+		{
+			case POSITION_BOTTOM:
+				y += data->border_width;
+			case POSITION_TOP:
+				orientation = ORIENTATION_HORIZONTAL;
+				break;
+
+			case POSITION_RIGHT:
+				x += data->border_width;
+			case POSITION_LEFT:
+				orientation = ORIENTATION_VERTICAL;
+				break;
+
+			case POSITION_CENTER:
+				/* Will never be reached. */
+				break;
+		}
 
 	float w, h;
 	struct Lava_button *bt_1, *bt_2;
@@ -71,7 +91,6 @@ static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data)
 		cairo_surface_destroy(image);
 
 		cairo_restore(cairo);
-
 
 		if ( orientation == ORIENTATION_HORIZONTAL )
 			x += data->bar_width;
@@ -99,47 +118,72 @@ static void cairo_draw_coloured_rectangle (cairo_t *cairo, float colour[4],
 	cairo_fill(cairo);
 }
 
-void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
+static void cairo_draw_full_bar (cairo_t *cairo, struct Lava_data *data,
+		struct Lava_output *output)
 {
-	if (data->verbose)
-		fputs("Rendering bar frame.\nPreparing buffer.\n", stderr);
+	switch (data->position)
+	{
+		case POSITION_BOTTOM:
+			cairo_draw_coloured_rectangle(cairo,
+					data->bar_colour,
+					0, data->border_width,
+					output->w, data->h - data->border_width,
+					0, 0, output->scale);
+			cairo_draw_coloured_rectangle(cairo,
+					data->border_colour,
+					0, 0,
+					output->w, data->border_width,
+					0, 0, output->scale);
+			break;
 
-	int buffer_w = data->w * output->scale, buffer_h = data->h * output->scale;
+		case POSITION_TOP:
+			cairo_draw_coloured_rectangle(cairo,
+					data->bar_colour,
+					0, 0,
+					output->w, data->h - data->border_width,
+					0, 0, output->scale);
+			cairo_draw_coloured_rectangle(cairo,
+					data->border_colour,
+					0, data->bar_width,
+					output->w, data->border_width,
+					0, 0, output->scale);
+			break;
 
-	if (data->aggressive_anchor)
-		switch (data->position)
-		{
-			case POSITION_TOP:
-			case POSITION_BOTTOM:
-				buffer_w = output->w;
-				break;
+		case POSITION_LEFT:
+			cairo_draw_coloured_rectangle(cairo,
+					data->bar_colour,
+					0, 0,
+					data->bar_width, output->h,
+					0, 0, output->scale);
+			cairo_draw_coloured_rectangle(cairo,
+					data->border_colour,
+					data->bar_width, 0,
+					data->border_width, output->h,
+					0, 0, output->scale);
+			break;
 
-			case POSITION_LEFT:
-			case POSITION_RIGHT:
-				buffer_h = output->h;
-				break;
+		case POSITION_RIGHT:
+			cairo_draw_coloured_rectangle(cairo,
+					data->bar_colour,
+					data->border_width, 0,
+					data->bar_width, output->h,
+					0, 0, output->scale);
+			cairo_draw_coloured_rectangle(cairo,
+					data->border_colour,
+					0, 0,
+					data->border_width, output->h,
+					0, 0, output->scale);
+			break;
 
-			case POSITION_CENTER:
-				/* Will never be reached. */
-				break;
-		}
+		case POSITION_CENTER:
+			/* Will never be reached. */
+			break;
+	}
+}
 
-	output->current_buffer = get_next_buffer(data->shm,
-			output->buffers,
-			buffer_w, buffer_h);
-	if (! output->current_buffer)
-		return;
-
-	cairo_t *cairo = output->current_buffer->cairo;
-	cairo_save(cairo);
-	cairo_set_operator(cairo, CAIRO_OPERATOR_CLEAR);
-	cairo_paint(cairo);
-	cairo_restore(cairo);
-
-	if (data->verbose)
-		fputs("Drawing bar.\n", stderr);
-
-	/* Draw the bar. */
+static void cairo_draw_bar (cairo_t *cairo, struct Lava_data *data,
+		struct Lava_output *output)
+{
 	switch (data->position)
 	{
 		case POSITION_BOTTOM:
@@ -271,6 +315,59 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 					data->w - 2 * data->border_width,
 					data->border_width,
 					data->x_offset, data->y_offset, output->scale);
+			break;
+	}
+}
+
+void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
+{
+	if (data->verbose)
+		fputs("Rendering bar frame.\nPreparing buffer.\n", stderr);
+
+	int buffer_w = data->w * output->scale, buffer_h = data->h * output->scale;
+	if ( data->mode != MODE_DEFAULT )
+		switch (data->position)
+		{
+			case POSITION_TOP:
+			case POSITION_BOTTOM:
+				buffer_w = output->w;
+				break;
+
+			case POSITION_LEFT:
+			case POSITION_RIGHT:
+				buffer_h = output->h;
+				break;
+
+			case POSITION_CENTER:
+				/* Will never be reached. */
+				break;
+		}
+
+	output->current_buffer = get_next_buffer(data->shm,
+			output->buffers,
+			buffer_w, buffer_h);
+	if (! output->current_buffer)
+		return;
+
+	cairo_t *cairo = output->current_buffer->cairo;
+	cairo_save(cairo);
+	cairo_set_operator(cairo, CAIRO_OPERATOR_CLEAR);
+	cairo_paint(cairo);
+	cairo_restore(cairo);
+
+	if (data->verbose)
+		fputs("Drawing bar.\n", stderr);
+
+	switch (data->mode)
+	{
+		case MODE_DEFAULT:
+		case MODE_AGGRESSIVE:
+			cairo_draw_bar(cairo, data, output);
+			break;
+
+		case MODE_FULL:
+		case MODE_FULL_CENTER:
+			cairo_draw_full_bar(cairo, data, output);
 			break;
 	}
 

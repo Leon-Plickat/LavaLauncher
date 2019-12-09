@@ -25,10 +25,18 @@
 #include"wlr-layer-shell-unstable-v1-client-protocol.h"
 #include"pool-buffer.h"
 
-enum Orientation
+enum Bar_orientation
 {
 	ORIENTATION_VERTICAL = 0,
 	ORIENTATION_HORIZONTAL
+};
+
+enum Bar_mode
+{
+	MODE_DEFAULT = 0,
+	MODE_AGGRESSIVE,
+	MODE_FULL,
+	MODE_FULL_CENTER
 };
 
 enum Bar_position
@@ -60,7 +68,7 @@ struct Lava_data
 	enum zwlr_layer_shell_v1_layer layer;
 
 	enum Bar_position position;
-	bool              aggressive_anchor;
+	enum Bar_mode     mode;
 	int               y_offset;
 	int               x_offset;
 	int               bar_width;

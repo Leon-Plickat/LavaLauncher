@@ -60,6 +60,9 @@ lavalauncher: lavalauncher.o pool-buffer.o config.o draw.o \
 	lib/wayland-protocols/xdg-shell-protocol.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
+doc/lavalauncher.1: doc/lavalauncher.1.scd
+	scdoc < $^ > $@
+
 install: lavalauncher doc/lavalauncher.1
 	install -D -m 755 lavalauncher $(BINPREFIX)/lavalauncher
 	install -D -m 644 doc/lavalauncher.1 $(MANPREFIX)/man1/lavalauncher.1
@@ -77,7 +80,8 @@ clean:
 		pool-buffer.o \
 		lavalauncher.o \
 		config.o \
-		draw.o
+		draw.o \
+		doc/lavalauncher.1
 
 .DEFAULT_GOAL=lavalauncher
 .PHONY: clean

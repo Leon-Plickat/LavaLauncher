@@ -43,16 +43,16 @@
 
 static const char usage[] = "LavaLauncher -- Version 1.0\n\n"
                             "Usage: lavalauncher [options...]\n\n"
-                            "  -a                                 Aggressive anchoring.\n"
-                            "  -b <path> <command>                Add a button.\n"
-                            "  -c <colour>                        Background colour.\n"
-                            "  -C <colour>                        Border colour.\n"
-                            "  -h                                 Display this help text and exit.\n"
-                            "  -l <overlay|top|bottom|background> Layer of the bar surface.\n"
-                            "  -p <top|bottom|left|right|center>  Position of the bar.\n"
-                            "  -s <size>                          Width of the bar.\n"
-                            "  -S <size>                          Width of the border.\n"
-                            "  -v                                 Verbose output.\n\n"
+                            "  -b <path> <command>                      Add a button.\n"
+                            "  -c <colour>                              Background colour.\n"
+                            "  -C <colour>                              Border colour.\n"
+                            "  -h                                       Display this help text and exit.\n"
+                            "  -l <overlay|top|bottom|background>       Layer of the bar surface.\n"
+                            "  -m <default|aggressive|full|full-center> Display mode of bar.\n"
+                            "  -p <top|bottom|left|right|center>        Position of the bar.\n"
+                            "  -s <size>                                Width of the bar.\n"
+                            "  -S <size>                                Width of the border.\n"
+                            "  -v                                       Verbose output.\n\n"
                             "Buttons are displayed in the order in which they are declared.\n"
                             "Commands will be executed with sh(1).\n"
                             "Colours are expected to be in the format #RRGGBBAA.\n"
@@ -77,7 +77,7 @@ static void layer_surface_handle_configure (void *raw_data,
 
 	uint32_t width = data->w, height = data->h;
 
-	if (data->aggressive_anchor)
+	if ( data->mode != MODE_DEFAULT )
 		switch (data->position)
 		{
 			case POSITION_TOP:
@@ -150,7 +150,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	{
 		case POSITION_TOP:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					data->aggressive_anchor
+					data->mode != MODE_DEFAULT
 					? ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
@@ -161,7 +161,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 
 		case POSITION_RIGHT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					data->aggressive_anchor
+					data->mode != MODE_DEFAULT
 					? ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
@@ -172,7 +172,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 
 		case POSITION_BOTTOM:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					data->aggressive_anchor
+					data->mode != MODE_DEFAULT
 					? ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
@@ -183,7 +183,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 
 		case POSITION_LEFT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					data->aggressive_anchor
+					data->mode != MODE_DEFAULT
 					? ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
@@ -214,11 +214,16 @@ static void exec_cmd (const char *cmd)
 }
 
 static struct Lava_button *button_from_ordinate (struct Lava_data *data,
-		int ordinate, enum Orientation orientation)
+		int ordinate, enum Bar_orientation orientation)
 {
-	int pre_button_zone = data->border_width
-		+ (orientation == ORIENTATION_HORIZONTAL ?
-			data->x_offset : data->y_offset);
+	int pre_button_zone = 0;
+	if ( data->mode == MODE_DEFAULT || data->mode == MODE_AGGRESSIVE )
+		pre_button_zone += data->border_width;
+	if ( orientation == ORIENTATION_HORIZONTAL )
+		pre_button_zone += data->x_offset;
+	else
+		pre_button_zone += data->y_offset;
+
 	int i = pre_button_zone;
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
@@ -364,13 +369,7 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 	output->w = width;
 	output->h = height;
 
-	/* Center the bar for aggressive_anchor, as anchoring it to three sides
-	 * will place it as close to the origin (0, 0) as possible.
-	 */
-	/* The min() is an ugly workaround, as a margin larger than the surface
-	 * itself causes weird behaviour. TODO FIXME
-	 */
-	if (data->aggressive_anchor)
+	if ( data->mode == MODE_AGGRESSIVE || data->mode == MODE_FULL_CENTER )
 	{
 		if (data->verbose)
 			fputs("Centering bar", stderr);
@@ -388,10 +387,7 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 				break;
 
 			case POSITION_CENTER:
-				/* Should never be reached, as aggressive_anchor
-				 * will always be false for POSITION_CENTER
-				 * (see main)
-				 */
+				/* Will never be reached. */
 				break;
 		}
 
@@ -706,15 +702,15 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
-	for (int c; (c = getopt(argc, argv, "ab:l:p:s:S:c:C:hv")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "b:l:m:p:s:S:c:C:hv")) != -1 ;)
 		switch (c)
 		{
 			/* Weirdly formatted for readability. */
 			case 'v': data.verbose           = true; break;
-			case 'a': data.aggressive_anchor = true; break;
 			case 'h': fputs                    (usage, stderr); return EXIT_SUCCESS;
 			case 'b': config_add_button        (&data, argv[optind-1], argv[optind]); optind++; break;
 			case 'l': config_set_layer         (&data, optarg); break;
+			case 'm': config_set_mode          (&data, optarg); break;
 			case 'p': config_set_position      (&data, optarg); break;
 			case 's': config_set_bar_size      (&data, optarg); break;
 			case 'S': config_set_border_size   (&data, optarg); break;
@@ -755,7 +751,7 @@ int main (int argc, char *argv[])
 			break;
 
 		case POSITION_CENTER:
-			data.aggressive_anchor = false;
+			data.mode = MODE_DEFAULT;
 			data.w = (uint32_t)((data.button_amount * data.bar_width)
 					+ (2 * data.border_width));
 			data.h = (uint32_t)(data.bar_width + (2 * data.border_width));

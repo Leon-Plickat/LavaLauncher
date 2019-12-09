@@ -16,8 +16,8 @@ details and an example.
 ## Building
 
 LavaLauncher depends on Wayland, Wayland protocols and Cairo. To build
-this program you will need a C compiler and a GNU compatible implementation of
-`make`.
+this program you will need a C compiler, a GNU compatible implementation of
+`make` and `scdoc` to generate the manpage.
 
     git clone https://git.sr.ht/~leon_plickat/lavalauncher
     cd lavalauncher

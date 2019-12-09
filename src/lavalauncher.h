@@ -61,6 +61,8 @@ struct Lava_data
 
 	enum Bar_position position;
 	bool              aggressive_anchor;
+	int               y_offset;
+	int               x_offset;
 	int               bar_width;
 	int               border_width;
 	float             bar_colour[4];

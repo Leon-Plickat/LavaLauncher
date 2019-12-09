@@ -75,17 +75,33 @@ static void layer_surface_handle_configure (void *raw_data,
 		fprintf(stderr, "Layer surface configure request"
 				" w=%d h=%d serial=%d\n", w, h, serial);
 
-	if ( w == data->w && h == data->h )
-	{
-		if (data->verbose)
-			fputs("Requested size equals needed size.\n", stderr);
-		zwlr_layer_surface_v1_ack_configure(surface, serial);
-	}
-	else if (data->verbose)
-	{
-		fputs("Requested size does not equal needed size, ignoring.\n",
-				stderr);
-	}
+	uint32_t width = data->w, height = data->h;
+
+	if (data->aggressive_anchor)
+		switch (data->position)
+		{
+			case POSITION_TOP:
+			case POSITION_BOTTOM:
+				width = output->w;
+				break;
+
+			case POSITION_LEFT:
+			case POSITION_RIGHT:
+				height = output->h;
+				break;
+
+			case POSITION_CENTER:
+				/* Will never be reached. */
+				break;
+		}
+
+	if (data->verbose)
+		fprintf(stderr, "Resizing surface w=%d h=%d\n",
+				width, height);
+
+	zwlr_layer_surface_v1_ack_configure(surface, serial);
+	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
+	wl_surface_commit(output->wl_surface);
 
 	render_bar_frame(data, output);
 }
@@ -197,15 +213,19 @@ static void exec_cmd (const char *cmd)
 	}
 }
 
-static struct Lava_button *button_from_ordinate (struct Lava_data *data, int ordinate)
+static struct Lava_button *button_from_ordinate (struct Lava_data *data,
+		int ordinate, enum Orientation orientation)
 {
-	int i = data->border_width + data->bar_width;
+	int pre_button_zone = data->border_width
+		+ (orientation == ORIENTATION_HORIZONTAL ?
+			data->x_offset : data->y_offset);
+	int i = pre_button_zone;
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
 	{
-		if ( ordinate < i )
-			return bt_1;
 		i += data->bar_width;
+		if ( ordinate < i && ordinate >= pre_button_zone)
+			return bt_1;
 	}
 	return NULL;
 }
@@ -238,17 +258,25 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		case POSITION_TOP:
 		case POSITION_BOTTOM:
 		case POSITION_CENTER:
-			bar_button = button_from_ordinate(seat->data, seat->pointer.x);
+			bar_button = button_from_ordinate(seat->data,
+					seat->pointer.x,
+					ORIENTATION_HORIZONTAL);
 			break;
 
 		case POSITION_LEFT:
 		case POSITION_RIGHT:
-			bar_button = button_from_ordinate(seat->data, seat->pointer.y);
+			bar_button = button_from_ordinate(seat->data,
+					seat->pointer.y,
+					ORIENTATION_VERTICAL);
 			break;
 	}
 
 	if ( bar_button == NULL )
+	{
+		if (seat->data->verbose)
+			fputs("\n", stderr);
 		return;
+	}
 
 	if (seat->data->verbose)
 		fprintf(stderr, " cmd=%s\n", bar_button->cmd);
@@ -318,15 +346,8 @@ static void output_handle_geometry (void *raw_data,
 	output->subpixel           = subpixel;
 
 	if (data->verbose)
-		fputs("Output updated geometry.\n", stderr);
-}
-
-static int min (int a, int b)
-{
-	if ( a > b )
-		return b;
-	else
-		return a;
+		fprintf(stderr, "Output update geometry model=%s make=%s\n",
+				model, make); // TODO multimonitor configuration
 }
 
 static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
@@ -354,21 +375,16 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 		if (data->verbose)
 			fputs("Centering bar", stderr);
 
-		int margin = 0;
 		switch (data->position)
 		{
 			case POSITION_TOP:
 			case POSITION_BOTTOM:
-				margin = (width / 2) - (data->w / 2);
-				zwlr_layer_surface_v1_set_margin(output->layer_surface,
-						0, 0, 0, min(margin, data->w));
+				data->x_offset = (width / 2) - (data->w / 2);
 				break;
 
 			case POSITION_LEFT:
 			case POSITION_RIGHT:
-				margin = (height / 2) - (data->h / 2);
-				zwlr_layer_surface_v1_set_margin(output->layer_surface,
-						min(margin, data->h), 0, 0, 0);
+				data->y_offset = (height / 2) - (data->h / 2);
 				break;
 
 			case POSITION_CENTER:
@@ -376,10 +392,12 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 				 * will always be false for POSITION_CENTER
 				 * (see main)
 				 */
-				return;
+				break;
 		}
+
 		if (data->verbose)
-			fprintf(stderr, " margin=%d\n", margin);
+			fprintf(stderr, " x-offset=%d y-offset=%d\n",
+					data->x_offset, data->y_offset);
 	}
 }
 
@@ -390,7 +408,7 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output, in
 	output->scale              = (int)factor;
 
 	if (data->verbose)
-		fputs("Output updated scale.\n", stderr);
+		fputs("Output update scale.\n", stderr);
 }
 
 static const struct wl_output_listener output_listener = {

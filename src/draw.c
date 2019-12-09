@@ -34,7 +34,7 @@ static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data)
 
 	cairo_surface_t *image = NULL;
 
-	int x = 0, y = 0;
+	int x = data->x_offset, y = data->y_offset;
 	enum Orientation orientation;
 
 	switch (data->position)
@@ -82,14 +82,19 @@ static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data)
 
 static void cairo_draw_coloured_rectangle (cairo_t *cairo, float colour[4],
 		int x, int y,
-		int w, int h)
+		int w, int h,
+		int x_offset, int y_offset,
+		float scale)
 {
 	cairo_set_source_rgba(cairo,
 			colour[0],
 			colour[1],
 			colour[2],
 			colour[3]);
-	cairo_rectangle(cairo, x, y, w, h);
+	cairo_rectangle(cairo,
+			(x + x_offset) * scale,
+			(y + y_offset) * scale,
+			w *scale, h * scale);
 	cairo_close_path(cairo);
 	cairo_fill(cairo);
 }
@@ -100,6 +105,25 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 		fputs("Rendering bar frame.\nPreparing buffer.\n", stderr);
 
 	int buffer_w = data->w * output->scale, buffer_h = data->h * output->scale;
+
+	if (data->aggressive_anchor)
+		switch (data->position)
+		{
+			case POSITION_TOP:
+			case POSITION_BOTTOM:
+				buffer_w = output->w;
+				break;
+
+			case POSITION_LEFT:
+			case POSITION_RIGHT:
+				buffer_h = output->h;
+				break;
+
+			case POSITION_CENTER:
+				/* Will never be reached. */
+				break;
+		}
+
 	output->current_buffer = get_next_buffer(data->shm,
 			output->buffers,
 			buffer_w, buffer_h);
@@ -122,106 +146,135 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 			cairo_draw_coloured_rectangle(cairo,
 					data->bar_colour,
 					data->border_width, data->border_width,
-					data->w - 2 * data->border_width, data->h - data->border_width);
+					data->w - 2 * data->border_width,
+					data->h - data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
-					data->border_width, data->h);
+					data->border_width, data->h,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->w - data->border_width, 0,
-					data->border_width, data->h);
+					data->border_width, data->h,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->border_width, 0,
-					data->w - 2 * data->border_width, data->border_width);
-			cairo_draw_bar_icons(cairo, data);
+					data->w - 2 * data->border_width,
+					data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			break;
 
 		case POSITION_TOP:
 			cairo_draw_coloured_rectangle(cairo,
 					data->bar_colour,
 					data->border_width, 0,
-					data->w - 2 * data->border_width, data->h - data->border_width);
+					data->w - 2 * data->border_width,
+					data->h - data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
-					data->border_width, data->h);
+					data->border_width, data->h,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->w - data->border_width, 0,
-					data->border_width, data->h);
+					data->border_width, data->h,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->border_width, data->h - data->border_width,
-					data->w - 2 * data->border_width, data->border_width);
-			cairo_draw_bar_icons(cairo, data);
+					data->w - 2 * data->border_width,
+					data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			break;
 
 		case POSITION_LEFT:
 			cairo_draw_coloured_rectangle(cairo,
 					data->bar_colour,
 					0, data->border_width,
-					data->w - data->border_width, data->h - 2 * data->border_width);
+					data->w - data->border_width,
+					data->h - 2 * data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
-					data->w, data->border_width);
+					data->w, data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, data->h - data->border_width,
-					data->w, data->border_width);
+					data->w, data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->w - data->border_width, data->border_width,
-					data->border_width, data->h - 2 * data->border_width);
-			cairo_draw_bar_icons(cairo, data);
+					data->border_width,
+					data->h - 2 * data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			break;
 
 		case POSITION_RIGHT:
 			cairo_draw_coloured_rectangle(cairo,
 					data->bar_colour,
 					data->border_width, data->border_width,
-					data->w - data->border_width, data->h - 2 * data->border_width);
+					data->w - data->border_width,
+					data->h - 2 * data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
-					data->w, data->border_width);
+					data->w, data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, data->h - data->border_width,
-					data->w, data->border_width);
+					data->w, data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, data->border_width,
-					data->border_width, data->h - 2 * data->border_width);
-			cairo_draw_bar_icons(cairo, data);
+					data->border_width,
+					data->h - 2 * data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			break;
 
 		case POSITION_CENTER:
 			cairo_draw_coloured_rectangle(cairo,
 					data->bar_colour,
 					data->border_width, data->border_width,
-					data->w - 2 * data->border_width, data->h - 2 * data->border_width);
+					data->w - 2 * data->border_width,
+					data->h - 2 * data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
-					data->border_width, data->h);
+					data->border_width, data->h,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->w - data->border_width, 0,
-					data->border_width, data->h);
+					data->border_width, data->h,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->border_width, 0,
-					data->w - 2 * data->border_width, data->border_width);
+					data->w - 2 * data->border_width,
+					data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->border_width, data->bar_width + data->border_width,
-					data->w - 2 * data->border_width, data->border_width);
-			cairo_draw_bar_icons(cairo, data);
+					data->w - 2 * data->border_width,
+					data->border_width,
+					data->x_offset, data->y_offset, output->scale);
 			break;
 	}
+
+	cairo_draw_bar_icons(cairo, data);
 
 	if (data->verbose)
 		fputs("Scaling, attaching, damaging and committing surface.\n", stderr);

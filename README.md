@@ -9,8 +9,11 @@ This program serves a single purpose: Letting the user execute shell commands
 by clicking on icons on a dynamically sized bar, placed at one of the screen
 edges or in the center.
 
-LavaLauncher is configured entirely via command flags. See the manpage for
-details and an example.
+Configuration is done entirely via command flags. See the manpage for details
+and an example.
+
+LavaLauncher been successfully tested with [sway](https://github.com/swaywm/sway)
+and [wayfire](https://github.com/WayfireWM/wayfire).
 
 
 ## Building

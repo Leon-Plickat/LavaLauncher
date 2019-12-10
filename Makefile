@@ -13,10 +13,12 @@ LIBS=\
 
 CFLAGS=\
        -std=c11 \
+       -O2 \
        -Werror \
        -Wall \
        -Wextra \
        -Wpedantic \
+       -Wno-maybe-uninitialized \
        -Wno-unused-variable \
        -Wno-unused-function \
        -Wno-unused-parameter \
@@ -28,50 +30,63 @@ CFLAGS=\
        $(shell pkg-config --cflags cairo)
 
 lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h: lib/wayland-protocols/wlr-layer-shell-unstable-v1.xml
+	@echo Generating $@
 	$(WAYLAND_SCANNER) client-header $< $@
 
 lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c: lib/wayland-protocols/wlr-layer-shell-unstable-v1.xml
+	@echo Generating $@
 	$(WAYLAND_SCANNER) private-code $< $@
 
 lib/wayland-protocols/xdg-shell-client-protocol.h:
+	@echo Generating $@
 	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
 
 lib/wayland-protocols/xdg-shell-protocol.c:
+	@echo Generating $@
 	$(WAYLAND_SCANNER) private-code $(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
 
 pool-buffer.o: lib/pool-buffer/pool-buffer.c lib/pool-buffer/pool-buffer.h
+	@echo Building $@
 	$(CC) $(CFLAGS) -c $<
 
 config.o: src/config.c src/config.h \
 	lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h
+	@echo Building $@
 	$(CC) $(CFLAGS) -c $<
 
 draw.o: src/draw.c src/draw.h
+	@echo Building $@
 	$(CC) $(CFLAGS) -c $<
 
 lavalauncher.o: src/lavalauncher.c src/lavalauncher.h \
 	lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h \
 	lib/wayland-protocols/xdg-shell-client-protocol.h \
 	lib/pool-buffer/pool-buffer.h
+	@echo Building $@
 	$(CC) $(CFLAGS) -c $<
 
 lavalauncher: lavalauncher.o pool-buffer.o config.o draw.o \
 	lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c \
 	lib/wayland-protocols/xdg-shell-protocol.c
+	@echo Building $@
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 doc/lavalauncher.1: doc/lavalauncher.1.scd
+	@echo Generating $@
 	scdoc < $^ > $@
 
 install: lavalauncher doc/lavalauncher.1
+	@echo Installing
 	install -D -m 755 lavalauncher $(BINPREFIX)/lavalauncher
 	install -D -m 644 doc/lavalauncher.1 $(MANPREFIX)/man1/lavalauncher.1
 
 uninstall:
+	@echo Uninstalling
 	$(RM) $(BINPREFIX)/lavalauncher
 	$(RM) $(MANPREFIX)/man1/lavalauncher.1
 
 clean:
+	@echo Cleaning
 	rm -f lavalauncher \
 		lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h \
 		lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c \

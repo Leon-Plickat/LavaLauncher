@@ -114,6 +114,7 @@ struct Lava_seat
 		int32_t             x;
 		int32_t             y;
 		struct Lava_output *output;
+		struct Lava_button *button;
 	} pointer;
 };
 

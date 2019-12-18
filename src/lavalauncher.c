@@ -236,29 +236,56 @@ static struct Lava_button *button_from_ordinate (struct Lava_data *data,
 	return NULL;
 }
 
-static void pointer_handle_leave(void *data, struct wl_pointer *wl_pointer,
+static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 		uint32_t serial, struct wl_surface *surface)
 {
 	struct Lava_seat *seat = data;
 	seat->pointer.x        = -1;
 	seat->pointer.y        = -1;
 	seat->pointer.output   = NULL;
+	seat->pointer.button   = NULL;
 
 	if (seat->data->verbose)
 		fputs("Pointer left surface.\n", stderr);
 }
 
-static void pointer_handle_enter(void *data, struct wl_pointer *wl_pointer,
+static void pointer_motion (struct Lava_seat *seat, wl_fixed_t x, wl_fixed_t y)
+{
+	seat->pointer.x = wl_fixed_to_int(x);
+	seat->pointer.y = wl_fixed_to_int(y);
+
+	struct Lava_button *old_button = seat->pointer.button;
+
+	switch (seat->data->position)
+	{
+		case POSITION_TOP:
+		case POSITION_BOTTOM:
+		case POSITION_CENTER:
+			seat->pointer.button = button_from_ordinate(seat->data,
+					seat->pointer.output,
+					seat->pointer.x,
+					ORIENTATION_HORIZONTAL);
+			break;
+
+		case POSITION_LEFT:
+		case POSITION_RIGHT:
+			seat->pointer.button = button_from_ordinate(seat->data,
+					seat->pointer.output,
+					seat->pointer.y,
+					ORIENTATION_VERTICAL);
+			break;
+	}
+
+	// TODO draw highlighting
+	//if ( old_button != seat->pointer.button )
+	//	render_bar_frame(seat->data, seat->pointer.output);
+}
+
+static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 		uint32_t serial, struct wl_surface *surface,
 		wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
 	struct Lava_seat *seat = data;
-	seat->pointer.x = wl_fixed_to_int(surface_x);
-	seat->pointer.y = wl_fixed_to_int(surface_y);
-
-	if (seat->data->verbose)
-		fprintf(stderr, "Pointer entered surface x=%d y=%d\n",
-				seat->pointer.x, seat->pointer.y);
 
 	struct Lava_output *op1, *op2;
 	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
@@ -266,18 +293,25 @@ static void pointer_handle_enter(void *data, struct wl_pointer *wl_pointer,
 		if ( op1->wl_surface == surface )
 		{
 			seat->pointer.output = op1;
-			return;
+			goto handle_motion;
 		}
 	}
 	seat->pointer.output = NULL;
+
+handle_motion:
+
+	pointer_motion(seat, surface_x, surface_y);
+
+	if (seat->data->verbose)
+		fprintf(stderr, "Pointer entered surface x=%d y=%d\n",
+				seat->pointer.x, seat->pointer.y);
 }
 
 static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 		uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
 	struct Lava_seat *seat = data;
-	seat->pointer.x = wl_fixed_to_int(surface_x);
-	seat->pointer.y = wl_fixed_to_int(surface_y);
+	pointer_motion(seat, surface_x, surface_y);
 }
 
 static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer,
@@ -293,29 +327,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		fprintf(stderr, "Click! x=%d y=%d",
 				seat->pointer.x, seat->pointer.y);
 
-	struct Lava_button *bar_button;
-
-	switch (seat->data->position)
-	{
-		case POSITION_TOP:
-		case POSITION_BOTTOM:
-		case POSITION_CENTER:
-			bar_button = button_from_ordinate(seat->data,
-					seat->pointer.output,
-					seat->pointer.x,
-					ORIENTATION_HORIZONTAL);
-			break;
-
-		case POSITION_LEFT:
-		case POSITION_RIGHT:
-			bar_button = button_from_ordinate(seat->data,
-					seat->pointer.output,
-					seat->pointer.y,
-					ORIENTATION_VERTICAL);
-			break;
-	}
-
-	if ( bar_button == NULL )
+	if ( seat->pointer.button == NULL )
 	{
 		if (seat->data->verbose)
 			fputs("\n", stderr);
@@ -323,12 +335,12 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	}
 
 	if (seat->data->verbose)
-		fprintf(stderr, " cmd=%s\n", bar_button->cmd);
+		fprintf(stderr, " cmd=%s\n", seat->pointer.button->cmd);
 
-	if (! strcmp(bar_button->cmd, "exit"))
+	if (! strcmp(seat->pointer.button->cmd, "exit"))
 		seat->data->loop = false;
 	else
-		exec_cmd(bar_button->cmd);
+		exec_cmd(seat->pointer.button->cmd);
 }
 
 static const struct wl_pointer_listener pointer_listener = {

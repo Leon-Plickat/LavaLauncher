@@ -214,15 +214,16 @@ static void exec_cmd (const char *cmd)
 }
 
 static struct Lava_button *button_from_ordinate (struct Lava_data *data,
-		int ordinate, enum Bar_orientation orientation)
+		struct Lava_output *output, int ordinate,
+		enum Bar_orientation orientation)
 {
 	int pre_button_zone = 0;
 	if ( data->mode == MODE_DEFAULT || data->mode == MODE_AGGRESSIVE )
 		pre_button_zone += data->border_width;
 	if ( orientation == ORIENTATION_HORIZONTAL )
-		pre_button_zone += data->x_offset;
+		pre_button_zone += output->bar_x_offset;
 	else
-		pre_button_zone += data->y_offset;
+		pre_button_zone += output->bar_y_offset;
 
 	int i = pre_button_zone;
 	struct Lava_button *bt_1, *bt_2;
@@ -233,6 +234,42 @@ static struct Lava_button *button_from_ordinate (struct Lava_data *data,
 			return bt_1;
 	}
 	return NULL;
+}
+
+static void pointer_handle_leave(void *data, struct wl_pointer *wl_pointer,
+		uint32_t serial, struct wl_surface *surface)
+{
+	struct Lava_seat *seat = data;
+	seat->pointer.x        = -1;
+	seat->pointer.y        = -1;
+	seat->pointer.output   = NULL;
+
+	if (seat->data->verbose)
+		fputs("Pointer left surface.\n", stderr);
+}
+
+static void pointer_handle_enter(void *data, struct wl_pointer *wl_pointer,
+		uint32_t serial, struct wl_surface *surface,
+		wl_fixed_t surface_x, wl_fixed_t surface_y)
+{
+	struct Lava_seat *seat = data;
+	seat->pointer.x = wl_fixed_to_int(surface_x);
+	seat->pointer.y = wl_fixed_to_int(surface_y);
+
+	if (seat->data->verbose)
+		fprintf(stderr, "Pointer entered surface x=%d y=%d\n",
+				seat->pointer.x, seat->pointer.y);
+
+	struct Lava_output *op1, *op2;
+	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
+	{
+		if ( op1->wl_surface == surface )
+		{
+			seat->pointer.output = op1;
+			return;
+		}
+	}
+	seat->pointer.output = NULL;
 }
 
 static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
@@ -264,6 +301,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		case POSITION_BOTTOM:
 		case POSITION_CENTER:
 			bar_button = button_from_ordinate(seat->data,
+					seat->pointer.output,
 					seat->pointer.x,
 					ORIENTATION_HORIZONTAL);
 			break;
@@ -271,6 +309,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		case POSITION_LEFT:
 		case POSITION_RIGHT:
 			bar_button = button_from_ordinate(seat->data,
+					seat->pointer.output,
 					seat->pointer.y,
 					ORIENTATION_VERTICAL);
 			break;
@@ -293,8 +332,8 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 }
 
 static const struct wl_pointer_listener pointer_listener = {
-	.enter  = noop,
-	.leave  = noop,
+	.enter  = pointer_handle_enter,
+	.leave  = pointer_handle_leave,
 	.motion = pointer_handle_motion,
 	.button = pointer_handle_button,
 	.axis   = noop
@@ -378,12 +417,12 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 		{
 			case POSITION_TOP:
 			case POSITION_BOTTOM:
-				data->x_offset = (width / 2) - (data->w / 2);
+				output->bar_x_offset = (width / 2) - (data->w / 2);
 				break;
 
 			case POSITION_LEFT:
 			case POSITION_RIGHT:
-				data->y_offset = (height / 2) - (data->h / 2);
+				output->bar_y_offset = (height / 2) - (data->h / 2);
 				break;
 
 			case POSITION_CENTER:
@@ -393,7 +432,12 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 
 		if (data->verbose)
 			fprintf(stderr, " x-offset=%d y-offset=%d\n",
-					data->x_offset, data->y_offset);
+					output->bar_x_offset, output->bar_y_offset);
+	}
+	else
+	{
+		output->bar_x_offset = 0;
+		output->bar_y_offset = 0;
 	}
 }
 
@@ -404,7 +448,7 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output, in
 	output->scale              = (int)factor;
 
 	if (data->verbose)
-		fputs("Output update scale.\n", stderr);
+		fprintf(stderr, "Output update scale s=%d\n", output->scale);
 }
 
 static const struct wl_output_listener output_listener = {
@@ -500,8 +544,7 @@ static void registry_handle_global_remove (void *raw_data,
 		uint32_t name)
 {
 	struct Lava_data   *data = (struct Lava_data *)raw_data;
-	struct Lava_output *op1;
-	struct Lava_output *op2;
+	struct Lava_output *op1, *op2;
 
 	if (data->verbose)
 		fputs("Global remove.\n", stderr);

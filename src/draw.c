@@ -27,14 +27,14 @@
 #include"lavalauncher.h"
 #include"draw.h"
 
-static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data)
+static void cairo_draw_bar_icons (cairo_t *cairo, struct Lava_data *data, struct Lava_output *output)
 {
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
 
 	cairo_surface_t *image = NULL;
 
-	int x = data->x_offset, y = data->y_offset;
+	int x = output->bar_x_offset, y = output->bar_y_offset;
 	enum Bar_orientation orientation;
 
 	if ( data->mode == MODE_DEFAULT || data->mode == MODE_AGGRESSIVE )
@@ -192,23 +192,23 @@ static void cairo_draw_bar (cairo_t *cairo, struct Lava_data *data,
 					data->border_width, data->border_width,
 					data->w - 2 * data->border_width,
 					data->h - data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
 					data->border_width, data->h,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->w - data->border_width, 0,
 					data->border_width, data->h,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->border_width, 0,
 					data->w - 2 * data->border_width,
 					data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			break;
 
 		case POSITION_TOP:
@@ -217,23 +217,23 @@ static void cairo_draw_bar (cairo_t *cairo, struct Lava_data *data,
 					data->border_width, 0,
 					data->w - 2 * data->border_width,
 					data->h - data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
 					data->border_width, data->h,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->w - data->border_width, 0,
 					data->border_width, data->h,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->border_width, data->h - data->border_width,
 					data->w - 2 * data->border_width,
 					data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			break;
 
 		case POSITION_LEFT:
@@ -242,23 +242,23 @@ static void cairo_draw_bar (cairo_t *cairo, struct Lava_data *data,
 					0, data->border_width,
 					data->w - data->border_width,
 					data->h - 2 * data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
 					data->w, data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, data->h - data->border_width,
 					data->w, data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->w - data->border_width, data->border_width,
 					data->border_width,
 					data->h - 2 * data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			break;
 
 		case POSITION_RIGHT:
@@ -267,23 +267,23 @@ static void cairo_draw_bar (cairo_t *cairo, struct Lava_data *data,
 					data->border_width, data->border_width,
 					data->w - data->border_width,
 					data->h - 2 * data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
 					data->w, data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, data->h - data->border_width,
 					data->w, data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, data->border_width,
 					data->border_width,
 					data->h - 2 * data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			break;
 
 		case POSITION_CENTER:
@@ -292,29 +292,29 @@ static void cairo_draw_bar (cairo_t *cairo, struct Lava_data *data,
 					data->border_width, data->border_width,
 					data->w - 2 * data->border_width,
 					data->h - 2 * data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					0, 0,
 					data->border_width, data->h,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->w - data->border_width, 0,
 					data->border_width, data->h,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->border_width, 0,
 					data->w - 2 * data->border_width,
 					data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			cairo_draw_coloured_rectangle(cairo,
 					data->border_colour,
 					data->border_width, data->bar_width + data->border_width,
 					data->w - 2 * data->border_width,
 					data->border_width,
-					data->x_offset, data->y_offset, output->scale);
+					output->bar_x_offset, output->bar_y_offset, output->scale);
 			break;
 	}
 }
@@ -371,7 +371,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 			break;
 	}
 
-	cairo_draw_bar_icons(cairo, data);
+	cairo_draw_bar_icons(cairo, data, output);
 
 	if (data->verbose)
 		fputs("Scaling, attaching, damaging and committing surface.\n", stderr);

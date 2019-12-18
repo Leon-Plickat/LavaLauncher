@@ -44,8 +44,6 @@ void sensible_defaults (struct Lava_data *data)
 	data->border_colour[3]  = 1.0f;
 	data->verbose           = false;
 	data->mode              = MODE_DEFAULT;
-	data->x_offset          = 0;
-	data->y_offset          = 0;
 }
 
 static void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)

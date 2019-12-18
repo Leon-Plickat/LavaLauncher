@@ -69,15 +69,12 @@ struct Lava_data
 
 	enum Bar_position position;
 	enum Bar_mode     mode;
-	int               y_offset;
-	int               x_offset;
 	int               bar_width;
 	int               border_width;
 	float             bar_colour[4];
 	float             border_colour[4];
-
-	uint32_t w;
-	uint32_t h;
+	uint32_t          w;
+	uint32_t          h;
 
 	bool loop;
 	bool verbose;
@@ -98,6 +95,9 @@ struct Lava_output
 	int                            w;
 	int                            h;
 
+	int      bar_y_offset;
+	int      bar_x_offset;
+
 	struct pool_buffer  buffers[2];
 	struct pool_buffer *current_buffer;
 };
@@ -110,9 +110,10 @@ struct Lava_seat
 
 	struct
 	{
-		struct wl_pointer *wl_pointer;
-		int32_t            x;
-		int32_t            y;
+		struct wl_pointer  *wl_pointer;
+		int32_t             x;
+		int32_t             y;
+		struct Lava_output *output;
 	} pointer;
 };
 

@@ -38,10 +38,14 @@ events to them.
 	given by the user.
 
 *-c <colour>*
-	Colour of the bar in the format #RRGGBBAA.
+	Colour of the bar in the format '#RRGGBBAA'.
+
+	The default bar colour is '#000000FF'
 
 *-C <colour>*
-	Colour of the border in the format #RRGGBBAA.
+	Colour of the border in the format '#RRGGBBAA'.
+
+	The default border colour is '#FFFFFFFF'
 *-h*
 	Display a helpful help message and exit.
 
@@ -51,6 +55,8 @@ events to them.
 	Typically, 'bottom' and 'background' will be underneath regular windows,
 	while 'top' and 'overlay' will be above them, however the exact
 	placement on the z axis depends on the implementation of the compositor.
+
+	The default layer is 'bottom'.
 
 *-m <default|aggressive|full|full-center>*
 	The display mode of the bar.
@@ -86,6 +92,8 @@ events to them.
 
 	Choosing 'center' will automatically set the display mode to 'default'.
 
+	The default position is 'bottom'.
+
 *-s <size>*
 	Size of the bar in pixels.
 
@@ -93,8 +101,12 @@ events to them.
 	it is anchored to. All icons will be drawn as squares with the bar size
 	as width and height.
 
+	The default bar size is 80;
+
 *-S <size>*
 	Size of the border in pixels.
+
+	The default border size is 2;
 
 *-v*
 	Verbose output.

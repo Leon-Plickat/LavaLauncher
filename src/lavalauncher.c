@@ -36,8 +36,9 @@
 #include"draw.h"
 
 #include"wlr-layer-shell-unstable-v1-client-protocol.h"
-#include"pool-buffer.h"
+#include"xdg-output-unstable-v1-client-protocol.h"
 #include"xdg-shell-client-protocol.h"
+#include"pool-buffer.h"
 
 #define SHELL "/bin/sh"
 
@@ -64,8 +65,7 @@ static const char usage[] = "LavaLauncher -- Version 1.0\n\n"
 static void noop () {}
 
 static void layer_surface_handle_configure (void *raw_data,
-		struct zwlr_layer_surface_v1 *surface,
-		uint32_t serial,
+		struct zwlr_layer_surface_v1 *surface, uint32_t serial,
 		uint32_t w, uint32_t h)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
@@ -398,23 +398,16 @@ static void update_bar_offset (struct Lava_data *data, struct Lava_output *outpu
 		return;
 	}
 
-	if (data->verbose)
-		fputs("Centering bar", stderr);
-
-	int32_t w = output->w, h = output->h;
-	if ( output->transform == 1 || output->transform == 3 )
-		w = output->h, h = output->w;
-
 	switch (data->position)
 	{
 		case POSITION_TOP:
 		case POSITION_BOTTOM:
-			output->bar_x_offset = (w / 2) - (data->w / 2);
+			output->bar_x_offset = (output->w / 2) - (data->w / 2);
 			break;
 
 		case POSITION_LEFT:
 		case POSITION_RIGHT:
-			output->bar_y_offset = (h / 2) - (data->h / 2);
+			output->bar_y_offset = (output->h / 2) - (data->h / 2);
 			break;
 
 		case POSITION_CENTER:
@@ -423,77 +416,70 @@ static void update_bar_offset (struct Lava_data *data, struct Lava_output *outpu
 	}
 
 	if (data->verbose)
-		fprintf(stderr, " x-offset=%d y-offset=%d\n",
+		fprintf(stderr, "Centering bar x-offset=%d y-offset=%d\n",
 				output->bar_x_offset, output->bar_y_offset);
 }
 
-static void output_handle_geometry (void *raw_data,
-		struct wl_output *wl_output,
-		int32_t x, int32_t y,
-		int32_t phy_width, int32_t phy_height,
-		int32_t subpixel,
-		const char *make,
-		const char *model,
-		int32_t transform)
+static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
+		int32_t factor)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
-	struct Lava_data   *data   = output->data;
-	output->subpixel           = subpixel;
-	output->transform          = transform;
+	output->scale              = factor;
 
-	if (data->verbose)
-		fprintf(stderr, "Output update geometry model=%s make=%s"
-				" transform=%d\n",
-				model, make, transform); // TODO multimonitor configuration
-
-	update_bar_offset(data, output);
-
-	render_bar_frame(data, output);
-}
-
-static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
-		uint32_t flags, int32_t width, int32_t height, int32_t refresh)
-{
-	struct Lava_output *output = (struct Lava_output *)raw_data;
-	struct Lava_data   *data   = output->data;
-
-	if (data->verbose)
-		fprintf(stderr, "Output update mode w=%d h=%d"
-				" refresh=%d flags=%d\n",
-				width, height, refresh, flags);
-
-	output->w = width;
-	output->h = height;
-
-	update_bar_offset(data, output);
-
-	render_bar_frame(data, output);
-}
-
-static void output_handle_scale (void *raw_data, struct wl_output *wl_output, int32_t factor)
-{
-	struct Lava_output *output = (struct Lava_output *)raw_data;
-	struct Lava_data   *data   = output->data;
-	output->scale              = (int)factor;
-
-	if (data->verbose)
+	if (output->data->verbose)
 		fprintf(stderr, "Output update scale s=%d\n", output->scale);
 
-	render_bar_frame(data, output);
+	update_bar_offset(output->data, output);
+	render_bar_frame(output->data, output);
 }
 
 static const struct wl_output_listener output_listener = {
-	.geometry = output_handle_geometry,
-	.mode     = output_handle_mode,
-	.done     = noop,
-	.scale    = output_handle_scale
+	.scale    = output_handle_scale,
+	.geometry = noop,
+	.mode     = noop,
+	.done     = noop
 };
 
-static void registry_handle_global (void *raw_data,
-		struct wl_registry *registry,
-		uint32_t name,
-		const char *interface,
-		uint32_t version)
+static void xdg_output_handle_logical_size (void *raw_data,
+		struct zxdg_output_v1 *xdg_output, int32_t w, int32_t h)
+{
+	struct Lava_output *output = (struct Lava_output *)raw_data;
+	output->w                  = w;
+	output->h                  = h;
+
+	if (output->data->verbose)
+		fprintf(stderr, "XDG-Output update logical size w=%d h=%d\n",
+				w, h);
+
+	update_bar_offset(output->data, output);
+	render_bar_frame(output->data, output);
+}
+
+static void xdg_output_handle_logical_position (void *raw_data,
+		struct zxdg_output_v1 *xdg_output, int32_t x, int32_t y)
+{
+	struct Lava_output *output = (struct Lava_output *)raw_data;
+	output->x                  = x;
+	output->y                  = y;
+
+	if (output->data->verbose)
+		fprintf(stderr, "XDG-Output update logical position x=%d y=%d\n",
+				x, y);
+
+	update_bar_offset(output->data, output);
+	render_bar_frame(output->data, output);
+}
+
+static const struct zxdg_output_v1_listener xdg_output_listener = {
+	.logical_position = xdg_output_handle_logical_position,
+	.logical_size     = xdg_output_handle_logical_size,
+	.description      = noop,
+	.name             = noop,
+	.done             = noop
+};
+
+static void registry_handle_global (void *raw_data, struct wl_registry *registry,
+		uint32_t name, const char *interface, uint32_t version)
 {
 	struct Lava_data *data = (struct Lava_data *)raw_data;
 
@@ -501,38 +487,37 @@ static void registry_handle_global (void *raw_data,
 	{
 		if (data->verbose)
 			fputs("Get wl_compositor.\n", stderr);
-		data->compositor = wl_registry_bind(registry,
-				name,
-				&wl_compositor_interface,
-				4);
+		data->compositor = wl_registry_bind(registry, name,
+				&wl_compositor_interface, 4);
 	}
 	else if (! strcmp(interface, wl_shm_interface.name))
 	{
 		if (data->verbose)
 			fputs("Get wl_shm.\n", stderr);
-		data->shm = wl_registry_bind(registry,
-				name,
-				&wl_shm_interface,
-				1);
+		data->shm = wl_registry_bind(registry, name,
+				&wl_shm_interface, 1);
 	}
 	else if (! strcmp(interface, zwlr_layer_shell_v1_interface.name))
 	{
 		if (data->verbose)
 			fputs("Get zwlr_layer_shell_v1.\n", stderr);
-		data->layer_shell = wl_registry_bind(registry,
-				name,
-				&zwlr_layer_shell_v1_interface,
-				1);
+		data->layer_shell = wl_registry_bind(registry, name,
+				&zwlr_layer_shell_v1_interface, 1);
+	}
+	else if (! strcmp(interface, zxdg_output_manager_v1_interface.name))
+	{
+		if (data->verbose)
+			fputs("Get zxdg_output_manager_v1.\n", stderr);
+		data->xdg_output_manager = wl_registry_bind(registry, name,
+				&zxdg_output_manager_v1_interface, 2);
 	}
 	else if (! strcmp(interface, wl_seat_interface.name))
 	{
 		if (data->verbose)
 			fputs("Adding seat.\n", stderr);
 
-		struct wl_seat *wl_seat = wl_registry_bind(registry,
-				name,
-				&wl_seat_interface,
-				3);
+		struct wl_seat *wl_seat = wl_registry_bind(registry, name,
+				&wl_seat_interface, 3);
 		struct Lava_seat *seat = calloc(1, sizeof(struct Lava_seat));
 		if ( seat == NULL )
 		{
@@ -562,21 +547,25 @@ static void registry_handle_global (void *raw_data,
 		output->data        = data;
 		output->global_name = name;
 		output->wl_output   = wl_output;
+		output->xdg_output  = zxdg_output_manager_v1_get_xdg_output(
+				data->xdg_output_manager, output->wl_output);
 		output->scale       = 1;
-		output->transform   = 0;
+		output->x           = 0;
+		output->y           = 0;
 		output->w           = 0;
 		output->h           = 0;
 		output->configured  = false;
 		wl_list_insert(&data->outputs, &output->link);
 		wl_output_set_user_data(wl_output, output);
 		wl_output_add_listener(wl_output, &output_listener, output);
+		zxdg_output_v1_add_listener(output->xdg_output,
+				&xdg_output_listener, output);
 		create_bar(data, output);
 	}
 }
 
 static void registry_handle_global_remove (void *raw_data,
-		struct wl_registry *registry,
-		uint32_t name)
+		struct wl_registry *registry, uint32_t name)
 {
 	struct Lava_data   *data = (struct Lava_data *)raw_data;
 	struct Lava_output *op1, *op2;

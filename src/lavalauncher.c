@@ -70,6 +70,7 @@ static void layer_surface_handle_configure (void *raw_data,
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	struct Lava_data   *data   = output->data;
+	output->configured         = true;
 
 	if (data->verbose)
 		fprintf(stderr, "Layer surface configure request"
@@ -388,6 +389,44 @@ static const struct wl_seat_listener seat_listener = {
 	.name         = noop
 };
 
+static void update_bar_offset (struct Lava_data *data, struct Lava_output *output)
+{
+	if ( data->mode != MODE_AGGRESSIVE && data->mode != MODE_FULL_CENTER )
+	{
+		output->bar_x_offset = 0;
+		output->bar_y_offset = 0;
+		return;
+	}
+
+	if (data->verbose)
+		fputs("Centering bar", stderr);
+
+	int32_t w = output->w, h = output->h;
+	if ( output->transform == 1 || output->transform == 3 )
+		w = output->h, h = output->w;
+
+	switch (data->position)
+	{
+		case POSITION_TOP:
+		case POSITION_BOTTOM:
+			output->bar_x_offset = (w / 2) - (data->w / 2);
+			break;
+
+		case POSITION_LEFT:
+		case POSITION_RIGHT:
+			output->bar_y_offset = (h / 2) - (data->h / 2);
+			break;
+
+		case POSITION_CENTER:
+			/* Will never be reached. */
+			break;
+	}
+
+	if (data->verbose)
+		fprintf(stderr, " x-offset=%d y-offset=%d\n",
+				output->bar_x_offset, output->bar_y_offset);
+}
+
 static void output_handle_geometry (void *raw_data,
 		struct wl_output *wl_output,
 		int32_t x, int32_t y,
@@ -400,10 +439,16 @@ static void output_handle_geometry (void *raw_data,
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	struct Lava_data   *data   = output->data;
 	output->subpixel           = subpixel;
+	output->transform          = transform;
 
 	if (data->verbose)
-		fprintf(stderr, "Output update geometry model=%s make=%s\n",
-				model, make); // TODO multimonitor configuration
+		fprintf(stderr, "Output update geometry model=%s make=%s"
+				" transform=%d\n",
+				model, make, transform); // TODO multimonitor configuration
+
+	update_bar_offset(data, output);
+
+	render_bar_frame(data, output);
 }
 
 static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
@@ -420,37 +465,9 @@ static void output_handle_mode (void *raw_data, struct wl_output *wl_output,
 	output->w = width;
 	output->h = height;
 
-	if ( data->mode == MODE_AGGRESSIVE || data->mode == MODE_FULL_CENTER )
-	{
-		if (data->verbose)
-			fputs("Centering bar", stderr);
+	update_bar_offset(data, output);
 
-		switch (data->position)
-		{
-			case POSITION_TOP:
-			case POSITION_BOTTOM:
-				output->bar_x_offset = (width / 2) - (data->w / 2);
-				break;
-
-			case POSITION_LEFT:
-			case POSITION_RIGHT:
-				output->bar_y_offset = (height / 2) - (data->h / 2);
-				break;
-
-			case POSITION_CENTER:
-				/* Will never be reached. */
-				break;
-		}
-
-		if (data->verbose)
-			fprintf(stderr, " x-offset=%d y-offset=%d\n",
-					output->bar_x_offset, output->bar_y_offset);
-	}
-	else
-	{
-		output->bar_x_offset = 0;
-		output->bar_y_offset = 0;
-	}
+	render_bar_frame(data, output);
 }
 
 static void output_handle_scale (void *raw_data, struct wl_output *wl_output, int32_t factor)
@@ -461,6 +478,8 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output, in
 
 	if (data->verbose)
 		fprintf(stderr, "Output update scale s=%d\n", output->scale);
+
+	render_bar_frame(data, output);
 }
 
 static const struct wl_output_listener output_listener = {
@@ -544,6 +563,10 @@ static void registry_handle_global (void *raw_data,
 		output->global_name = name;
 		output->wl_output   = wl_output;
 		output->scale       = 1;
+		output->transform   = 0;
+		output->w           = 0;
+		output->h           = 0;
+		output->configured  = false;
 		wl_list_insert(&data->outputs, &output->link);
 		wl_output_set_user_data(wl_output, output);
 		wl_output_add_listener(wl_output, &output_listener, output);

@@ -42,7 +42,7 @@
 
 #define SHELL "/bin/sh"
 
-static const char usage[] = "LavaLauncher -- Version 1.0\n\n"
+static const char usage[] = "LavaLauncher -- Version 1.1\n\n"
                             "Usage: lavalauncher [options...]\n\n"
                             "  -b <path> <command>                      Add a button.\n"
                             "  -c <colour>                              Background colour.\n"
@@ -796,7 +796,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (data.verbose)
-		fputs("LavaLauncher Version 1.0\n", stderr);
+		fputs("LavaLauncher Version 1.1\n", stderr);
 
 	/* Calculating the size of the bar. At the "docking" edge no border will
 	 * be drawn.

@@ -89,6 +89,8 @@ struct Lava_output
 //	struct zxdg_output_v1         *xdg_output;
 	char                          *name;
 	enum wl_output_subpixel        subpixel;
+	int32_t                        transform;
+	bool                           configured;
 	int32_t                        scale;
 	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;

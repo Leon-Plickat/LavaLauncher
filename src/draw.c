@@ -321,6 +321,9 @@ static void cairo_draw_bar (cairo_t *cairo, struct Lava_data *data,
 
 void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 {
+	if (! output->configured)
+		return;
+
 	if (data->verbose)
 		fputs("Rendering bar frame.\nPreparing buffer.\n", stderr);
 

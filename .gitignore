@@ -6,5 +6,7 @@ lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h
 lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c
 lib/wayland-protocols/xdg-shell-client-protocol.h
 lib/wayland-protocols/xdg-shell-protocol.c
+lib/wayland-protocols/xdg-output-unstable-v1-client-protocol.h
+lib/wayland-protocols/xdg-output-unstable-v1-protocol.c
 lavalauncher
 doc/lavalauncher.1

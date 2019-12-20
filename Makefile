@@ -45,6 +45,14 @@ lib/wayland-protocols/xdg-shell-protocol.c:
 	@echo Generating $@
 	$(WAYLAND_SCANNER) private-code $(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
 
+lib/wayland-protocols/xdg-output-unstable-v1-client-protocol.h:
+	@echo Generating $@
+	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS)/unstable/xdg-output/xdg-output-unstable-v1.xml $@
+
+lib/wayland-protocols/xdg-output-unstable-v1-protocol.c:
+	@echo Generating $@
+	$(WAYLAND_SCANNER) private-code $(WAYLAND_PROTOCOLS)/unstable/xdg-output/xdg-output-unstable-v1.xml $@
+
 pool-buffer.o: lib/pool-buffer/pool-buffer.c lib/pool-buffer/pool-buffer.h
 	@echo Building $@
 	$(CC) $(CFLAGS) -c $<
@@ -61,12 +69,14 @@ draw.o: src/draw.c src/draw.h
 lavalauncher.o: src/lavalauncher.c src/lavalauncher.h \
 	lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h \
 	lib/wayland-protocols/xdg-shell-client-protocol.h \
+	lib/wayland-protocols/xdg-output-unstable-v1-client-protocol.h \
 	lib/pool-buffer/pool-buffer.h
 	@echo Building $@
 	$(CC) $(CFLAGS) -c $<
 
 lavalauncher: lavalauncher.o pool-buffer.o config.o draw.o \
 	lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c \
+	lib/wayland-protocols/xdg-output-unstable-v1-protocol.c \
 	lib/wayland-protocols/xdg-shell-protocol.c
 	@echo Building $@
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
@@ -92,6 +102,8 @@ clean:
 		lib/wayland-protocols/wlr-layer-shell-unstable-v1-protocol.c \
 		lib/wayland-protocols/xdg-shell-client-protocol.h \
 		lib/wayland-protocols/xdg-shell-protocol.c \
+		lib/wayland-protocols/xdg-output-unstable-v1-client-protocol.h \
+		lib/wayland-protocols/xdg-output-unstable-v1-protocol.c \
 		pool-buffer.o \
 		lavalauncher.o \
 		config.o \

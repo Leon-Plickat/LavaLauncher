@@ -23,6 +23,7 @@
 #include<stdbool.h>
 
 #include"wlr-layer-shell-unstable-v1-client-protocol.h"
+#include"xdg-output-unstable-v1-client-protocol.h"
 #include"pool-buffer.h"
 
 enum Bar_orientation
@@ -55,7 +56,7 @@ struct Lava_data
 	struct wl_compositor          *compositor;
 	struct wl_shm                 *shm;
 	struct zwlr_layer_shell_v1    *layer_shell;
-	//struct zxdg_output_manager_v1 *xdg_output_manager; // TODO ??? XXX
+	struct zxdg_output_manager_v1 *xdg_output_manager;
 
 	int32_t scale;
 
@@ -86,16 +87,16 @@ struct Lava_output
 	struct Lava_data              *data;
 	uint32_t                       global_name;
 	struct wl_output              *wl_output;
-//	struct zxdg_output_v1         *xdg_output;
+	struct zxdg_output_v1         *xdg_output;
 	char                          *name;
-	enum wl_output_subpixel        subpixel;
-	int32_t                        transform;
 	bool                           configured;
 	int32_t                        scale;
 	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;
-	int                            w;
-	int                            h;
+	int32_t                        x;
+	int32_t                        y;
+	int32_t                        w;
+	int32_t                        h;
 
 	int      bar_y_offset;
 	int      bar_x_offset;

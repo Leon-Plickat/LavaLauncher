@@ -12,7 +12,7 @@ edges or in the center.
 Configuration is done entirely via command flags. See the manpage for details
 and an example.
 
-LavaLauncher been successfully tested with [sway](https://github.com/swaywm/sway)
+LavaLauncher has been successfully tested with [sway](https://github.com/swaywm/sway)
 and [wayfire](https://github.com/WayfireWM/wayfire).
 
 

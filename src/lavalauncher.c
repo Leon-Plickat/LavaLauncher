@@ -455,24 +455,9 @@ static void xdg_output_handle_logical_size (void *raw_data,
 	render_bar_frame(output->data, output);
 }
 
-static void xdg_output_handle_logical_position (void *raw_data,
-		struct zxdg_output_v1 *xdg_output, int32_t x, int32_t y)
-{
-	struct Lava_output *output = (struct Lava_output *)raw_data;
-	output->x                  = x;
-	output->y                  = y;
-
-	if (output->data->verbose)
-		fprintf(stderr, "XDG-Output update logical position x=%d y=%d\n",
-				x, y);
-
-	update_bar_offset(output->data, output);
-	render_bar_frame(output->data, output);
-}
-
 static const struct zxdg_output_v1_listener xdg_output_listener = {
-	.logical_position = xdg_output_handle_logical_position,
 	.logical_size     = xdg_output_handle_logical_size,
+	.logical_position = noop,
 	.description      = noop,
 	.name             = noop,
 	.done             = noop
@@ -550,8 +535,6 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		output->xdg_output  = zxdg_output_manager_v1_get_xdg_output(
 				data->xdg_output_manager, output->wl_output);
 		output->scale       = 1;
-		output->x           = 0;
-		output->y           = 0;
 		output->w           = 0;
 		output->h           = 0;
 		output->configured  = false;

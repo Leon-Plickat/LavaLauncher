@@ -93,8 +93,6 @@ struct Lava_output
 	int32_t                        scale;
 	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;
-	int32_t                        x;
-	int32_t                        y;
 	int32_t                        w;
 	int32_t                        h;
 

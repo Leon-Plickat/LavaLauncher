@@ -34,6 +34,7 @@ void sensible_defaults (struct Lava_data *data)
 	data->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 	data->bar_width         = 80;
 	data->border_width      = 2;
+	data->margin            = 0;
 	data->bar_colour[0]     = 0.0f;
 	data->bar_colour[1]     = 0.0f;
 	data->bar_colour[2]     = 0.0f;
@@ -126,6 +127,17 @@ void config_set_position(struct Lava_data *data, const char *arg)
 		fputs("Possible positions are 'top', 'right',"
 				"'bottom','left' and 'center'.\n",
 				stderr);
+		exit(EXIT_FAILURE);
+	}
+}
+
+void config_set_margin (struct Lava_data *data, const char *arg)
+{
+	data->margin = atoi(arg);
+
+	if ( data->margin < 0 )
+	{
+		fputs("Margin must be zero or greater.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }

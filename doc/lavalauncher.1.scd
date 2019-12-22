@@ -83,6 +83,13 @@ events to them.
 	The 'full-center' mode works just like the 'full' mode, with the
 	difference that the icons will be centered.
 
+*-M <size>*
+	Margin from the screen edge the bar is docked to in pixels.
+
+	The margin is ignored when the position is 'center'.
+
+	The default is 0.
+
 *-p <top|right|bottom|left|center>*
 	Position of the bar.
 

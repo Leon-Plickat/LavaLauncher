@@ -50,6 +50,7 @@ static const char usage[] = "LavaLauncher -- Version 1.1\n\n"
                             "  -h                                       Display this help text and exit.\n"
                             "  -l <overlay|top|bottom|background>       Layer of the bar surface.\n"
                             "  -m <default|aggressive|full|full-center> Display mode of bar.\n"
+                            "  -M <size>                                Margin to screen edge.\n"
                             "  -p <top|bottom|left|right|center>        Position of the bar.\n"
                             "  -s <size>                                Width of the bar.\n"
                             "  -S <size>                                Width of the border.\n"
@@ -158,6 +159,8 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->h);
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					data->margin, 0, 0, 0);
 			break;
 
 		case POSITION_RIGHT:
@@ -169,6 +172,8 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->w);
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					0, data->margin, 0, 0);
 			break;
 
 		case POSITION_BOTTOM:
@@ -180,6 +185,8 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->h);
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					0, 0, data->margin, 0);
 			break;
 
 		case POSITION_LEFT:
@@ -191,9 +198,13 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 					data->w);
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					0, 0, 0, data->margin);
 			break;
 
 		case POSITION_CENTER:
+			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+					-1);
 			break;
 	}
 
@@ -752,7 +763,7 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
-	for (int c; (c = getopt(argc, argv, "b:l:m:p:s:S:c:C:hv")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "b:l:m:M:p:s:S:c:C:hv")) != -1 ;)
 		switch (c)
 		{
 			/* Weirdly formatted for readability. */
@@ -761,6 +772,7 @@ int main (int argc, char *argv[])
 			case 'b': config_add_button        (&data, argv[optind-1], argv[optind]); optind++; break;
 			case 'l': config_set_layer         (&data, optarg); break;
 			case 'm': config_set_mode          (&data, optarg); break;
+			case 'M': config_set_margin        (&data, optarg); break;
 			case 'p': config_set_position      (&data, optarg); break;
 			case 's': config_set_bar_size      (&data, optarg); break;
 			case 'S': config_set_border_size   (&data, optarg); break;
@@ -791,6 +803,8 @@ int main (int argc, char *argv[])
 			data.w = (uint32_t)(data.bar_width + data.border_width);
 			data.h = (uint32_t)((data.button_amount * data.bar_width)
 					+ (2 * data.border_width));
+			if (data.margin)
+				data.w += data.border_width;
 			break;
 
 		case POSITION_TOP:
@@ -798,6 +812,8 @@ int main (int argc, char *argv[])
 			data.w = (uint32_t)((data.button_amount * data.bar_width)
 					+ (2 * data.border_width));
 			data.h = (uint32_t)(data.bar_width + data.border_width);
+			if (data.margin)
+				data.h += data.border_width;
 			break;
 
 		case POSITION_CENTER:

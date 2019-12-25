@@ -1,5 +1,4 @@
 # Todo
 * Additional 'return' command that causes LavaLauncher to exit with a given number,
   which might be interesting for scripting
-* Different background when hovering over icon
 * Check if scale is correctly implemented

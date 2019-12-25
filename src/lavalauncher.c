@@ -258,13 +258,39 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 		fputs("Pointer left surface.\n", stderr);
 }
 
-static void pointer_motion (struct Lava_seat *seat, wl_fixed_t x, wl_fixed_t y)
+static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
+		uint32_t serial, struct wl_surface *surface,
+		wl_fixed_t x, wl_fixed_t y)
 {
+	struct Lava_seat *seat = data;
+
+	seat->pointer.output = NULL;
+	struct Lava_output *op1, *op2;
+	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
+	{
+		if ( op1->wl_surface == surface )
+			seat->pointer.output = op1;
+	}
+
 	seat->pointer.x = wl_fixed_to_int(x);
 	seat->pointer.y = wl_fixed_to_int(y);
 
-	//struct Lava_button *old_button = seat->pointer.button;
+	if (seat->data->verbose)
+		fprintf(stderr, "Pointer entered surface x=%d y=%d\n",
+				seat->pointer.x, seat->pointer.y);
+}
 
+static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
+		uint32_t time, wl_fixed_t x, wl_fixed_t y)
+{
+	struct Lava_seat *seat = data;
+
+	seat->pointer.x = wl_fixed_to_int(x);
+	seat->pointer.y = wl_fixed_to_int(y);
+}
+
+static void pointer_update_button (struct Lava_seat *seat, wl_fixed_t x, wl_fixed_t y)
+{
 	switch (seat->data->position)
 	{
 		case POSITION_TOP:
@@ -282,38 +308,6 @@ static void pointer_motion (struct Lava_seat *seat, wl_fixed_t x, wl_fixed_t y)
 					ORIENTATION_VERTICAL);
 			break;
 	}
-
-	// TODO draw highlighting
-	//if ( old_button != seat->pointer.button )
-	//	render_bar_frame(seat->data, seat->pointer.output);
-}
-
-static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
-		uint32_t serial, struct wl_surface *surface,
-		wl_fixed_t surface_x, wl_fixed_t surface_y)
-{
-	struct Lava_seat *seat = data;
-
-	seat->pointer.output = NULL;
-	struct Lava_output *op1, *op2;
-	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
-	{
-		if ( op1->wl_surface == surface )
-			seat->pointer.output = op1;
-	}
-
-	pointer_motion(seat, surface_x, surface_y);
-
-	if (seat->data->verbose)
-		fprintf(stderr, "Pointer entered surface x=%d y=%d\n",
-				seat->pointer.x, seat->pointer.y);
-}
-
-static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
-		uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y)
-{
-	struct Lava_seat *seat = data;
-	pointer_motion(seat, surface_x, surface_y);
 }
 
 static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer,
@@ -326,6 +320,8 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 
 	if (seat->data->verbose)
 		fprintf(stderr, "Click! x=%d y=%d", seat->pointer.x, seat->pointer.y);
+
+	pointer_update_button(seat, seat->pointer.x, seat->pointer.y);
 
 	if ( seat->pointer.button == NULL )
 	{

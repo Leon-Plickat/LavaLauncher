@@ -52,8 +52,8 @@ static const char usage[] = "LavaLauncher -- Version 1.1\n\n"
                             "  -m <default|aggressive|full|full-center> Display mode of bar.\n"
                             "  -M <size>                                Margin to screen edge.\n"
                             "  -p <top|bottom|left|right|center>        Position of the bar.\n"
-                            "  -s <size>                                Width of the bar.\n"
-                            "  -S <size>                                Width of the border.\n"
+                            "  -s <size>                                Icon size.\n"
+                            "  -S <size>                                Border size.\n"
                             "  -v                                       Verbose output.\n\n"
                             "Buttons are displayed in the order in which they are declared.\n"
                             "Commands will be executed with sh(1).\n"
@@ -231,7 +231,7 @@ static struct Lava_button *button_from_ordinate (struct Lava_data *data,
 {
 	int pre_button_zone = 0;
 	if ( data->mode == MODE_DEFAULT || data->mode == MODE_AGGRESSIVE )
-		pre_button_zone += data->border_width;
+		pre_button_zone += data->border_size;
 	if ( orientation == ORIENTATION_HORIZONTAL )
 		pre_button_zone += output->bar_x_offset;
 	else
@@ -241,7 +241,7 @@ static struct Lava_button *button_from_ordinate (struct Lava_data *data,
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
 	{
-		i += data->bar_width;
+		i += data->icon_size;
 		if ( ordinate < i && ordinate >= pre_button_zone)
 			return bt_1;
 	}
@@ -774,7 +774,7 @@ int main (int argc, char *argv[])
 			case 'm': config_set_mode          (&data, optarg); break;
 			case 'M': config_set_margin        (&data, optarg); break;
 			case 'p': config_set_position      (&data, optarg); break;
-			case 's': config_set_bar_size      (&data, optarg); break;
+			case 's': config_set_icon_size     (&data, optarg); break;
 			case 'S': config_set_border_size   (&data, optarg); break;
 			case 'c': config_set_bar_colour    (&data, optarg); break;
 			case 'C': config_set_border_colour (&data, optarg); break;
@@ -800,27 +800,27 @@ int main (int argc, char *argv[])
 	{
 		case POSITION_LEFT:
 		case POSITION_RIGHT:
-			data.w = (uint32_t)(data.bar_width + data.border_width);
-			data.h = (uint32_t)((data.button_amount * data.bar_width)
-					+ (2 * data.border_width));
+			data.w = (uint32_t)(data.icon_size + data.border_size);
+			data.h = (uint32_t)((data.button_amount * data.icon_size)
+					+ (2 * data.border_size));
 			if (data.margin)
-				data.w += data.border_width;
+				data.w += data.border_size;
 			break;
 
 		case POSITION_TOP:
 		case POSITION_BOTTOM:
-			data.w = (uint32_t)((data.button_amount * data.bar_width)
-					+ (2 * data.border_width));
-			data.h = (uint32_t)(data.bar_width + data.border_width);
+			data.w = (uint32_t)((data.button_amount * data.icon_size)
+					+ (2 * data.border_size));
+			data.h = (uint32_t)(data.icon_size + data.border_size);
 			if (data.margin)
-				data.h += data.border_width;
+				data.h += data.border_size;
 			break;
 
 		case POSITION_CENTER:
 			data.mode = MODE_DEFAULT;
-			data.w = (uint32_t)((data.button_amount * data.bar_width)
-					+ (2 * data.border_width));
-			data.h = (uint32_t)(data.bar_width + (2 * data.border_width));
+			data.w = (uint32_t)((data.button_amount * data.icon_size)
+					+ (2 * data.border_size));
+			data.h = (uint32_t)(data.icon_size + (2 * data.border_size));
 			break;
 	}
 

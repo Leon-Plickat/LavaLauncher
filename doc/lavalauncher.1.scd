@@ -102,13 +102,9 @@ events to them.
 	The default position is 'bottom'.
 
 *-s <size>*
-	Size of the bar in pixels.
+	Size of the icons in pixels.
 
-	Size in this case is the height of the bar orthogonal to the screen edge
-	it is anchored to. All icons will be drawn as squares with the bar size
-	as width and height.
-
-	The default bar size is 80;
+	The default icon size is 80;
 
 *-S <size>*
 	Size of the border in pixels.

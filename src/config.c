@@ -31,10 +31,12 @@
 void sensible_defaults (struct Lava_data *data)
 {
 	data->position         = POSITION_BOTTOM;
+	data->mode             = MODE_DEFAULT;
 	data->layer            = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 	data->icon_size        = 80;
 	data->border_size      = 2;
 	data->margin           = 0;
+	data->verbose          = false;
 	data->bar_colour[0]    = 0.0f;
 	data->bar_colour[1]    = 0.0f;
 	data->bar_colour[2]    = 0.0f;
@@ -43,8 +45,6 @@ void sensible_defaults (struct Lava_data *data)
 	data->border_colour[1] = 1.0f;
 	data->border_colour[2] = 1.0f;
 	data->border_colour[3] = 1.0f;
-	data->verbose          = false;
-	data->mode             = MODE_DEFAULT;
 }
 
 static void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
@@ -53,8 +53,7 @@ static void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, fl
 
 	if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a) )
 	{
-		fputs("Colour codes are expected to use the format #RRGGBBAA\n",
-				stderr);
+		fputs("Colour codes are expected to use the format #RRGGBBAA\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -85,8 +84,7 @@ void config_set_layer(struct Lava_data *data, const char *arg)
 	else
 	{
 		fputs("Possible layers are 'overlay', 'top',"
-				"'bottom' and 'background'.\n",
-				stderr);
+				"'bottom' and 'background'.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -104,8 +102,7 @@ void config_set_mode(struct Lava_data *data, const char *arg)
 	else
 	{
 		fputs("Possible modes are 'default', 'aggressive',"
-				"'full' and 'full-center'.\n",
-				stderr);
+				"'full' and 'full-center'.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -125,8 +122,7 @@ void config_set_position(struct Lava_data *data, const char *arg)
 	else
 	{
 		fputs("Possible positions are 'top', 'right',"
-				"'bottom','left' and 'center'.\n",
-				stderr);
+				"'bottom','left' and 'center'.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -159,8 +155,7 @@ void config_set_border_size(struct Lava_data *data, const char *arg)
 
 	if ( data->border_size < 0 )
 	{
-		fputs("Border size must be equal to or greater than zero.\n",
-				stderr);
+		fputs("Border size must be equal to or greater than zero.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -173,11 +168,8 @@ void config_set_bar_colour(struct Lava_data *data, const char *arg)
 		exit(EXIT_FAILURE);
 	}
 
-	hex_to_rgba(arg,
-			&(data->bar_colour[0]),
-			&(data->bar_colour[1]),
-			&(data->bar_colour[2]),
-			&(data->bar_colour[3]));
+	hex_to_rgba(arg, &(data->bar_colour[0]), &(data->bar_colour[1]),
+			&(data->bar_colour[2]), &(data->bar_colour[3]));
 }
 
 void config_set_border_colour(struct Lava_data *data, const char *arg)
@@ -188,10 +180,7 @@ void config_set_border_colour(struct Lava_data *data, const char *arg)
 		exit(EXIT_FAILURE);
 	}
 
-	hex_to_rgba(arg,
-			&(data->border_colour[0]),
-			&(data->border_colour[1]),
-			&(data->border_colour[2]),
-			&(data->border_colour[3]));
+	hex_to_rgba(arg, &(data->border_colour[0]), &(data->border_colour[1]),
+			&(data->border_colour[2]), &(data->border_colour[3]));
 }
 

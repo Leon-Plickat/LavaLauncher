@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#define VERSION "1.2"
+
 #define _POSIX_C_SOURCE 200112L
 #include<stdio.h>
 #include<stdlib.h>
@@ -42,7 +44,7 @@
 
 #define SHELL "/bin/sh"
 
-static const char usage[] = "LavaLauncher -- Version 1.1\n\n"
+static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n\n"
                             "  -b <path> <command>                      Add a button.\n"
                             "  -c <colour>                              Background colour.\n"
@@ -98,8 +100,7 @@ static void layer_surface_handle_configure (void *raw_data,
 		}
 
 	if (data->verbose)
-		fprintf(stderr, "Resizing surface w=%d h=%d\n",
-				width, height);
+		fprintf(stderr, "Resizing surface w=%d h=%d\n", width, height);
 
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
@@ -135,11 +136,8 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	}
 
 	output->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-			data->layer_shell,
-			output->wl_surface,
-			output->wl_output,
-			data->layer,
-			"LavaLauncher");
+			data->layer_shell, output->wl_surface,
+			output->wl_output, data->layer, "LavaLauncher");
 	if ( output->layer_surface == NULL )
 	{
 		fputs("Compositor did not create layer_surface.\n", stderr);
@@ -203,8 +201,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 			break;
 
 		case POSITION_CENTER:
-			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					-1);
+			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface, -1);
 			break;
 	}
 
@@ -266,7 +263,7 @@ static void pointer_motion (struct Lava_seat *seat, wl_fixed_t x, wl_fixed_t y)
 	seat->pointer.x = wl_fixed_to_int(x);
 	seat->pointer.y = wl_fixed_to_int(y);
 
-	struct Lava_button *old_button = seat->pointer.button;
+	//struct Lava_button *old_button = seat->pointer.button;
 
 	switch (seat->data->position)
 	{
@@ -274,16 +271,14 @@ static void pointer_motion (struct Lava_seat *seat, wl_fixed_t x, wl_fixed_t y)
 		case POSITION_BOTTOM:
 		case POSITION_CENTER:
 			seat->pointer.button = button_from_ordinate(seat->data,
-					seat->pointer.output,
-					seat->pointer.x,
+					seat->pointer.output, seat->pointer.x,
 					ORIENTATION_HORIZONTAL);
 			break;
 
 		case POSITION_LEFT:
 		case POSITION_RIGHT:
 			seat->pointer.button = button_from_ordinate(seat->data,
-					seat->pointer.output,
-					seat->pointer.y,
+					seat->pointer.output, seat->pointer.y,
 					ORIENTATION_VERTICAL);
 			break;
 	}
@@ -299,18 +294,13 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 {
 	struct Lava_seat *seat = data;
 
+	seat->pointer.output = NULL;
 	struct Lava_output *op1, *op2;
 	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
 	{
 		if ( op1->wl_surface == surface )
-		{
 			seat->pointer.output = op1;
-			goto handle_motion;
-		}
 	}
-	seat->pointer.output = NULL;
-
-handle_motion:
 
 	pointer_motion(seat, surface_x, surface_y);
 
@@ -327,8 +317,7 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 }
 
 static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer,
-		uint32_t serial, uint32_t time, uint32_t button,
-		uint32_t button_state)
+		uint32_t serial, uint32_t time, uint32_t button, uint32_t button_state)
 {
 	struct Lava_seat *seat = raw_data;
 
@@ -336,8 +325,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		return;
 
 	if (seat->data->verbose)
-		fprintf(stderr, "Click! x=%d y=%d",
-				seat->pointer.x, seat->pointer.y);
+		fprintf(stderr, "Click! x=%d y=%d", seat->pointer.x, seat->pointer.y);
 
 	if ( seat->pointer.button == NULL )
 	{
@@ -363,8 +351,7 @@ static const struct wl_pointer_listener pointer_listener = {
 	.axis   = noop
 };
 
-static void seat_handle_capabilities (void *raw_data,
-		struct wl_seat *wl_seat,
+static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 		uint32_t capabilities)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
@@ -383,16 +370,14 @@ static void seat_handle_capabilities (void *raw_data,
 	{
 		seat->pointer.wl_pointer = wl_seat_get_pointer(wl_seat);
 		wl_pointer_add_listener(seat->pointer.wl_pointer,
-				&pointer_listener,
-				seat);
+				&pointer_listener, seat);
 		if (data->verbose)
 			fputs("Seat has WL_SEAT_CAPABILITY_POINTER.\n", stderr);
 	}
 	else
 		fputs("Compositor seat does not have pointer capabilities.\n"
 				"You will not be able to click on icons.\n"
-				"Continuing anyway.\n",
-				stderr);
+				"Continuing anyway.\n", stderr);
 }
 
 static const struct wl_seat_listener seat_listener = {
@@ -530,10 +515,8 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		if (data->verbose)
 			fputs("Adding output.\n", stderr);
 
-		struct wl_output *wl_output = wl_registry_bind(registry,
-				name,
-				&wl_output_interface,
-				3);
+		struct wl_output *wl_output = wl_registry_bind(registry, name,
+				&wl_output_interface, 3);
 		struct Lava_output *output = calloc(1, sizeof(struct Lava_output));
 		if ( output == NULL )
 		{
@@ -619,9 +602,7 @@ static void init_wayland (struct Lava_data *data)
 		fputs("Can not get registry.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-	wl_registry_add_listener(data->registry,
-			&registry_listener,
-			data);
+	wl_registry_add_listener(data->registry, &registry_listener, data);
 
 	if ( wl_display_roundtrip(data->display) == -1 )
 	{
@@ -692,8 +673,7 @@ static void deinit_wayland (struct Lava_data *data)
 
 	if (data->verbose)
 		fputs("Destroying wlr_layer_shell_v1, wl_compositor,"
-				"wl_shm and wl_registry.\n",
-				stderr);
+				"wl_shm and wl_registry.\n", stderr);
 
 	zwlr_layer_shell_v1_destroy(data->layer_shell);
 	wl_compositor_destroy(data->compositor);
@@ -725,8 +705,7 @@ static void main_loop (struct Lava_data *data)
 		{
 			if ( wl_display_flush(data->display) == -1  && errno != EAGAIN )
 			{
-				fprintf(stderr, "wl_display_flush: %s\n",
-						strerror(errno));
+				fprintf(stderr, "wl_display_flush: %s\n", strerror(errno));
 				break;
 			}
 		} while ( errno == EAGAIN );
@@ -741,14 +720,12 @@ static void main_loop (struct Lava_data *data)
 		/* Handle event. */
 		if ( fds.revents & POLLIN && wl_display_dispatch(data->display) == -1 )
 		{
-			fprintf(stderr, "wl_display_dispatch: %s\n",
-					strerror(errno));
+			fprintf(stderr, "wl_display_dispatch: %s\n", strerror(errno));
 			break;
 		}
 		if ( fds.revents & POLLOUT && wl_display_flush(data->display) == -1 )
 		{
-			fprintf(stderr, "wl_display_flush: %s\n",
-					strerror(errno));
+			fprintf(stderr, "wl_display_flush: %s\n", strerror(errno));
 			break;
 		}
 	}
@@ -791,7 +768,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (data.verbose)
-		fputs("LavaLauncher Version 1.1\n", stderr);
+		fputs("LavaLauncher Version "VERSION"\n", stderr);
 
 	/* Calculating the size of the bar. At the "docking" edge no border will
 	 * be drawn.
@@ -825,8 +802,8 @@ int main (int argc, char *argv[])
 	}
 
 	if (data.verbose)
-		fprintf(stderr, "Bar w=%d h=%d buttons=%d\n",
-				data.w, data.h, data.button_amount);
+		fprintf(stderr, "Bar w=%d h=%d buttons=%d\n", data.w, data.h,
+				data.button_amount);
 
 	init_wayland(&data);
 	main_loop(&data);

@@ -1,4 +1,4 @@
-lavalauncher(1) ["Version 1.1" ["19 December 2019"]]
+lavalauncher(1) ["Version 1.2" ["19 December 2019"]]
 
 # NAME
 

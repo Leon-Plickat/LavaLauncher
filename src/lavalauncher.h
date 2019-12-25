@@ -70,8 +70,8 @@ struct Lava_data
 
 	enum Bar_position position;
 	enum Bar_mode     mode;
-	int               bar_width;
-	int               border_width;
+	int               icon_size;
+	int               border_size;
 	int               margin;
 	float             bar_colour[4];
 	float             border_colour[4];

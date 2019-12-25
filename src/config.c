@@ -30,21 +30,21 @@
 
 void sensible_defaults (struct Lava_data *data)
 {
-	data->position          = POSITION_BOTTOM;
-	data->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
-	data->bar_width         = 80;
-	data->border_width      = 2;
-	data->margin            = 0;
-	data->bar_colour[0]     = 0.0f;
-	data->bar_colour[1]     = 0.0f;
-	data->bar_colour[2]     = 0.0f;
-	data->bar_colour[3]     = 1.0f;
-	data->border_colour[0]  = 1.0f;
-	data->border_colour[1]  = 1.0f;
-	data->border_colour[2]  = 1.0f;
-	data->border_colour[3]  = 1.0f;
-	data->verbose           = false;
-	data->mode              = MODE_DEFAULT;
+	data->position         = POSITION_BOTTOM;
+	data->layer            = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
+	data->icon_size        = 80;
+	data->border_size      = 2;
+	data->margin           = 0;
+	data->bar_colour[0]    = 0.0f;
+	data->bar_colour[1]    = 0.0f;
+	data->bar_colour[2]    = 0.0f;
+	data->bar_colour[3]    = 1.0f;
+	data->border_colour[0] = 1.0f;
+	data->border_colour[1] = 1.0f;
+	data->border_colour[2] = 1.0f;
+	data->border_colour[3] = 1.0f;
+	data->verbose          = false;
+	data->mode             = MODE_DEFAULT;
 }
 
 static void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
@@ -142,24 +142,24 @@ void config_set_margin (struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_bar_size(struct Lava_data *data, const char *arg)
+void config_set_icon_size(struct Lava_data *data, const char *arg)
 {
-	data->bar_width = atoi(arg);
+	data->icon_size = atoi(arg);
 
-	if ( data->bar_width <= 0 )
+	if ( data->icon_size <= 0 )
 	{
-		fputs("Bar width must be greater than zero.\n", stderr);
+		fputs("Icon size must be greater than zero.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
 
 void config_set_border_size(struct Lava_data *data, const char *arg)
 {
-	data->border_width = atoi(arg);
+	data->border_size = atoi(arg);
 
-	if ( data->border_width < 0 )
+	if ( data->border_size < 0 )
 	{
-		fputs("Border width must be equal to or greater than zero.\n",
+		fputs("Border size must be equal to or greater than zero.\n",
 				stderr);
 		exit(EXIT_FAILURE);
 	}

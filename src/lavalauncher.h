@@ -58,8 +58,6 @@ struct Lava_data
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 
-	int32_t scale;
-
 	struct wl_list outputs;
 	struct wl_list seats;
 	struct wl_list buttons;
@@ -84,21 +82,23 @@ struct Lava_data
 
 struct Lava_output
 {
-	struct wl_list                 link;
-	struct Lava_data              *data;
-	uint32_t                       global_name;
-	struct wl_output              *wl_output;
-	struct zxdg_output_v1         *xdg_output;
-	char                          *name;
-	bool                           configured;
-	int32_t                        scale;
+	struct wl_list    link;
+	struct Lava_data *data;
+
+	struct wl_output      *wl_output;
+	struct zxdg_output_v1 *xdg_output;
+	char                  *name;
+	uint32_t               global_name;
+	int32_t                scale;
+	int32_t                w;
+	int32_t                h;
+	int32_t                bar_y_offset;
+	int32_t                bar_x_offset;
+
 	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;
-	int32_t                        w;
-	int32_t                        h;
+	bool                           configured;
 
-	int      bar_y_offset;
-	int      bar_x_offset;
 
 	struct pool_buffer  buffers[2];
 	struct pool_buffer *current_buffer;
@@ -108,7 +108,8 @@ struct Lava_seat
 {
 	struct wl_list    link;
 	struct Lava_data *data;
-	struct wl_seat   *wl_seat;
+
+	struct wl_seat *wl_seat;
 
 	struct
 	{

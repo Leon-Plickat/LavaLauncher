@@ -90,6 +90,12 @@ events to them.
 
 	The default is 0.
 
+*-o <name>*
+	Name of the output on which the bar should be displayed.
+
+	If this option is omitted, the bar will be displayed on all outputs,
+	which is also the default behaviour.
+
 *-p <top|right|bottom|left|center>*
 	Position of the bar.
 
@@ -116,7 +122,7 @@ events to them.
 
 
 # EXAMPLE
-lavalauncher -b "/home/leon/.config/icons/firefox.png" firefox -b "/home/leon/.config/icons/glenda.png" acme -p bottom -s 80 -c "#20202088"
+lavalauncher -b "~/icons/firefox.png" firefox -b "~/icons/glenda.png" acme -p bottom -s 80 -c "#20202088" -o eDP-1
 
 
 # BUGS

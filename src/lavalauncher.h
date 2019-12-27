@@ -19,7 +19,6 @@
 #ifndef LAVALAUNCHER_H
 #define LAVALAUNCHER_H
 
-#define _POSIX_C_SOURCE 200112L
 #include<stdbool.h>
 
 #include"wlr-layer-shell-unstable-v1-client-protocol.h"
@@ -66,15 +65,16 @@ struct Lava_data
 
 	enum zwlr_layer_shell_v1_layer layer;
 
-	enum Bar_position position;
-	enum Bar_mode     mode;
-	int               icon_size;
-	int               border_size;
-	int               margin;
-	float             bar_colour[4];
-	float             border_colour[4];
-	uint32_t          w;
-	uint32_t          h;
+	enum Bar_position  position;
+	enum Bar_mode      mode;
+	int                icon_size;
+	int                border_size;
+	int                margin;
+	char              *only_output;
+	float              bar_colour[4];
+	float              border_colour[4];
+	uint32_t           w;
+	uint32_t           h;
 
 	bool loop;
 	bool verbose;

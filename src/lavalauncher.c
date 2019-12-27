@@ -18,7 +18,6 @@
 
 #define VERSION "1.2"
 
-#define _POSIX_C_SOURCE 200112L
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
@@ -53,6 +52,7 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "  -l <overlay|top|bottom|background>       Layer of the bar surface.\n"
                             "  -m <default|aggressive|full|full-center> Display mode of bar.\n"
                             "  -M <size>                                Margin to screen edge.\n"
+                            "  -o <name>                                Name of the output.\n"
                             "  -p <top|bottom|left|right|center>        Position of the bar.\n"
                             "  -s <size>                                Icon size.\n"
                             "  -S <size>                                Border size.\n"
@@ -432,6 +432,21 @@ static const struct wl_output_listener output_listener = {
 	.done     = noop
 };
 
+static void xdg_output_handle_name (void *raw_data,
+		struct zxdg_output_v1 *xdg_output, const char *name)
+{
+	struct Lava_output *output = (struct Lava_output *)raw_data;
+	output->name               = strdup(name);
+
+	if (output->data->verbose)
+		fprintf(stderr, "XDG-Output update name name=%s\n",
+				name);
+
+	if ( output->data->only_output == NULL
+		|| ! strcmp(name, output->data->only_output) )
+		create_bar(output->data, output);
+}
+
 static void xdg_output_handle_logical_size (void *raw_data,
 		struct zxdg_output_v1 *xdg_output, int32_t w, int32_t h)
 {
@@ -449,9 +464,9 @@ static void xdg_output_handle_logical_size (void *raw_data,
 
 static const struct zxdg_output_v1_listener xdg_output_listener = {
 	.logical_size     = xdg_output_handle_logical_size,
+	.name             = xdg_output_handle_name,
 	.logical_position = noop,
 	.description      = noop,
-	.name             = noop,
 	.done             = noop
 };
 
@@ -533,7 +548,6 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		wl_output_add_listener(wl_output, &output_listener, output);
 		zxdg_output_v1_add_listener(output->xdg_output,
 				&xdg_output_listener, output);
-		create_bar(data, output);
 	}
 }
 
@@ -736,7 +750,7 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
-	for (int c; (c = getopt(argc, argv, "b:l:m:M:p:s:S:c:C:hv")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "b:l:m:M:o:p:s:S:c:C:hv")) != -1 ;)
 		switch (c)
 		{
 			/* Weirdly formatted for readability. */
@@ -746,6 +760,7 @@ int main (int argc, char *argv[])
 			case 'l': config_set_layer         (&data, optarg); break;
 			case 'm': config_set_mode          (&data, optarg); break;
 			case 'M': config_set_margin        (&data, optarg); break;
+			case 'o': data.only_output       = optarg;          break;
 			case 'p': config_set_position      (&data, optarg); break;
 			case 's': config_set_icon_size     (&data, optarg); break;
 			case 'S': config_set_border_size   (&data, optarg); break;

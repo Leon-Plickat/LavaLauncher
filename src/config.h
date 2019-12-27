@@ -19,8 +19,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define _POSIX_C_SOURCE 200112L
-
 #include"lavalauncher.h"
 
 void sensible_defaults (struct Lava_data *data);

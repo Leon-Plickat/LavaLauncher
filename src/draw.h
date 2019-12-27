@@ -19,7 +19,6 @@
 #ifndef DRAW_H
 #define DRAW_H
 
-#define _POSIX_C_SOURCE 200112L
 #include"lavalauncher.h"
 
 void render_bar_frame (struct Lava_data *data, struct Lava_output *output);

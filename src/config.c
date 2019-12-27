@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define _POSIX_C_SOURCE 200112L
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
@@ -37,6 +36,7 @@ void sensible_defaults (struct Lava_data *data)
 	data->border_size      = 2;
 	data->margin           = 0;
 	data->verbose          = false;
+	data->only_output      = NULL;
 	data->bar_colour[0]    = 0.0f;
 	data->bar_colour[1]    = 0.0f;
 	data->bar_colour[2]    = 0.0f;

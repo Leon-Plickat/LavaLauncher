@@ -12,7 +12,6 @@ LIBS=\
 	 -lrt
 
 CFLAGS=\
-       -std=c11 \
        -O2 \
        -Werror \
        -Wall \

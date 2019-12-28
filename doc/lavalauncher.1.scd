@@ -29,10 +29,9 @@ events to them.
 
 	*Command* is the shell command executed when the user clicks on the
 	button. If the given command is 'exit', LavaLauncher will exit.
-	LavaLauncher being able to close itself means that a user can launch
-	instances that are meant to be temporary, which opens up many
-	interesting possibilities, like having a main bar which launches smaller
-	bars as sub-menus.
+	LavaLauncher replaces '%buttons%' with the amount of buttons, '%icon-size%'
+	with the icon size and '%border-size%' with the border
+	size.
 
 	The buttons on the bar will be shown in the order in which they are
 	given by the user.

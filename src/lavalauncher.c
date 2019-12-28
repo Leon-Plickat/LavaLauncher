@@ -58,7 +58,7 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "  -S <size>                                Border size.\n"
                             "  -v                                       Verbose output.\n\n"
                             "Buttons are displayed in the order in which they are declared.\n"
-                            "Commands will be executed with sh(1).\n"
+                            "Commands will be executed with the system shell.\n"
                             "Colours are expected to be in the format #RRGGBBAA.\n"
                             "Sizes are expected to be in pixels.\n\n"
                             "You can send bug reports, contributions and user feedback to the mailinglist:\n"
@@ -212,14 +212,54 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	wl_surface_commit(output->wl_surface);
 }
 
-static void exec_cmd (const char *cmd)
+static void string_insert_int (char **str, char *srch, int repl, size_t size)
 {
-	if (! fork())
+	char  buffer[4096]; /* Local editing buffer. */
+	char *p;            /* Pointer to beginning of *srch. */
+
+	if (! (p = strstr(*str, srch)))
+		return;
+
+	/* Copy str to buffer, but only until p. */
+	strncpy(buffer, *str, p - *str);
+
+	/* Insert replacement int and rest of string. */
+	sprintf(buffer + (p - *str), "%d%s", repl, p + strlen(srch));
+
+	/* Copy buffer back to str. */
+	strncpy(*str, buffer, size);
+}
+
+static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
+		const char *cmd)
+{
+	int ret = fork();
+	errno   = 0;
+	if ( ret == 0 )
 	{
-		setsid();
-		execl(SHELL, SHELL, "-c", cmd, (char *)NULL);
+		errno = 0;
+		if ( setsid() == -1 )
+		{
+			fprintf(stderr, "setsid: %s\n", strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+
+		char *buffer = malloc(4096);
+		strncpy(buffer, cmd, 4096);
+
+		string_insert_int(&buffer, "%buttons%",     data->button_amount, 4096);
+		string_insert_int(&buffer, "%icon-size%",   data->icon_size, 4096);
+		string_insert_int(&buffer, "%border-size%", data->border_size, 4096);
+
+		if (data->verbose)
+			fprintf(stderr, "Executing cmd=%s\n", buffer);
+		system(buffer);
+
+		free(buffer);
 		exit(EXIT_SUCCESS);
 	}
+	else if ( ret < 0 )
+		fprintf(stderr, "fork: %s\n", strerror(errno));
 }
 
 static struct Lava_button *button_from_ordinate (struct Lava_data *data,
@@ -336,7 +376,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	if (! strcmp(seat->pointer.button->cmd, "exit"))
 		seat->data->loop = false;
 	else
-		exec_cmd(seat->pointer.button->cmd);
+		exec_cmd(seat->data, seat->pointer.output, seat->pointer.button->cmd);
 }
 
 static const struct wl_pointer_listener pointer_listener = {

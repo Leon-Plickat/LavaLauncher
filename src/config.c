@@ -29,22 +29,24 @@
 
 void sensible_defaults (struct Lava_data *data)
 {
-	data->position         = POSITION_BOTTOM;
-	data->mode             = MODE_DEFAULT;
-	data->layer            = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
-	data->icon_size        = 80;
-	data->border_size      = 2;
-	data->margin           = 0;
-	data->verbose          = false;
-	data->only_output      = NULL;
-	data->bar_colour[0]    = 0.0f;
-	data->bar_colour[1]    = 0.0f;
-	data->bar_colour[2]    = 0.0f;
-	data->bar_colour[3]    = 1.0f;
-	data->border_colour[0] = 1.0f;
-	data->border_colour[1] = 1.0f;
-	data->border_colour[2] = 1.0f;
-	data->border_colour[3] = 1.0f;
+	data->position          = POSITION_BOTTOM;
+	data->mode              = MODE_DEFAULT;
+	data->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
+	data->icon_size         = 80;
+	data->border_size       = 2;
+	data->margin            = 0;
+	data->verbose           = false;
+	data->only_output       = NULL;
+	data->bar_colour_hex    = "#000000FF";
+	data->bar_colour[0]     = 0.0f;
+	data->bar_colour[1]     = 0.0f;
+	data->bar_colour[2]     = 0.0f;
+	data->bar_colour[3]     = 1.0f;
+	data->border_colour_hex = "#FFFFFFFF";
+	data->border_colour[0]  = 1.0f;
+	data->border_colour[1]  = 1.0f;
+	data->border_colour[2]  = 1.0f;
+	data->border_colour[3]  = 1.0f;
 }
 
 static void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
@@ -170,6 +172,7 @@ void config_set_bar_colour(struct Lava_data *data, const char *arg)
 
 	hex_to_rgba(arg, &(data->bar_colour[0]), &(data->bar_colour[1]),
 			&(data->bar_colour[2]), &(data->bar_colour[3]));
+	data->bar_colour_hex = (char *)arg;
 }
 
 void config_set_border_colour(struct Lava_data *data, const char *arg)
@@ -182,5 +185,6 @@ void config_set_border_colour(struct Lava_data *data, const char *arg)
 
 	hex_to_rgba(arg, &(data->border_colour[0]), &(data->border_colour[1]),
 			&(data->border_colour[2]), &(data->border_colour[3]));
+	data->border_colour_hex = (char *)arg;
 }
 

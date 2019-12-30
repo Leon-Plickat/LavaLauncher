@@ -17,6 +17,7 @@
  */
 
 #define VERSION "1.2"
+#define STRING_BUFFER_SIZE 4096
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -212,10 +213,10 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	wl_surface_commit(output->wl_surface);
 }
 
-static void string_insert_int (char **str, char *srch, int repl, size_t size)
+static void string_insert (char **str, char *srch, char *repl_s, int repl_i, size_t size)
 {
-	char  buffer[4096]; /* Local editing buffer. */
-	char *p;            /* Pointer to beginning of *srch. */
+	char  buffer[STRING_BUFFER_SIZE]; /* Local editing buffer. */
+	char *p;                          /* Pointer to beginning of *srch. */
 
 	if (! (p = strstr(*str, srch)))
 		return;
@@ -223,11 +224,17 @@ static void string_insert_int (char **str, char *srch, int repl, size_t size)
 	/* Copy str to buffer, but only until p. */
 	strncpy(buffer, *str, p - *str);
 
-	/* Insert replacement int and rest of string. */
-	sprintf(buffer + (p - *str), "%d%s", repl, p + strlen(srch));
+	/* Insert replacement and rest of string. */
+	if ( repl_s == NULL )
+		sprintf(buffer + (p - *str), "%d%s", repl_i, p + strlen(srch));
+	else
+		sprintf(buffer + (p - *str), "%s%s", repl_s, p + strlen(srch));
 
 	/* Copy buffer back to str. */
 	strncpy(*str, buffer, size);
+
+	/* Do the thing again until every instance of *srch is replaced. */
+	string_insert(str, srch, repl_s, repl_i, size);
 }
 
 static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
@@ -244,16 +251,27 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 			exit(EXIT_FAILURE);
 		}
 
-		char *buffer = malloc(4096);
-		strncpy(buffer, cmd, 4096);
+		char *buffer = malloc(STRING_BUFFER_SIZE);
+		strncpy(buffer, cmd, STRING_BUFFER_SIZE);
 
-		string_insert_int(&buffer, "%buttons%",     data->button_amount, 4096);
-		string_insert_int(&buffer, "%icon-size%",   data->icon_size, 4096);
-		string_insert_int(&buffer, "%border-size%", data->border_size, 4096);
+		string_insert(&buffer, "%buttons%",       NULL,                    data->button_amount, STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%icon-size%",     NULL,                    data->icon_size,     STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%border-size%",   NULL,                    data->border_size,   STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%colour%",        data->bar_colour_hex,    0,                   STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%border-colour%", data->border_colour_hex, 0,                   STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%output%",        output->name,            0,                   STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%scale%",         NULL,                    output->scale,       STRING_BUFFER_SIZE);
 
 		if (data->verbose)
 			fprintf(stderr, "Executing cmd=%s\n", buffer);
-		system(buffer);
+
+		errno = 0;
+		if ( system(buffer) == -1 )
+		{
+			fprintf(stderr, "system: %s\n", strerror(errno));
+			free(buffer);
+			exit(EXIT_FAILURE);
+		}
 
 		free(buffer);
 		exit(EXIT_SUCCESS);

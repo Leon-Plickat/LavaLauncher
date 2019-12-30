@@ -72,7 +72,9 @@ struct Lava_data
 	int                margin;
 	char              *only_output;
 	float              bar_colour[4];
+	char              *bar_colour_hex;
 	float              border_colour[4];
+	char              *border_colour_hex;
 	uint32_t           w;
 	uint32_t           h;
 

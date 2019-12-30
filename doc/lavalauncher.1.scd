@@ -30,8 +30,10 @@ events to them.
 	*Command* is the shell command executed when the user clicks on the
 	button. If the given command is 'exit', LavaLauncher will exit.
 	LavaLauncher replaces '%buttons%' with the amount of buttons, '%icon-size%'
-	with the icon size and '%border-size%' with the border
-	size.
+	with the icon size, '%border-size%' with the border size, '%colour%'
+	with the colour of the bar, '%border-colour%' with the colour of the
+	border, '%output%' with the name of the output and '%scale%' with
+	the scale of the output.
 
 	The buttons on the bar will be shown in the order in which they are
 	given by the user.
@@ -121,7 +123,7 @@ events to them.
 
 
 # EXAMPLE
-lavalauncher -b "~/icons/firefox.png" firefox -b "~/icons/glenda.png" acme -p bottom -s 80 -c "#20202088" -o eDP-1
+lavalauncher -b "~/icons/foo.png" "notify-send \\"Output: %output%\\"" -b "~/icons/glenda.png" acme -p bottom -s 80 -c "#20202088" -o eDP-1
 
 
 # BUGS

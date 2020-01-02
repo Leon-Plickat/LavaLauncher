@@ -129,6 +129,8 @@ struct Lava_button
 
 	const char *img_path;
 	const char *cmd;
+
+	cairo_surface_t *img;
 };
 
 #endif

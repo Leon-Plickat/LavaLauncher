@@ -77,7 +77,7 @@ static void layer_surface_handle_configure (void *raw_data,
 	output->configured         = true;
 
 	if (data->verbose)
-		fprintf(stderr, "Layer surface configure request"
+		fprintf(stderr, "Layer surface configure request:"
 				" w=%d h=%d serial=%d\n", w, h, serial);
 
 	uint32_t width = data->w, height = data->h;
@@ -101,7 +101,7 @@ static void layer_surface_handle_configure (void *raw_data,
 		}
 
 	if (data->verbose)
-		fprintf(stderr, "Resizing surface w=%d h=%d\n", width, height);
+		fprintf(stderr, "Resizing surface: w=%d h=%d\n", width, height);
 
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
@@ -263,7 +263,7 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 		string_insert(&buffer, "%scale%",         NULL,                    output->scale,       STRING_BUFFER_SIZE);
 
 		if (data->verbose)
-			fprintf(stderr, "Executing cmd=%s\n", buffer);
+			fprintf(stderr, "Executing: cmd=%s\n", buffer);
 
 		errno = 0;
 		if ( system(buffer) == -1 )
@@ -334,7 +334,7 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 	seat->pointer.y = wl_fixed_to_int(y);
 
 	if (seat->data->verbose)
-		fprintf(stderr, "Pointer entered surface x=%d y=%d\n",
+		fprintf(stderr, "Pointer entered surface: x=%d y=%d\n",
 				seat->pointer.x, seat->pointer.y);
 }
 
@@ -466,7 +466,7 @@ static void update_bar_offset (struct Lava_data *data, struct Lava_output *outpu
 	}
 
 	if (data->verbose)
-		fprintf(stderr, "Centering bar x-offset=%d y-offset=%d\n",
+		fprintf(stderr, "Centering bar: x-offset=%d y-offset=%d\n",
 				output->bar_x_offset, output->bar_y_offset);
 }
 
@@ -477,7 +477,7 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 	output->scale              = factor;
 
 	if (output->data->verbose)
-		fprintf(stderr, "Output update scale s=%d\n", output->scale);
+		fprintf(stderr, "Output update scale: s=%d\n", output->scale);
 
 	update_bar_offset(output->data, output);
 	render_bar_frame(output->data, output);
@@ -497,7 +497,7 @@ static void xdg_output_handle_name (void *raw_data,
 	output->name               = strdup(name);
 
 	if (output->data->verbose)
-		fprintf(stderr, "XDG-Output update name name=%s\n",
+		fprintf(stderr, "XDG-Output update name: name=%s\n",
 				name);
 
 	if ( output->data->only_output == NULL
@@ -513,7 +513,7 @@ static void xdg_output_handle_logical_size (void *raw_data,
 	output->h                  = h;
 
 	if (output->data->verbose)
-		fprintf(stderr, "XDG-Output update logical size w=%d h=%d\n",
+		fprintf(stderr, "XDG-Output update logical size: w=%d h=%d\n",
 				w, h);
 
 	update_bar_offset(output->data, output);
@@ -730,12 +730,13 @@ static void deinit_wayland (struct Lava_data *data)
 	}
 
 	if (data->verbose)
-		fputs("Destroying buttons.\n", stderr);
+		fputs("Destroying buttons and freeing icons.\n", stderr);
 
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
 	{
 		wl_list_remove(&bt_1->link);
+		cairo_surface_destroy(bt_1->img);
 		free(bt_1);
 	}
 
@@ -752,6 +753,18 @@ static void deinit_wayland (struct Lava_data *data)
 		fputs("Diconnecting from server.\n", stderr);
 
 	wl_display_disconnect(data->display);
+}
+
+static void load_icons (struct Lava_data *data)
+{
+	if (data->verbose)
+		fputs("Loading icons.\n", stderr);
+
+	struct Lava_button *bt_1, *bt_2;
+	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
+	{
+		bt_1->img = cairo_image_surface_create_from_png(bt_1->img_path);
+	}
 }
 
 static void main_loop (struct Lava_data *data)
@@ -871,15 +884,16 @@ int main (int argc, char *argv[])
 	}
 
 	if (data.verbose)
-		fprintf(stderr, "Bar w=%d h=%d buttons=%d\n", data.w, data.h,
+		fprintf(stderr, "Bar: w=%d h=%d buttons=%d\n", data.w, data.h,
 				data.button_amount);
 
 	init_wayland(&data);
+	load_icons(&data);
 	main_loop(&data);
 	deinit_wayland(&data);
 
 	if (data.verbose)
-		fputs("Exiting.\n", stderr);
+		fputs("Exiting.\nHave a nice day!\n", stderr);
 
 	return EXIT_SUCCESS;
 }

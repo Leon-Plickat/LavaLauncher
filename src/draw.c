@@ -26,34 +26,22 @@
 #include"lavalauncher.h"
 #include"draw.h"
 
-/* Draw a single icon (square picture). */
-static void draw_icon (cairo_t *cairo, int32_t x, int32_t y,
-		int32_t icon_size, const char *path)
-{
-	float w, h;
-	cairo_surface_t *image = NULL;
-
-	image = cairo_image_surface_create_from_png(path);
-	w     = cairo_image_surface_get_width(image);
-	h     = cairo_image_surface_get_height(image);
-
-	cairo_translate(cairo, x, y);
-	cairo_scale(cairo, icon_size / w, icon_size / h);
-	cairo_set_source_surface(cairo, image, 0, 0);
-	cairo_paint(cairo);
-
-	cairo_surface_destroy(image);
-}
-
 /* Draw the icons for all defined buttons. */
 static void draw_icons (cairo_t *cairo, int32_t x, int32_t y, int32_t icon_size,
 		enum Bar_orientation orientation, struct wl_list *button_list)
 {
+	float w, h;
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, button_list, link)
 	{
+		w = cairo_image_surface_get_width(bt_1->img);
+		h = cairo_image_surface_get_height(bt_1->img);
+
 		cairo_save(cairo);
-		draw_icon(cairo, x, y, icon_size, bt_1->img_path);
+		cairo_translate(cairo, x, y);
+		cairo_scale(cairo, icon_size / w, icon_size / h);
+		cairo_set_source_surface(cairo, bt_1->img, 0, 0);
+		cairo_paint(cairo);
 		cairo_restore(cairo);
 
 		if ( orientation == ORIENTATION_HORIZONTAL )

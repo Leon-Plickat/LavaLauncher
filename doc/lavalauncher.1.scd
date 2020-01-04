@@ -47,6 +47,28 @@ events to them.
 	Colour of the border in the format '#RRGGBBAA'.
 
 	The default border colour is '#FFFFFFFF'
+
+*-e <true|false|stationary>*
+	Exclusive zone of the surface.
+
+	If 'true', the compositor is informed that it should not obstruct the
+	surface of LavaLauncher with other surfaces.
+
+	If 'false', the compositor is informed that it can place other surfaces
+	over or under the surface of LavaLauncher.
+
+	If 'stationary', the compositor is informed that the surface of
+	LavaLauncher should not be moved to accommodate other layer shell
+	surfaces. The compositor is free to place other surfaces over or under
+	the surface of LavaLauncher.
+
+	The exact implementation is compositor dependant; A compositor may
+	choose to ignore the requested exclusive zone of surfaces.
+	For position 'center', the exclusive zone is always 'false'
+	or 'stationary'.
+
+	The default is 'true'.
+
 *-h*
 	Display a helpful help message and exit.
 
@@ -85,7 +107,7 @@ events to them.
 	difference that the icons will be centered.
 
 *-M <size>*
-	Margin from the screen edge the bar is docked to in pixels.
+	Margin from the screen edge the bar is docked to in pixel.
 
 	The margin is ignored when the position is 'center'.
 
@@ -109,12 +131,12 @@ events to them.
 	The default position is 'bottom'.
 
 *-s <size>*
-	Size of the icons in pixels.
+	Size of the icons in pixel.
 
 	The default icon size is 80;
 
 *-S <size>*
-	Size of the border in pixels.
+	Size of the border in pixel.
 
 	The default border size is 2;
 

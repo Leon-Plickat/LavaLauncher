@@ -61,24 +61,54 @@ struct Lava_data
 	struct wl_list seats;
 	struct wl_list buttons;
 
+	/* Amount of buttons defined by the user. */
 	int button_amount;
 
+	/* Mode and position of the bar. These are responsible for the general
+	 * shape of the visual bar and the actual surface.
+	 */
+	enum Bar_position position;
+	enum Bar_mode     mode;
+
+	/* Layer the surface will be rendered on. */
 	enum zwlr_layer_shell_v1_layer layer;
 
-	enum Bar_position  position;
-	enum Bar_mode      mode;
-	int                icon_size;
-	int                border_size;
-	int                margin;
-	char              *only_output;
-	float              bar_colour[4];
-	char              *bar_colour_hex;
-	float              border_colour[4];
-	char              *border_colour_hex;
-	uint32_t           w;
-	uint32_t           h;
+	/* Size of icons and bar border. */
+	int icon_size;
+	int border_size;
 
+	/* Colours of the bar and its border; In float for actual usage and as
+	 * hex string for insertion into commands.
+	 */
+	float  bar_colour[4];
+	char  *bar_colour_hex;
+	float  border_colour[4];
+	char  *border_colour_hex;
+
+	/* Expected (and enforced) width and height of the bar. */
+	uint32_t w;
+	uint32_t h;
+
+	/* If *only_output is NULL, a surface will be created for all outputs.
+	 * Otherwise only on the surface which name is equal to *only_output.
+	 * Examples of valid names are "eDP-1" or "HDMI-A-1" (likely compositor
+	 * dependant).
+	 */
+	char *only_output;
+
+	/* If exclusive_zone is 1, it will be set to the width/height of the bar
+	 * at startup, otherwise its exact value is used, which should be either
+	 * 0 or -1.
+	 */
+	uint32_t exclusive_zone;
+
+	/* Margin to the output edge the surface is anchored to. */
+	int margin;
+
+	/* Still running? */
 	bool loop;
+
+	/* Verbose output? */
 	bool verbose;
 };
 
@@ -99,8 +129,11 @@ struct Lava_output
 
 	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;
-	bool                           configured;
 
+	/* Has the surface been configured? This is needed to prevent trying to
+	 * render an unconfigured surface.
+	 */
+	bool configured;
 
 	struct pool_buffer  buffers[2];
 	struct pool_buffer *current_buffer;
@@ -130,6 +163,9 @@ struct Lava_button
 	const char *img_path;
 	const char *cmd;
 
+	/* Button icon. The PNG images get loaded into the cairo surfaces at
+	 * startup.
+	 */
 	cairo_surface_t *img;
 };
 

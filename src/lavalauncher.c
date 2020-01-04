@@ -49,6 +49,7 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "  -b <path> <command>                      Add a button.\n"
                             "  -c <colour>                              Background colour.\n"
                             "  -C <colour>                              Border colour.\n"
+                            "  -e <true|false|stationary>               Exclusive zone.\n"
                             "  -h                                       Display this help text and exit.\n"
                             "  -l <overlay|top|bottom|background>       Layer of the bar surface.\n"
                             "  -m <default|aggressive|full|full-center> Display mode of bar.\n"
@@ -157,7 +158,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					data->h);
+					data->exclusive_zone);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					data->margin, 0, 0, 0);
 			break;
@@ -170,7 +171,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					data->w);
+					data->exclusive_zone);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					0, data->margin, 0, 0);
 			break;
@@ -183,7 +184,7 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					data->h);
+					data->exclusive_zone);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					0, 0, data->margin, 0);
 			break;
@@ -196,13 +197,14 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
 			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					data->w);
+					data->exclusive_zone);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					0, 0, 0, data->margin);
 			break;
 
 		case POSITION_CENTER:
-			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface, -1);
+			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+					data->exclusive_zone);
 			break;
 	}
 
@@ -821,13 +823,13 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
-	for (int c; (c = getopt(argc, argv, "b:l:m:M:o:p:s:S:c:C:hv")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "b:e:hl:m:M:o:p:s:S:c:C:v")) != -1 ;)
 		switch (c)
 		{
 			/* Weirdly formatted for readability. */
-			case 'v': data.verbose           = true; break;
-			case 'h': fputs                    (usage, stderr); return EXIT_SUCCESS;
 			case 'b': config_add_button        (&data, argv[optind-1], argv[optind]); optind++; break;
+			case 'e': config_set_exclusive     (&data, optarg); break;
+			case 'h': fputs                    (usage, stderr); return EXIT_SUCCESS;
 			case 'l': config_set_layer         (&data, optarg); break;
 			case 'm': config_set_mode          (&data, optarg); break;
 			case 'M': config_set_margin        (&data, optarg); break;
@@ -837,6 +839,7 @@ int main (int argc, char *argv[])
 			case 'S': config_set_border_size   (&data, optarg); break;
 			case 'c': config_set_bar_colour    (&data, optarg); break;
 			case 'C': config_set_border_colour (&data, optarg); break;
+			case 'v': data.verbose           = true; break;
 			default:
 				  return EXIT_FAILURE;
 		}
@@ -864,6 +867,8 @@ int main (int argc, char *argv[])
 					+ (2 * data.border_size));
 			if (data.margin)
 				data.w += data.border_size;
+			if ( data.exclusive_zone == 1 )
+				data.exclusive_zone = data.w;
 			break;
 
 		case POSITION_TOP:
@@ -873,6 +878,8 @@ int main (int argc, char *argv[])
 			data.h = (uint32_t)(data.icon_size + data.border_size);
 			if (data.margin)
 				data.h += data.border_size;
+			if ( data.exclusive_zone == 1 )
+				data.exclusive_zone = data.h;
 			break;
 
 		case POSITION_CENTER:
@@ -880,6 +887,8 @@ int main (int argc, char *argv[])
 			data.w = (uint32_t)((data.button_amount * data.icon_size)
 					+ (2 * data.border_size));
 			data.h = (uint32_t)(data.icon_size + (2 * data.border_size));
+			if ( data.exclusive_zone == 1 )
+				data.exclusive_zone = 0;
 			break;
 	}
 

@@ -37,6 +37,7 @@ void sensible_defaults (struct Lava_data *data)
 	data->margin            = 0;
 	data->verbose           = false;
 	data->only_output       = NULL;
+	data->exclusive_zone    = 1;
 	data->bar_colour_hex    = "#000000FF";
 	data->bar_colour[0]     = 0.0f;
 	data->bar_colour[1]     = 0.0f;
@@ -65,7 +66,7 @@ static void hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, fl
 	*c_a = a / 255.0f;
 }
 
-void config_add_button(struct Lava_data *data, char *path, char *cmd)
+void config_add_button (struct Lava_data *data, char *path, char *cmd)
 {
 	struct Lava_button *new_button = calloc(1, sizeof(struct Lava_button));
 	new_button->img_path = path;
@@ -73,7 +74,7 @@ void config_add_button(struct Lava_data *data, char *path, char *cmd)
 	wl_list_insert(&data->buttons, &new_button->link);
 }
 
-void config_set_layer(struct Lava_data *data, const char *arg)
+void config_set_layer (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "overlay"))
 		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
@@ -91,7 +92,7 @@ void config_set_layer(struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_mode(struct Lava_data *data, const char *arg)
+void config_set_mode (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "default"))
 		data->mode = MODE_DEFAULT;
@@ -109,7 +110,23 @@ void config_set_mode(struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_position(struct Lava_data *data, const char *arg)
+void config_set_exclusive (struct Lava_data *data, const char *arg)
+{
+	if (! strcmp(arg, "true"))
+		data->exclusive_zone = 1;
+	else if (! strcmp(arg, "false"))
+		data->exclusive_zone = 0;
+	else if (! strcmp(arg, "stationary"))
+		data->exclusive_zone = -1;
+	else
+	{
+		fputs("Exclusive zone can be 'true', 'false' or 'stationary'.\n",
+				stderr);
+		exit(EXIT_FAILURE);
+	}
+}
+
+void config_set_position (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "top"))
 		data->position = POSITION_TOP;
@@ -140,7 +157,7 @@ void config_set_margin (struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_icon_size(struct Lava_data *data, const char *arg)
+void config_set_icon_size (struct Lava_data *data, const char *arg)
 {
 	data->icon_size = atoi(arg);
 
@@ -151,7 +168,7 @@ void config_set_icon_size(struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_border_size(struct Lava_data *data, const char *arg)
+void config_set_border_size (struct Lava_data *data, const char *arg)
 {
 	data->border_size = atoi(arg);
 
@@ -162,7 +179,7 @@ void config_set_border_size(struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_bar_colour(struct Lava_data *data, const char *arg)
+void config_set_bar_colour (struct Lava_data *data, const char *arg)
 {
 	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
 	{
@@ -175,7 +192,7 @@ void config_set_bar_colour(struct Lava_data *data, const char *arg)
 	data->bar_colour_hex = (char *)arg;
 }
 
-void config_set_border_colour(struct Lava_data *data, const char *arg)
+void config_set_border_colour (struct Lava_data *data, const char *arg)
 {
 	if ( arg == NULL || *arg == '\0' || *arg == ' ' )
 	{

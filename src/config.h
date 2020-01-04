@@ -25,6 +25,7 @@ void sensible_defaults (struct Lava_data *data);
 void config_add_button (struct Lava_data *data, char *path, char *cmd);
 void config_set_layer (struct Lava_data *data, const char *arg);
 void config_set_mode (struct Lava_data *data, const char *arg);
+void config_set_exclusive (struct Lava_data *data, const char *arg);
 void config_set_position (struct Lava_data *data, const char *arg);
 void config_set_margin (struct Lava_data *data, const char *arg);
 void config_set_icon_size (struct Lava_data *data, const char *arg);

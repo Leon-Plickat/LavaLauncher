@@ -386,7 +386,8 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	/* Draw icons. */
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
-	draw_icons(cairo, icons_x, icons_y, data->icon_size, orientation,
+	draw_icons(cairo, icons_x * output->scale, icons_y * output->scale,
+			data->icon_size * output->scale, orientation,
 			&data->buttons);
 
 	/* Commit surface. */

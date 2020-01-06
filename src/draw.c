@@ -27,6 +27,8 @@
 #include"draw.h"
 
 /* Draw the icons for all defined buttons. */
+// TODO * Improve -> remove conditional from loop
+//      * Draw once on startup to a cairo_surface (and at scale updates)
 static void draw_icons (cairo_t *cairo, int32_t x, int32_t y, int32_t icon_size,
 		enum Bar_orientation orientation, struct wl_list *button_list)
 {
@@ -46,7 +48,7 @@ static void draw_icons (cairo_t *cairo, int32_t x, int32_t y, int32_t icon_size,
 
 		if ( orientation == ORIENTATION_HORIZONTAL )
 			x += icon_size;
-		else if (orientation == ORIENTATION_VERTICAL )
+		else
 			y += icon_size;
 	}
 }
@@ -244,21 +246,6 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	if (! output->configured)
 		return;
 
-	/* Get orientation. */
-	enum Bar_orientation orientation;
-	switch (data->position)
-	{
-		case POSITION_CENTER:
-		case POSITION_TOP:
-		case POSITION_BOTTOM:
-			orientation = ORIENTATION_HORIZONTAL;
-			break;
-
-		case POSITION_LEFT:
-		case POSITION_RIGHT:
-			orientation = ORIENTATION_VERTICAL;
-	}
-
 	/* Calculate buffer size. */
 	int buffer_w = data->w * output->scale, buffer_h = data->h * output->scale;
 	if ( data->mode != MODE_DEFAULT )
@@ -387,7 +374,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
 	draw_icons(cairo, icons_x * output->scale, icons_y * output->scale,
-			data->icon_size * output->scale, orientation,
+			data->icon_size * output->scale, data->orientation,
 			&data->buttons);
 
 	/* Commit surface. */

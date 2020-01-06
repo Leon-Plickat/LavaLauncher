@@ -67,8 +67,9 @@ struct Lava_data
 	/* Mode and position of the bar. These are responsible for the general
 	 * shape of the visual bar and the actual surface.
 	 */
-	enum Bar_position position;
-	enum Bar_mode     mode;
+	enum Bar_position    position;
+	enum Bar_orientation orientation;
+	enum Bar_mode        mode;
 
 	/* Layer the surface will be rendered on. */
 	enum zwlr_layer_shell_v1_layer layer;

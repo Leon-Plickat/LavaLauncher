@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define VERSION "1.2"
+#define VERSION "1.3"
 #define STRING_BUFFER_SIZE 4096
 
 #include<stdio.h>

@@ -82,24 +82,13 @@ static void layer_surface_handle_configure (void *raw_data,
 				" w=%d h=%d serial=%d\n", w, h, serial);
 
 	uint32_t width = data->w, height = data->h;
-
 	if ( data->mode != MODE_DEFAULT )
-		switch (data->position)
-		{
-			case POSITION_TOP:
-			case POSITION_BOTTOM:
-				width = output->w;
-				break;
-
-			case POSITION_LEFT:
-			case POSITION_RIGHT:
-				height = output->h;
-				break;
-
-			case POSITION_CENTER:
-				/* Will never be reached. */
-				break;
-		}
+	{
+		if ( data->orientation == ORIENTATION_HORIZONTAL )
+			width = output->w;
+		else
+			height = output->h;
+	}
 
 	if (data->verbose)
 		fprintf(stderr, "Resizing surface: w=%d h=%d\n", width, height);
@@ -282,19 +271,30 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 		fprintf(stderr, "fork: %s\n", strerror(errno));
 }
 
-static struct Lava_button *button_from_ordinate (struct Lava_data *data,
-		struct Lava_output *output, int ordinate,
-		enum Bar_orientation orientation)
+/* Return pointer to Lava_button struct from button list which includes the
+ * given surface-local coordinates on the surface of the given output.
+ */
+static struct Lava_button *button_from_coords (struct Lava_data *data,
+		struct Lava_output *output, int32_t x, int32_t y)
 {
-	int pre_button_zone = 0;
+	int32_t ordinate;
+	int32_t pre_button_zone = 0;
+
 	if ( data->mode == MODE_DEFAULT || data->mode == MODE_AGGRESSIVE )
 		pre_button_zone += data->border_size;
-	if ( orientation == ORIENTATION_HORIZONTAL )
-		pre_button_zone += output->bar_x_offset;
-	else
-		pre_button_zone += output->bar_y_offset;
 
-	int i = pre_button_zone;
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+	{
+		pre_button_zone += output->bar_x_offset;
+		ordinate         = x;
+	}
+	else
+	{
+		pre_button_zone += output->bar_y_offset;
+		ordinate         = y;
+	}
+
+	int32_t i = pre_button_zone;
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
 	{
@@ -349,31 +349,11 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 	seat->pointer.y = wl_fixed_to_int(y);
 }
 
-static void pointer_update_button (struct Lava_seat *seat, wl_fixed_t x, wl_fixed_t y)
-{
-	switch (seat->data->position)
-	{
-		case POSITION_TOP:
-		case POSITION_BOTTOM:
-		case POSITION_CENTER:
-			seat->pointer.button = button_from_ordinate(seat->data,
-					seat->pointer.output, seat->pointer.x,
-					ORIENTATION_HORIZONTAL);
-			break;
-
-		case POSITION_LEFT:
-		case POSITION_RIGHT:
-			seat->pointer.button = button_from_ordinate(seat->data,
-					seat->pointer.output, seat->pointer.y,
-					ORIENTATION_VERTICAL);
-			break;
-	}
-}
-
 static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer,
 		uint32_t serial, uint32_t time, uint32_t button, uint32_t button_state)
 {
 	struct Lava_seat *seat = raw_data;
+	struct Lava_data *data = seat->data;
 
 	if ( button_state != WL_POINTER_BUTTON_STATE_PRESSED )
 		return;
@@ -381,7 +361,8 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	if (seat->data->verbose)
 		fprintf(stderr, "Click! x=%d y=%d", seat->pointer.x, seat->pointer.y);
 
-	pointer_update_button(seat, seat->pointer.x, seat->pointer.y);
+	seat->pointer.button = button_from_coords(seat->data, seat->pointer.output,
+			seat->pointer.x, seat->pointer.y);
 
 	if ( seat->pointer.button == NULL )
 	{
@@ -450,22 +431,10 @@ static void update_bar_offset (struct Lava_data *data, struct Lava_output *outpu
 		return;
 	}
 
-	switch (data->position)
-	{
-		case POSITION_TOP:
-		case POSITION_BOTTOM:
-			output->bar_x_offset = (output->w / 2) - (data->w / 2);
-			break;
-
-		case POSITION_LEFT:
-		case POSITION_RIGHT:
-			output->bar_y_offset = (output->h / 2) - (data->h / 2);
-			break;
-
-		case POSITION_CENTER:
-			/* Will never be reached. */
-			break;
-	}
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+		output->bar_x_offset = (output->w / 2) - (data->w / 2);
+	else
+		output->bar_y_offset = (output->h / 2) - (data->h / 2);
 
 	if (data->verbose)
 		fprintf(stderr, "Centering bar: x-offset=%d y-offset=%d\n",
@@ -826,22 +795,26 @@ int main (int argc, char *argv[])
 	for (int c; (c = getopt(argc, argv, "b:e:hl:m:M:o:p:s:S:c:C:v")) != -1 ;)
 		switch (c)
 		{
-			/* Weirdly formatted for readability. */
-			case 'b': config_add_button        (&data, argv[optind-1], argv[optind]); optind++; break;
-			case 'e': config_set_exclusive     (&data, optarg); break;
-			case 'h': fputs                    (usage, stderr); return EXIT_SUCCESS;
-			case 'l': config_set_layer         (&data, optarg); break;
-			case 'm': config_set_mode          (&data, optarg); break;
-			case 'M': config_set_margin        (&data, optarg); break;
-			case 'o': data.only_output       = optarg;          break;
-			case 'p': config_set_position      (&data, optarg); break;
-			case 's': config_set_icon_size     (&data, optarg); break;
-			case 'S': config_set_border_size   (&data, optarg); break;
-			case 'c': config_set_bar_colour    (&data, optarg); break;
-			case 'C': config_set_border_colour (&data, optarg); break;
-			case 'v': data.verbose           = true; break;
+			case 'b':
+				config_add_button(&data, argv[optind-1], argv[optind]);
+				optind++;
+				break;
+
+			case 'c': config_set_bar_colour(&data, optarg);    break;
+			case 'C': config_set_border_colour(&data, optarg); break;
+			case 'e': config_set_exclusive(&data, optarg);     break;
+			case 'h': fputs(usage, stderr);                    return EXIT_SUCCESS;
+			case 'l': config_set_layer(&data, optarg);         break;
+			case 'm': config_set_mode(&data, optarg);          break;
+			case 'M': config_set_margin(&data, optarg);        break;
+			case 'o': data.only_output = optarg;               break;
+			case 'p': config_set_position(&data, optarg);      break;
+			case 's': config_set_icon_size(&data, optarg);     break;
+			case 'S': config_set_border_size(&data, optarg);   break;
+			case 'v': data.verbose = true;                     break;
+
 			default:
-				  return EXIT_FAILURE;
+				return EXIT_FAILURE;
 		}
 
 	/* Count buttons. If none are defined, exit. */
@@ -857,11 +830,14 @@ int main (int argc, char *argv[])
 
 	/* Calculating the size of the bar. At the "docking" edge no border will
 	 * be drawn.
+	 *
+	 * Also setting orientation and exclusive zone.
 	 */
 	switch (data.position)
 	{
 		case POSITION_LEFT:
 		case POSITION_RIGHT:
+			data.orientation = ORIENTATION_VERTICAL;
 			data.w = (uint32_t)(data.icon_size + data.border_size);
 			data.h = (uint32_t)((data.button_amount * data.icon_size)
 					+ (2 * data.border_size));
@@ -873,6 +849,7 @@ int main (int argc, char *argv[])
 
 		case POSITION_TOP:
 		case POSITION_BOTTOM:
+			data.orientation = ORIENTATION_HORIZONTAL;
 			data.w = (uint32_t)((data.button_amount * data.icon_size)
 					+ (2 * data.border_size));
 			data.h = (uint32_t)(data.icon_size + data.border_size);
@@ -884,6 +861,7 @@ int main (int argc, char *argv[])
 
 		case POSITION_CENTER:
 			data.mode = MODE_DEFAULT;
+			data.orientation = ORIENTATION_HORIZONTAL;
 			data.w = (uint32_t)((data.button_amount * data.icon_size)
 					+ (2 * data.border_size));
 			data.h = (uint32_t)(data.icon_size + (2 * data.border_size));

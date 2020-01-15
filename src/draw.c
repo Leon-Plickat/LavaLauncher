@@ -20,6 +20,8 @@
 #include<stdbool.h>
 #include<stdlib.h>
 #include<unistd.h>
+#include<errno.h>
+#include<string.h>
 #include<cairo/cairo.h>
 #include<wayland-server.h>
 
@@ -27,11 +29,12 @@
 #include"draw.h"
 
 /* Draw the icons for all defined buttons. */
-// TODO * Improve -> remove conditional from loop
+// TODO * Improve -> remove conditional in loop
 //      * Draw once on startup to a cairo_surface (and at scale updates)
 static void draw_icons (cairo_t *cairo, int32_t x, int32_t y, int32_t icon_size,
 		enum Bar_orientation orientation, struct wl_list *button_list)
 {
+	errno = 0;
 	float w, h;
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, button_list, link)

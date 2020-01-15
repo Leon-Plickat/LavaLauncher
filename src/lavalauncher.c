@@ -146,8 +146,6 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
-			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					data->exclusive_zone);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					data->margin, 0, 0, 0);
 			break;
@@ -159,8 +157,6 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
-			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					data->exclusive_zone);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					0, data->margin, 0, 0);
 			break;
@@ -172,8 +168,6 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
-			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					data->exclusive_zone);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					0, 0, data->margin, 0);
 			break;
@@ -185,17 +179,16 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 					: ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
-			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					data->exclusive_zone);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					0, 0, 0, data->margin);
 			break;
 
 		case POSITION_CENTER:
-			zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-					data->exclusive_zone);
 			break;
 	}
+
+	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+			data->exclusive_zone);
 
 	zwlr_layer_surface_v1_add_listener(output->layer_surface,
 			&layer_surface_listener,
@@ -388,6 +381,17 @@ static const struct wl_pointer_listener pointer_listener = {
 	.axis   = noop
 };
 
+// TODO implement touch handlers
+static const struct wl_touch_listener touch_listener = {
+	.down        = noop,
+	.up          = noop,
+	.motion      = noop,
+	.frame       = noop,
+	.cancel      = noop,
+	.shape       = noop,
+	.orientation = noop
+};
+
 static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 		uint32_t capabilities)
 {
@@ -411,10 +415,16 @@ static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 		if (data->verbose)
 			fputs("Seat has WL_SEAT_CAPABILITY_POINTER.\n", stderr);
 	}
-	else
-		fputs("Compositor seat does not have pointer capabilities.\n"
-				"You will not be able to click on icons.\n"
-				"Continuing anyway.\n", stderr);
+
+	if ( capabilities & WL_SEAT_CAPABILITY_TOUCH )
+	{
+		seat->touch.wl_touch = wl_seat_get_touch(wl_seat);
+		wl_touch_add_listener(seat->touch.wl_touch, &touch_listener, seat);
+		if (data->verbose)
+			fputs("Seat has WL_SEAT_CAPABILITY_TOUCH.\n"
+					"Touch handling is not yet implemented.\n",
+					stderr);
+	}
 }
 
 static const struct wl_seat_listener seat_listener = {
@@ -731,10 +741,19 @@ static void load_icons (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Loading icons.\n", stderr);
 
+	errno = 0;
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
 	{
+		// TODO check file type
 		bt_1->img = cairo_image_surface_create_from_png(bt_1->img_path);
+		if ( errno != 0 )
+		{
+			fprintf(stderr, "Failed loading image: %s\n"
+					"cairo_image_surface_create_from_png: %s\n",
+					bt_1->img_path, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
 	}
 }
 

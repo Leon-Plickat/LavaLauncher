@@ -57,6 +57,8 @@ struct Lava_data
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 
+	int ret;
+
 	struct wl_list outputs;
 	struct wl_list seats;
 	struct wl_list buttons;

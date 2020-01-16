@@ -12,21 +12,21 @@ LIBS=\
 	 -lrt
 
 CFLAGS=\
-       -O2 \
-       -Werror \
-       -Wall \
-       -Wextra \
-       -Wpedantic \
-       -Wno-maybe-uninitialized \
-       -Wno-unused-variable \
-       -Wno-unused-function \
-       -Wno-unused-parameter \
-       -Wno-implicit-fallthrough \
-       -Ilib/wayland-protocols \
-       -Ilib/pool-buffer \
-       $(shell pkg-config --cflags wayland-client) \
-       $(shell pkg-config --cflags wayland-protocols) \
-       $(shell pkg-config --cflags cairo)
+	-O2 \
+	-Werror \
+	-Wall \
+	-Wextra \
+	-Wpedantic \
+	-Wno-maybe-uninitialized \
+	-Wno-unused-variable \
+	-Wno-unused-function \
+	-Wno-unused-parameter \
+	-Wno-implicit-fallthrough \
+	-Ilib/wayland-protocols \
+	-Ilib/pool-buffer \
+	$(shell pkg-config --cflags wayland-client) \
+	$(shell pkg-config --cflags wayland-protocols) \
+	$(shell pkg-config --cflags cairo)
 
 lib/wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h: lib/wayland-protocols/wlr-layer-shell-unstable-v1.xml
 	@echo Generating $@

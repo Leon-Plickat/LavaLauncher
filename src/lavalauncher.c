@@ -104,8 +104,7 @@ static void layer_surface_handle_closed (void *raw_data,
 		struct zwlr_layer_surface_v1 *surface)
 {
 	struct Lava_data *data = (struct Lava_data *)raw_data;
-	if (data->verbose)
-		fputs("Layer surface has been closed.\n", stderr);
+	fputs("Layer surface has been closed.\n", stderr);
 	data->loop = false;
 }
 
@@ -114,7 +113,7 @@ static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 	.closed    = layer_surface_handle_closed
 };
 
-static void create_bar (struct Lava_data *data, struct Lava_output *output)
+static bool create_bar (struct Lava_data *data, struct Lava_output *output)
 {
 	if (data->verbose)
 		fputs("Creating bar.\n", stderr);
@@ -122,8 +121,8 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	output->wl_surface = wl_compositor_create_surface(data->compositor);
 	if ( output->wl_surface == NULL )
 	{
-		fputs("Compositor did not create wl_surface.\n", stderr);
-		exit(EXIT_FAILURE);
+		fputs("ERROR: Compositor did not create wl_surface.\n", stderr);
+		return false;
 	}
 
 	output->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
@@ -131,8 +130,8 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 			output->wl_output, data->layer, "LavaLauncher");
 	if ( output->layer_surface == NULL )
 	{
-		fputs("Compositor did not create layer_surface.\n", stderr);
-		exit(EXIT_FAILURE);
+		fputs("ERROR: Compositor did not create layer_surface.\n", stderr);
+		return false;
 	}
 
 	zwlr_layer_surface_v1_set_size(output->layer_surface, data->w, data->h);
@@ -193,10 +192,12 @@ static void create_bar (struct Lava_data *data, struct Lava_output *output)
 	zwlr_layer_surface_v1_add_listener(output->layer_surface,
 			&layer_surface_listener,
 			output);
-
 	wl_surface_commit(output->wl_surface);
+
+	return true;
 }
 
+// TODO this probably sucks; Fix it!
 static void string_insert (char **str, char *srch, char *repl_s, int repl_i, size_t size)
 {
 	char  buffer[STRING_BUFFER_SIZE]; /* Local editing buffer. */
@@ -261,7 +262,7 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 		exit(EXIT_SUCCESS);
 	}
 	else if ( ret < 0 )
-		fprintf(stderr, "fork: %s\n", strerror(errno));
+		fprintf(stderr, "ERROR: fork: %s\n", strerror(errno));
 }
 
 /* Return pointer to Lava_button struct from button list which includes the
@@ -482,8 +483,12 @@ static void xdg_output_handle_name (void *raw_data,
 				name);
 
 	if ( output->data->only_output == NULL
-		|| ! strcmp(name, output->data->only_output) )
-		create_bar(output->data, output);
+			|| ! strcmp(name, output->data->only_output) )
+		if (! create_bar(output->data, output))
+		{
+			output->data->loop = false;
+			output->data->ret  = EXIT_FAILURE;
+		}
 }
 
 static void xdg_output_handle_logical_size (void *raw_data,
@@ -552,8 +557,10 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		struct Lava_seat *seat = calloc(1, sizeof(struct Lava_seat));
 		if ( seat == NULL )
 		{
-			fputs("Could not allocate.\n", stderr);
-			exit(EXIT_FAILURE);
+			fputs("ERROR: Could not allocate.\n", stderr);
+			data->loop = false;
+			data->ret  = EXIT_FAILURE;
+			return;
 		}
 		seat->data    = data;
 		seat->wl_seat = wl_seat;
@@ -570,8 +577,10 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		struct Lava_output *output = calloc(1, sizeof(struct Lava_output));
 		if ( output == NULL )
 		{
-			fputs("Could not allocate.\n", stderr);
-			exit(EXIT_FAILURE);
+			fputs("ERROR: Could not allocate.\n", stderr);
+			data->loop = false;
+			data->ret  = EXIT_FAILURE;
+			return;
 		}
 		output->data        = data;
 		output->global_name = name;
@@ -621,7 +630,7 @@ static const struct wl_registry_listener registry_listener = {
 	.global_remove = registry_handle_global_remove
 };
 
-static void init_wayland (struct Lava_data *data)
+static bool init_wayland (struct Lava_data *data)
 {
 	if (data->verbose)
 		fputs("Init Wayland.\n", stderr);
@@ -638,8 +647,8 @@ static void init_wayland (struct Lava_data *data)
 	assert(data->display);
 	if ( data->display == NULL || wayland_display == NULL )
 	{
-		fputs("Can not connect to a Wayland server.\n", stderr);
-		exit(EXIT_FAILURE);
+		fputs("ERROR: Can not connect to a Wayland server.\n", stderr);
+		return false;
 	}
 
 	/* Get registry and add listeners. */
@@ -648,41 +657,59 @@ static void init_wayland (struct Lava_data *data)
 	data->registry = wl_display_get_registry(data->display);
 	if ( data->registry == NULL )
 	{
-		fputs("Can not get registry.\n", stderr);
-		exit(EXIT_FAILURE);
+		fputs("ERROR: Can not get registry.\n", stderr);
+		return false;
 	}
 	wl_registry_add_listener(data->registry, &registry_listener, data);
 
 	if ( wl_display_roundtrip(data->display) == -1 )
 	{
-		fputs("Roundtrip failed.\n", stderr);
-		exit(EXIT_FAILURE);
+		fputs("ERROR: Roundtrip failed.\n", stderr);
+		return false;
 	}
 
 	/* Testing compatibilities. */
 	if ( data->compositor == NULL )
 	{
-		fputs("Wayland compositor does not support wl_compositor.\n",
+		fputs("ERROR: Wayland compositor does not support wl_compositor.\n",
 				stderr);
-		exit(EXIT_FAILURE);
+		return false;
 	}
 	if ( data->shm == NULL )
 	{
-		fputs("Wayland compositor does not support wl_shm.\n", stderr);
-		exit(EXIT_FAILURE);
+		fputs("ERROR: Wayland compositor does not support wl_shm.\n",
+				stderr);
+		return false;
 	}
 	if ( data->layer_shell == NULL )
 	{
-		fputs("Wayland compositor does not support zwlr_layer_shell_v1.\n",
+		fputs("ERROR: Wayland compositor does not support zwlr_layer_shell_v1.\n",
 				stderr);
-		exit(EXIT_FAILURE);
+		return false;
+	}
+
+	return true;
+}
+
+static void destroy_buttons (struct Lava_data *data)
+{
+	if (data->verbose)
+		fputs("Destroying buttons and freeing icons.\n", stderr);
+
+	struct Lava_button *bt_1, *bt_2;
+	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
+	{
+		wl_list_remove(&bt_1->link);
+		cairo_surface_destroy(bt_1->img);
+		free(bt_1);
 	}
 }
 
-static void deinit_wayland (struct Lava_data *data)
+/* Finish him! */
+static void finish_wayland (struct Lava_data *data)
 {
 	if (data->verbose)
-		fputs("Deinit Wayland.\nDestroying outputs.\n", stderr);
+		fputs("Finish Wayland.\nDestroying outputs.\n", stderr);
 
 	struct Lava_output *op_1, *op_2;
 	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
@@ -711,18 +738,7 @@ static void deinit_wayland (struct Lava_data *data)
 	}
 
 	if (data->verbose)
-		fputs("Destroying buttons and freeing icons.\n", stderr);
-
-	struct Lava_button *bt_1, *bt_2;
-	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
-	{
-		wl_list_remove(&bt_1->link);
-		cairo_surface_destroy(bt_1->img);
-		free(bt_1);
-	}
-
-	if (data->verbose)
-		fputs("Destroying wlr_layer_shell_v1, wl_compositor,"
+		fputs("Destroying wlr_layer_shell_v1, wl_compositor, "
 				"wl_shm and wl_registry.\n", stderr);
 
 	zwlr_layer_shell_v1_destroy(data->layer_shell);
@@ -734,27 +750,6 @@ static void deinit_wayland (struct Lava_data *data)
 		fputs("Diconnecting from server.\n", stderr);
 
 	wl_display_disconnect(data->display);
-}
-
-static void load_icons (struct Lava_data *data)
-{
-	if (data->verbose)
-		fputs("Loading icons.\n", stderr);
-
-	errno = 0;
-	struct Lava_button *bt_1, *bt_2;
-	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
-	{
-		// TODO check file type
-		bt_1->img = cairo_image_surface_create_from_png(bt_1->img_path);
-		if ( errno != 0 )
-		{
-			fprintf(stderr, "Failed loading image: %s\n"
-					"cairo_image_surface_create_from_png: %s\n",
-					bt_1->img_path, strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-	}
 }
 
 static void main_loop (struct Lava_data *data)
@@ -776,7 +771,8 @@ static void main_loop (struct Lava_data *data)
 		{
 			if ( wl_display_flush(data->display) == -1  && errno != EAGAIN )
 			{
-				fprintf(stderr, "wl_display_flush: %s\n", strerror(errno));
+				fprintf(stderr, "ERROR: wl_display_flush: %s\n",
+						strerror(errno));
 				break;
 			}
 		} while ( errno == EAGAIN );
@@ -791,20 +787,63 @@ static void main_loop (struct Lava_data *data)
 		/* Handle event. */
 		if ( fds.revents & POLLIN && wl_display_dispatch(data->display) == -1 )
 		{
-			fprintf(stderr, "wl_display_dispatch: %s\n", strerror(errno));
+			fprintf(stderr, "ERROR: wl_display_dispatch: %s\n",
+					strerror(errno));
 			break;
 		}
 		if ( fds.revents & POLLOUT && wl_display_flush(data->display) == -1 )
 		{
-			fprintf(stderr, "wl_display_flush: %s\n", strerror(errno));
+			fprintf(stderr, "ERROR: wl_display_flush: %s\n",
+					strerror(errno));
 			break;
 		}
+	}
+}
+
+static void calculate_dimensions (struct Lava_data *data)
+{
+	switch (data->position)
+	{
+		case POSITION_LEFT:
+		case POSITION_RIGHT:
+			data->orientation = ORIENTATION_VERTICAL;
+			data->w = (uint32_t)(data->icon_size + data->border_size);
+			data->h = (uint32_t)((data->button_amount * data->icon_size)
+					+ (2 * data->border_size));
+			if (data->margin)
+				data->w += data->border_size;
+			if ( data->exclusive_zone == 1 )
+				data->exclusive_zone = data->w;
+			break;
+
+		case POSITION_TOP:
+		case POSITION_BOTTOM:
+			data->orientation = ORIENTATION_HORIZONTAL;
+			data->w = (uint32_t)((data->button_amount * data->icon_size)
+					+ (2 * data->border_size));
+			data->h = (uint32_t)(data->icon_size + data->border_size);
+			if (data->margin)
+				data->h += data->border_size;
+			if ( data->exclusive_zone == 1 )
+				data->exclusive_zone = data->h;
+			break;
+
+		case POSITION_CENTER:
+			data->mode = MODE_DEFAULT;
+			data->orientation = ORIENTATION_HORIZONTAL;
+			data->w = (uint32_t)((data->button_amount * data->icon_size)
+					+ (2 * data->border_size));
+			data->h = (uint32_t)(data->icon_size + (2 * data->border_size));
+			if ( data->exclusive_zone == 1 )
+				data->exclusive_zone = 0;
+			break;
 	}
 }
 
 int main (int argc, char *argv[])
 {
 	struct Lava_data data = {0};
+	data.ret              = EXIT_SUCCESS;
 	wl_list_init(&(data.buttons));
 
 	/* Init data struct with sensible defaults. */
@@ -812,6 +851,7 @@ int main (int argc, char *argv[])
 
 	/* Handle command flags. */
 	for (int c; (c = getopt(argc, argv, "b:e:hl:m:M:o:p:s:S:c:C:v")) != -1 ;)
+	{
 		switch (c)
 		{
 			case 'b':
@@ -836,6 +876,14 @@ int main (int argc, char *argv[])
 				return EXIT_FAILURE;
 		}
 
+		if ( data.ret == EXIT_FAILURE )
+		{
+			if ( wl_list_length(&(data.buttons)) > 0 )
+				destroy_buttons(&data);
+			return EXIT_FAILURE;
+		}
+	}
+
 	/* Count buttons. If none are defined, exit. */
 	data.button_amount = wl_list_length(&(data.buttons));
 	if (! data.button_amount)
@@ -844,62 +892,19 @@ int main (int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	if (data.verbose)
-		fputs("LavaLauncher Version "VERSION"\n", stderr);
-
-	/* Calculating the size of the bar. At the "docking" edge no border will
-	 * be drawn.
-	 *
-	 * Also setting orientation and exclusive zone.
-	 */
-	switch (data.position)
-	{
-		case POSITION_LEFT:
-		case POSITION_RIGHT:
-			data.orientation = ORIENTATION_VERTICAL;
-			data.w = (uint32_t)(data.icon_size + data.border_size);
-			data.h = (uint32_t)((data.button_amount * data.icon_size)
-					+ (2 * data.border_size));
-			if (data.margin)
-				data.w += data.border_size;
-			if ( data.exclusive_zone == 1 )
-				data.exclusive_zone = data.w;
-			break;
-
-		case POSITION_TOP:
-		case POSITION_BOTTOM:
-			data.orientation = ORIENTATION_HORIZONTAL;
-			data.w = (uint32_t)((data.button_amount * data.icon_size)
-					+ (2 * data.border_size));
-			data.h = (uint32_t)(data.icon_size + data.border_size);
-			if (data.margin)
-				data.h += data.border_size;
-			if ( data.exclusive_zone == 1 )
-				data.exclusive_zone = data.h;
-			break;
-
-		case POSITION_CENTER:
-			data.mode = MODE_DEFAULT;
-			data.orientation = ORIENTATION_HORIZONTAL;
-			data.w = (uint32_t)((data.button_amount * data.icon_size)
-					+ (2 * data.border_size));
-			data.h = (uint32_t)(data.icon_size + (2 * data.border_size));
-			if ( data.exclusive_zone == 1 )
-				data.exclusive_zone = 0;
-			break;
-	}
+	calculate_dimensions(&data);
 
 	if (data.verbose)
-		fprintf(stderr, "Bar: w=%d h=%d buttons=%d\n", data.w, data.h,
+		fprintf(stderr, "LavaLauncher Version "VERSION"\n"
+				"Bar: w=%d h=%d buttons=%d\n", data.w, data.h,
 				data.button_amount);
 
-	init_wayland(&data);
-	load_icons(&data);
-	main_loop(&data);
-	deinit_wayland(&data);
+	if (! init_wayland(&data))
+		data.ret = EXIT_FAILURE;
+	else
+		main_loop(&data);
 
-	if (data.verbose)
-		fputs("Exiting.\nHave a nice day!\n", stderr);
-
-	return EXIT_SUCCESS;
+	destroy_buttons(&data);
+	finish_wayland(&data);
+	return data.ret;
 }

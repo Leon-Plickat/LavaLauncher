@@ -32,10 +32,14 @@
 void sensible_defaults (struct Lava_data *data)
 {
 	data->position          = POSITION_BOTTOM;
+	data->alignment         = ALIGNMENT_CENTER;
 	data->mode              = MODE_DEFAULT;
 	data->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 	data->icon_size         = 80;
-	data->border_size       = 2;
+	data->border_top        = 2;
+	data->border_right      = 2;
+	data->border_bottom     = 0;
+	data->border_left       = 2;
 	data->margin            = 0;
 	data->verbose           = false;
 	data->only_output       = NULL;
@@ -119,16 +123,27 @@ void config_set_mode (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "default"))
 		data->mode = MODE_DEFAULT;
-	else if (! strcmp(arg, "aggressive"))
-		data->mode = MODE_AGGRESSIVE;
 	else if (! strcmp(arg, "full"))
 		data->mode = MODE_FULL;
-	else if (! strcmp(arg, "full-center"))
-		data->mode = MODE_FULL_CENTER;
 	else
 	{
-		fputs("ERROR: Possible modes are 'default', 'aggressive',"
-				"'full' and 'full-center'.\n", stderr);
+		fputs("ERROR: Possible modes are 'default' and 'full'.\n", stderr);
+		data->ret = EXIT_FAILURE;
+	}
+}
+
+void config_set_alignment (struct Lava_data *data, const char *arg)
+{
+	if (! strcmp(arg, "start"))
+		data->alignment = ALIGNMENT_START;
+	else if (! strcmp(arg, "center"))
+		data->alignment = ALIGNMENT_CENTER;
+	else if (! strcmp(arg, "end"))
+		data->alignment = ALIGNMENT_END;
+	else
+	{
+		fputs("ERROR: Possible alignments are 'start', 'center' and 'end'.\n",
+				stderr);
 		data->ret = EXIT_FAILURE;
 	}
 }
@@ -159,12 +174,10 @@ void config_set_position (struct Lava_data *data, const char *arg)
 		data->position = POSITION_BOTTOM;
 	else if (! strcmp(arg, "left"))
 		data->position = POSITION_LEFT;
-	else if (! strcmp(arg, "center"))
-		data->position = POSITION_CENTER;
 	else
 	{
 		fputs("ERROR: Possible positions are 'top', 'right',"
-				"'bottom','left' and 'center'.\n", stderr);
+				"'bottom' and'left'.\n", stderr);
 		data->ret = EXIT_FAILURE;
 	}
 }
@@ -189,10 +202,14 @@ void config_set_icon_size (struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_border_size (struct Lava_data *data, const char *arg)
+void config_set_border_size (struct Lava_data *data, int top, int right,
+		int bottom, int left)
 {
-	data->border_size = atoi(arg);
-	if ( data->border_size < 0 )
+	data->border_top    = top;
+	data->border_right  = right;
+	data->border_bottom = bottom;
+	data->border_left   = left;
+	if ( top < 0 || right < 0 || bottom < 0 || left < 0 )
 	{
 		fputs("ERROR: Border size must be equal to or greater than zero.\n",
 				stderr);

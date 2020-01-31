@@ -1,6 +1,5 @@
 # Todo
 * Additional 'return' command that causes LavaLauncher to exit with a given number,
   which might be interesting for scripting
-* Check if scale is correctly implemented
+* Check if scale is correctly implemented (scary)
 * replace `lib/pool-buffer` with own code to simplify licensing
-* rewrite draw code to allow '-a' alignment command flag.

@@ -25,11 +25,12 @@ void sensible_defaults (struct Lava_data *data);
 void config_add_button (struct Lava_data *data, char *path, char *cmd);
 void config_set_layer (struct Lava_data *data, const char *arg);
 void config_set_mode (struct Lava_data *data, const char *arg);
+void config_set_alignment (struct Lava_data *data, const char *arg);
 void config_set_exclusive (struct Lava_data *data, const char *arg);
 void config_set_position (struct Lava_data *data, const char *arg);
 void config_set_margin (struct Lava_data *data, const char *arg);
 void config_set_icon_size (struct Lava_data *data, const char *arg);
-void config_set_border_size (struct Lava_data *data, const char *arg);
+void config_set_border_size (struct Lava_data *data, int top, int right, int bottom, int left);
 void config_set_bar_colour (struct Lava_data *data, const char *arg);
 void config_set_border_colour (struct Lava_data *data, const char *arg);
 

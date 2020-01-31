@@ -39,6 +39,8 @@ For larger contributions, especially for radical changes, I highly recommend you
 to ask me whether I will include your commit *before* you start investing time
 into it.
 
+If you are looking for things to do, check out the filed aptly called "TODO".
+
 You are strongly invited to add your name to the copyright header of the files
 you changed and to the authors sections in the man page and README if you made
 an important contribution.

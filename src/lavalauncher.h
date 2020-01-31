@@ -34,9 +34,7 @@ enum Bar_orientation
 enum Bar_mode
 {
 	MODE_DEFAULT = 0,
-	MODE_AGGRESSIVE,
-	MODE_FULL,
-	MODE_FULL_CENTER
+	MODE_FULL
 };
 
 enum Bar_position
@@ -44,8 +42,14 @@ enum Bar_position
 	POSITION_TOP = 0,
 	POSITION_RIGHT,
 	POSITION_BOTTOM,
-	POSITION_LEFT,
-	POSITION_CENTER
+	POSITION_LEFT
+};
+
+enum Bar_alignment
+{
+	ALIGNMENT_START = 0,
+	ALIGNMENT_CENTER,
+	ALIGNMENT_END
 };
 
 struct Lava_data
@@ -70,15 +74,16 @@ struct Lava_data
 	 * shape of the visual bar and the actual surface.
 	 */
 	enum Bar_position    position;
+	enum Bar_alignment   alignment;
 	enum Bar_orientation orientation;
 	enum Bar_mode        mode;
 
 	/* Layer the surface will be rendered on. */
 	enum zwlr_layer_shell_v1_layer layer;
 
-	/* Size of icons and bar border. */
+	/* Size of icons and bar borders. */
 	int icon_size;
-	int border_size;
+	int border_top, border_right, border_bottom, border_left;
 
 	/* Colours of the bar and its border; In float for actual usage and as
 	 * hex string for insertion into commands.

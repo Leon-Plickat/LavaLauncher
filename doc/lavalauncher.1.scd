@@ -93,12 +93,10 @@ events to them.
 	In 'full' mode, the bar spans the entire length of the edge it is docked
 	to.
 
-*-M <size>*
-	Margin from the screen edge the bar is docked to in pixel.
+*-M <top> <right> <bottom> <left>*
+	Margin.
 
-	The margin is ignored when the position is 'center'.
-
-	The default is 0.
+	The default is 0 0 0 0.
 
 *-o <name>*
 	Name of the output on which the bar should be displayed.

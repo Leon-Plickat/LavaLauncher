@@ -69,8 +69,7 @@ static void draw_coloured_rectangle (cairo_t *cairo, float colour[4],
 static void draw_bar (cairo_t *cairo, int32_t x, int32_t y, int32_t w, int32_t h,
 		int32_t border_top, int32_t border_right,
 		int32_t border_bottom, int32_t border_left,
-		float scale, enum Bar_position position,
-		float center_colour[4], float border_colour[4])
+		float scale, float center_colour[4], float border_colour[4])
 {
 	/* Calculate dimensions of center. */
 	int32_t cx = x + border_left,
@@ -134,7 +133,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 				data->w, data->h,
 				data->border_top, data->border_right,
 				data->border_bottom, data->border_left,
-				output->scale, data->position,
+				output->scale,
 				data->bar_colour, data->border_colour);
 	}
 	else if ( data->mode == MODE_FULL )
@@ -153,7 +152,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 		draw_bar(cairo, 0, 0, bar_w, bar_h,
 				data->border_top, data->border_right,
 				data->border_bottom, data->border_left,
-				output->scale, data->position,
+				output->scale,
 				data->bar_colour, data->border_colour);
 	}
 

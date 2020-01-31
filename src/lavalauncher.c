@@ -56,7 +56,7 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "  -h                                  Display this help text and exit.\n"
                             "  -l <overlay|top|bottom|background>  Layer of the bar surface.\n"
                             "  -m <default|full>                   Display mode of bar.\n"
-                            "  -M <size>                           Margin to screen edge.\n"
+                            "  -M <top> <right> <bottom> <left>    Margin.\n"
                             "  -o <name>                           Name of the output.\n"
                             "  -p <top|bottom|left|right>          Position of the bar.\n"
                             "  -s <size>                           Icon size.\n"
@@ -107,7 +107,6 @@ static void layer_surface_handle_configure (void *raw_data,
 
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
-	wl_surface_commit(output->wl_surface);
 
 	render_bar_frame(data, output);
 }
@@ -155,8 +154,6 @@ static bool create_bar (struct Lava_data *data, struct Lava_output *output)
 					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					data->margin, 0, 0, 0);
 			break;
 
 		case POSITION_RIGHT:
@@ -164,8 +161,6 @@ static bool create_bar (struct Lava_data *data, struct Lava_output *output)
 					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					0, data->margin, 0, 0);
 			break;
 
 		case POSITION_BOTTOM:
@@ -173,8 +168,6 @@ static bool create_bar (struct Lava_data *data, struct Lava_output *output)
 					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					0, 0, data->margin, 0);
 			break;
 
 		case POSITION_LEFT:
@@ -182,11 +175,12 @@ static bool create_bar (struct Lava_data *data, struct Lava_output *output)
 					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					0, 0, 0, data->margin);
 			break;
 	}
 
+	zwlr_layer_surface_v1_set_margin(output->layer_surface,
+			data->margin_top, data->margin_right,
+			data->margin_bottom, data->margin_left);
 	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 			data->exclusive_zone);
 	zwlr_layer_surface_v1_add_listener(output->layer_surface,
@@ -905,7 +899,22 @@ int main (int argc, char *argv[])
 			case 'h': fputs(usage, stderr);                    return EXIT_SUCCESS;
 			case 'l': config_set_layer(&data, optarg);         break;
 			case 'm': config_set_mode(&data, optarg);          break;
-			case 'M': config_set_margin(&data, optarg);        break;
+
+			case 'M':
+				args = count_arguments(optind, argc, argv);
+				if ( args != 4 )
+				{
+					fputs("ERROR: '-M' expects four arguments.\n",
+							stderr);
+					data.ret = EXIT_FAILURE;
+					break;
+				}
+				config_set_margin(&data, atoi(argv[optind-1]),
+						atoi(argv[optind]), atoi(argv[optind+1]),
+						atoi(argv[optind+2]));
+				optind += 3; /* Tell getopt() to "skip" three argv fields. */
+				break;
+
 			case 'o': data.only_output = optarg;               break;
 			case 'p': config_set_position(&data, optarg);      break;
 			case 's': config_set_icon_size(&data, optarg);     break;

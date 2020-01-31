@@ -22,6 +22,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
+#include<signal.h>
 #include<unistd.h>
 #include<string.h>
 #include<assert.h>
@@ -197,36 +198,38 @@ static bool create_bar (struct Lava_data *data, struct Lava_output *output)
 	return true;
 }
 
-// TODO this probably sucks; Fix it!
+/* This function will search for a string (*srch) inside a given string (**str)
+ * and replace it either with another string (*repl_s) or with a string-ified
+ * integer (repl_i, when *repl_s == NULL).
+ */
+// This likely sucks...
 static void string_insert (char **str, char *srch, char *repl_s, int repl_i, size_t size)
 {
 	char  buffer[STRING_BUFFER_SIZE]; /* Local editing buffer. */
 	char *p;                          /* Pointer to beginning of *srch. */
 
-	if (! (p = strstr(*str, srch)))
-		return;
+	/* Iterate over all occurrences of *srch */
+	while ((p = strstr(*str, srch)))
+	{
+		/* Copy str to buffer, but only until p. */
+		strncpy(buffer, *str, p - *str);
 
-	/* Copy str to buffer, but only until p. */
-	strncpy(buffer, *str, p - *str);
+		/* Insert replacement and rest of string. */
+		if ( repl_s == NULL )
+			sprintf(buffer + (p - *str), "%d%s", repl_i, p + strlen(srch));
+		else
+			sprintf(buffer + (p - *str), "%s%s", repl_s, p + strlen(srch));
 
-	/* Insert replacement and rest of string. */
-	if ( repl_s == NULL )
-		sprintf(buffer + (p - *str), "%d%s", repl_i, p + strlen(srch));
-	else
-		sprintf(buffer + (p - *str), "%s%s", repl_s, p + strlen(srch));
-
-	/* Copy buffer back to str. */
-	strncpy(*str, buffer, size);
-
-	/* Do the thing again until every instance of *srch is replaced. */
-	string_insert(str, srch, repl_s, repl_i, size);
+		/* Copy buffer back to str. */
+		strncpy(*str, buffer, size);
+	}
 }
 
 static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 		const char *cmd)
 {
-	int ret = fork();
 	errno   = 0;
+	int ret = fork();
 	if ( ret == 0 )
 	{
 		errno = 0;
@@ -253,7 +256,7 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 		errno = 0;
 		if ( system(buffer) == -1 )
 		{
-			fprintf(stderr, "system: %s\n", strerror(errno));
+			fprintf(stderr, "ERROR: system: %s\n", strerror(errno));
 			free(buffer);
 			exit(EXIT_FAILURE);
 		}
@@ -479,8 +482,7 @@ static void xdg_output_handle_name (void *raw_data,
 	output->name               = strdup(name);
 
 	if (output->data->verbose)
-		fprintf(stderr, "XDG-Output update name: name=%s\n",
-				name);
+		fprintf(stderr, "XDG-Output update name: name=%s\n", name);
 
 	if ( output->data->only_output == NULL
 			|| ! strcmp(name, output->data->only_output) )
@@ -898,6 +900,8 @@ int main (int argc, char *argv[])
 		fprintf(stderr, "LavaLauncher Version "VERSION"\n"
 				"Bar: w=%d h=%d buttons=%d\n", data.w, data.h,
 				data.button_amount);
+
+	signal(SIGCHLD, SIG_IGN);
 
 	if (! init_wayland(&data))
 		data.ret = EXIT_FAILURE;

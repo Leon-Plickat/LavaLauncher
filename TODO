@@ -2,3 +2,5 @@
 * Additional 'return' command that causes LavaLauncher to exit with a given number,
   which might be interesting for scripting
 * Check if scale is correctly implemented
+* replace `lib/pool-buffer` with own code to simplify licensing
+* rewrite draw code to allow '-a' alignment command flag.

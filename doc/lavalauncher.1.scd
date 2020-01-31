@@ -128,7 +128,7 @@ events to them.
 
 
 # EXAMPLE
-lavalauncher -b "~/icons/foo.png" "notify-send \\"Output: %output%\\"" -b "~/icons/glenda.png" acme -p bottom -a center -s 80 -c "#20202088" -o eDP-1
+lavalauncher -b "~/icons/foo.png" "notify-send 'Output: %output%'" -b "~/icons/glenda.png" acme -p bottom -a center -s 80 -S 2 2 0 2 -c "#20202088" -o eDP-1
 
 
 # BUGS

@@ -21,24 +21,23 @@ events to them.
 
 
 # OPTIONS
-*-a <start|center|end>*
+*-a <alignment>*
 	Alignment of the icons.
 
-	The default is 'center'.
+	Can be 'start', 'center' or 'end'.  The default is 'center'.
 
 *-b <path> <command>*
 	Add a button.
 
-	*Path* is the path to a PNG image file. It is recommended to use
-	square images.
-
-	*Command* is the shell command executed when the user clicks on the
-	button. If the given command is 'exit', LavaLauncher will exit.
-	LavaLauncher replaces '%buttons%' with the amount of buttons, '%icon-size%'
-	with the icon size, '%border-{top, right, bottom, left}%' with the
-	corresponding border size, '%colour%' with the colour of the
-	bar, '%border-colour%' with the colour of the border, '%output%' with
-	the name of the output and '%scale%' with the scale of the output.
+	*Path* is the path to a PNG image file. It is recommended to use square
+	images. *Command* is the shell command executed when the user clicks on
+	the button. The command is executed by the users system shell. If the
+	given command is 'exit', LavaLauncher will exit.  LavaLauncher
+	replaces '%buttons%' with the amount of buttons, '%icon-size%' with the
+	icon size, '%border-{top, right, bottom, left}%' with the corresponding
+	border size, '%colour%' with the colour of the bar, '%border-colour%'
+	with the colour of the border, '%output%' with the name of the output
+	and '%scale%' with the scale of the output.
 
 	The buttons on the bar will be shown in the order in which they are
 	given by the user.
@@ -53,63 +52,57 @@ events to them.
 
 	The default border colour is '#FFFFFFFF'
 
-*-e <true|false|stationary>*
+*-e <mode>*
 	Exclusive zone of the surface.
 
-	If 'true', the compositor is informed that it should not obstruct the
-	surface of LavaLauncher with other surfaces.
-
-	If 'false', the compositor is informed that it can place other surfaces
-	over or under the surface of LavaLauncher.
-
-	If 'stationary', the compositor is informed that the surface of
-	LavaLauncher should not be moved to accommodate other layer shell
-	surfaces. The compositor is free to place other surfaces over or under
-	the surface of LavaLauncher.
+	Can be 'true', 'false' or 'stationary'. If 'true', the compositor is
+	informed that it should not obstruct the surface of LavaLauncher with
+	other surfaces. If 'false', the compositor is informed that it can place
+	other surfaces over or under the surface of LavaLauncher.  If 'stationary',
+	the compositor is informed that the surface of LavaLauncher should not
+	be moved to accommodate other layer shell surfaces and that it can
+	freely place other surfaces over or under the surface of LavaLauncher.
+	The default is 'true'.
 
 	The exact implementation is compositor dependant; A compositor may
 	choose to ignore the requested exclusive zone of surfaces.
 
-	The default is 'true'.
-
 *-h*
 	Display a helpful help message and exit.
 
-*-l <overlay|top|bottom|background>*
+*-l <layer>*
 	Layer of the bar surface.
 
-	Typically, 'bottom' and 'background' will be underneath regular windows,
-	while 'top' and 'overlay' will be above them, however the exact
-	placement on the z axis depends on the implementation of the compositor.
+	Can be 'overlay', 'top', 'bottom' or 'background'. Typically, 'bottom'
+	and 'background' will be underneath regular windows, while 'top'
+	and 'overlay' will be above them, however the exact placement on the z
+	axis depends on the implementation of the compositor. The default layer
+	is 'bottom'.
 
-	The default layer is 'bottom'.
-
-*-m <default|full>*
+*-m <mode>*
 	The display mode of the bar.
 
-	In 'default' mode, the bar is sized just large enough to house all the
-	buttons. Logically, the default mode is 'default'.
-
-	In 'full' mode, the bar spans the entire length of the edge it is docked
-	to.
+	Can be 'default' or 'full'. In 'default' mode, the bar is sized just
+	large enough to house all the buttons. Logically, the default mode
+	is 'default'. In 'full' mode, the bar spans the entire length of the
+	edge it is docked to.
 
 *-M <top> <right> <bottom> <left>*
 	Margin.
 
-	The default is 0 0 0 0.
+	The default margins are 0 0 0 0.
 
 *-o <name>*
 	Name of the output on which the bar should be displayed.
 
 	If this option is omitted, the bar will be displayed on all outputs,
-	which is also the default behaviour.
+	which is the default behaviour.
 
-*-p <top|right|bottom|left>*
+*-p <position>*
 	Position of the bar.
 
-	The bar will dock to that edge of the output.
-
-	The default position is 'bottom'.
+	Can be 'top', 'right', 'bottom' or 'left'. The bar will dock to that
+	edge of the output.  The default position is 'bottom'.
 
 *-s <size>*
 	Size of the icons in pixel.
@@ -119,7 +112,7 @@ events to them.
 *-S <top> <right> <bottom> <left>*
 	Size of the borders in pixel.
 
-	The default border size are 2 2 0 2.
+	The default border sizes are 2 2 0 2.
 
 *-v*
 	Verbose output.

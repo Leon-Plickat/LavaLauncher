@@ -19,13 +19,14 @@ and [wayfire](https://github.com/WayfireWM/wayfire).
 ## Building
 
 LavaLauncher depends on Wayland, Wayland protocols and Cairo. To build
-this program you will need a C compiler, a GNU compatible implementation of
-`make` and `scdoc` to generate the manpage.
+this program you will need a C compiler, the meson & ninja build system and
+`scdoc` to generate the manpage.
 
     git clone https://git.sr.ht/~leon_plickat/lavalauncher
     cd lavalauncher
-    make
-    sudo make install
+    meson build
+    ninja -C build
+    sudo ninja -C build install
 
 
 ## Contributing
@@ -56,12 +57,12 @@ The mailinglist is for bug reports, contributions, feedback and getting help.
 
 LavaLauncher is licensed under the GPLv3.
 
-The contents of the `lib/wayland-protocols` directory are licensed differently.
-See the header of the files for more information.
+The contents of the `protocol` directory are licensed differently.  See the
+header of the files for more information.
 
-The contents of the `lib/pool-buffer` directory are licensed under the MIT
-license. The copyright of these files belongs to emersion. The files were copied
-from the project "slurp" and slightly modified to work with LavaLauncher.
+The contents of the `lib` directory are licensed under the MIT license. The
+copyright of these files belongs to emersion. The files were copied from the
+project "slurp" and slightly modified to work with LavaLauncher.
 
 
 ## Authors

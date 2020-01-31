@@ -93,7 +93,17 @@ static void layer_surface_handle_configure (void *raw_data,
 	if (data->verbose)
 		fprintf(stderr, "Resizing surface: w=%d h=%d\n", width, height);
 
-	// TODO set interactive zone
+	/* Set input region. This is necessarry to prevent the unused parts of
+	 * the surface to catch pointer and touch events.
+	 */
+	struct wl_region *region = wl_compositor_create_region(data->compositor);
+	if ( data->mode == MODE_DEFAULT )
+		wl_region_add(region, output->bar_x_offset, output->bar_y_offset,
+				data->w, data->h);
+	else
+		wl_region_add(region, 0, 0, output->w, output->h);
+	wl_surface_set_input_region(output->wl_surface, region);
+	wl_region_destroy(region);
 
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);

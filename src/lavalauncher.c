@@ -843,6 +843,22 @@ static void calculate_dimensions (struct Lava_data *data)
 	}
 }
 
+/* getopts() only handles command flags with none or a single argument directly;
+ * For multiple argument we have to do some of the work ourself. This function
+ * counts the arguments of a command flag.
+ */
+static int count_arguments (int optind, int argc, char *argv[])
+{
+	int args = 0, index = optind - 1;
+	while ( index < argc )
+	{
+		if ( *argv[index] == '-' )
+			break;
+		args++, index++;
+	}
+	return args;
+}
+
 int main (int argc, char *argv[])
 {
 	struct Lava_data data = {0};
@@ -855,13 +871,22 @@ int main (int argc, char *argv[])
 	/* Handle command flags. */
 	extern char *optarg;
 	extern int optind;
+	int args;
 	for (int c; (c = getopt(argc, argv, "b:e:hl:m:M:o:p:s:S:c:C:v")) != -1 ;)
 	{
 		switch (c)
 		{
 			case 'b':
+				args = count_arguments(optind, argc, argv);
+				if ( args != 2 )
+				{
+					fputs("ERROR: '-b' expects two arguments.\n",
+							stderr);
+					data.ret = EXIT_FAILURE;
+					break;
+				}
 				config_add_button(&data, argv[optind-1], argv[optind]);
-				optind++;
+				optind++; /* Tell getopt() to "skip" one argv field. */
 				break;
 
 			case 'c': config_set_bar_colour(&data, optarg);    break;
@@ -893,7 +918,7 @@ int main (int argc, char *argv[])
 	data.button_amount = wl_list_length(&(data.buttons));
 	if (! data.button_amount)
 	{
-		fputs("No buttons defined!\n", stderr);
+		fputs("ERROR: No buttons defined.\n", stderr);
 		return EXIT_FAILURE;
 	}
 

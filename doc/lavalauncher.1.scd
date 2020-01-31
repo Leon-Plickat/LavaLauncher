@@ -21,6 +21,11 @@ events to them.
 
 
 # OPTIONS
+*-a <start|center|end>*
+	Alignment of the icons.
+
+	The default is 'center'.
+
 *-b <path> <command>*
 	Add a button.
 
@@ -30,10 +35,10 @@ events to them.
 	*Command* is the shell command executed when the user clicks on the
 	button. If the given command is 'exit', LavaLauncher will exit.
 	LavaLauncher replaces '%buttons%' with the amount of buttons, '%icon-size%'
-	with the icon size, '%border-size%' with the border size, '%colour%'
-	with the colour of the bar, '%border-colour%' with the colour of the
-	border, '%output%' with the name of the output and '%scale%' with
-	the scale of the output.
+	with the icon size, '%border-{top, right, bottom, left}%' with the
+	corresponding border size, '%colour%' with the colour of the
+	bar, '%border-colour%' with the colour of the border, '%output%' with
+	the name of the output and '%scale%' with the scale of the output.
 
 	The buttons on the bar will be shown in the order in which they are
 	given by the user.
@@ -64,8 +69,6 @@ events to them.
 
 	The exact implementation is compositor dependant; A compositor may
 	choose to ignore the requested exclusive zone of surfaces.
-	For position 'center', the exclusive zone is always 'false'
-	or 'stationary'.
 
 	The default is 'true'.
 
@@ -81,30 +84,14 @@ events to them.
 
 	The default layer is 'bottom'.
 
-*-m <default|aggressive|full|full-center>*
+*-m <default|full>*
 	The display mode of the bar.
 
-	In 'default' mode, the surface is sized just large enough to house all
-	the buttons and placed in the middle of the edge it is docked to, or in
-	the outputs center, depending on the position. The surface will only be
-	anchored to that edge. Choosing the position 'center' will automatically
-	enable this mode.
-
-	The 'aggressive' mode is needed, because some compositors do not respect
-	the exclusive zone of surfaces that are anchored to less then three
-	sides. To work around this, 'aggressive' mode will make the surface use
-	the entire length of the edge it is docked to and also anchor it to the
-	adjacent edges. Visually however, 'aggressive' mode should not deviate
-	from 'default' mode, as the bar is only drawn in the center of the
-	surface.
+	In 'default' mode, the bar is sized just large enough to house all the
+	buttons. Logically, the default mode is 'default'.
 
 	In 'full' mode, the bar spans the entire length of the edge it is docked
-	to. The surface is created similarly to 'aggressive' mode, however the
-	bar is drawn to the full area of the surface. Icons will be drawn
-	starting on the left or top side of the bar, depending on the position.
-
-	The 'full-center' mode works just like the 'full' mode, with the
-	difference that the icons will be centered.
+	to.
 
 *-M <size>*
 	Margin from the screen edge the bar is docked to in pixel.
@@ -119,14 +106,10 @@ events to them.
 	If this option is omitted, the bar will be displayed on all outputs,
 	which is also the default behaviour.
 
-*-p <top|right|bottom|left|center>*
+*-p <top|right|bottom|left>*
 	Position of the bar.
 
-	The bar will dock to that edge, or in the case of 'center' in the
-	middle, of the output. No border will be drawn on the side where the bar
-	is docked.
-
-	Choosing 'center' will automatically set the display mode to 'default'.
+	The bar will dock to that edge of the output.
 
 	The default position is 'bottom'.
 
@@ -135,17 +118,17 @@ events to them.
 
 	The default icon size is 80;
 
-*-S <size>*
-	Size of the border in pixel.
+*-S <top> <right> <bottom> <left>*
+	Size of the borders in pixel.
 
-	The default border size is 2;
+	The default border size are 2 2 0 2.
 
 *-v*
 	Verbose output.
 
 
 # EXAMPLE
-lavalauncher -b "~/icons/foo.png" "notify-send \\"Output: %output%\\"" -b "~/icons/glenda.png" acme -p bottom -s 80 -c "#20202088" -o eDP-1
+lavalauncher -b "~/icons/foo.png" "notify-send \\"Output: %output%\\"" -b "~/icons/glenda.png" acme -p bottom -a center -s 80 -c "#20202088" -o eDP-1
 
 
 # BUGS

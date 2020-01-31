@@ -48,19 +48,20 @@
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n\n"
-                            "  -b <path> <command>                      Add a button.\n"
-                            "  -c <colour>                              Background colour.\n"
-                            "  -C <colour>                              Border colour.\n"
-                            "  -e <true|false|stationary>               Exclusive zone.\n"
-                            "  -h                                       Display this help text and exit.\n"
-                            "  -l <overlay|top|bottom|background>       Layer of the bar surface.\n"
-                            "  -m <default|aggressive|full|full-center> Display mode of bar.\n"
-                            "  -M <size>                                Margin to screen edge.\n"
-                            "  -o <name>                                Name of the output.\n"
-                            "  -p <top|bottom|left|right|center>        Position of the bar.\n"
-                            "  -s <size>                                Icon size.\n"
-                            "  -S <size>                                Border size.\n"
-                            "  -v                                       Verbose output.\n\n"
+                            "  -a <start|center|end>               Alignment.\n"
+                            "  -b <path> <command>                 Add a button.\n"
+                            "  -c <colour>                         Background colour.\n"
+                            "  -C <colour>                         Border colour.\n"
+                            "  -e <true|false|stationary>          Exclusive zone.\n"
+                            "  -h                                  Display this help text and exit.\n"
+                            "  -l <overlay|top|bottom|background>  Layer of the bar surface.\n"
+                            "  -m <default|full>                   Display mode of bar.\n"
+                            "  -M <size>                           Margin to screen edge.\n"
+                            "  -o <name>                           Name of the output.\n"
+                            "  -p <top|bottom|left|right>          Position of the bar.\n"
+                            "  -s <size>                           Icon size.\n"
+                            "  -S <top> <right> <bottom> <left>    Border sizes.\n"
+                            "  -v                                  Verbose output.\n\n"
                             "Buttons are displayed in the order in which they are declared.\n"
                             "Commands will be executed with the system shell.\n"
                             "Colours are expected to be in the format #RRGGBBAA.\n"
@@ -83,17 +84,16 @@ static void layer_surface_handle_configure (void *raw_data,
 		fprintf(stderr, "Layer surface configure request:"
 				" w=%d h=%d serial=%d\n", w, h, serial);
 
-	uint32_t width = data->w, height = data->h;
-	if ( data->mode != MODE_DEFAULT )
-	{
-		if ( data->orientation == ORIENTATION_HORIZONTAL )
-			width = output->w;
-		else
-			height = output->h;
-	}
+	uint32_t width, height;
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+		width = output->w, height = data->h;
+	else
+		width = data->w, height = output->h;
 
 	if (data->verbose)
 		fprintf(stderr, "Resizing surface: w=%d h=%d\n", width, height);
+
+	// TODO set interactive zone
 
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
@@ -142,60 +142,46 @@ static bool create_bar (struct Lava_data *data, struct Lava_output *output)
 	{
 		case POSITION_TOP:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					data->mode != MODE_DEFAULT
-					? ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-					: ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					data->margin, 0, 0, 0);
 			break;
 
 		case POSITION_RIGHT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					data->mode != MODE_DEFAULT
-					? ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-					: ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					0, data->margin, 0, 0);
 			break;
 
 		case POSITION_BOTTOM:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					data->mode != MODE_DEFAULT
-					? ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-					: ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					0, 0, data->margin, 0);
 			break;
 
 		case POSITION_LEFT:
 			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					data->mode != MODE_DEFAULT
-					? ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-					: ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
 					0, 0, 0, data->margin);
-			break;
-
-		case POSITION_CENTER:
 			break;
 	}
 
 	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 			data->exclusive_zone);
-
 	zwlr_layer_surface_v1_add_listener(output->layer_surface,
-			&layer_surface_listener,
-			output);
+			&layer_surface_listener, output);
 	wl_surface_commit(output->wl_surface);
-
 	return true;
 }
 
@@ -245,7 +231,10 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 
 		string_insert(&buffer, "%buttons%",       NULL,                    data->button_amount, STRING_BUFFER_SIZE);
 		string_insert(&buffer, "%icon-size%",     NULL,                    data->icon_size,     STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%border-size%",   NULL,                    data->border_size,   STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%border-top%",    NULL,                    data->border_top,    STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%border-left%",   NULL,                    data->border_left,   STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%border-bottom%", NULL,                    data->border_bottom, STRING_BUFFER_SIZE);
+		string_insert(&buffer, "%border-right%",  NULL,                    data->border_right,  STRING_BUFFER_SIZE);
 		string_insert(&buffer, "%colour%",        data->bar_colour_hex,    0,                   STRING_BUFFER_SIZE);
 		string_insert(&buffer, "%border-colour%", data->border_colour_hex, 0,                   STRING_BUFFER_SIZE);
 		string_insert(&buffer, "%output%",        output->name,            0,                   STRING_BUFFER_SIZE);
@@ -278,17 +267,14 @@ static struct Lava_button *button_from_coords (struct Lava_data *data,
 	int32_t ordinate;
 	int32_t pre_button_zone = 0;
 
-	if ( data->mode == MODE_DEFAULT || data->mode == MODE_AGGRESSIVE )
-		pre_button_zone += data->border_size;
-
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
 	{
-		pre_button_zone += output->bar_x_offset;
+		pre_button_zone += output->bar_x_offset + data->border_left;
 		ordinate         = x;
 	}
 	else
 	{
-		pre_button_zone += output->bar_y_offset;
+		pre_button_zone += output->bar_y_offset + data->border_top;
 		ordinate         = y;
 	}
 
@@ -439,20 +425,42 @@ static const struct wl_seat_listener seat_listener = {
 
 static void update_bar_offset (struct Lava_data *data, struct Lava_output *output)
 {
-	if ( data->mode != MODE_AGGRESSIVE && data->mode != MODE_FULL_CENTER )
+	switch (data->alignment)
 	{
-		output->bar_x_offset = 0;
-		output->bar_y_offset = 0;
-		return;
+		case ALIGNMENT_START:
+			output->bar_x_offset = 0;
+			output->bar_y_offset = 0;
+			break;
+
+		case ALIGNMENT_CENTER:
+			if ( data->orientation == ORIENTATION_HORIZONTAL )
+			{
+				output->bar_x_offset = (output->w / 2) - (data->w / 2);
+				output->bar_y_offset = 0;
+			}
+			else
+			{
+				output->bar_x_offset = 0;
+				output->bar_y_offset = (output->h / 2) - (data->h / 2);
+			}
+			break;
+
+		case ALIGNMENT_END:
+			if ( data->orientation == ORIENTATION_HORIZONTAL )
+			{
+				output->bar_x_offset = output->w  - data->w;
+				output->bar_y_offset = 0;
+			}
+			else
+			{
+				output->bar_x_offset = 0;
+				output->bar_y_offset = output->h - data->h;
+			}
+			break;
 	}
 
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		output->bar_x_offset = (output->w / 2) - (data->w / 2);
-	else
-		output->bar_y_offset = (output->h / 2) - (data->h / 2);
-
 	if (data->verbose)
-		fprintf(stderr, "Centering bar: x-offset=%d y-offset=%d\n",
+		fprintf(stderr, "Aligning bar: x-offset=%d y-offset=%d\n",
 				output->bar_x_offset, output->bar_y_offset);
 }
 
@@ -803,6 +811,9 @@ static void main_loop (struct Lava_data *data)
 	}
 }
 
+/* This functions calculates the dimensions of the minimal visible part of the
+ * bar.
+ */
 static void calculate_dimensions (struct Lava_data *data)
 {
 	switch (data->position)
@@ -810,11 +821,10 @@ static void calculate_dimensions (struct Lava_data *data)
 		case POSITION_LEFT:
 		case POSITION_RIGHT:
 			data->orientation = ORIENTATION_VERTICAL;
-			data->w = (uint32_t)(data->icon_size + data->border_size);
+			data->w = (uint32_t)(data->icon_size + data->border_right
+					+ data->border_left);
 			data->h = (uint32_t)((data->button_amount * data->icon_size)
-					+ (2 * data->border_size));
-			if (data->margin)
-				data->w += data->border_size;
+					+ data->border_top + data->border_bottom);
 			if ( data->exclusive_zone == 1 )
 				data->exclusive_zone = data->w;
 			break;
@@ -823,22 +833,11 @@ static void calculate_dimensions (struct Lava_data *data)
 		case POSITION_BOTTOM:
 			data->orientation = ORIENTATION_HORIZONTAL;
 			data->w = (uint32_t)((data->button_amount * data->icon_size)
-					+ (2 * data->border_size));
-			data->h = (uint32_t)(data->icon_size + data->border_size);
-			if (data->margin)
-				data->h += data->border_size;
+					+ data->border_left + data->border_right);
+			data->h = (uint32_t)(data->icon_size + data->border_top
+					+ data->border_bottom);
 			if ( data->exclusive_zone == 1 )
 				data->exclusive_zone = data->h;
-			break;
-
-		case POSITION_CENTER:
-			data->mode = MODE_DEFAULT;
-			data->orientation = ORIENTATION_HORIZONTAL;
-			data->w = (uint32_t)((data->button_amount * data->icon_size)
-					+ (2 * data->border_size));
-			data->h = (uint32_t)(data->icon_size + (2 * data->border_size));
-			if ( data->exclusive_zone == 1 )
-				data->exclusive_zone = 0;
 			break;
 	}
 }
@@ -869,13 +868,14 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
-	extern char *optarg;
 	extern int optind;
-	int args;
-	for (int c; (c = getopt(argc, argv, "b:e:hl:m:M:o:p:s:S:c:C:v")) != -1 ;)
+	extern char *optarg;
+	for (int c, args; (c = getopt(argc, argv, "a:b:e:hl:m:M:o:p:s:S:c:C:v")) != -1 ;)
 	{
 		switch (c)
 		{
+			case 'a': config_set_alignment(&data, optarg); break;
+
 			case 'b':
 				args = count_arguments(optind, argc, argv);
 				if ( args != 2 )
@@ -899,8 +899,23 @@ int main (int argc, char *argv[])
 			case 'o': data.only_output = optarg;               break;
 			case 'p': config_set_position(&data, optarg);      break;
 			case 's': config_set_icon_size(&data, optarg);     break;
-			case 'S': config_set_border_size(&data, optarg);   break;
-			case 'v': data.verbose = true;                     break;
+
+			case 'S':
+				args = count_arguments(optind, argc, argv);
+				if ( args != 4 )
+				{
+					fputs("ERROR: '-S' expects four arguments.\n",
+							stderr);
+					data.ret = EXIT_FAILURE;
+					break;
+				}
+				config_set_border_size(&data,
+						atoi(argv[optind-1]), atoi(argv[optind]),
+						atoi(argv[optind+1]), atoi(argv[optind+2]));
+				optind += 3; /* Tell getopt() to "skip" three argv fields. */
+				break;
+
+			case 'v': data.verbose = true; break;
 
 			default:
 				return EXIT_FAILURE;
@@ -922,6 +937,7 @@ int main (int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	/* Calculate dimension of the visible part of the bar. */
 	calculate_dimensions(&data);
 
 	if (data.verbose)
@@ -929,6 +945,7 @@ int main (int argc, char *argv[])
 				"Bar: w=%d h=%d buttons=%d\n", data.w, data.h,
 				data.button_amount);
 
+	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);
 
 	if (! init_wayland(&data))

@@ -111,7 +111,7 @@ struct Lava_data
 	uint32_t exclusive_zone;
 
 	/* Margin to the output edge the surface is anchored to. */
-	int margin;
+	int margin_top, margin_right, margin_bottom, margin_left;
 
 	/* Still running? */
 	bool loop;

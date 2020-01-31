@@ -40,7 +40,10 @@ void sensible_defaults (struct Lava_data *data)
 	data->border_right      = 2;
 	data->border_bottom     = 0;
 	data->border_left       = 2;
-	data->margin            = 0;
+	data->margin_top        = 0;
+	data->margin_right      = 0;
+	data->margin_bottom     = 0;
+	data->margin_left       = 0;
 	data->verbose           = false;
 	data->only_output       = NULL;
 	data->exclusive_zone    = 1;
@@ -182,12 +185,17 @@ void config_set_position (struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_margin (struct Lava_data *data, const char *arg)
+void config_set_margin (struct Lava_data *data, int top, int right, int bottom,
+		int left)
 {
-	data->margin = atoi(arg);
-	if ( data->margin < 0 )
+	data->margin_top    = top;
+	data->margin_right  = right;
+	data->margin_bottom = bottom;
+	data->margin_left   = left;
+	if ( top < 0 || right < 0 || bottom < 0 || left < 0 )
 	{
-		fputs("ERROR: Margin must be zero or greater.\n", stderr);
+		fputs("ERROR: Margin must be equal to or greater than zero.\n",
+				stderr);
 		data->ret = EXIT_FAILURE;
 	}
 }

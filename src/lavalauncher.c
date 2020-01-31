@@ -18,6 +18,7 @@
 
 #define VERSION "1.3"
 #define STRING_BUFFER_SIZE 4096
+#define _POSIX_C_SOURCE 200809L
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -38,9 +39,9 @@
 #include"config.h"
 #include"draw.h"
 
-#include"wlr-layer-shell-unstable-v1-client-protocol.h"
-#include"xdg-output-unstable-v1-client-protocol.h"
-#include"xdg-shell-client-protocol.h"
+#include"wlr-layer-shell-unstable-v1-protocol.h"
+#include"xdg-output-unstable-v1-protocol.h"
+#include"xdg-shell-protocol.h"
 #include"pool-buffer.h"
 
 #define SHELL "/bin/sh"
@@ -852,6 +853,8 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
+	extern char *optarg;
+	extern int optind;
 	for (int c; (c = getopt(argc, argv, "b:e:hl:m:M:o:p:s:S:c:C:v")) != -1 ;)
 	{
 		switch (c)

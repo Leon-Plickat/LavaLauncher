@@ -21,8 +21,8 @@
 
 #include<stdbool.h>
 
-#include"wlr-layer-shell-unstable-v1-client-protocol.h"
-#include"xdg-output-unstable-v1-client-protocol.h"
+#include"wlr-layer-shell-unstable-v1-protocol.h"
+#include"xdg-output-unstable-v1-protocol.h"
 #include"pool-buffer.h"
 
 enum Bar_orientation

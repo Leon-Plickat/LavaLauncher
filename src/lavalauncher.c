@@ -66,6 +66,75 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
 /* No-Op function. */
 static void noop () {}
 
+static void configure_surface (struct Lava_data *data, struct Lava_output *output)
+{
+	uint32_t width, height;
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+		width = output->w, height = data->h;
+	else
+		width = data->w, height = output->h;
+
+	if (data->verbose)
+		fprintf(stderr, "Surface size: w=%d h=%d\n", width, height);
+
+	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
+
+	/* Anchor the surface to the correct screen edge. */
+	switch (data->position)
+	{
+		case POSITION_TOP:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+			break;
+
+		case POSITION_RIGHT:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+			break;
+
+		case POSITION_BOTTOM:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+			break;
+
+		case POSITION_LEFT:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+			break;
+	}
+
+	/* Set margin. */
+	zwlr_layer_surface_v1_set_margin(output->layer_surface,
+			data->margin_top, data->margin_right,
+			data->margin_bottom, data->margin_left);
+
+	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
+	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+			data->exclusive_zone);
+
+	/* Set input region. This is necessary to prevent the unused parts of
+	 * the surface to catch pointer and touch events.
+	 */
+	struct wl_region *region = wl_compositor_create_region(data->compositor);
+	if ( data->mode == MODE_DEFAULT )
+		wl_region_add(region, output->bar_x_offset, output->bar_y_offset,
+				data->w, data->h);
+	else
+		wl_region_add(region, 0, 0, output->w, output->h);
+	wl_surface_set_input_region(output->wl_surface, region);
+	wl_region_destroy(region);
+
+	/* Careful: This function does not commit! */
+}
+
 static void layer_surface_handle_configure (void *raw_data,
 		struct zwlr_layer_surface_v1 *surface, uint32_t serial,
 		uint32_t w, uint32_t h)
@@ -78,30 +147,8 @@ static void layer_surface_handle_configure (void *raw_data,
 		fprintf(stderr, "Layer surface configure request:"
 				" w=%d h=%d serial=%d\n", w, h, serial);
 
-	uint32_t width, height;
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		width = output->w, height = data->h;
-	else
-		width = data->w, height = output->h;
-
-	if (data->verbose)
-		fprintf(stderr, "Resizing surface: w=%d h=%d\n", width, height);
-
-	/* Set input region. This is necessarry to prevent the unused parts of
-	 * the surface to catch pointer and touch events.
-	 */
-	struct wl_region *region = wl_compositor_create_region(data->compositor);
-	if ( data->mode == MODE_DEFAULT )
-		wl_region_add(region, output->bar_x_offset, output->bar_y_offset,
-				data->w, data->h);
-	else
-		wl_region_add(region, 0, 0, output->w, output->h);
-	wl_surface_set_input_region(output->wl_surface, region);
-	wl_region_destroy(region);
-
+	configure_surface(data, output);
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
-	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
-
 	render_bar_frame(data, output);
 }
 
@@ -139,53 +186,7 @@ static bool create_bar (struct Lava_data *data, struct Lava_output *output)
 		return false;
 	}
 
-	uint32_t width, height;
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		width = output->w, height = data->h;
-	else
-		width = data->w, height = output->h;
-
-	if (data->verbose)
-		fprintf(stderr, "Surface size: w=%d h=%d\n", width, height);
-
-	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
-
-	switch (data->position)
-	{
-		case POSITION_TOP:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
-			break;
-
-		case POSITION_RIGHT:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
-			break;
-
-		case POSITION_BOTTOM:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
-			break;
-
-		case POSITION_LEFT:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
-			break;
-	}
-
-	zwlr_layer_surface_v1_set_margin(output->layer_surface,
-			data->margin_top, data->margin_right,
-			data->margin_bottom, data->margin_left);
-	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-			data->exclusive_zone);
+	configure_surface(data, output);
 	zwlr_layer_surface_v1_add_listener(output->layer_surface,
 			&layer_surface_listener, output);
 	wl_surface_commit(output->wl_surface);

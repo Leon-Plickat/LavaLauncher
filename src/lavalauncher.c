@@ -842,9 +842,13 @@ static void calculate_dimensions (struct Lava_data *data)
 
 /* getopts() only handles command flags with none or a single argument directly;
  * For multiple argument we have to do some of the work ourself. This function
- * counts the arguments of a command flag.
+ * counts the arguments to a command flag and checks if that is expected amount.
+ * If it is the correct amount, it will return true, if not, an error message,
+ * specifying the flag and the expected amount of arguments, is printed and the
+ * function returns false.
  */
-static int count_arguments (int optind, int argc, char *argv[])
+static bool check_arguments (int optind, int argc, char *argv[], int expected,
+		const char *flag)
 {
 	int args = 0, index = optind - 1;
 	while ( index < argc )
@@ -853,7 +857,12 @@ static int count_arguments (int optind, int argc, char *argv[])
 			break;
 		args++, index++;
 	}
-	return args;
+
+	if ( args == expected )
+		return true;
+
+	fprintf(stderr, "ERROR: '%s' expects %d arguments.\n", flag, expected);
+	return false;
 }
 
 int main (int argc, char *argv[])
@@ -875,11 +884,8 @@ int main (int argc, char *argv[])
 			case 'a': config_set_alignment(&data, optarg); break;
 
 			case 'b':
-				args = count_arguments(optind, argc, argv);
-				if ( args != 2 )
+				if(! check_arguments(optind, argc, argv, 2, "-b"))
 				{
-					fputs("ERROR: '-b' expects two arguments.\n",
-							stderr);
 					data.ret = EXIT_FAILURE;
 					break;
 				}
@@ -895,11 +901,8 @@ int main (int argc, char *argv[])
 			case 'm': config_set_mode(&data, optarg);          break;
 
 			case 'M':
-				args = count_arguments(optind, argc, argv);
-				if ( args != 4 )
+				if (! check_arguments(optind, argc, argv, 4, "-M"))
 				{
-					fputs("ERROR: '-M' expects four arguments.\n",
-							stderr);
 					data.ret = EXIT_FAILURE;
 					break;
 				}
@@ -914,11 +917,8 @@ int main (int argc, char *argv[])
 			case 's': config_set_icon_size(&data, optarg);     break;
 
 			case 'S':
-				args = count_arguments(optind, argc, argv);
-				if ( args != 4 )
+				if (! check_arguments(optind, argc, argv, 4, "-S"))
 				{
-					fputs("ERROR: '-S' expects four arguments.\n",
-							stderr);
 					data.ret = EXIT_FAILURE;
 					break;
 				}

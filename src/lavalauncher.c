@@ -139,7 +139,16 @@ static bool create_bar (struct Lava_data *data, struct Lava_output *output)
 		return false;
 	}
 
-	zwlr_layer_surface_v1_set_size(output->layer_surface, data->w, data->h);
+	uint32_t width, height;
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+		width = output->w, height = data->h;
+	else
+		width = data->w, height = output->h;
+
+	if (data->verbose)
+		fprintf(stderr, "Surface size: w=%d h=%d\n", width, height);
+
+	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
 
 	switch (data->position)
 	{
@@ -423,6 +432,9 @@ static const struct wl_seat_listener seat_listener = {
 
 static void update_bar_offset (struct Lava_data *data, struct Lava_output *output)
 {
+	if ( output->w == 0 || output->h == 0 )
+		return;
+
 	switch (data->alignment)
 	{
 		case ALIGNMENT_START:
@@ -490,14 +502,6 @@ static void xdg_output_handle_name (void *raw_data,
 
 	if (output->data->verbose)
 		fprintf(stderr, "XDG-Output update name: name=%s\n", name);
-
-	if ( output->data->only_output == NULL
-			|| ! strcmp(name, output->data->only_output) )
-		if (! create_bar(output->data, output))
-		{
-			output->data->loop = false;
-			output->data->ret  = EXIT_FAILURE;
-		}
 }
 
 static void xdg_output_handle_logical_size (void *raw_data,
@@ -591,20 +595,44 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 			data->ret  = EXIT_FAILURE;
 			return;
 		}
+
 		output->data        = data;
 		output->global_name = name;
 		output->wl_output   = wl_output;
 		output->xdg_output  = zxdg_output_manager_v1_get_xdg_output(
 				data->xdg_output_manager, output->wl_output);
-		output->scale       = 1;
-		output->w           = 0;
-		output->h           = 0;
 		output->configured  = false;
+
 		wl_list_insert(&data->outputs, &output->link);
 		wl_output_set_user_data(wl_output, output);
 		wl_output_add_listener(wl_output, &output_listener, output);
 		zxdg_output_v1_add_listener(output->xdg_output,
 				&xdg_output_listener, output);
+
+		/* Roundtrip to allow the output handlers to "catch up", as
+		 * the outputs dimensions as well as name are needed for
+		 * creating the bar.
+		 */
+		if ( wl_display_roundtrip(data->display) == -1 )
+		{
+			fputs("ERROR: Roundtrip failed.\n", stderr);
+			data->loop = false;
+			data->ret  = EXIT_FAILURE;
+			return;
+		}
+
+		/* If either the name of output equals only_output or if no
+		 * only_output has been given, create a surface for this new
+		 * output.
+		 */
+		assert(output->name);
+		if ( data->only_output == NULL
+				|| ! strcmp(output->name, data->only_output) )
+			if (! create_bar(output->data, output))
+			{
+				output->data->loop = false;
+				output->data->ret  = EXIT_FAILURE;
+			}
 	}
 }
 

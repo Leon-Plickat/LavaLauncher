@@ -83,8 +83,6 @@ project "slurp" and slightly modified to work with LavaLauncher.
   a given number or string, which might be interesting for scripting.
 * Check if scale is correctly implemented (scary).
 * Replace `lib/pool-buffer` with own code to simplify licensing.
-* Fix possible bug causing some margins to not be respected in some positions.
-  This could also possibly be a bug in the compositors.
 * Speed up drawing, either by using something other than cairo for the icons or
   by drawing icons to a subsurface.
 * Different background for button the pointer hovers over. This likely requires

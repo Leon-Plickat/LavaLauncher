@@ -111,10 +111,26 @@ static void configure_surface (struct Lava_data *data, struct Lava_output *outpu
 			break;
 	}
 
-	/* Set margin. */
-	zwlr_layer_surface_v1_set_margin(output->layer_surface,
-			data->margin_top, data->margin_right,
-			data->margin_bottom, data->margin_left);
+	/* Set margin.
+	 * Since we create a surface spanning the entire length of an outputs
+	 * edge, margins parallel to it would move it outside the boundaries of
+	 * the output, which may or may not cause issues in some compositors.
+	 * To work around this, we simply cheat a bit: Margins parallel to the
+	 * bar will be simulated in the draw code by adjusting the bar offsets.
+	 *
+	 * See: update_bar_offset()
+	 *
+	 * Here we set the margins not parallel to the edges length, which are
+	 * "real" layer shell margins.
+	 */
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					data->margin_top, 0,
+					data->margin_bottom, 0);
+	else
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					0, data->margin_right,
+					0, data->margin_left);
 
 	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
 	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
@@ -482,6 +498,23 @@ static void update_bar_offset (struct Lava_data *data, struct Lava_output *outpu
 			}
 			break;
 	}
+
+	/* Set margin.
+	 * Since we create a surface spanning the entire length of an outputs
+	 * edge, margins parallel to it would move it outside the boundaries of
+	 * the output, which may or may not cause issues in some compositors.
+	 * To work around this, we simply cheat a bit: Margins parallel to the
+	 * bar will be simulated in the draw code by adjusting the bar offsets.
+	 *
+	 * See: configure_surface()
+	 *
+	 * Here we set the margins parallel to the edges length, which are
+	 * "fake", by adjusting the offset of the bar.
+	 */
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+		output->bar_x_offset += data->margin_left - data->margin_right;
+	else
+		output->bar_y_offset += data->margin_top - data->margin_bottom;
 
 	if (data->verbose)
 		fprintf(stderr, "Aligning bar: x-offset=%d y-offset=%d\n",

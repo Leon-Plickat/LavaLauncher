@@ -249,7 +249,8 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 		string_insert(&buffer, "%scale%",         NULL,                    output->scale,       STRING_BUFFER_SIZE);
 
 		if (data->verbose)
-			fprintf(stderr, "Executing: cmd=%s\n", buffer);
+			fprintf(stderr, "Executing: cmd='%s' raw='%s'\n",
+					buffer, cmd);
 
 		errno = 0;
 		if ( system(buffer) == -1 )
@@ -347,29 +348,41 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	struct Lava_seat *seat = raw_data;
 	struct Lava_data *data = seat->data;
 
-	if ( button_state != WL_POINTER_BUTTON_STATE_PRESSED )
-		return;
-
-	if (seat->data->verbose)
-		fprintf(stderr, "Click! x=%d y=%d", seat->pointer.x, seat->pointer.y);
-
-	seat->pointer.button = button_from_coords(seat->data, seat->pointer.output,
-			seat->pointer.x, seat->pointer.y);
-
-	if ( seat->pointer.button == NULL )
+	/* Only execute the command if the pointer button was pressed and
+	 * released over the same button on the bar.
+	 */
+	if ( button_state == WL_POINTER_BUTTON_STATE_PRESSED )
 	{
 		if (seat->data->verbose)
-			fputs("\n", stderr);
-		return;
+			fprintf(stderr, "Button pressed: x=%d y=%d\n",
+					seat->pointer.x, seat->pointer.y);
+		seat->pointer.button = button_from_coords(seat->data,
+				seat->pointer.output,
+				seat->pointer.x, seat->pointer.y);
 	}
-
-	if (seat->data->verbose)
-		fprintf(stderr, " cmd=%s\n", seat->pointer.button->cmd);
-
-	if (! strcmp(seat->pointer.button->cmd, "exit"))
-		seat->data->loop = false;
 	else
-		exec_cmd(seat->data, seat->pointer.output, seat->pointer.button->cmd);
+	{
+		if (seat->data->verbose)
+			fprintf(stderr, "Button released: x=%d y=%d\n",
+					seat->pointer.x, seat->pointer.y);
+
+		if ( seat->pointer.button == NULL )
+			return;
+
+		struct Lava_button *bar_button = button_from_coords(seat->data,
+				seat->pointer.output,
+				seat->pointer.x, seat->pointer.y);
+
+		if ( bar_button != seat->pointer.button )
+			return;
+
+		seat->pointer.button = NULL;
+
+		if (! strcmp(bar_button->cmd, "exit"))
+			seat->data->loop = false;
+		else
+			exec_cmd(seat->data, seat->pointer.output, bar_button->cmd);
+	}
 }
 
 static const struct wl_pointer_listener pointer_listener = {

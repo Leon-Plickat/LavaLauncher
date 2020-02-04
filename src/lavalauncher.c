@@ -338,7 +338,10 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
 	{
 		if ( op1->wl_surface == surface )
+		{
 			seat->pointer.output = op1;
+			break;
+		}
 	}
 
 	seat->pointer.x = wl_fixed_to_int(x);
@@ -401,6 +404,15 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	}
 }
 
+/* These are the listeners for pointer events. Only if a mouse button has been
+ * pressed and released over the same bar button do we want that buttons command
+ * to be executed. To achieve this, pointer_handle_enter() and
+ * pointer_handle_motion() will update the cursor coordinates stored in the seat.
+ * pointer_handle_button() will on press store the bar button under the pointer
+ * in the seat. On release it will check whether the button under the pointer is
+ * the one stored in the seat and execute the buttons commands if this is the
+ * case. pointer_handle_leave() will simply abort the pointer operation.
+ */
 static const struct wl_pointer_listener pointer_listener = {
 	.enter  = pointer_handle_enter,
 	.leave  = pointer_handle_leave,
@@ -409,11 +421,96 @@ static const struct wl_pointer_listener pointer_listener = {
 	.axis   = noop
 };
 
-// TODO implement touch handlers
+static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
+		uint32_t serial, uint32_t time, int32_t id)
+{
+	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
+	struct Lava_data *data = seat->data;
+
+	if (seat->data->verbose)
+		fputs("Touch up.\n", stderr);
+
+	/* If this touch event does not have the same id as the touch-down event
+	 * which initiated the touch operation, abort. Also abort if no touch
+	 * operation has been initiated.
+	 */
+	if ( ! seat->touch.button || id != seat->touch.id )
+	{
+		seat->touch.button = NULL;
+		seat->touch.output = NULL;
+		return;
+	}
+
+	/* At this point, we know for sure that we have received a touch-down
+	 * and the following touch-up event over the same button, so we can
+	 * execute its command.
+	 */
+	if (! strcmp(seat->touch.button->cmd, "exit"))
+		seat->data->loop = false;
+	else
+		exec_cmd(seat->data, seat->pointer.output, seat->touch.button->cmd);
+}
+
+static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
+		uint32_t serial, uint32_t time,
+		struct wl_surface *surface, int32_t id,
+		wl_fixed_t fx, wl_fixed_t fy)
+{
+	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
+	struct Lava_data *data = seat->data;
+
+	uint32_t x = wl_fixed_to_int(fx), y = wl_fixed_to_int(fy);
+
+	if (seat->data->verbose)
+		fprintf(stderr, "Touch down: x=%d y=%d\n", x, y);
+
+	/* Find the output of the touch event. */
+	seat->touch.output = NULL;
+	struct Lava_output *op1, *op2;
+	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
+	{
+		if ( op1->wl_surface == surface )
+		{
+			seat->touch.output = op1;
+			break;
+		}
+	}
+
+	seat->touch.id     = id;
+	seat->touch.button = button_from_coords(seat->data, seat->touch.output,
+			x, y);
+}
+
+static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
+		uint32_t time, int32_t id, wl_fixed_t x, wl_fixed_t y)
+{
+	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
+
+	if (seat->data->verbose)
+		fputs("Touch move.\n", stderr);
+
+	if ( id != seat->touch.id )
+		return;
+
+	/* The touch point has been moved, meaning it likely is no longer over
+	 * the button, so we simply abort the touch operation.
+	 */
+	seat->touch.button = NULL;
+	seat->touch.output = NULL;
+}
+
+/* These are the handlers for touch events. We only want to execute a buttons
+ * command, if both touch-down and touch-up were over the same button. To
+ * achieve this, touch_handle_down() will store the touch id and the button in
+ * the seat. touch_handle_up() checks whether a button is stored in the seat and
+ * whether its id is the same as the one stored in the seat and if both are true
+ * executes the buttons command. touch_handle_motion() will simply remove the
+ * button from the seat, effectively aborting the touch operation.
+ */
 static const struct wl_touch_listener touch_listener = {
-	.down        = noop,
-	.up          = noop,
-	.motion      = noop,
+	.down        = touch_handle_down,
+	.up          = touch_handle_up,
+	.motion      = touch_handle_motion,
 	.frame       = noop,
 	.cancel      = noop,
 	.shape       = noop,
@@ -437,21 +534,20 @@ static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 
 	if ( capabilities & WL_SEAT_CAPABILITY_POINTER )
 	{
+		if (data->verbose)
+			fputs("Seat has pointer capabilities.\n", stderr);
 		seat->pointer.wl_pointer = wl_seat_get_pointer(wl_seat);
 		wl_pointer_add_listener(seat->pointer.wl_pointer,
 				&pointer_listener, seat);
-		if (data->verbose)
-			fputs("Seat has WL_SEAT_CAPABILITY_POINTER.\n", stderr);
 	}
 
 	if ( capabilities & WL_SEAT_CAPABILITY_TOUCH )
 	{
-		seat->touch.wl_touch = wl_seat_get_touch(wl_seat);
-		wl_touch_add_listener(seat->touch.wl_touch, &touch_listener, seat);
 		if (data->verbose)
-			fputs("Seat has WL_SEAT_CAPABILITY_TOUCH.\n"
-					"Touch handling is not yet implemented.\n",
-					stderr);
+			fputs("Seat has touch capabilities.\n", stderr);
+		seat->touch.wl_touch = wl_seat_get_touch(wl_seat);
+		wl_touch_add_listener(seat->touch.wl_touch,
+				&touch_listener, seat);
 	}
 }
 

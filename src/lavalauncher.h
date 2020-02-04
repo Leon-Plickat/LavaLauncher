@@ -166,8 +166,7 @@ struct Lava_seat
 	struct
 	{
 		struct wl_touch    *wl_touch;
-		int32_t             x;
-		int32_t             y;
+		int32_t             id;
 		struct Lava_output *output;
 		struct Lava_button *button;
 	} touch;

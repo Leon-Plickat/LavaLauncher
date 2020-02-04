@@ -79,7 +79,8 @@ header of the files for more information.
   by drawing icons to a subsurface.
 * Different background for button the pointer hovers over. This likely requires
   speeding up of the drawing code.
-* Implement input handlers for touch support.
+* Test touch support.
+* Add support for other input methods, like drawing tablets
 
 
 ## Authors

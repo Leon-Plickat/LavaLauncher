@@ -28,7 +28,7 @@ realtime          = cc.find_library('rt')
 
 subdir('protocol')
 
-lavalauncher_inc = include_directories('src', 'lib')
+lavalauncher_inc = include_directories('src')
 
 executable(
   'lavalauncher',
@@ -36,7 +36,7 @@ executable(
     'src/lavalauncher.c',
     'src/config.c',
     'src/draw.c',
-    'lib/pool-buffer.c',
+    'src/buffer.c',
   ),
   dependencies: [
     wayland_client,

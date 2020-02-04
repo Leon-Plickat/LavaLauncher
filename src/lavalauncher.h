@@ -23,7 +23,7 @@
 
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 #include"xdg-output-unstable-v1-protocol.h"
-#include"pool-buffer.h"
+#include"buffer.h"
 
 enum Bar_orientation
 {
@@ -143,8 +143,8 @@ struct Lava_output
 	 */
 	bool configured;
 
-	struct pool_buffer  buffers[2];
-	struct pool_buffer *current_buffer;
+	struct Lava_buffer  buffers[2];
+	struct Lava_buffer *current_buffer;
 };
 
 struct Lava_seat

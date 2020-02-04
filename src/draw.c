@@ -112,9 +112,8 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	}
 
 	/* Get new/next buffer. */
-	output->current_buffer = get_next_buffer(data->shm, output->buffers,
-			buffer_w, buffer_h);
-	if (! output->current_buffer)
+	if (! next_buffer(&output->current_buffer, data->shm, output->buffers,
+				buffer_w, buffer_h))
 		return;
 
 	/* Clear buffer. */

@@ -42,12 +42,12 @@
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 #include"xdg-output-unstable-v1-protocol.h"
 #include"xdg-shell-protocol.h"
-#include"pool-buffer.h"
+#include"buffer.h"
 
 #define SHELL "/bin/sh"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
-                            "Usage: lavalauncher [options...]\n\n"
+                            "Usage: lavalauncher [options...]\n"
                             "  -a <alignments>                   Alignment.\n"
                             "  -b <path> <command>               Add a button.\n"
                             "  -c <colour>                       Background colour.\n"
@@ -246,7 +246,7 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 		errno = 0;
 		if ( setsid() == -1 )
 		{
-			fprintf(stderr, "setsid: %s\n", strerror(errno));
+			fprintf(stderr, "ERROR: setsid: %s\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 

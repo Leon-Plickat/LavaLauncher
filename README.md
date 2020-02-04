@@ -61,9 +61,6 @@ You are strongly invited to add your name to the copyright header of the files
 you changed and to the authors sections in the man page and README if you made
 an important contribution. A Free Software project is proud of every contributor.
 
-Your changes will be licensed under the same license as the file(s) you modified.
-New files will be licensed under the GPLv3.
-
 
 ## Licensing
 
@@ -72,17 +69,12 @@ LavaLauncher is licensed under the GPLv3.
 The contents of the `protocol` directory are licensed differently.  See the
 header of the files for more information.
 
-The contents of the `lib` directory are licensed under the MIT license. The
-copyright of these files belongs to emersion. The files were copied from the
-project "slurp" and slightly modified to work with LavaLauncher.
-
 
 ## TODO
 
 * Additional 'return' command for buttons that causes LavaLauncher to exit with
   a given number or string, which might be interesting for scripting.
 * Check if scale is correctly implemented (scary).
-* Replace `lib/pool-buffer` with own code to simplify licensing.
 * Speed up drawing, either by using something other than cairo for the icons or
   by drawing icons to a subsurface.
 * Different background for button the pointer hovers over. This likely requires

@@ -66,6 +66,9 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
 /* No-Op function. */
 static void noop () {}
 
+/* Helper function to configure the bar surface. Careful: This function does not
+ * commit!
+ */
 static void configure_surface (struct Lava_data *data, struct Lava_output *output)
 {
 	uint32_t width, height;
@@ -121,7 +124,7 @@ static void configure_surface (struct Lava_data *data, struct Lava_output *outpu
 	 * See: update_bar_offset()
 	 *
 	 * Here we set the margins not parallel to the edges length, which are
-	 * "real" layer shell margins.
+	 * real layer shell margins.
 	 */
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
 			zwlr_layer_surface_v1_set_margin(output->layer_surface,
@@ -136,19 +139,26 @@ static void configure_surface (struct Lava_data *data, struct Lava_output *outpu
 	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 			data->exclusive_zone);
 
-	/* Set input region. This is necessary to prevent the unused parts of
-	 * the surface to catch pointer and touch events.
-	 */
 	struct wl_region *region = wl_compositor_create_region(data->compositor);
 	if ( data->mode == MODE_DEFAULT )
 		wl_region_add(region, output->bar_x_offset, output->bar_y_offset,
 				data->w, data->h);
 	else
 		wl_region_add(region, 0, 0, output->w, output->h);
-	wl_surface_set_input_region(output->wl_surface, region);
-	wl_region_destroy(region);
 
-	/* Careful: This function does not commit! */
+	/* Set input region. This is necessary to prevent the unused parts of
+	 * the surface to catch pointer and touch events.
+	 */
+	wl_surface_set_input_region(output->wl_surface, region);
+
+	/* If both border and background are opaque, set opaque region. This
+	 * will inform the compositor that it does not have to render anything
+	 * below the surface.
+	 */
+	if ( data->bar_colour[3] == 1 && data->border_colour[3] == 1 )
+		wl_surface_set_opaque_region(output->wl_surface, region);
+
+	wl_region_destroy(region);
 }
 
 static void layer_surface_handle_configure (void *raw_data,

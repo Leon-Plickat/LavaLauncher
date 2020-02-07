@@ -43,14 +43,14 @@ events to them.
 	given by the user.
 
 *-c <colour>*
-	Colour of the bar in the format '#RRGGBBAA'.
+	Colour of the bar in the format '#RRGGBBAA' or '#RRGGBB'.
 
-	The default bar colour is '#000000FF'
+	The default bar colour is '#000000'
 
 *-C <colour>*
-	Colour of the border in the format '#RRGGBBAA'.
+	Colour of the border in the format '#RRGGBBAA' or '#RRGGBB'.
 
-	The default border colour is '#FFFFFFFF'
+	The default border colour is '#FFFFFF'
 
 *-e <mode>*
 	Exclusive zone of the surface.

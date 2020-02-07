@@ -59,13 +59,16 @@ void sensible_defaults (struct Lava_data *data)
 	data->border_colour[3]  = 1.0f;
 }
 
+/* Convert a hex colour string with or without alpha channel into RGBA floats. */
 static bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
 {
-	unsigned int r = 0, g = 0, b = 0, a = 0;
+	unsigned int r = 0, g = 0, b = 0, a = 255;
 
-	if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a) )
+	if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a)
+			&& 3 != sscanf(hex, "#%02x%02x%02x", &r, &g, &b) )
 	{
-		fputs("ERROR: Colour codes are expected to use the format #RRGGBBAA\n",
+		fputs("ERROR: Colour codes are expected to be in the format"
+				" #RRGGBBAA or #RRGGBB\n",
 				stderr);
 		return false;
 	}

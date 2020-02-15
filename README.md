@@ -81,6 +81,7 @@ header of the files for more information.
   speeding up of the drawing code.
 * Test touch support.
 * Add support for other input methods, like drawing tablets
+* clone() instead of fork() ?
 
 
 ## Authors

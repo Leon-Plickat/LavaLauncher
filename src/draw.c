@@ -98,17 +98,15 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 
 	/* Calculate buffer size. */
 	int buffer_w, buffer_h;
-	switch (data->orientation)
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
 	{
-		case ORIENTATION_HORIZONTAL:
-			buffer_w = output->w;
-			buffer_h = data->h * output->scale;
-			break;
-
-		case ORIENTATION_VERTICAL:
-			buffer_w = data->w * output->scale;
-			buffer_h = output->h;
-			break;
+		buffer_w = output->w;
+		buffer_h = data->h * output->scale;
+	}
+	else
+	{
+		buffer_w = data->w * output->scale;
+		buffer_h = output->h;
 	}
 
 	/* Get new/next buffer. */

@@ -279,7 +279,7 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 					buffer, cmd);
 
 		errno = 0;
-		if ( system(buffer) == -1 )
+		if ( system(buffer) == -1 && errno != ECHILD )
 		{
 			fprintf(stderr, "ERROR: system: %s\n", strerror(errno));
 			free(buffer);
@@ -375,7 +375,6 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		uint32_t serial, uint32_t time, uint32_t button, uint32_t button_state)
 {
 	struct Lava_seat *seat = raw_data;
-	struct Lava_data *data = seat->data;
 
 	/* Only execute the command if the pointer button was pressed and
 	 * released over the same button on the bar.
@@ -435,7 +434,6 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 		uint32_t serial, uint32_t time, int32_t id)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-	struct Lava_data *data = seat->data;
 
 	if (seat->data->verbose)
 		fputs("Touch up.\n", stderr);
@@ -467,7 +465,6 @@ static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
 		wl_fixed_t fx, wl_fixed_t fy)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-	struct Lava_data *data = seat->data;
 
 	uint32_t x = wl_fixed_to_int(fx), y = wl_fixed_to_int(fy);
 
@@ -1058,7 +1055,7 @@ int main (int argc, char *argv[])
 	/* Handle command flags. */
 	extern int optind;
 	extern char *optarg;
-	for (int c, args; (c = getopt(argc, argv, "a:b:e:hl:m:M:o:p:s:S:c:C:v")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "a:b:e:hl:m:M:o:p:s:S:c:C:v")) != -1 ;)
 	{
 		switch (c)
 		{

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define VERSION "1.5"
+#define VERSION "1.6"
 #define STRING_BUFFER_SIZE 4096
 #define _POSIX_C_SOURCE 200809L
 

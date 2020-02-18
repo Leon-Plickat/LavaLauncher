@@ -72,6 +72,11 @@ header of the files for more information.
 
 ## TODO
 
+* Go back to a small surface with a single anchor. This would mean one final
+  rewrite of the draw code, but will massively simplify the code. The major
+  problem here is, that sway does not respect the exclusive zone of surfaces
+  anchored to less than three sides. Until sways behaviour changes, this will
+  not be done.
 * Additional 'return' command for buttons that causes LavaLauncher to exit with
   a given number or string, which might be interesting for scripting.
 * Check if scale is correctly implemented (scary).

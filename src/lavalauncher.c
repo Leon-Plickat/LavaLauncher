@@ -771,11 +771,14 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 			return;
 		}
 
+		assert(output->name);
+		if ( data->layer_shell == NULL )
+			return;
+
 		/* If either the name of output equals only_output or if no
 		 * only_output has been given, create a surface for this new
 		 * output.
 		 */
-		assert(output->name);
 		if ( data->only_output == NULL
 				|| ! strcmp(output->name, data->only_output) )
 			if (! create_bar(output->data, output))
@@ -849,6 +852,7 @@ static bool init_wayland (struct Lava_data *data)
 	}
 	wl_registry_add_listener(data->registry, &registry_listener, data);
 
+	/* Allow registry listeners to catch up. */
 	if ( wl_display_roundtrip(data->display) == -1 )
 	{
 		fputs("ERROR: Roundtrip failed.\n", stderr);
@@ -928,10 +932,14 @@ static void finish_wayland (struct Lava_data *data)
 		fputs("Destroying wlr_layer_shell_v1, wl_compositor, "
 				"wl_shm and wl_registry.\n", stderr);
 
-	zwlr_layer_shell_v1_destroy(data->layer_shell);
-	wl_compositor_destroy(data->compositor);
-	wl_shm_destroy(data->shm);
-	wl_registry_destroy(data->registry);
+	if ( data->layer_shell != NULL )
+		zwlr_layer_shell_v1_destroy(data->layer_shell);
+	if ( data->compositor != NULL )
+		wl_compositor_destroy(data->compositor);
+	if ( data->shm != NULL )
+		wl_shm_destroy(data->shm);
+	if ( data->registry != NULL )
+		wl_registry_destroy(data->registry);
 
 	if (data->verbose)
 		fputs("Diconnecting from server.\n", stderr);

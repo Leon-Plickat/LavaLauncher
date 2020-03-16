@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef DRAW_H
-#define DRAW_H
+#ifndef LAVALAUNCHER_DRAW_H
+#define LAVALAUNCHER_DRAW_H
 
 #include"lavalauncher.h"
 

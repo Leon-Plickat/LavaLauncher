@@ -1,5 +1,5 @@
-#ifndef INPUT_H
-#define INPUT_H
+#ifndef LAVALAUNCHER_INPUT_H
+#define LAVALAUNCHER_INPUT_H
 
 #include"lavalauncher.h"
 

@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef LAVALAUNCHER_CONFIG_H
+#define LAVALAUNCHER_CONFIG_H
 
 #include"lavalauncher.h"
 

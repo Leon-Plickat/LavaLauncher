@@ -1,5 +1,5 @@
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef LAVALAUNCHER_BUFFER_H
+#define LAVALAUNCHER_BUFFER_H
 
 #include<stdint.h>
 #include<stdbool.h>

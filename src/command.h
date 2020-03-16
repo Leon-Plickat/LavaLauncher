@@ -1,5 +1,5 @@
-#ifndef COMMAND_H
-#define COMMAND_H
+#ifndef LAVALAUNCHER_COMMAND_H
+#define LAVALAUNCHER_COMMAND_H
 
 #include"lavalauncher.h"
 

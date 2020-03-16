@@ -17,7 +17,7 @@ static void randomize_string (char *str, size_t len)
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	long r = ts.tv_nsec;
-	
+
 	for (size_t i = 0; i < len; i++, str++)
 	{
 		/* Use two byte from the current nano-second to pseudo-randomly

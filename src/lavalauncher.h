@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_H
-#define LAVALAUNCHER_H
+#ifndef LAVALAUNCHER_LAVALAUNCHER_H
+#define LAVALAUNCHER_LAVALAUNCHER_H
 
 #include<stdbool.h>
 

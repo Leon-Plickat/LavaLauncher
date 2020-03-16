@@ -35,6 +35,8 @@ executable(
     'src/config.c',
     'src/draw.c',
     'src/buffer.c',
+    'src/command.c',
+    'src/input.c',
   ),
   dependencies: [
     wayland_client,

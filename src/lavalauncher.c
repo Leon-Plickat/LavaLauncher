@@ -126,13 +126,13 @@ static void configure_surface (struct Lava_data *data, struct Lava_output *outpu
 	 * real layer shell margins.
 	 */
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					data->margin_top, 0,
-					data->margin_bottom, 0);
+		zwlr_layer_surface_v1_set_margin(output->layer_surface,
+				data->margin_top, 0,
+				data->margin_bottom, 0);
 	else
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					0, data->margin_right,
-					0, data->margin_left);
+		zwlr_layer_surface_v1_set_margin(output->layer_surface,
+				0, data->margin_right,
+				0, data->margin_left);
 
 	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
 	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
@@ -475,10 +475,10 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		 */
 		if ( data->only_output == NULL
 				|| ! strcmp(output->name, data->only_output) )
-			if (! create_bar(output->data, output))
+			if (! create_bar(data, output))
 			{
-				output->data->loop = false;
-				output->data->ret  = EXIT_FAILURE;
+				data->loop = false;
+				data->ret  = EXIT_FAILURE;
 			}
 	}
 }

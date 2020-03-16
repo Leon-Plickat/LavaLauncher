@@ -234,6 +234,8 @@ static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
  * whether its id is the same as the one stored in the seat and if both are true
  * executes the buttons command. touch_handle_motion() will simply remove the
  * button from the seat, effectively aborting the touch operation.
+ *
+ * Behold: Since I lack the necessary hardware, touch support is untested.
  */
 const struct wl_touch_listener touch_listener = {
 	.down        = touch_handle_down,

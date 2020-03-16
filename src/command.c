@@ -16,7 +16,7 @@
  * integer (repl_i, when *repl_s == NULL).
  */
 // This likely sucks...
-static void string_insert (char **str, char *srch, char *repl_s, int repl_i, size_t size)
+static void replace_token (char **str, char *srch, char *repl_s, int repl_i, size_t size)
 {
 	char  buffer[STRING_BUFFER_SIZE]; /* Local editing buffer. */
 	char *p;                          /* Pointer to beginning of *srch. */
@@ -38,9 +38,25 @@ static void string_insert (char **str, char *srch, char *repl_s, int repl_i, siz
 	}
 }
 
-/* This function will execute a string as a shell command. Before execution,
- * certain sub-strings are replaced.
- */
+static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
+		char *buffer)
+{
+	replace_token(&buffer, "%buttons%",       NULL,                    data->button_amount, STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%icon-size%",     NULL,                    data->icon_size,     STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%border-top%",    NULL,                    data->border_top,    STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%border-left%",   NULL,                    data->border_left,   STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%border-bottom%", NULL,                    data->border_bottom, STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%border-right%",  NULL,                    data->border_right,  STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%margin-top%",    NULL,                    data->margin_top,    STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%margin-left%",   NULL,                    data->margin_left,   STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%margin-bottom%", NULL,                    data->margin_bottom, STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%margin-right%",  NULL,                    data->margin_right,  STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%colour%",        data->bar_colour_hex,    0,                   STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%border-colour%", data->border_colour_hex, 0,                   STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%output%",        output->name,            0,                   STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%scale%",         NULL,                    output->scale,       STRING_BUFFER_SIZE);
+}
+
 static void exec_cmd (struct Lava_data *data, struct Lava_output *output, const char *cmd)
 {
 	errno   = 0;
@@ -56,17 +72,7 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output, const 
 
 		char *buffer = malloc(STRING_BUFFER_SIZE);
 		strncpy(buffer, cmd, STRING_BUFFER_SIZE);
-
-		string_insert(&buffer, "%buttons%",       NULL,                    data->button_amount, STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%icon-size%",     NULL,                    data->icon_size,     STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%border-top%",    NULL,                    data->border_top,    STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%border-left%",   NULL,                    data->border_left,   STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%border-bottom%", NULL,                    data->border_bottom, STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%border-right%",  NULL,                    data->border_right,  STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%colour%",        data->bar_colour_hex,    0,                   STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%border-colour%", data->border_colour_hex, 0,                   STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%output%",        output->name,            0,                   STRING_BUFFER_SIZE);
-		string_insert(&buffer, "%scale%",         NULL,                    output->scale,       STRING_BUFFER_SIZE);
+		handle_tokens(data, output, buffer);
 
 		if (data->verbose)
 			fprintf(stderr, "Executing: cmd='%s' raw='%s'\n",
@@ -90,18 +96,17 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output, const 
 
 /* Helper function that catches any special cases before executing the button
  * command.
- *
- * Currently there are two special cases: If the command is NULL, return. If the
- * command is "exit", exit lavalauncher.
  */
-void button_command (struct Lava_data *data, struct Lava_button *button,
+bool button_command (struct Lava_data *data, struct Lava_button *button,
 		struct Lava_output *output)
 {
 	if ( button->cmd == NULL )
-		return;
+		return false;
 
 	if (! strcmp(button->cmd, "exit"))
 		data->loop = false;
 	else
 		exec_cmd(data, output, button->cmd);
+
+	return true;
 }

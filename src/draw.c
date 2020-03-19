@@ -107,13 +107,13 @@ static void calculate_buffer_size (struct Lava_data *data, struct Lava_output *o
 {
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
 	{
-		*w = output->w;
-		*h = data->h * output->scale;
+		*w = output->w * output->scale;
+		*h = data->h   * output->scale;
 	}
 	else
 	{
-		*w = data->w * output->scale;
-		*h = output->h;
+		*w = data->w   * output->scale;
+		*h = output->h * output->scale;
 	}
 }
 

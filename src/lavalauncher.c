@@ -70,11 +70,14 @@ static void noop () {}
  */
 static void configure_surface (struct Lava_data *data, struct Lava_output *output)
 {
+	if (! output->configured)
+		return;
+
 	uint32_t width, height;
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		width = output->w, height = data->h;
+		width = output->w * output->scale, height = data->h;
 	else
-		width = data->w, height = output->h;
+		width = data->w, height = output->h * output->scale;
 
 	if (data->verbose)
 		fprintf(stderr, "Surface size: w=%d h=%d\n", width, height);
@@ -327,6 +330,7 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 	if (output->data->verbose)
 		fprintf(stderr, "Output update scale: s=%d\n", output->scale);
 
+	configure_surface(output->data, output);
 	update_bar_offset(output->data, output);
 	render_bar_frame(output->data, output);
 }

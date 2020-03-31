@@ -28,28 +28,8 @@
 enum Bar_orientation
 {
 	ORIENTATION_VERTICAL = 0,
-	ORIENTATION_HORIZONTAL
-};
-
-enum Bar_mode
-{
-	MODE_DEFAULT = 0,
-	MODE_FULL
-};
-
-enum Bar_position
-{
-	POSITION_TOP = 0,
-	POSITION_RIGHT,
-	POSITION_BOTTOM,
-	POSITION_LEFT
-};
-
-enum Bar_alignment
-{
-	ALIGNMENT_START = 0,
-	ALIGNMENT_CENTER,
-	ALIGNMENT_END
+	ORIENTATION_HORIZONTAL,
+	ORIENTATION_AUTO
 };
 
 struct Lava_data
@@ -70,13 +50,8 @@ struct Lava_data
 	/* Amount of buttons defined by the user. */
 	int button_amount;
 
-	/* Mode and position of the bar. These are responsible for the general
-	 * shape of the visual bar and the actual surface.
-	 */
-	enum Bar_position    position;
-	enum Bar_alignment   alignment;
-	enum Bar_orientation orientation;
-	enum Bar_mode        mode;
+	enum zwlr_layer_surface_v1_anchor anchors;
+	enum Bar_orientation              orientation;
 
 	/* Layer the surface will be rendered on. */
 	enum zwlr_layer_shell_v1_layer layer;
@@ -94,8 +69,7 @@ struct Lava_data
 	char  *border_colour_hex;
 
 	/* Expected (and enforced) width and height of the bar. */
-	uint32_t w;
-	uint32_t h;
+	uint32_t w, h;
 
 	/* If *only_output is NULL, a surface will be created for all outputs.
 	 * Otherwise only on the surface which name is equal to *only_output.
@@ -110,8 +84,7 @@ struct Lava_data
 	 */
 	uint32_t exclusive_zone;
 
-	/* Margin to the output edge the surface is anchored to. */
-	int margin_top, margin_right, margin_bottom, margin_left;
+	int margin;
 
 	/* Still running? */
 	bool loop;
@@ -130,10 +103,7 @@ struct Lava_output
 	char                  *name;
 	uint32_t               global_name;
 	int32_t                scale;
-	int32_t                w;
-	int32_t                h;
-	int32_t                bar_y_offset;
-	int32_t                bar_x_offset;
+	int32_t                w, h;
 
 	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;

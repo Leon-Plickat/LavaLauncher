@@ -47,17 +47,16 @@
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
-                            "  -a <alignments>                   Alignment.\n"
                             "  -b <path> <command>               Add a button.\n"
                             "  -c <colour>                       Background colour.\n"
                             "  -C <colour>                       Border colour.\n"
                             "  -e <mode>                         Exclusive zone.\n"
                             "  -h                                Display help text and exit.\n"
                             "  -l <layer>                        Layer of surface.\n"
-                            "  -m <mode>                         Display mode of bar.\n"
-                            "  -M <top> <right> <bottom> <left>  Margin.\n"
+                            "  -m <margin>                       Margin.\n"
                             "  -o <name>                         Name of exclusive output.\n"
-                            "  -p <position>                     Bar position.\n"
+                            "  -O <orientation>                  Orientation of bar.\n"
+                            "  -p <position>                     Position of the bar.\n"
                             "  -s <size>                         Icon size.\n"
                             "  -S <top> <right> <bottom> <left>  Border sizes.\n"
                             "  -v                                Verbose output.\n";
@@ -73,94 +72,48 @@ static void configure_surface (struct Lava_data *data, struct Lava_output *outpu
 	if (! output->configured)
 		return;
 
-	uint32_t width, height;
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		width = output->w * output->scale, height = data->h;
-	else
-		width = data->w, height = output->h * output->scale;
+	zwlr_layer_surface_v1_set_size(output->layer_surface,
+			data->w * output->scale, data->h * output->scale);
+	zwlr_layer_surface_v1_set_anchor(output->layer_surface, data->anchors);
+	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+			data->exclusive_zone > 0 ? data->exclusive_zone * output->scale : data->exclusive_zone);
 
-	if (data->verbose)
-		fprintf(stderr, "Surface size: w=%d h=%d\n", width, height);
-
-	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
-
-	/* Anchor the surface to the correct screen edge. */
-	switch (data->position)
+	/* Set margin only to the edge the bar is anchored to. */
+	switch (data->anchors)
 	{
-		case POSITION_TOP:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+		case ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP:
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					data->margin, 0, 0, 0);
 			break;
 
-		case POSITION_RIGHT:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+		case ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT:
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					0, data->margin, 0, 0);
 			break;
 
-		case POSITION_BOTTOM:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+		case ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM:
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					0, 0, data->margin, 0);
 			break;
 
-		case POSITION_LEFT:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+		case ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT:
+			zwlr_layer_surface_v1_set_margin(output->layer_surface,
+					0, 0, 0, data->margin);
 			break;
 	}
-
-	/* Set margin.
-	 * Since we create a surface spanning the entire length of an outputs
-	 * edge, margins parallel to it would move it outside the boundaries of
-	 * the output, which may or may not cause issues in some compositors.
-	 * To work around this, we simply cheat a bit: Margins parallel to the
-	 * bar will be simulated in the draw code by adjusting the bar offsets.
-	 *
-	 * See: update_bar_offset()
-	 *
-	 * Here we set the margins not parallel to the edges length, which are
-	 * real layer shell margins.
-	 */
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		zwlr_layer_surface_v1_set_margin(output->layer_surface,
-				data->margin_top, 0,
-				data->margin_bottom, 0);
-	else
-		zwlr_layer_surface_v1_set_margin(output->layer_surface,
-				0, data->margin_right,
-				0, data->margin_left);
-
-	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
-	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-			data->exclusive_zone);
-
-	struct wl_region *region = wl_compositor_create_region(data->compositor);
-	if ( data->mode == MODE_DEFAULT )
-		wl_region_add(region, output->bar_x_offset, output->bar_y_offset,
-				data->w, data->h);
-	else
-		wl_region_add(region, 0, 0, output->w, output->h);
-
-	/* Set input region. This is necessary to prevent the unused parts of
-	 * the surface to catch pointer and touch events.
-	 */
-	wl_surface_set_input_region(output->wl_surface, region);
 
 	/* If both border and background are opaque, set opaque region. This
 	 * will inform the compositor that it does not have to render anything
 	 * below the surface.
 	 */
 	if ( data->bar_colour[3] == 1 && data->border_colour[3] == 1 )
+	{
+		struct wl_region *region = wl_compositor_create_region(data->compositor);
+		wl_region_add(region, 0, 0,
+				data->w * output->scale, data->h * output->scale);
 		wl_surface_set_opaque_region(output->wl_surface, region);
-
-	wl_region_destroy(region);
+		wl_region_destroy(region);
+	}
 }
 
 static void layer_surface_handle_configure (void *raw_data,
@@ -260,67 +213,6 @@ static const struct wl_seat_listener seat_listener = {
 	.name         = noop
 };
 
-static void update_bar_offset (struct Lava_data *data, struct Lava_output *output)
-{
-	if ( output->w == 0 || output->h == 0 )
-		return;
-
-	switch (data->alignment)
-	{
-		case ALIGNMENT_START:
-			output->bar_x_offset = 0;
-			output->bar_y_offset = 0;
-			break;
-
-		case ALIGNMENT_CENTER:
-			if ( data->orientation == ORIENTATION_HORIZONTAL )
-			{
-				output->bar_x_offset = (output->w / 2) - (data->w / 2);
-				output->bar_y_offset = 0;
-			}
-			else
-			{
-				output->bar_x_offset = 0;
-				output->bar_y_offset = (output->h / 2) - (data->h / 2);
-			}
-			break;
-
-		case ALIGNMENT_END:
-			if ( data->orientation == ORIENTATION_HORIZONTAL )
-			{
-				output->bar_x_offset = output->w  - data->w;
-				output->bar_y_offset = 0;
-			}
-			else
-			{
-				output->bar_x_offset = 0;
-				output->bar_y_offset = output->h - data->h;
-			}
-			break;
-	}
-
-	/* Set margin.
-	 * Since we create a surface spanning the entire length of an outputs
-	 * edge, margins parallel to it would move it outside the boundaries of
-	 * the output, which may or may not cause issues in some compositors.
-	 * To work around this, we simply cheat a bit: Margins parallel to the
-	 * bar will be simulated in the draw code by adjusting the bar offsets.
-	 *
-	 * See: configure_surface()
-	 *
-	 * Here we set the margins parallel to the edges length, which are
-	 * "fake", by adjusting the offset of the bar.
-	 */
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		output->bar_x_offset += data->margin_left - data->margin_right;
-	else
-		output->bar_y_offset += data->margin_top - data->margin_bottom;
-
-	if (data->verbose)
-		fprintf(stderr, "Aligning bar: x-offset=%d y-offset=%d\n",
-				output->bar_x_offset, output->bar_y_offset);
-}
-
 static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		int32_t factor)
 {
@@ -331,7 +223,6 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		fprintf(stderr, "Output update scale: s=%d\n", output->scale);
 
 	configure_surface(output->data, output);
-	update_bar_offset(output->data, output);
 	render_bar_frame(output->data, output);
 }
 
@@ -363,7 +254,6 @@ static void xdg_output_handle_logical_size (void *raw_data,
 		fprintf(stderr, "XDG-Output update logical size: w=%d h=%d\n",
 				w, h);
 
-	update_bar_offset(output->data, output);
 	render_bar_frame(output->data, output);
 }
 
@@ -518,6 +408,17 @@ static const struct wl_registry_listener registry_listener = {
 	.global_remove = registry_handle_global_remove
 };
 
+/* Helper function for capability support error message. */
+static bool capability_test (void *ptr, const char *name)
+{
+	if ( ptr == NULL )
+	{
+		fprintf(stderr, "ERROR: Wayland compositor does not support %s.\n", name);
+		return false;
+	}
+	return true;
+}
+
 static bool init_wayland (struct Lava_data *data)
 {
 	if (data->verbose)
@@ -558,24 +459,12 @@ static bool init_wayland (struct Lava_data *data)
 	}
 
 	/* Testing compatibilities. */
-	if ( data->compositor == NULL )
-	{
-		fputs("ERROR: Wayland compositor does not support wl_compositor.\n",
-				stderr);
+	if (! capability_test(data->compositor, "wl_compositor"))
 		return false;
-	}
-	if ( data->shm == NULL )
-	{
-		fputs("ERROR: Wayland compositor does not support wl_shm.\n",
-				stderr);
+	if (! capability_test(data->shm, "wl_shm"))
 		return false;
-	}
-	if ( data->layer_shell == NULL )
-	{
-		fputs("ERROR: Wayland compositor does not support zwlr_layer_shell_v1.\n",
-				stderr);
+	if (! capability_test(data->layer_shell, "zwlr_layer_shell"))
 		return false;
-	}
 
 	return true;
 }
@@ -698,29 +587,23 @@ static void main_loop (struct Lava_data *data)
  */
 static void calculate_dimensions (struct Lava_data *data)
 {
-	switch (data->position)
+	if ( data->orientation == ORIENTATION_HORIZONTAL)
 	{
-		case POSITION_LEFT:
-		case POSITION_RIGHT:
-			data->orientation = ORIENTATION_VERTICAL;
-			data->w = (uint32_t)(data->icon_size + data->border_right
-					+ data->border_left);
-			data->h = (uint32_t)((data->button_amount * data->icon_size)
-					+ data->border_top + data->border_bottom);
-			if ( data->exclusive_zone == 1 )
-				data->exclusive_zone = data->w;
-			break;
-
-		case POSITION_TOP:
-		case POSITION_BOTTOM:
-			data->orientation = ORIENTATION_HORIZONTAL;
-			data->w = (uint32_t)((data->button_amount * data->icon_size)
-					+ data->border_left + data->border_right);
-			data->h = (uint32_t)(data->icon_size + data->border_top
-					+ data->border_bottom);
-			if ( data->exclusive_zone == 1 )
-				data->exclusive_zone = data->h;
-			break;
+		data->w = (uint32_t)((data->button_amount * data->icon_size)
+				+ data->border_left + data->border_right);
+		data->h = (uint32_t)(data->icon_size + data->border_top
+				+ data->border_bottom);
+		if ( data->exclusive_zone == 1 )
+			data->exclusive_zone = data->h;
+	}
+	else
+	{
+		data->w = (uint32_t)(data->icon_size + data->border_right
+				+ data->border_left);
+		data->h = (uint32_t)((data->button_amount * data->icon_size)
+				+ data->border_top + data->border_bottom);
+		if ( data->exclusive_zone == 1 )
+			data->exclusive_zone = data->w;
 	}
 }
 
@@ -749,6 +632,77 @@ static bool check_arguments (int optind, int argc, char *argv[], int expected,
 	return false;
 }
 
+static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data)
+{
+	extern int optind;
+	extern char *optarg;
+	for (int c; (c = getopt(argc, argv, "b:c:C:e:hl:m:o:O:p:s:S:v")) != -1 ;)
+	{
+		switch (c)
+		{
+			case 'b':
+				if(! check_arguments(optind, argc, argv, 2, "-b"))
+				{
+					data->ret = EXIT_FAILURE;
+					break;
+				}
+				config_add_button(data, argv[optind-1], argv[optind]);
+				optind++; /* Tell getopt() to "skip" one argv field. */
+				break;
+
+			case 'c': config_set_bar_colour(data, optarg);    break;
+			case 'C': config_set_border_colour(data, optarg); break;
+			case 'e': config_set_exclusive(data, optarg);     break;
+			case 'h': fputs(usage, stderr);                   return EXIT_SUCCESS;
+			case 'l': config_set_layer(data, optarg);         break;
+			case 'm': config_set_margin(data, optarg);        break;
+			case 'o': data->only_output = optarg;             break;
+			case 'O': config_set_orientation(data, optarg);   break;
+			case 'p': config_set_position(data, optarg);      break;
+			case 's': config_set_icon_size(data, optarg);     break;
+
+			case 'S':
+				if (! check_arguments(optind, argc, argv, 4, "-S"))
+				{
+					data->ret = EXIT_FAILURE;
+					break;
+				}
+				config_set_border_size(data,
+						atoi(argv[optind-1]), atoi(argv[optind]),
+						atoi(argv[optind+1]), atoi(argv[optind+2]));
+				optind += 3; /* Tell getopt() to "skip" three argv fields. */
+				break;
+
+			case 'v': data->verbose = true;    break;
+
+			default:
+				return false;
+		}
+
+		if ( data->ret == EXIT_FAILURE )
+		{
+			if ( wl_list_length(&(data->buttons)) > 0 )
+				destroy_buttons(data);
+			return false;;
+		}
+	}
+
+	return true;
+}
+
+static enum Bar_orientation default_orientation (struct Lava_data *data)
+{
+	switch (data->anchors)
+	{
+		case ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT:
+		case ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT:
+			return ORIENTATION_VERTICAL;
+
+		default:
+			return ORIENTATION_HORIZONTAL;
+	}
+}
+
 int main (int argc, char *argv[])
 {
 	struct Lava_data data = {0};
@@ -759,72 +713,8 @@ int main (int argc, char *argv[])
 	sensible_defaults(&data);
 
 	/* Handle command flags. */
-	extern int optind;
-	extern char *optarg;
-	for (int c; (c = getopt(argc, argv, "a:b:c:C:e:hl:m:M:o:p:s:S:v")) != -1 ;)
-	{
-		switch (c)
-		{
-			case 'a': config_set_alignment(&data, optarg); break;
-
-			case 'b':
-				if(! check_arguments(optind, argc, argv, 2, "-b"))
-				{
-					data.ret = EXIT_FAILURE;
-					break;
-				}
-				config_add_button(&data, argv[optind-1], argv[optind]);
-				optind++; /* Tell getopt() to "skip" one argv field. */
-				break;
-
-			case 'c': config_set_bar_colour(&data, optarg);    break;
-			case 'C': config_set_border_colour(&data, optarg); break;
-			case 'e': config_set_exclusive(&data, optarg);     break;
-			case 'h': fputs(usage, stderr);                    return EXIT_SUCCESS;
-			case 'l': config_set_layer(&data, optarg);         break;
-			case 'm': config_set_mode(&data, optarg);          break;
-
-			case 'M':
-				if (! check_arguments(optind, argc, argv, 4, "-M"))
-				{
-					data.ret = EXIT_FAILURE;
-					break;
-				}
-				config_set_margin(&data, atoi(argv[optind-1]),
-						atoi(argv[optind]), atoi(argv[optind+1]),
-						atoi(argv[optind+2]));
-				optind += 3; /* Tell getopt() to "skip" three argv fields. */
-				break;
-
-			case 'o': data.only_output = optarg;               break;
-			case 'p': config_set_position(&data, optarg);      break;
-			case 's': config_set_icon_size(&data, optarg);     break;
-
-			case 'S':
-				if (! check_arguments(optind, argc, argv, 4, "-S"))
-				{
-					data.ret = EXIT_FAILURE;
-					break;
-				}
-				config_set_border_size(&data,
-						atoi(argv[optind-1]), atoi(argv[optind]),
-						atoi(argv[optind+1]), atoi(argv[optind+2]));
-				optind += 3; /* Tell getopt() to "skip" three argv fields. */
-				break;
-
-			case 'v': data.verbose = true;    break;
-
-			default:
-				return EXIT_FAILURE;
-		}
-
-		if ( data.ret == EXIT_FAILURE )
-		{
-			if ( wl_list_length(&(data.buttons)) > 0 )
-				destroy_buttons(&data);
-			return EXIT_FAILURE;
-		}
-	}
+	if (! handle_command_flags(argc, argv, &data))
+		return EXIT_FAILURE;
 
 	/* Count buttons. If none are defined, exit. */
 	data.button_amount = wl_list_length(&(data.buttons));
@@ -833,6 +723,12 @@ int main (int argc, char *argv[])
 		fputs("ERROR: No buttons defined.\n", stderr);
 		return EXIT_FAILURE;
 	}
+
+	/* If the user did not specify an orientation, chose a good default,
+	 * depending on what edge the surface is anchored to.
+	 */
+	if ( data.orientation == ORIENTATION_AUTO )
+		data.orientation = default_orientation(&data);
 
 	/* Calculate dimension of the visible part of the bar. */
 	calculate_dimensions(&data);

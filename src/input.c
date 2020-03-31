@@ -31,12 +31,12 @@ static struct Lava_button *button_from_coords (struct Lava_data *data,
 
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
 	{
-		pre_button_zone += output->bar_x_offset + data->border_left;
+		pre_button_zone += data->border_left;
 		ordinate         = x;
 	}
 	else
 	{
-		pre_button_zone += output->bar_y_offset + data->border_top;
+		pre_button_zone += data->border_top;
 		ordinate         = y;
 	}
 

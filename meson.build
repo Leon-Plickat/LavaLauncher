@@ -37,6 +37,7 @@ executable(
     'src/buffer.c',
     'src/command.c',
     'src/input.c',
+    'src/layersurface.c',
   ),
   dependencies: [
     wayland_client,

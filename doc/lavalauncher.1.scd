@@ -38,14 +38,14 @@ events to them.
 	defined by the user.
 
 *-c <colour>*
-	Colour of the bar in the format '#RRGGBBAA' or '#RRGGBB'.
+	Colour of the bar.
 
-	The default bar colour is '#000000'
+	The default bar colour is 'black'
 
 *-C <colour>*
-	Colour of the border in the format '#RRGGBBAA' or '#RRGGBB'.
+	Colour of the border.
 
-	The default border colour is '#FFFFFF'
+	The default border colour is 'white'
 
 *-e <mode>*
 	Exclusive zone of the surface.
@@ -115,6 +115,11 @@ events to them.
 
 *-v*
 	Enable verbose output.
+
+
+# COLOURS
+LavaLauncher excepts colours in the formats '#RRGGBBAA' or '#RRGGBB'.
+Alternatively, 'transparent', 'white' and 'black' are accepted as well.
 
 
 # EXAMPLE

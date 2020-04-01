@@ -322,7 +322,7 @@ static void main_loop (struct Lava_data *data)
  */
 static void calculate_dimensions (struct Lava_data *data)
 {
-	if ( data->orientation == ORIENTATION_HORIZONTAL)
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
 	{
 		data->w = (uint32_t)((data->button_amount * data->icon_size)
 				+ data->border_left + data->border_right);
@@ -385,7 +385,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 			case 'h': fputs(usage, stderr);                   return EXIT_SUCCESS;
 			case 'l': config_set_layer(data, optarg);         break;
 			case 'm': config_set_margin(data, optarg);        break;
-			case 'o': data->only_output = optarg;             break;
+			case 'o': config_set_only_output(data, optarg);   break;
 			case 'O': config_set_orientation(data, optarg);   break;
 			case 'p': config_set_position(data, optarg);      break;
 			case 's': config_set_icon_size(data, optarg);     break;
@@ -484,6 +484,9 @@ int main (int argc, char *argv[])
 		data.ret = EXIT_FAILURE;
 	else
 		main_loop(&data);
+
+	if ( data.only_output != NULL )
+		free(data.only_output);
 
 	destroy_buttons(&data);
 	finish_wayland(&data);

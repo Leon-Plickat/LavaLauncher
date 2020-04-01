@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+#define _POSIX_C_SOURCE 200809L
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -243,3 +244,10 @@ void config_set_border_colour (struct Lava_data *data, const char *arg)
 	data->border_colour_hex = (char *)arg;
 }
 
+void config_set_only_output (struct Lava_data *data, const char *arg)
+{
+	if ( ! strcmp(arg, "all") || *arg == '*' )
+		data->only_output = NULL;
+	else
+		data->only_output = strdup(arg);
+}

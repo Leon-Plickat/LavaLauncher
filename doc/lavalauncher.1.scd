@@ -75,15 +75,16 @@ events to them.
 	is 'bottom'.
 
 *-m <size>*
-	Size of the margin to the edge the bar is docked to.
+	Size of the margin to the edge the bar is docked to, in pixel.
 
 	The default margin is 0.
 
 *-o <name>*
 	Name of the output on which the bar should be displayed.
 
-	If this option is omitted, the bar will be displayed on all outputs,
-	which is the default behaviour.
+	Output names are compositor dependant. If the argument 'all' is given,
+	LavaLauncher will display a bar on all outputs, which is the default
+	behaviour.
 
 *-O <orientation>*
 	Orientation of the bar.
@@ -110,14 +111,14 @@ events to them.
 	The default border size is 2.
 
 *-S <top> <right> <bottom> <left>*
-	Size of each individual border.
+	Size of each individual border in pixel.
 
 *-v*
 	Enable verbose output.
 
 
 # EXAMPLE
-lavalauncher -b "~/icons/foo.png" "notify-send 'Output: %output%'" -b "~/icons/glenda.png" acme -a true false false false -s 80 -S 2 2 0 2 -c "#20202088" -o eDP-1
+lavalauncher -b "~/icons/foo.png" "notify-send 'Output: %output%'" -b "~/icons/glenda.png" acme -m bottom -s 80 -S 2 2 0 2 -c "#20202088" -o eDP-1
 
 
 # BUGS

@@ -360,7 +360,7 @@ static int count_arguments (int optind, int argc, char *argv[])
 
 static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data)
 {
-	int temp;
+	int arguments;
 	extern int optind;
 	extern char *optarg;
 	for (int c; (c = getopt(argc, argv, "b:c:C:e:hl:m:o:O:p:s:S:v")) != -1 ;)
@@ -391,12 +391,14 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 			case 's': config_set_icon_size(data, optarg);     break;
 
 			case 'S':
-				temp = count_arguments(optind, argc, argv);
-				if ( temp == 1 )
-					config_set_border_size_all(data, atoi(optarg));
-				else if ( temp == 4 )
+				arguments = count_arguments(optind, argc, argv);
+				if ( arguments == 1 )
+					config_set_border_size(data,
+							atoi(optarg), atoi(optarg),
+							atoi(optarg), atoi(optarg));
+				else if ( arguments == 4 )
 				{
-					config_set_border_size_specific(data,
+					config_set_border_size(data,
 							atoi(argv[optind-1]), atoi(argv[optind]),
 							atoi(argv[optind+1]), atoi(argv[optind+2]));
 					optind += 3; /* Tell getopt() to "skip" three argv fields. */
@@ -474,8 +476,8 @@ int main (int argc, char *argv[])
 
 	if (data.verbose)
 		fprintf(stderr, "LavaLauncher Version "VERSION"\n"
-				"Bar: w=%d h=%d buttons=%d\n", data.w, data.h,
-				data.button_amount);
+				"Bar: w=%d h=%d buttons=%d\n",
+				data.w, data.h, data.button_amount);
 
 	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);

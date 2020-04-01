@@ -65,7 +65,13 @@ static bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, fl
 {
 	unsigned int r = 0, g = 0, b = 0, a = 255;
 
-	if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a)
+	if (! strcmp(hex, "transparent"))
+		r = g = b = a = 0;
+	else if (! strcmp(hex, "black"))
+		r = g = b = 0, a = 255;
+	else if (! strcmp(hex, "white"))
+		r = g = b = a = 255;
+	else if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a)
 			&& 3 != sscanf(hex, "#%02x%02x%02x", &r, &g, &b) )
 	{
 		fputs("ERROR: Colour codes are expected to be in the format"
@@ -199,7 +205,7 @@ void config_set_icon_size (struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_border_size_specific (struct Lava_data *data, int top, int right,
+void config_set_border_size (struct Lava_data *data, int top, int right,
 		int bottom, int left)
 {
 	data->border_top    = top;
@@ -212,11 +218,6 @@ void config_set_border_size_specific (struct Lava_data *data, int top, int right
 				stderr);
 		data->ret = EXIT_FAILURE;
 	}
-}
-
-void config_set_border_size_all (struct Lava_data *data, int border)
-{
-	config_set_border_size_specific(data, border, border, border, border);
 }
 
 void config_set_bar_colour (struct Lava_data *data, const char *arg)

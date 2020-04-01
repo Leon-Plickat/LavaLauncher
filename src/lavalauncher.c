@@ -42,9 +42,7 @@
 #include"config.h"
 #include"layersurface.h"
 #include"draw.h"
-#include"buffer.h"
-#include"command.h"
-#include"input.h"
+#include"seat.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
@@ -65,45 +63,6 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
 
 /* No-Op function. */
 static void noop () {}
-
-static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
-		uint32_t capabilities)
-{
-	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-	struct Lava_data *data = seat->data;
-
-	if (data->verbose)
-		fputs("Handling seat capabilities.\n", stderr);
-
-	if ( seat->pointer.wl_pointer != NULL )
-	{
-		wl_pointer_release(seat->pointer.wl_pointer);
-		seat->pointer.wl_pointer = NULL;
-	}
-
-	if ( capabilities & WL_SEAT_CAPABILITY_POINTER )
-	{
-		if (data->verbose)
-			fputs("Seat has pointer capabilities.\n", stderr);
-		seat->pointer.wl_pointer = wl_seat_get_pointer(wl_seat);
-		wl_pointer_add_listener(seat->pointer.wl_pointer,
-				&pointer_listener, seat);
-	}
-
-	if ( capabilities & WL_SEAT_CAPABILITY_TOUCH )
-	{
-		if (data->verbose)
-			fputs("Seat has touch capabilities.\n", stderr);
-		seat->touch.wl_touch = wl_seat_get_touch(wl_seat);
-		wl_touch_add_listener(seat->touch.wl_touch,
-				&touch_listener, seat);
-	}
-}
-
-static const struct wl_seat_listener seat_listener = {
-	.capabilities = seat_handle_capabilities,
-	.name         = noop
-};
 
 static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		int32_t factor)
@@ -192,23 +151,8 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 	}
 	else if (! strcmp(interface, wl_seat_interface.name))
 	{
-		if (data->verbose)
-			fputs("Adding seat.\n", stderr);
-
-		struct wl_seat *wl_seat = wl_registry_bind(registry, name,
-				&wl_seat_interface, 3);
-		struct Lava_seat *seat = calloc(1, sizeof(struct Lava_seat));
-		if ( seat == NULL )
-		{
-			fputs("ERROR: Could not allocate.\n", stderr);
-			data->loop = false;
-			data->ret  = EXIT_FAILURE;
+		if (! create_seat(data, registry, name, interface, version))
 			return;
-		}
-		seat->data    = data;
-		seat->wl_seat = wl_seat;
-		wl_list_insert(&data->seats, &seat->link);
-		wl_seat_add_listener(wl_seat, &seat_listener, seat);
 	}
 	else if (! strcmp(interface, wl_output_interface.name))
 	{

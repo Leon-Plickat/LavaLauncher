@@ -41,24 +41,31 @@ struct Lava_data
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 
-	int ret;
-
 	struct wl_list outputs;
 	struct wl_list seats;
 	struct wl_list buttons;
 
+	/* Return value. */
+	int ret;
+
 	/* Amount of buttons defined by the user. */
 	int button_amount;
 
+	/* Anchors of the bar surface. */
 	enum zwlr_layer_surface_v1_anchor anchors;
-	enum Bar_orientation              orientation;
 
 	/* Layer the surface will be rendered on. */
 	enum zwlr_layer_shell_v1_layer layer;
 
+	/* Orientation of the bar surface. */
+	enum Bar_orientation orientation;
+
 	/* Size of icons and bar borders. */
 	int icon_size;
 	int border_top, border_right, border_bottom, border_left;
+
+	/* Expected (and enforced) width and height of the bar. */
+	uint32_t w, h;
 
 	/* Colours of the bar and its border; In float for actual usage and as
 	 * hex string for insertion into commands.
@@ -68,11 +75,8 @@ struct Lava_data
 	float  border_colour[4];
 	char  *border_colour_hex;
 
-	/* Expected (and enforced) width and height of the bar. */
-	uint32_t w, h;
-
 	/* If *only_output is NULL, a surface will be created for all outputs.
-	 * Otherwise only on the surface which name is equal to *only_output.
+	 * Otherwise only on the output which name is equal to *only_output.
 	 * Examples of valid names are "eDP-1" or "HDMI-A-1" (likely compositor
 	 * dependant).
 	 */
@@ -84,6 +88,7 @@ struct Lava_data
 	 */
 	uint32_t exclusive_zone;
 
+	/* Margin to the edge the surface is anchored to. */
 	int margin;
 
 	/* Still running? */

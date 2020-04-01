@@ -58,7 +58,8 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "  -O <orientation>                  Orientation of bar.\n"
                             "  -p <position>                     Position of the bar.\n"
                             "  -s <size>                         Icon size.\n"
-                            "  -S <top> <right> <bottom> <left>  Border sizes.\n"
+                            "  -S <size>                         All border sizes.\n"
+                            "  -S <top> <right> <bottom> <left>  Individual border sizes.\n"
                             "  -v                                Verbose output.\n";
 
 /* No-Op function. */
@@ -609,13 +610,9 @@ static void calculate_dimensions (struct Lava_data *data)
 
 /* getopts() only handles command flags with none or a single argument directly;
  * For multiple argument we have to do some of the work ourself. This function
- * counts the arguments to a command flag and checks if that is expected amount.
- * If it is the correct amount, it will return true, if not, an error message,
- * specifying the flag and the expected amount of arguments, is printed and the
- * function returns false.
+ * counts the arguments to a command flag.
  */
-static bool check_arguments (int optind, int argc, char *argv[], int expected,
-		const char *flag)
+static int count_arguments (int optind, int argc, char *argv[])
 {
 	int args = 0, index = optind - 1;
 	while ( index < argc )
@@ -624,16 +621,12 @@ static bool check_arguments (int optind, int argc, char *argv[], int expected,
 			break;
 		args++, index++;
 	}
-
-	if ( args == expected )
-		return true;
-
-	fprintf(stderr, "ERROR: '%s' expects %d arguments.\n", flag, expected);
-	return false;
+	return args;
 }
 
 static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data)
 {
+	int temp;
 	extern int optind;
 	extern char *optarg;
 	for (int c; (c = getopt(argc, argv, "b:c:C:e:hl:m:o:O:p:s:S:v")) != -1 ;)
@@ -641,13 +634,15 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 		switch (c)
 		{
 			case 'b':
-				if(! check_arguments(optind, argc, argv, 2, "-b"))
+				if( count_arguments(optind, argc, argv) != 2 )
 				{
+					fputs("ERROR: '-b' expects 2 arguments.\n",
+							stderr);
 					data->ret = EXIT_FAILURE;
 					break;
 				}
 				config_add_button(data, argv[optind-1], argv[optind]);
-				optind++; /* Tell getopt() to "skip" one argv field. */
+				optind++; /* Tell getopt() to skip one argv field. */
 				break;
 
 			case 'c': config_set_bar_colour(data, optarg);    break;
@@ -662,15 +657,22 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 			case 's': config_set_icon_size(data, optarg);     break;
 
 			case 'S':
-				if (! check_arguments(optind, argc, argv, 4, "-S"))
+				temp = count_arguments(optind, argc, argv);
+				if ( temp == 1 )
+					config_set_border_size_all(data, atoi(optarg));
+				else if ( temp == 4 )
 				{
-					data->ret = EXIT_FAILURE;
-					break;
+					config_set_border_size_specific(data,
+							atoi(argv[optind-1]), atoi(argv[optind]),
+							atoi(argv[optind+1]), atoi(argv[optind+2]));
+					optind += 3; /* Tell getopt() to "skip" three argv fields. */
 				}
-				config_set_border_size(data,
-						atoi(argv[optind-1]), atoi(argv[optind]),
-						atoi(argv[optind+1]), atoi(argv[optind+2]));
-				optind += 3; /* Tell getopt() to "skip" three argv fields. */
+				else
+				{
+					fputs("ERROR: '-S' expects 1 or 4 arguments.\n",
+							stderr);
+					data->ret = EXIT_FAILURE;
+				}
 				break;
 
 			case 'v': data->verbose = true;    break;
@@ -690,16 +692,19 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 	return true;
 }
 
-static enum Bar_orientation default_orientation (struct Lava_data *data)
+/* Set the orientation depending on the positon. */
+static void automatic_orientation (struct Lava_data *data)
 {
 	switch (data->anchors)
 	{
 		case ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT:
 		case ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT:
-			return ORIENTATION_VERTICAL;
+			data->orientation = ORIENTATION_VERTICAL;
+			break;
 
 		default:
-			return ORIENTATION_HORIZONTAL;
+			data->orientation = ORIENTATION_HORIZONTAL;
+			break;
 	}
 }
 
@@ -728,7 +733,7 @@ int main (int argc, char *argv[])
 	 * depending on what edge the surface is anchored to.
 	 */
 	if ( data.orientation == ORIENTATION_AUTO )
-		data.orientation = default_orientation(&data);
+		automatic_orientation(&data);
 
 	/* Calculate dimension of the visible part of the bar. */
 	calculate_dimensions(&data);

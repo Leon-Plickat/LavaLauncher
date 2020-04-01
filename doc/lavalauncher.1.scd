@@ -35,7 +35,7 @@ events to them.
 	and '%scale%' with the scale of the output.
 
 	The buttons on the bar will be shown in the order in which they are
-	given by the user.
+	defined by the user.
 
 *-c <colour>*
 	Colour of the bar in the format '#RRGGBBAA' or '#RRGGBB'.
@@ -74,10 +74,10 @@ events to them.
 	axis depends on the implementation of the compositor. The default layer
 	is 'bottom'.
 
-*-m <top> <right> <bottom> <left>*
-	Directional margins of the surface.
+*-m <size>*
+	Size of the margin to the edge the bar is docked to.
 
-	The default margins are 0 0 0 0.
+	The default margin is 0.
 
 *-o <name>*
 	Name of the output on which the bar should be displayed.
@@ -88,29 +88,32 @@ events to them.
 *-O <orientation>*
 	Orientation of the bar.
 
-	Can be 'horizontal' and 'vertical' and 'auto'. If 'auto', the
-	orientation will be chosen automatically based on the
-	position: 'horizontal' for 'top', 'bottom' and 'center' and 'vertical'
-	for 'left' and 'right'. The default is auto.
+	Can be 'horizontal', 'vertical' and 'auto'. If 'auto', the orientation
+	will be chosen automatically based on the position: 'horizontal'
+	for 'top', 'bottom' and 'center' and 'vertical' for 'left' and 'right'.
+	The default is 'auto'.
 
 *-p <position>*
 	Position of the bar.
 
-	Can be 'top', 'right', 'bottom', 'left' or 'center'.
-	The default is 'bottom'.
+	Can be 'top', 'right', 'bottom', 'left' or 'center'.  The default
+	position is 'bottom'.
 
 *-s <size>*
 	Size of the icons in pixel.
 
 	The default icon size is 80;
 
-*-S <top> <right> <bottom> <left>*
-	Size of the borders in pixel.
+*-S <size>*
+	Size of all borders in pixel.
 
-	The default border sizes are 2 2 0 2.
+	The default border size is 2.
+
+*-S <top> <right> <bottom> <left>*
+	Size of each individual border.
 
 *-v*
-	Verbose output.
+	Enable verbose output.
 
 
 # EXAMPLE

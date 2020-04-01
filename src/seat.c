@@ -71,8 +71,6 @@ bool create_seat (struct Lava_data *data, struct wl_registry *registry,
 	if ( seat == NULL )
 	{
 		fputs("ERROR: Could not allocate.\n", stderr);
-		data->loop = false;
-		data->ret  = EXIT_FAILURE;
 		return false;
 	}
 

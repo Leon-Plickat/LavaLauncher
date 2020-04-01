@@ -35,19 +35,23 @@ void sensible_defaults (struct Lava_data *data)
 	data->orientation       = ORIENTATION_AUTO;
 	data->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 	data->icon_size         = 80;
+
 	data->border_top        = 2;
 	data->border_right      = 2;
-	data->border_bottom     = 0;
+	data->border_bottom     = 2;
 	data->border_left       = 2;
+
 	data->margin            = 0;
 	data->verbose           = false;
 	data->only_output       = NULL;
 	data->exclusive_zone    = 1;
+
 	data->bar_colour_hex    = "#000000FF";
 	data->bar_colour[0]     = 0.0f;
 	data->bar_colour[1]     = 0.0f;
 	data->bar_colour[2]     = 0.0f;
 	data->bar_colour[3]     = 1.0f;
+
 	data->border_colour_hex = "#FFFFFFFF";
 	data->border_colour[0]  = 1.0f;
 	data->border_colour[1]  = 1.0f;
@@ -194,7 +198,7 @@ void config_set_icon_size (struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_border_size (struct Lava_data *data, int top, int right,
+void config_set_border_size_specific (struct Lava_data *data, int top, int right,
 		int bottom, int left)
 {
 	data->border_top    = top;
@@ -207,6 +211,11 @@ void config_set_border_size (struct Lava_data *data, int top, int right,
 				stderr);
 		data->ret = EXIT_FAILURE;
 	}
+}
+
+void config_set_border_size_all (struct Lava_data *data, int border)
+{
+	config_set_border_size_specific(data, border, border, border, border);
 }
 
 void config_set_bar_colour (struct Lava_data *data, const char *arg)

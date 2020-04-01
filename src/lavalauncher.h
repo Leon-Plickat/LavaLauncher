@@ -98,55 +98,6 @@ struct Lava_data
 	bool verbose;
 };
 
-struct Lava_output
-{
-	struct wl_list    link;
-	struct Lava_data *data;
-
-	struct wl_output      *wl_output;
-	struct zxdg_output_v1 *xdg_output;
-	char                  *name;
-	uint32_t               global_name;
-	int32_t                scale;
-	int32_t                w, h;
-
-	struct wl_surface             *wl_surface;
-	struct zwlr_layer_surface_v1  *layer_surface;
-
-	/* Has the surface been configured? This is needed to prevent trying to
-	 * render an unconfigured surface.
-	 */
-	bool configured;
-
-	struct Lava_buffer  buffers[2];
-	struct Lava_buffer *current_buffer;
-};
-
-struct Lava_seat
-{
-	struct wl_list    link;
-	struct Lava_data *data;
-
-	struct wl_seat *wl_seat;
-
-	struct
-	{
-		struct wl_pointer  *wl_pointer;
-		int32_t             x;
-		int32_t             y;
-		struct Lava_output *output;
-		struct Lava_button *button;
-	} pointer;
-
-	struct
-	{
-		struct wl_touch    *wl_touch;
-		int32_t             id;
-		struct Lava_output *output;
-		struct Lava_button *button;
-	} touch;
-};
-
 struct Lava_button
 {
 	struct wl_list link;

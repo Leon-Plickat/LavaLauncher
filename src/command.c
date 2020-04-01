@@ -9,6 +9,7 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
+#include"output.h"
 #include"command.h"
 
 /* This function will search for a string (*srch) inside a given string (**str)

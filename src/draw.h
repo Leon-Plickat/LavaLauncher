@@ -19,7 +19,9 @@
 #ifndef LAVALAUNCHER_DRAW_H
 #define LAVALAUNCHER_DRAW_H
 
-#include"lavalauncher.h"
+
+struct Lava_data;
+struct Lava_output;
 
 void render_bar_frame (struct Lava_data *data, struct Lava_output *output);
 

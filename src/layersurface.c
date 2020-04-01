@@ -15,6 +15,8 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"output.h"
+#include"seat.h"
 #include"draw.h"
 
 /* Helper function to configure the bar surface. Careful: This function does not

@@ -24,6 +24,8 @@
 #include<wayland-server.h>
 
 #include"lavalauncher.h"
+#include"output.h"
+#include"seat.h"
 #include"draw.h"
 
 // TODO Draw icons once on startup to a cairo_surface (and at scale updates)

@@ -15,6 +15,8 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"output.h"
+#include"seat.h"
 #include"command.h"
 
 /* No-Op function. */

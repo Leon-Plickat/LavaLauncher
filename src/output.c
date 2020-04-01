@@ -16,6 +16,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"output.h"
 #include"layersurface.h"
 #include"draw.h"
 

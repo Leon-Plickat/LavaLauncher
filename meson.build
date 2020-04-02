@@ -40,6 +40,7 @@ executable(
     'src/layersurface.c',
     'src/seat.c',
     'src/output.c',
+    'src/registry.c',
   ),
   dependencies: [
     wayland_client,

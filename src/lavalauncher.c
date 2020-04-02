@@ -39,15 +39,16 @@
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
+                            "  -a <alignment>                    Alignment of the bar / icons.\n"
                             "  -b <path> <command>               Add a button.\n"
                             "  -c <colour>                       Background colour.\n"
                             "  -C <colour>                       Border colour.\n"
                             "  -e <mode>                         Exclusive zone.\n"
                             "  -h                                Display help text and exit.\n"
                             "  -l <layer>                        Layer of surface.\n"
-                            "  -m <margin>                       Margin.\n"
+                            "  -m <mode>                         Display mode of the bar.\n"
+                            "  -M <top> <right> <bottom> <left>  Directional margins of the bar / icons.\n"
                             "  -o <name>                         Name of exclusive output.\n"
-                            "  -O <orientation>                  Orientation of bar.\n"
                             "  -p <position>                     Position of the bar.\n"
                             "  -s <size>                         Icon size.\n"
                             "  -S <size>                         All border sizes.\n"
@@ -116,42 +117,32 @@ static void destroy_buttons (struct Lava_data *data)
 	}
 }
 
-/* Set the orientation depending on the positon. */
-static void automatic_orientation (struct Lava_data *data)
-{
-	switch (data->anchors)
-	{
-		case ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT:
-		case ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT:
-			data->orientation = ORIENTATION_VERTICAL;
-			break;
-
-		default:
-			data->orientation = ORIENTATION_HORIZONTAL;
-			break;
-	}
-}
-
 /* This functions calculates the dimensions of the of the bar. */
 static void calculate_dimensions (struct Lava_data *data)
 {
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
+	switch (data->position)
 	{
-		data->w = (uint32_t)((data->button_amount * data->icon_size)
-				+ data->border_left + data->border_right);
-		data->h = (uint32_t)(data->icon_size + data->border_top
-				+ data->border_bottom);
-		if ( data->exclusive_zone == 1 )
-			data->exclusive_zone = data->h;
-	}
-	else
-	{
-		data->w = (uint32_t)(data->icon_size + data->border_right
-				+ data->border_left);
-		data->h = (uint32_t)((data->button_amount * data->icon_size)
-				+ data->border_top + data->border_bottom);
-		if ( data->exclusive_zone == 1 )
-			data->exclusive_zone = data->w;
+		case POSITION_LEFT:
+		case POSITION_RIGHT:
+			data->orientation = ORIENTATION_VERTICAL;
+			data->w = (uint32_t)(data->icon_size + data->border_right
+					+ data->border_left);
+			data->h = (uint32_t)((data->button_amount * data->icon_size)
+					+ data->border_top + data->border_bottom);
+			if ( data->exclusive_zone == 1 )
+				data->exclusive_zone = data->w;
+			break;
+
+		case POSITION_TOP:
+		case POSITION_BOTTOM:
+			data->orientation = ORIENTATION_HORIZONTAL;
+			data->w = (uint32_t)((data->button_amount * data->icon_size)
+					+ data->border_left + data->border_right);
+			data->h = (uint32_t)(data->icon_size + data->border_top
+					+ data->border_bottom);
+			if ( data->exclusive_zone == 1 )
+				data->exclusive_zone = data->h;
+			break;
 	}
 }
 
@@ -176,15 +167,15 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 	int arguments;
 	extern int optind;
 	extern char *optarg;
-	for (int c; (c = getopt(argc, argv, "b:c:C:e:hl:m:o:O:p:s:S:v")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "a:b:c:C:e:hl:m:M:o:p:s:S:v")) != -1 ;)
 	{
 		switch (c)
 		{
+			case 'a': config_set_alignment(data, optarg); break;
 			case 'b':
 				if( count_arguments(optind, argc, argv) != 2 )
 				{
-					fputs("ERROR: '-b' expects 2 arguments.\n",
-							stderr);
+					fputs("ERROR: '-b' expects 2 arguments.\n", stderr);
 					data->ret = EXIT_FAILURE;
 					break;
 				}
@@ -197,9 +188,22 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 			case 'e': config_set_exclusive(data, optarg);     break;
 			case 'h': fputs(usage, stderr);                   return EXIT_SUCCESS;
 			case 'l': config_set_layer(data, optarg);         break;
-			case 'm': config_set_margin(data, optarg);        break;
+			case 'm': config_set_mode(data, optarg);        break;
+
+			case 'M':
+				if( count_arguments(optind, argc, argv) != 4 )
+				{
+					fputs("ERROR: '-M' expects 4 arguments.\n", stderr);
+					data->ret = EXIT_FAILURE;
+					break;
+				}
+				config_set_margin(data,
+						atoi(argv[optind-1]), atoi(argv[optind]),
+						atoi(argv[optind+1]), atoi(argv[optind+2]));
+				optind += 3; /* Tell getopt() to skip one argv field. */
+				break;
+
 			case 'o': config_set_only_output(data, optarg);   break;
-			case 'O': config_set_orientation(data, optarg);   break;
 			case 'p': config_set_position(data, optarg);      break;
 			case 's': config_set_icon_size(data, optarg);     break;
 
@@ -218,8 +222,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 				}
 				else
 				{
-					fputs("ERROR: '-S' expects 1 or 4 arguments.\n",
-							stderr);
+					fputs("ERROR: '-S' expects 1 or 4 arguments.\n", stderr);
 					data->ret = EXIT_FAILURE;
 				}
 				break;
@@ -234,7 +237,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 		{
 			if ( wl_list_length(&(data->buttons)) > 0 )
 				destroy_buttons(data);
-			return false;;
+			return false;
 		}
 	}
 
@@ -261,12 +264,6 @@ int main (int argc, char *argv[])
 		fputs("ERROR: No buttons defined.\n", stderr);
 		return EXIT_FAILURE;
 	}
-
-	/* If the user did not specify an orientation, chose a good default,
-	 * depending on what edge the surface is anchored to.
-	 */
-	if ( data.orientation == ORIENTATION_AUTO )
-		automatic_orientation(&data);
 
 	/* Calculate dimension of the visible part of the bar. */
 	calculate_dimensions(&data);

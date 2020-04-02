@@ -48,7 +48,10 @@ static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
 	replace_token(&buffer, "%border-left%",   NULL,                    data->border_left,   STRING_BUFFER_SIZE);
 	replace_token(&buffer, "%border-bottom%", NULL,                    data->border_bottom, STRING_BUFFER_SIZE);
 	replace_token(&buffer, "%border-right%",  NULL,                    data->border_right,  STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%margin%",        NULL,                    data->margin,        STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%margin-top%",    NULL,                    data->margin_top,    STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%margin-right%",  NULL,                    data->margin_right,  STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%margin-bottom%", NULL,                    data->margin_bottom, STRING_BUFFER_SIZE);
+	replace_token(&buffer, "%margin-left%",   NULL,                    data->margin_left,   STRING_BUFFER_SIZE);
 	replace_token(&buffer, "%colour%",        data->bar_colour_hex,    0,                   STRING_BUFFER_SIZE);
 	replace_token(&buffer, "%border-colour%", data->border_colour_hex, 0,                   STRING_BUFFER_SIZE);
 	replace_token(&buffer, "%output%",        output->name,            0,                   STRING_BUFFER_SIZE);

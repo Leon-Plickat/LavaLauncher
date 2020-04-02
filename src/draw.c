@@ -104,14 +104,31 @@ static void clear_cairo_buffer (cairo_t *cairo)
 	cairo_restore(cairo);
 }
 
+static void calculate_buffer_size (struct Lava_data *data, struct Lava_output *output,
+		int *w, int *h)
+{
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+	{
+		*w = output->w * output->scale;
+		*h = data->h   * output->scale;
+	}
+	else
+	{
+		*w = data->w   * output->scale;
+		*h = output->h * output->scale;
+	}
+}
+
 void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 {
 	if (! output->configured)
 		return;
 
 	/* Get new/next buffer. */
+	int buffer_w, buffer_h;
+	calculate_buffer_size(data, output, &buffer_w, &buffer_h);
 	if (! next_buffer(&output->current_buffer, data->shm, output->buffers,
-				data->w * output->scale, data->h * output->scale))
+				buffer_w, buffer_h))
 		return;
 
 	cairo_t *cairo = output->current_buffer->cairo;
@@ -120,16 +137,40 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	/* Draw bar. */
 	if (data->verbose)
 		fputs("Drawing bar.\n", stderr);
-	draw_bar(cairo, 0, 0, data->w, data->h,
-			data->border_top, data->border_right,
-			data->border_bottom, data->border_left,
-			output->scale,
-			data->bar_colour, data->border_colour);
+	if ( data->mode == MODE_DEFAULT )
+	{
+		draw_bar(cairo, output->bar_x_offset, output->bar_y_offset,
+				data->w, data->h,
+				data->border_top, data->border_right,
+				data->border_bottom, data->border_left,
+				output->scale,
+				data->bar_colour, data->border_colour);
+	}
+	else
+	{
+		int bar_w, bar_h;
+		if ( data->orientation == ORIENTATION_HORIZONTAL )
+		{
+			bar_w = output->w;
+			bar_h = data->h;
+		}
+		else
+		{
+			bar_w = data->w;
+			bar_h = output->h;
+		}
+		draw_bar(cairo, 0, 0, bar_w, bar_h,
+				data->border_top, data->border_right,
+				data->border_bottom, data->border_left,
+				output->scale,
+				data->bar_colour, data->border_colour);
+	}
 
 	/* Draw icons. */
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
-	draw_icons(cairo, data->border_left * output->scale, data->border_top * output->scale,
+	draw_icons(cairo, (output->bar_x_offset + data->border_left) * output->scale,
+			(output->bar_y_offset + data->border_top) * output->scale,
 			data->icon_size * output->scale, data->orientation,
 			&data->buttons);
 

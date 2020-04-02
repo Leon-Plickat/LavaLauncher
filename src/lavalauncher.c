@@ -32,18 +32,10 @@
 #include<wayland-server.h>
 #include<wayland-client.h>
 #include<wayland-client-protocol.h>
-#include<cairo/cairo.h>
-
-#include"wlr-layer-shell-unstable-v1-protocol.h"
-#include"xdg-output-unstable-v1-protocol.h"
-#include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
 #include"config.h"
-#include"layersurface.h"
-#include"draw.h"
-#include"seat.h"
-#include"output.h"
+#include"registry.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
@@ -61,213 +53,6 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "  -S <size>                         All border sizes.\n"
                             "  -S <top> <right> <bottom> <left>  Individual border sizes.\n"
                             "  -v                                Verbose output.\n";
-
-static void registry_handle_global (void *raw_data, struct wl_registry *registry,
-		uint32_t name, const char *interface, uint32_t version)
-{
-	struct Lava_data *data = (struct Lava_data *)raw_data;
-
-	if (! strcmp(interface, wl_compositor_interface.name))
-	{
-		if (data->verbose)
-			fputs("Get wl_compositor.\n", stderr);
-		data->compositor = wl_registry_bind(registry, name,
-				&wl_compositor_interface, 4);
-	}
-	else if (! strcmp(interface, wl_shm_interface.name))
-	{
-		if (data->verbose)
-			fputs("Get wl_shm.\n", stderr);
-		data->shm = wl_registry_bind(registry, name,
-				&wl_shm_interface, 1);
-	}
-	else if (! strcmp(interface, zwlr_layer_shell_v1_interface.name))
-	{
-		if (data->verbose)
-			fputs("Get zwlr_layer_shell_v1.\n", stderr);
-		data->layer_shell = wl_registry_bind(registry, name,
-				&zwlr_layer_shell_v1_interface, 1);
-	}
-	else if (! strcmp(interface, zxdg_output_manager_v1_interface.name))
-	{
-		if (data->verbose)
-			fputs("Get zxdg_output_manager_v1.\n", stderr);
-		data->xdg_output_manager = wl_registry_bind(registry, name,
-				&zxdg_output_manager_v1_interface, 2);
-	}
-	else if (! strcmp(interface, wl_seat_interface.name))
-	{
-		if (! create_seat(data, registry, name, interface, version))
-			goto error;
-	}
-	else if (! strcmp(interface, wl_output_interface.name))
-	{
-		if (! create_output(data, registry, name, interface, version))
-			goto error;
-	}
-
-	return;
-error:
-	data->loop = false;
-	data->ret  = EXIT_FAILURE;
-}
-
-static void registry_handle_global_remove (void *raw_data,
-		struct wl_registry *registry, uint32_t name)
-{
-	struct Lava_data   *data = (struct Lava_data *)raw_data;
-	struct Lava_output *op1, *op2;
-
-	if (data->verbose)
-		fputs("Global remove.\n", stderr);
-
-	wl_list_for_each_safe(op1, op2, &data->outputs, link)
-	{
-		if ( op1->global_name == name )
-		{
-			wl_list_remove(&op1->link);
-			wl_output_destroy(op1->wl_output);
-			if ( op1->layer_surface != NULL )
-				zwlr_layer_surface_v1_destroy(op1->layer_surface);
-			if ( op1->wl_surface != NULL )
-				wl_surface_destroy(op1->wl_surface);
-			free(op1->name);
-			free(op1);
-			break;
-		}
-	}
-}
-
-static const struct wl_registry_listener registry_listener = {
-	.global        = registry_handle_global,
-	.global_remove = registry_handle_global_remove
-};
-
-/* Helper function for capability support error message. */
-static bool capability_test (void *ptr, const char *name)
-{
-	if ( ptr == NULL )
-	{
-		fprintf(stderr, "ERROR: Wayland compositor does not support %s.\n", name);
-		return false;
-	}
-	return true;
-}
-
-static bool init_wayland (struct Lava_data *data)
-{
-	if (data->verbose)
-		fputs("Init Wayland.\n", stderr);
-
-	/* Init lists. */
-	wl_list_init(&data->outputs);
-	wl_list_init(&data->seats);
-
-	/* Connect to Wayland server. */
-	if (data->verbose)
-		fputs("Connecting to server.\n", stderr);
-	const char *wayland_display = getenv("WAYLAND_DISPLAY");
-	data->display = wl_display_connect(wayland_display);
-	assert(data->display);
-	if ( data->display == NULL || wayland_display == NULL )
-	{
-		fputs("ERROR: Can not connect to a Wayland server.\n", stderr);
-		return false;
-	}
-
-	/* Get registry and add listeners. */
-	if (data->verbose)
-		fputs("Get wl_registry.\n", stderr);
-	data->registry = wl_display_get_registry(data->display);
-	if ( data->registry == NULL )
-	{
-		fputs("ERROR: Can not get registry.\n", stderr);
-		return false;
-	}
-	wl_registry_add_listener(data->registry, &registry_listener, data);
-
-	/* Allow registry listeners to catch up. */
-	if ( wl_display_roundtrip(data->display) == -1 )
-	{
-		fputs("ERROR: Roundtrip failed.\n", stderr);
-		return false;
-	}
-
-	/* Testing compatibilities. */
-	if (! capability_test(data->compositor, "wl_compositor"))
-		return false;
-	if (! capability_test(data->shm, "wl_shm"))
-		return false;
-	if (! capability_test(data->layer_shell, "zwlr_layer_shell"))
-		return false;
-
-	return true;
-}
-
-static void destroy_buttons (struct Lava_data *data)
-{
-	if (data->verbose)
-		fputs("Destroying buttons and freeing icons.\n", stderr);
-
-	struct Lava_button *bt_1, *bt_2;
-	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
-	{
-		wl_list_remove(&bt_1->link);
-		cairo_surface_destroy(bt_1->img);
-		free(bt_1);
-	}
-}
-
-/* Finish him! */
-static void finish_wayland (struct Lava_data *data)
-{
-	if (data->verbose)
-		fputs("Finish Wayland.\nDestroying outputs.\n", stderr);
-
-	struct Lava_output *op_1, *op_2;
-	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
-	{
-		wl_list_remove(&op_1->link);
-		wl_output_destroy(op_1->wl_output);
-		if ( op_1->layer_surface != NULL )
-			zwlr_layer_surface_v1_destroy(op_1->layer_surface);
-		if ( op_1->wl_surface != NULL )
-			wl_surface_destroy(op_1->wl_surface);
-		free(op_1->name);
-		free(op_1);
-	}
-
-	if (data->verbose)
-		fputs("Destroying seats.\n", stderr);
-
-	struct Lava_seat *st_1, *st_2;
-	wl_list_for_each_safe(st_1, st_2, &data->seats, link)
-	{
-		wl_list_remove(&st_1->link);
-		wl_seat_release(st_1->wl_seat);
-		if (st_1->pointer.wl_pointer)
-			wl_pointer_release(st_1->pointer.wl_pointer);
-		free(st_1);
-	}
-
-	if (data->verbose)
-		fputs("Destroying wlr_layer_shell_v1, wl_compositor, "
-				"wl_shm and wl_registry.\n", stderr);
-
-	if ( data->layer_shell != NULL )
-		zwlr_layer_shell_v1_destroy(data->layer_shell);
-	if ( data->compositor != NULL )
-		wl_compositor_destroy(data->compositor);
-	if ( data->shm != NULL )
-		wl_shm_destroy(data->shm);
-	if ( data->registry != NULL )
-		wl_registry_destroy(data->registry);
-
-	if (data->verbose)
-		fputs("Diconnecting from server.\n", stderr);
-
-	wl_display_disconnect(data->display);
-}
 
 static void main_loop (struct Lava_data *data)
 {
@@ -317,9 +102,37 @@ static void main_loop (struct Lava_data *data)
 	}
 }
 
-/* This functions calculates the dimensions of the minimal visible part of the
- * bar.
- */
+static void destroy_buttons (struct Lava_data *data)
+{
+	if (data->verbose)
+		fputs("Destroying buttons and freeing icons.\n", stderr);
+
+	struct Lava_button *bt_1, *bt_2;
+	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
+	{
+		wl_list_remove(&bt_1->link);
+		cairo_surface_destroy(bt_1->img);
+		free(bt_1);
+	}
+}
+
+/* Set the orientation depending on the positon. */
+static void automatic_orientation (struct Lava_data *data)
+{
+	switch (data->anchors)
+	{
+		case ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT:
+		case ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT:
+			data->orientation = ORIENTATION_VERTICAL;
+			break;
+
+		default:
+			data->orientation = ORIENTATION_HORIZONTAL;
+			break;
+	}
+}
+
+/* This functions calculates the dimensions of the of the bar. */
 static void calculate_dimensions (struct Lava_data *data)
 {
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
@@ -426,22 +239,6 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 	}
 
 	return true;
-}
-
-/* Set the orientation depending on the positon. */
-static void automatic_orientation (struct Lava_data *data)
-{
-	switch (data->anchors)
-	{
-		case ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT:
-		case ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT:
-			data->orientation = ORIENTATION_VERTICAL;
-			break;
-
-		default:
-			data->orientation = ORIENTATION_HORIZONTAL;
-			break;
-	}
 }
 
 int main (int argc, char *argv[])

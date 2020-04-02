@@ -32,17 +32,21 @@
 
 void sensible_defaults (struct Lava_data *data)
 {
-	data->anchors           = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
-	data->orientation       = ORIENTATION_AUTO;
+	data->position          = POSITION_BOTTOM;
+	data->alignment         = ALIGNMENT_CENTER;
+	data->mode              = MODE_DEFAULT;
 	data->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
-	data->icon_size         = 80;
 
+	data->icon_size         = 80;
 	data->border_top        = 2;
 	data->border_right      = 2;
 	data->border_bottom     = 2;
 	data->border_left       = 2;
+	data->margin_top        = 0;
+	data->margin_right      = 0;
+	data->margin_bottom     = 0;
+	data->margin_left       = 0;
 
-	data->margin            = 0;
 	data->verbose           = false;
 	data->only_output       = NULL;
 	data->exclusive_zone    = 1;
@@ -91,19 +95,17 @@ static bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, fl
 void config_set_position (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "top"))
-		data->anchors = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+		data->position = POSITION_TOP;
 	else if (! strcmp(arg, "right"))
-		data->anchors = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+		data->position = POSITION_RIGHT;
 	else if (! strcmp(arg, "bottom"))
-		data->anchors = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+		data->position = POSITION_BOTTOM;
 	else if (! strcmp(arg, "left"))
-		data->anchors = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
-	else if (! strcmp(arg, "center"))
-		data->anchors = 0;
+		data->position = POSITION_LEFT;
 	else
 	{
 		fputs("ERROR: Possible positions are 'top', 'right',"
-				"'bottom', 'left' and 'center'.\n", stderr);
+				" 'bottom' and 'left'.\n", stderr);
 		data->ret = EXIT_FAILURE;
 	}
 }
@@ -152,18 +154,31 @@ void config_set_layer (struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_orientation (struct Lava_data *data, const char *arg)
+void config_set_mode (struct Lava_data *data, const char *arg)
 {
-	if (! strcmp(arg, "horizontal"))
-		data->orientation = ORIENTATION_HORIZONTAL;
-	else if (! strcmp(arg, "vertical"))
-		data->orientation = ORIENTATION_VERTICAL;
-	else if (! strcmp(arg, "auto"))
-		data->orientation = ORIENTATION_AUTO;
+	if (! strcmp(arg, "default"))
+		data->mode = MODE_DEFAULT;
+	else if (! strcmp(arg, "full"))
+		data->mode = MODE_FULL;
 	else
 	{
-		fputs("ERROR: Possible orientations are 'horizontal', 'vertical'"
-				"and 'auto'.\n", stderr);
+		fputs("ERROR: Possible modes are 'default' and 'full'.\n", stderr);
+		data->ret = EXIT_FAILURE;
+	}
+}
+
+void config_set_alignment (struct Lava_data *data, const char *arg)
+{
+	if (! strcmp(arg, "start"))
+		data->alignment = ALIGNMENT_START;
+	else if (! strcmp(arg, "center"))
+		data->alignment = ALIGNMENT_CENTER;
+	else if (! strcmp(arg, "end"))
+		data->alignment = ALIGNMENT_END;
+	else
+	{
+		fputs("ERROR: Possible alignments are 'start', 'center',"
+				" and 'end'.\n", stderr);
 		data->ret = EXIT_FAILURE;
 	}
 }
@@ -184,12 +199,15 @@ void config_set_exclusive (struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_set_margin (struct Lava_data *data, const char *arg)
+void config_set_margin (struct Lava_data *data, int top, int right, int bottom, int left)
 {
-	data->margin = atoi(arg);
-	if ( data->margin < 0 )
+	data->margin_top    = top;
+	data->margin_right  = right;
+	data->margin_bottom = bottom;
+	data->margin_left   = left;
+	if ( top < 0 || right < 0 || bottom < 0 || left < 0 )
 	{
-		fputs("ERROR: Margin must be equal to or greater than zero.\n",
+		fputs("ERROR: Margins must be equal to or greater than zero.\n",
 				stderr);
 		data->ret = EXIT_FAILURE;
 	}

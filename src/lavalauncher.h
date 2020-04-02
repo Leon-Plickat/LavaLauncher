@@ -25,11 +25,31 @@
 #include"xdg-output-unstable-v1-protocol.h"
 #include"buffer.h"
 
+enum Bar_position
+{
+	POSITION_TOP,
+	POSITION_RIGHT,
+	POSITION_BOTTOM,
+	POSITION_LEFT
+};
+
 enum Bar_orientation
 {
-	ORIENTATION_VERTICAL = 0,
-	ORIENTATION_HORIZONTAL,
-	ORIENTATION_AUTO
+	ORIENTATION_VERTICAL,
+	ORIENTATION_HORIZONTAL
+};
+
+enum Bar_mode
+{
+	MODE_DEFAULT,
+	MODE_FULL
+};
+
+enum Bar_alignment
+{
+	ALIGNMENT_START,
+	ALIGNMENT_CENTER,
+	ALIGNMENT_END
 };
 
 struct Lava_data
@@ -48,17 +68,19 @@ struct Lava_data
 	/* Return value. */
 	int ret;
 
+	/* Mode and positioning of the bar. These re responsible for the shape
+	 * of the visual bar and the actual surface.
+	 */
+	enum Bar_position    position;
+	enum Bar_alignment   alignment;
+	enum Bar_orientation orientation;
+	enum Bar_mode        mode;
+
 	/* Amount of buttons defined by the user. */
 	int button_amount;
 
-	/* Anchors of the bar surface. */
-	enum zwlr_layer_surface_v1_anchor anchors;
-
 	/* Layer the surface will be rendered on. */
 	enum zwlr_layer_shell_v1_layer layer;
-
-	/* Orientation of the bar surface. */
-	enum Bar_orientation orientation;
 
 	/* Size of icons and bar borders. */
 	int icon_size;
@@ -88,8 +110,8 @@ struct Lava_data
 	 */
 	uint32_t exclusive_zone;
 
-	/* Margin to the edge the surface is anchored to. */
-	int margin;
+	/* Directional margins of the surface. */
+	int margin_top, margin_right, margin_bottom, margin_left;
 
 	/* Still running? */
 	bool loop;

@@ -23,6 +23,67 @@
 /* No-Op function. */
 static void noop () {}
 
+static void update_bar_offset (struct Lava_data *data, struct Lava_output *output)
+{
+	if ( output->w == 0 || output->h == 0 )
+		return;
+
+	switch (data->alignment)
+	{
+		case ALIGNMENT_START:
+			output->bar_x_offset = 0;
+			output->bar_y_offset = 0;
+			break;
+
+		case ALIGNMENT_CENTER:
+			if ( data->orientation == ORIENTATION_HORIZONTAL )
+			{
+				output->bar_x_offset = (output->w / 2) - (data->w / 2);
+				output->bar_y_offset = 0;
+			}
+			else
+			{
+				output->bar_x_offset = 0;
+				output->bar_y_offset = (output->h / 2) - (data->h / 2);
+			}
+			break;
+
+		case ALIGNMENT_END:
+			if ( data->orientation == ORIENTATION_HORIZONTAL )
+			{
+				output->bar_x_offset = output->w  - data->w;
+				output->bar_y_offset = 0;
+			}
+			else
+			{
+				output->bar_x_offset = 0;
+				output->bar_y_offset = output->h - data->h;
+			}
+			break;
+	}
+
+	/* Set margin.
+	 * Since we create a surface spanning the entire length of an outputs
+	 * edge, margins parallel to it would move it outside the boundaries of
+	 * the output, which may or may not cause issues in some compositors.
+	 * To work around this, we simply cheat a bit: Margins parallel to the
+	 * bar will be simulated in the draw code by adjusting the bar offsets.
+	 *
+	 * See: configure_surface()
+	 *
+	 * Here we set the margins parallel to the edges length, which are
+	 * "fake", by adjusting the offset of the bar.
+	 */
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+		output->bar_x_offset += data->margin_left - data->margin_right;
+	else
+		output->bar_y_offset += data->margin_top - data->margin_bottom;
+
+	if (data->verbose)
+		fprintf(stderr, "Aligning bar: x-offset=%d y-offset=%d\n",
+				output->bar_x_offset, output->bar_y_offset);
+}
+
 static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		int32_t factor)
 {
@@ -33,6 +94,7 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		fprintf(stderr, "Output update scale: s=%d\n", output->scale);
 
 	configure_surface(output->data, output);
+	update_bar_offset(output->data, output);
 	render_bar_frame(output->data, output);
 }
 
@@ -64,6 +126,7 @@ static void xdg_output_handle_logical_size (void *raw_data,
 		fprintf(stderr, "XDG-Output update logical size: w=%d h=%d\n",
 				w, h);
 
+	update_bar_offset(output->data, output);
 	render_bar_frame(output->data, output);
 }
 

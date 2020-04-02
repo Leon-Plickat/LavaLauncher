@@ -21,6 +21,11 @@ events to them.
 
 
 # OPTIONS
+*-a <alignment>*
+	Alignment of the icons / bar.
+
+	Can be 'start', 'center' or 'end'. The default is 'center'.
+
 *-b <path> <command>*
 	Add a button.
 
@@ -74,10 +79,18 @@ events to them.
 	axis depends on the implementation of the compositor. The default layer
 	is 'bottom'.
 
-*-m <size>*
-	Size of the margin to the edge the bar is docked to, in pixel.
+*-m <mode>*
+	The display mode of the bar.
+	
+	Can be 'default' or 'full'. In 'default' mode, the bar is sized just
+	large enough to house all the buttons. Logically, the default mode
+	is 'default'. In 'full' mode, the bar spans the entire length of the
+	edge it is docked to.
 
-	The default margin is 0.
+*-M <top> <right> <bottom> <left>*
+	Directional margins of the surface,
+
+	The default margins are 0 0 0 0.
 
 *-o <name>*
 	Name of the output on which the bar should be displayed.
@@ -86,19 +99,11 @@ events to them.
 	LavaLauncher will display a bar on all outputs, which is the default
 	behaviour.
 
-*-O <orientation>*
-	Orientation of the bar.
-
-	Can be 'horizontal', 'vertical' and 'auto'. If 'auto', the orientation
-	will be chosen automatically based on the position: 'horizontal'
-	for 'top', 'bottom' and 'center' and 'vertical' for 'left' and 'right'.
-	The default is 'auto'.
-
 *-p <position>*
 	Position of the bar.
 
-	Can be 'top', 'right', 'bottom', 'left' or 'center'.  The default
-	position is 'bottom'.
+	Can be 'top', 'right', 'bottom', 'left'. The bar will dock to that edge
+	of the output(s). The default position is 'bottom'.
 
 *-s <size>*
 	Size of the icons in pixel.
@@ -123,7 +128,7 @@ Alternatively, 'transparent', 'white' and 'black' are accepted as well.
 
 
 # EXAMPLE
-lavalauncher -b "~/icons/foo.png" "notify-send 'Output: %output%'" -b "~/icons/glenda.png" acme -m bottom -s 80 -S 2 2 0 2 -c "#20202088" -o eDP-1
+lavalauncher -b "~/icons/foo.png" "notify-send 'Output: %output%'" -b "~/icons/glenda.png" acme -p bottom -s 80 -S 2 2 0 2 -c "#20202088" -o eDP-1
 
 
 # BUGS

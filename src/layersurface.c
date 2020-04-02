@@ -27,48 +27,95 @@ void configure_surface (struct Lava_data *data, struct Lava_output *output)
 	if (! output->configured)
 		return;
 
-	zwlr_layer_surface_v1_set_size(output->layer_surface,
-			data->w * output->scale, data->h * output->scale);
-	zwlr_layer_surface_v1_set_anchor(output->layer_surface, data->anchors);
-	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
-			data->exclusive_zone > 0 ? data->exclusive_zone * output->scale : data->exclusive_zone);
+	uint32_t width, height;
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+		width = output->w * output->scale, height = data->h;
+	else
+		width = data->w, height = output->h * output->scale;
 
-	/* Set margin only to the edge the bar is anchored to. */
-	switch (data->anchors)
+	if (data->verbose)
+		fprintf(stderr, "Surface size: w=%d h=%d\n", width, height);
+
+	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
+
+	/* Anchor the surface to the correct edge. */
+	switch (data->position)
 	{
-		case ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP:
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					data->margin, 0, 0, 0);
+		case POSITION_TOP:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
 			break;
 
-		case ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT:
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					0, data->margin, 0, 0);
+		case POSITION_RIGHT:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
 			break;
 
-		case ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM:
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					0, 0, data->margin, 0);
+		case POSITION_BOTTOM:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
 			break;
 
-		case ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT:
-			zwlr_layer_surface_v1_set_margin(output->layer_surface,
-					0, 0, 0, data->margin);
+		case POSITION_LEFT:
+			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
+					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
 			break;
 	}
+
+	/* Set margin.
+	* Since we create a surface spanning the entire length of an outputs
+	* edge, margins parallel to it would move it outside the boundaries of
+	* the output, which may or may not cause issues in some compositors.
+	* To work around this, we simply cheat a bit: Margins parallel to the
+	* bar will be simulated in the draw code by adjusting the bar offsets.
+	*
+	* See: update_bar_offset()
+	*
+	* Here we set the margins not parallel to the edges length, which are
+	* real layer shell margins.
+	*/
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
+		zwlr_layer_surface_v1_set_margin(output->layer_surface,
+				data->margin_top, 0,
+				data->margin_bottom, 0);
+	else
+		zwlr_layer_surface_v1_set_margin(output->layer_surface,
+				0, data->margin_right,
+				0, data->margin_left);
+
+	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
+	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+			data->exclusive_zone);
+
+	/* Create a region of the visible part of the surface. */
+	struct wl_region *region = wl_compositor_create_region(data->compositor);
+	if ( data->mode == MODE_DEFAULT )
+		wl_region_add(region, output->bar_x_offset, output->bar_y_offset,
+				data->w, data->h);
+	else
+		wl_region_add(region, 0, 0, output->w, output->h);
+
+	/* Set input region. This is necessary to prevent the unused parts of
+	 * the surface to catch pointer and touch events.
+	 */
+	wl_surface_set_input_region(output->wl_surface, region);
 
 	/* If both border and background are opaque, set opaque region. This
 	 * will inform the compositor that it does not have to render anything
 	 * below the surface.
 	 */
 	if ( data->bar_colour[3] == 1 && data->border_colour[3] == 1 )
-	{
-		struct wl_region *region = wl_compositor_create_region(data->compositor);
-		wl_region_add(region, 0, 0,
-				data->w * output->scale, data->h * output->scale);
 		wl_surface_set_opaque_region(output->wl_surface, region);
-		wl_region_destroy(region);
-	}
+
+	wl_region_destroy(region);
 }
 
 static void layer_surface_handle_configure (void *raw_data,

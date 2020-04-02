@@ -14,6 +14,7 @@ struct Lava_output
 	uint32_t               global_name;
 	int32_t                scale;
 	int32_t                w, h;
+	int32_t                bar_x_offset, bar_y_offset;
 
 	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;

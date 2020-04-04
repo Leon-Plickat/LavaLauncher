@@ -49,15 +49,12 @@ static void draw_single_icon (cairo_t *cairo, int32_t x, int32_t y,
 static void draw_icons (cairo_t *cairo, int32_t x, int32_t y, int32_t icon_size,
 		enum Bar_orientation orientation, struct wl_list *button_list)
 {
+	int *iterator = orientation == ORIENTATION_HORIZONTAL ? &x : &y;
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, button_list, link)
 	{
 		draw_single_icon(cairo, x, y, icon_size, bt_1->img);
-
-		if ( orientation == ORIENTATION_HORIZONTAL )
-			x += icon_size;
-		else
-			y += icon_size;
+		*iterator += icon_size;
 	}
 }
 

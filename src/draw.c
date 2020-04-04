@@ -61,39 +61,37 @@ static void draw_icons (cairo_t *cairo, int32_t x, int32_t y, int32_t icon_size,
 	}
 }
 
-static void draw_coloured_rectangle (cairo_t *cairo, float colour[4],
-		int x, int y, int w, int h, float scale)
-{
-	cairo_set_source_rgba(cairo, colour[0], colour[1], colour[2], colour[3]);
-	cairo_rectangle(cairo, x * scale, y * scale, w *scale, h * scale);
-	cairo_close_path(cairo);
-	cairo_fill(cairo);
-}
-
 /* Draw the bar background plus border. */
 static void draw_bar (cairo_t *cairo, int32_t x, int32_t y, int32_t w, int32_t h,
 		int32_t border_top, int32_t border_right,
 		int32_t border_bottom, int32_t border_left,
 		float scale, float center_colour[4], float border_colour[4])
 {
+	/* Scale. */
+	x *= scale, y *= scale, w *= scale, h *= scale;
+	border_top *= scale, border_bottom *= scale;
+	border_left *= scale, border_right *= scale;
+
 	/* Calculate dimensions of center. */
 	int32_t cx = x + border_left,
 		cy = y + border_top,
 		cw = w - border_left - border_right,
-		ch = h - border_top - border_bottom;
+		ch = h - border_top  - border_bottom;
 
 	/* Draw center. */
-	draw_coloured_rectangle(cairo, center_colour, cx, cy, cw, ch, scale);
+	cairo_rectangle(cairo, cx, cy, cw, ch);
+	cairo_set_source_rgba(cairo, center_colour[0], center_colour[1],
+			center_colour[2], center_colour[3]);
+	cairo_fill(cairo);
 
 	/* Draw borders. Top - Right - Bottom - Left */
-	draw_coloured_rectangle(cairo, border_colour, x, y,
-			w, border_top, scale);
-	draw_coloured_rectangle(cairo, border_colour, x + w - border_right, y + border_top,
-			border_right, h - border_top - border_bottom, scale);
-	draw_coloured_rectangle(cairo, border_colour, x, y + h - border_bottom,
-			w, border_bottom, scale);
-	draw_coloured_rectangle(cairo, border_colour, x, y + border_top,
-			border_left, h - border_top - border_bottom, scale);
+	cairo_rectangle(cairo, x, y, w, border_top);
+	cairo_rectangle(cairo, x + w - border_right, y + border_top, border_right, h - border_top - border_bottom);
+	cairo_rectangle(cairo, x, y + h - border_bottom, w, border_bottom);
+	cairo_rectangle(cairo, x, y + border_top, border_left, h - border_top - border_bottom);
+	cairo_set_source_rgba(cairo, border_colour[0], border_colour[1],
+			border_colour[2], border_colour[3]);
+	cairo_fill(cairo);
 }
 
 static void clear_cairo_buffer (cairo_t *cairo)

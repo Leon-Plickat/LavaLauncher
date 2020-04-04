@@ -30,7 +30,7 @@
 
 // TODO Draw icons once on startup to a cairo_surface (and at scale updates)
 // TODO Possibly draw icons to a subsurface so only the bar needs redrawing for animations
-// TODO Use something faster than cairo for drawing the icons
+// TODO Maybe use something faster than cairo for drawing the icons?
 
 static void draw_single_icon (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t icon_size, cairo_surface_t *img)
@@ -47,8 +47,9 @@ static void draw_single_icon (cairo_t *cairo, int32_t x, int32_t y,
 }
 
 static void draw_icons (cairo_t *cairo, int32_t x, int32_t y, int32_t icon_size,
-		enum Bar_orientation orientation, struct wl_list *button_list)
+		float scale, enum Bar_orientation orientation, struct wl_list *button_list)
 {
+	x *= scale, y *= scale, icon_size *= scale;
 	int *iterator = orientation == ORIENTATION_HORIZONTAL ? &x : &y;
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, button_list, link)
@@ -83,9 +84,11 @@ static void draw_bar (cairo_t *cairo, int32_t x, int32_t y, int32_t w, int32_t h
 
 	/* Draw borders. Top - Right - Bottom - Left */
 	cairo_rectangle(cairo, x, y, w, border_top);
-	cairo_rectangle(cairo, x + w - border_right, y + border_top, border_right, h - border_top - border_bottom);
+	cairo_rectangle(cairo, x + w - border_right, y + border_top,
+			border_right, h - border_top - border_bottom);
 	cairo_rectangle(cairo, x, y + h - border_bottom, w, border_bottom);
-	cairo_rectangle(cairo, x, y + border_top, border_left, h - border_top - border_bottom);
+	cairo_rectangle(cairo, x, y + border_top, border_left,
+			h - border_top - border_bottom);
 	cairo_set_source_rgba(cairo, border_colour[0], border_colour[1],
 			border_colour[2], border_colour[3]);
 	cairo_fill(cairo);
@@ -103,15 +106,11 @@ static void calculate_buffer_size (struct Lava_data *data, struct Lava_output *o
 		int *w, int *h)
 {
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
-	{
-		*w = output->w * output->scale;
-		*h = data->h   * output->scale;
-	}
+		*w = output->w, *h = data->h;
 	else
-	{
-		*w = data->w   * output->scale;
-		*h = output->h * output->scale;
-	}
+		*w = data->w, *h = output->h;
+
+	*w *= output->scale, *h *= output->scale;
 }
 
 void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
@@ -133,27 +132,20 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	if (data->verbose)
 		fputs("Drawing bar.\n", stderr);
 	if ( data->mode == MODE_DEFAULT )
-	{
 		draw_bar(cairo, output->bar_x_offset, output->bar_y_offset,
 				data->w, data->h,
 				data->border_top, data->border_right,
 				data->border_bottom, data->border_left,
 				output->scale,
 				data->bar_colour, data->border_colour);
-	}
 	else
 	{
 		int bar_w, bar_h;
 		if ( data->orientation == ORIENTATION_HORIZONTAL )
-		{
-			bar_w = output->w;
-			bar_h = data->h;
-		}
+			bar_w = output->w, bar_h = data->h;
 		else
-		{
-			bar_w = data->w;
-			bar_h = output->h;
-		}
+			bar_w = data->w, bar_h = output->h;
+
 		draw_bar(cairo, 0, 0, bar_w, bar_h,
 				data->border_top, data->border_right,
 				data->border_bottom, data->border_left,
@@ -164,9 +156,9 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	/* Draw icons. */
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
-	draw_icons(cairo, (output->bar_x_offset + data->border_left) * output->scale,
-			(output->bar_y_offset + data->border_top) * output->scale,
-			data->icon_size * output->scale, data->orientation,
+	draw_icons(cairo, output->bar_x_offset + data->border_left,
+			output->bar_y_offset + data->border_top,
+			data->icon_size, output->scale, data->orientation,
 			&data->buttons);
 
 	/* Commit surface. */

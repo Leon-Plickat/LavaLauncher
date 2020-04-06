@@ -105,7 +105,9 @@ static void clear_cairo_buffer (cairo_t *cairo)
 static void calculate_buffer_size (struct Lava_data *data, struct Lava_output *output,
 		int *w, int *h)
 {
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
+	if ( data->mode == MODE_SIMPLE )
+		*w = data->w, *h = data->h;
+	else if ( data->orientation == ORIENTATION_HORIZONTAL )
 		*w = output->w, *h = data->h;
 	else
 		*w = data->w, *h = output->h;
@@ -131,14 +133,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	/* Draw bar. */
 	if (data->verbose)
 		fputs("Drawing bar.\n", stderr);
-	if ( data->mode == MODE_DEFAULT )
-		draw_bar(cairo, output->bar_x_offset, output->bar_y_offset,
-				data->w, data->h,
-				data->border_top, data->border_right,
-				data->border_bottom, data->border_left,
-				output->scale,
-				data->bar_colour, data->border_colour);
-	else
+	if ( data->mode == MODE_FULL )
 	{
 		int bar_w, bar_h;
 		if ( data->orientation == ORIENTATION_HORIZONTAL )
@@ -152,6 +147,13 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 				output->scale,
 				data->bar_colour, data->border_colour);
 	}
+	else
+		draw_bar(cairo, output->bar_x_offset, output->bar_y_offset,
+				data->w, data->h,
+				data->border_top, data->border_right,
+				data->border_bottom, data->border_left,
+				output->scale,
+				data->bar_colour, data->border_colour);
 
 	/* Draw icons. */
 	if (data->verbose)

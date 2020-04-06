@@ -188,7 +188,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 			case 'e': config_set_exclusive(data, optarg);     break;
 			case 'h': fputs(usage, stderr);                   return EXIT_SUCCESS;
 			case 'l': config_set_layer(data, optarg);         break;
-			case 'm': config_set_mode(data, optarg);        break;
+			case 'm': config_set_mode(data, optarg);          break;
 
 			case 'M':
 				if( count_arguments(optind, argc, argv) != 4 )

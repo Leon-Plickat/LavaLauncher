@@ -160,9 +160,11 @@ void config_set_mode (struct Lava_data *data, const char *arg)
 		data->mode = MODE_DEFAULT;
 	else if (! strcmp(arg, "full"))
 		data->mode = MODE_FULL;
+	else if (! strcmp(arg, "simple"))
+		data->mode = MODE_SIMPLE;
 	else
 	{
-		fputs("ERROR: Possible modes are 'default' and 'full'.\n", stderr);
+		fputs("ERROR: Possible modes are 'default', 'full' and 'simple'.\n", stderr);
 		data->ret = EXIT_FAILURE;
 	}
 }

@@ -28,6 +28,12 @@ static void update_bar_offset (struct Lava_data *data, struct Lava_output *outpu
 	if ( output->w == 0 || output->h == 0 )
 		return;
 
+	if ( data->mode == MODE_SIMPLE )
+	{
+		output->bar_x_offset = output->bar_y_offset = 0;
+		return;
+	}
+
 	switch (data->alignment)
 	{
 		case ALIGNMENT_START:

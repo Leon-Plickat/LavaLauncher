@@ -24,7 +24,8 @@ events to them.
 *-a <alignment>*
 	Alignment of the icons / bar.
 
-	Can be 'start', 'center' or 'end'. The default is 'center'.
+	Can be 'start', 'center' or 'end'. The default is 'center'. This option
+	has no effect in 'simple' mode.
 
 *-b <path> <command>*
 	Add a button.
@@ -81,11 +82,17 @@ events to them.
 
 *-m <mode>*
 	The display mode of the bar.
-	
-	Can be 'default' or 'full'. In 'default' mode, the bar is sized just
-	large enough to house all the buttons. Logically, the default mode
-	is 'default'. In 'full' mode, the bar spans the entire length of the
-	edge it is docked to.
+
+	Can be 'default', 'full' or 'simple'. In 'default' mode, the bar is
+	sized just large enough to house all the buttons. Logically, the default
+	mode is 'default'. In 'full' mode, the bar spans the entire length of the
+	edge it is docked to. 'simple' mode is visually identical to 'normal'
+	mode, however the surface of the bar is sized and anchored less
+	aggressively, which may (or may not; depending on the implementation of
+	the compositor) improve how well LavaLauncher geometrically integrates
+	and fits onto the desktop. It gives the compositor a lot more leeway
+	regarding the exact placement of the bar, at the cost of not respecting
+	the user defined alignment and margins parallel to the bar.
 
 *-M <top> <right> <bottom> <left>*
 	Directional margins of the surface,

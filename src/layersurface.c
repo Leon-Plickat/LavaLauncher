@@ -19,6 +19,47 @@
 #include"seat.h"
 #include"draw.h"
 
+static uint32_t get_anchor (struct Lava_data *data)
+{
+	struct {
+		uint32_t singular_anchor;
+		uint32_t anchor_triplet;
+	} edges[4] = {
+		[POSITION_TOP] = {
+			.singular_anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+		},
+		[POSITION_RIGHT] = {
+			.singular_anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
+			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+		},
+		[POSITION_BOTTOM] = {
+			.singular_anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+		},
+		[POSITION_LEFT] = {
+			.singular_anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
+			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+		},
+	};
+
+	/* MODE_SIMPLE is only anchored to a single edge; All other modes are
+	 * anchored to three edges.
+	 */
+	if ( data->mode == MODE_SIMPLE )
+		return edges[data->position].singular_anchor;
+	else
+		return edges[data->position].anchor_triplet;
+}
+
 /* Helper function to configure the bar surface. Careful: This function does not
  * commit!
  */
@@ -28,7 +69,9 @@ void configure_surface (struct Lava_data *data, struct Lava_output *output)
 		return;
 
 	uint32_t width, height;
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
+	if ( data->mode == MODE_SIMPLE )
+		width = data->w, height = data->h;
+	else if ( data->orientation == ORIENTATION_HORIZONTAL )
 		width = output->w * output->scale, height = data->h;
 	else
 		width = data->w, height = output->h * output->scale;
@@ -39,36 +82,7 @@ void configure_surface (struct Lava_data *data, struct Lava_output *output)
 	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
 
 	/* Anchor the surface to the correct edge. */
-	switch (data->position)
-	{
-		case POSITION_TOP:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
-			break;
-
-		case POSITION_RIGHT:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
-			break;
-
-		case POSITION_BOTTOM:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
-			break;
-
-		case POSITION_LEFT:
-			zwlr_layer_surface_v1_set_anchor(output->layer_surface,
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-					| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
-			break;
-	}
+	zwlr_layer_surface_v1_set_anchor(output->layer_surface, get_anchor(data));
 
 	/* Set margin.
 	* Since we create a surface spanning the entire length of an outputs
@@ -95,7 +109,10 @@ void configure_surface (struct Lava_data *data, struct Lava_output *output)
 	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
 			data->exclusive_zone);
 
-	/* Create a region of the visible part of the surface. */
+	/* Create a region of the visible part of the surface.
+	 * Behold: In MODE_DEFAULT, the actual surface is larger than the visible
+	 * bar.
+	 */
 	struct wl_region *region = wl_compositor_create_region(data->compositor);
 	if ( data->mode == MODE_DEFAULT )
 		wl_region_add(region, output->bar_x_offset, output->bar_y_offset,

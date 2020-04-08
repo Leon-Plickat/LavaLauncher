@@ -71,7 +71,7 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output, const 
 			exit(EXIT_FAILURE);
 		}
 
-		char *buffer = malloc(STRING_BUFFER_SIZE);
+		char buffer[STRING_BUFFER_SIZE];
 		strncpy(buffer, cmd, STRING_BUFFER_SIZE);
 		handle_tokens(data, output, buffer);
 
@@ -79,17 +79,11 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output, const 
 			fprintf(stderr, "Executing: cmd='%s' raw='%s'\n",
 					buffer, cmd);
 
-		// TODO Use something other than system()
+		/* execl() only returns on error. */
 		errno = 0;
-		if ( system(buffer) == -1 && errno != ECHILD )
-		{
-			fprintf(stderr, "ERROR: system: %s\n", strerror(errno));
-			free(buffer);
-			exit(EXIT_FAILURE);
-		}
-
-		free(buffer);
-		exit(EXIT_SUCCESS);
+		execl("/bin/sh", "/bin/sh", "-c", buffer, NULL);
+		fprintf(stderr, "ERROR: execl: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
 	}
 	else if ( ret < 0 )
 		fprintf(stderr, "ERROR: fork: %s\n", strerror(errno));

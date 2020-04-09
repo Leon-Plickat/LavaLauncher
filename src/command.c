@@ -19,8 +19,8 @@
 // This likely sucks...
 static void replace_token (char **str, char *srch, char *repl_s, int repl_i, size_t size)
 {
-	char  buffer[STRING_BUFFER_SIZE]; /* Local editing buffer. */
-	char *p;                          /* Pointer to beginning of *srch. */
+	char  buffer[STRING_BUFFER_SIZE+1]; /* Local editing buffer. */
+	char *p;                            /* Pointer to beginning of *srch. */
 
 	/* Iterate over all occurrences of *srch */
 	while ((p = strstr(*str, srch)))
@@ -35,7 +35,7 @@ static void replace_token (char **str, char *srch, char *repl_s, int repl_i, siz
 			sprintf(buffer + (p - *str), "%s%s", repl_s, p + strlen(srch));
 
 		/* Copy buffer back to str. */
-		strncpy(*str, buffer, size);
+		strncpy(*str, buffer, size+1);
 	}
 }
 
@@ -71,7 +71,7 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output, const 
 			exit(EXIT_FAILURE);
 		}
 
-		char buffer[STRING_BUFFER_SIZE];
+		char buffer[STRING_BUFFER_SIZE+1];
 		strncpy(buffer, cmd, STRING_BUFFER_SIZE);
 		handle_tokens(data, output, buffer);
 

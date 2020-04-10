@@ -128,7 +128,6 @@ bool init_wayland (struct Lava_data *data)
 		fputs("Connecting to server.\n", stderr);
 	const char *wayland_display = getenv("WAYLAND_DISPLAY");
 	data->display = wl_display_connect(wayland_display);
-	assert(data->display);
 	if ( data->display == NULL || wayland_display == NULL )
 	{
 		fputs("ERROR: Can not connect to a Wayland server.\n", stderr);
@@ -212,6 +211,7 @@ void finish_wayland (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Diconnecting from server.\n", stderr);
 
-	wl_display_disconnect(data->display);
+	if ( data->display != NULL )
+		wl_display_disconnect(data->display);
 }
 

@@ -120,6 +120,13 @@ struct Lava_data
 
 	/* Verbose output? */
 	bool verbose;
+
+	/* Everything that is needed for changing the cursor. */
+	struct {
+		struct wl_cursor_theme *theme;
+		struct wl_cursor_image *image;
+		struct wl_surface      *surface;
+	} cursor;
 };
 
 struct Lava_button

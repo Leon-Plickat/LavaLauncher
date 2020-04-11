@@ -25,8 +25,6 @@
 #include<signal.h>
 #include<unistd.h>
 #include<string.h>
-#include<assert.h>
-#include<poll.h>
 #include<errno.h>
 
 #include<wayland-server.h>
@@ -203,7 +201,6 @@ void finish_wayland (struct Lava_data *data)
 
 	if (data->verbose)
 		fputs("Destroying seats.\n", stderr);
-
 	struct Lava_seat *st_1, *st_2;
 	wl_list_for_each_safe(st_1, st_2, &data->seats, link)
 	{
@@ -215,9 +212,7 @@ void finish_wayland (struct Lava_data *data)
 	}
 
 	if (data->verbose)
-		fputs("Destroying wlr_layer_shell_v1, wl_compositor, "
-				"wl_shm and wl_registry.\n", stderr);
-
+		fputs("Destroying Wayland objects.\n", stderr);
 	if ( data->layer_shell != NULL )
 		zwlr_layer_shell_v1_destroy(data->layer_shell);
 	if ( data->compositor != NULL )
@@ -227,10 +222,11 @@ void finish_wayland (struct Lava_data *data)
 	if ( data->registry != NULL )
 		wl_registry_destroy(data->registry);
 
-	if (data->verbose)
-		fputs("Diconnecting from server.\n", stderr);
-
 	if ( data->display != NULL )
+	{
+		if (data->verbose)
+			fputs("Diconnecting from server.\n", stderr);
 		wl_display_disconnect(data->display);
+	}
 }
 

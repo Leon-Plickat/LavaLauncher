@@ -38,6 +38,7 @@
 #include"lavalauncher.h"
 #include"config.h"
 #include"registry.h"
+#include"cursor.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
@@ -282,15 +283,16 @@ int main (int argc, char *argv[])
 	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);
 
-	if (! init_wayland(&data))
-		data.ret = EXIT_FAILURE;
-	else
+	if ( init_wayland(&data) && init_cursor(&data) )
 		main_loop(&data);
+	else
+		data.ret = EXIT_FAILURE;
 
 	if ( data.only_output != NULL )
 		free(data.only_output);
 
 	destroy_buttons(&data);
+	finish_cursor(&data);
 	finish_wayland(&data);
 	return data.ret;
 }

@@ -21,6 +21,7 @@ add_project_arguments(cc.get_supported_arguments([
 
 wayland_protocols = dependency('wayland-protocols')
 wayland_client    = dependency('wayland-client')
+wayland_cursor    = dependency('wayland-cursor')
 cairo             = dependency('cairo')
 realtime          = cc.find_library('rt')
 
@@ -41,10 +42,12 @@ executable(
     'src/seat.c',
     'src/output.c',
     'src/registry.c',
+    'src/cursor.c',
   ),
   dependencies: [
     wayland_client,
     wayland_protocols,
+    wayland_cursor,
     cairo,
     wl_protocols,
     realtime,

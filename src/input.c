@@ -37,6 +37,7 @@
 #include"output.h"
 #include"seat.h"
 #include"command.h"
+#include"cursor.h"
 
 /* No-Op function. */
 static void noop () {}
@@ -90,6 +91,8 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 		wl_fixed_t x, wl_fixed_t y)
 {
 	struct Lava_seat *seat = data;
+
+	attach_cursor_surface(seat->data, wl_pointer, serial);
 
 	seat->pointer.output = NULL;
 	struct Lava_output *op1, *op2;

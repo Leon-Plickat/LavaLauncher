@@ -107,6 +107,9 @@ static void main_loop (struct Lava_data *data)
 
 static void destroy_buttons (struct Lava_data *data)
 {
+	if ( wl_list_length(&(data->buttons)) <= 0 )
+		return;
+
 	if (data->verbose)
 		fputs("Destroying buttons and freeing icons.\n", stderr);
 
@@ -115,6 +118,8 @@ static void destroy_buttons (struct Lava_data *data)
 	{
 		wl_list_remove(&bt_1->link);
 		cairo_surface_destroy(bt_1->img);
+		free(bt_1->img_path);
+		free(bt_1->cmd);
 		free(bt_1);
 	}
 }
@@ -237,8 +242,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 
 		if ( data->ret == EXIT_FAILURE )
 		{
-			if ( wl_list_length(&(data->buttons)) > 0 )
-				destroy_buttons(data);
+			destroy_buttons(data);
 			return false;
 		}
 	}

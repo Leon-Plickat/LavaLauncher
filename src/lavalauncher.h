@@ -126,8 +126,8 @@ struct Lava_button
 {
 	struct wl_list link;
 
-	const char *img_path;
-	const char *cmd;
+	char *img_path;
+	char *cmd;
 
 	/* Button icon. The PNG images get loaded into the cairo surfaces at
 	 * startup.

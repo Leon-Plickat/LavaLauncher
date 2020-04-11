@@ -124,8 +124,8 @@ void config_add_button (struct Lava_data *data, char *path, char *cmd)
 		return;
 	}
 
-	new_button->img_path = path;
-	new_button->cmd      = cmd;
+	new_button->img_path = strdup(path);
+	new_button->cmd      = strdup(cmd);
 	new_button->img      = cairo_image_surface_create_from_png(path);
 	if ( errno != 0 )
 	{

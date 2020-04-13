@@ -30,6 +30,7 @@
 #include"lavalauncher.h"
 #include"output.h"
 #include"command.h"
+#include"button.h"
 
 /* This function will search for a string (*srch) inside a given string (**str)
  * and replace it either with another string (*repl_s) or with a string-ified
@@ -59,8 +60,9 @@ static void replace_token (char **str, char *srch, char *repl_s, int repl_i, siz
 }
 
 static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
-		char *buffer)
+		struct Lava_button *button, char *buffer)
 {
+	replace_token(&buffer, "%index%",         NULL,                    button->index,       STRING_BUFFER_SIZE);
 	replace_token(&buffer, "%buttons%",       NULL,                    data->button_amount, STRING_BUFFER_SIZE);
 	replace_token(&buffer, "%icon-size%",     NULL,                    data->icon_size,     STRING_BUFFER_SIZE);
 	replace_token(&buffer, "%border-top%",    NULL,                    data->border_top,    STRING_BUFFER_SIZE);
@@ -77,7 +79,8 @@ static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
 	replace_token(&buffer, "%scale%",         NULL,                    output->scale,       STRING_BUFFER_SIZE);
 }
 
-static void exec_cmd (struct Lava_data *data, struct Lava_output *output, const char *cmd)
+static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
+		struct Lava_button *button)
 {
 	errno   = 0;
 	int ret = fork();
@@ -91,12 +94,12 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output, const 
 		}
 
 		char buffer[STRING_BUFFER_SIZE+1];
-		strncpy(buffer, cmd, STRING_BUFFER_SIZE);
-		handle_tokens(data, output, buffer);
+		strncpy(buffer, button->cmd, STRING_BUFFER_SIZE);
+		handle_tokens(data, output, button, buffer);
 
 		if (data->verbose)
 			fprintf(stderr, "Executing: cmd='%s' raw='%s'\n",
-					buffer, cmd);
+					buffer, button->cmd);
 
 		/* execl() only returns on error. */
 		errno = 0;
@@ -120,7 +123,7 @@ bool button_command (struct Lava_data *data, struct Lava_button *button,
 	if (! strcmp(button->cmd, "exit"))
 		data->loop = false;
 	else
-		exec_cmd(data, output, button->cmd);
+		exec_cmd(data, output, button);
 
 	return true;
 }

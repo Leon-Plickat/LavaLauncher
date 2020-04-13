@@ -39,6 +39,7 @@
 #include"config.h"
 #include"registry.h"
 #include"cursor.h"
+#include"button.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
@@ -106,26 +107,7 @@ static void main_loop (struct Lava_data *data)
 	}
 }
 
-static void destroy_buttons (struct Lava_data *data)
-{
-	if ( wl_list_length(&(data->buttons)) <= 0 )
-		return;
-
-	if (data->verbose)
-		fputs("Destroying buttons and freeing icons.\n", stderr);
-
-	struct Lava_button *bt_1, *bt_2;
-	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
-	{
-		wl_list_remove(&bt_1->link);
-		cairo_surface_destroy(bt_1->img);
-		free(bt_1->img_path);
-		free(bt_1->cmd);
-		free(bt_1);
-	}
-}
-
-/* This functions calculates the dimensions of the of the bar. */
+/* Calculate the dimensions of the visible part of the bar. */
 static void calculate_dimensions (struct Lava_data *data)
 {
 	switch (data->position)
@@ -187,7 +169,8 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 					data->ret = EXIT_FAILURE;
 					break;
 				}
-				config_add_button(data, argv[optind-1], argv[optind]);
+				if (! add_button(data, argv[optind-1], argv[optind]))
+					data->ret = EXIT_FAILURE;
 				optind++; /* Tell getopt() to skip one argv field. */
 				break;
 
@@ -241,6 +224,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 				return false;
 		}
 
+		/* Check for errors during configuration. */
 		if ( data->ret == EXIT_FAILURE )
 		{
 			destroy_buttons(data);
@@ -257,22 +241,12 @@ int main (int argc, char *argv[])
 	data.ret              = EXIT_SUCCESS;
 	wl_list_init(&(data.buttons));
 
-	/* Init data struct with sensible defaults. */
+	/* Sensible configuration defaults. */
 	sensible_defaults(&data);
 
-	/* Handle command flags. */
-	if (! handle_command_flags(argc, argv, &data))
+	if (! handle_command_flags(argc, argv, &data) || ! init_buttons(&data) )
 		return EXIT_FAILURE;
 
-	/* Count buttons. If none are defined, exit. */
-	data.button_amount = wl_list_length(&(data.buttons));
-	if (! data.button_amount)
-	{
-		fputs("ERROR: No buttons defined.\n", stderr);
-		return EXIT_FAILURE;
-	}
-
-	/* Calculate dimension of the visible part of the bar. */
 	calculate_dimensions(&data);
 
 	if (data.verbose)

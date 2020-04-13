@@ -28,6 +28,7 @@
 #include"output.h"
 #include"seat.h"
 #include"draw.h"
+#include"button.h"
 
 // TODO Draw icons once on startup to a cairo_surface (and at scale updates)
 // TODO Possibly draw icons to a subsurface so only the bar needs redrawing for animations

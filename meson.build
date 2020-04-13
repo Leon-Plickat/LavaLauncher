@@ -43,6 +43,7 @@ executable(
     'src/output.c',
     'src/registry.c',
     'src/cursor.c',
+    'src/button.c',
   ),
   dependencies: [
     wayland_client,

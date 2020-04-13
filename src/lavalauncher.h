@@ -129,17 +129,4 @@ struct Lava_data
 	} cursor;
 };
 
-struct Lava_button
-{
-	struct wl_list link;
-
-	char *img_path;
-	char *cmd;
-
-	/* Button icon. The PNG images get loaded into the cairo surfaces at
-	 * startup.
-	 */
-	cairo_surface_t *img;
-};
-
 #endif

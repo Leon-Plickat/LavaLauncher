@@ -17,13 +17,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_COMMAND_H
-#define LAVALAUNCHER_COMMAND_H
+#ifndef LAVALAUNCHER_BUTTON_H
+#define LAVALAUNCHER_BUTTON_H
 
 struct Lava_data;
 struct Lava_output;
-struct Lava_button;
 
-bool button_command (struct Lava_data *data, struct Lava_button *button, struct Lava_output *output);
+struct Lava_button
+{
+	struct wl_list   link;
+	cairo_surface_t *img;
+	char            *cmd;
+	unsigned int     index, ordinate;
+};
+
+struct Lava_button *button_from_coords (struct Lava_data *data, struct Lava_output *output, int32_t x, int32_t y);
+bool add_button (struct Lava_data *data, char *path, char *cmd);
+bool init_buttons (struct Lava_data *data);
+void destroy_buttons (struct Lava_data *data);
 
 #endif

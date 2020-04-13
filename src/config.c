@@ -112,32 +112,6 @@ void config_set_position (struct Lava_data *data, const char *arg)
 	}
 }
 
-void config_add_button (struct Lava_data *data, char *path, char *cmd)
-{
-	errno = 0;
-
-	struct Lava_button *new_button = calloc(1, sizeof(struct Lava_button));
-	if ( new_button == NULL )
-	{
-		fprintf(stderr, "ERROR: Could not allocate.\n");
-		data->ret = EXIT_FAILURE;
-		return;
-	}
-
-	new_button->img_path = strdup(path);
-	new_button->cmd      = strdup(cmd);
-	new_button->img      = cairo_image_surface_create_from_png(path);
-	if ( errno != 0 )
-	{
-		fprintf(stderr, "ERROR: Failed loading image: %s\n"
-				"ERROR: cairo_image_surface_create_from_png: %s\n",
-				path, strerror(errno));
-		data->ret = EXIT_FAILURE;
-	}
-
-	wl_list_insert(&data->buttons, &new_button->link);
-}
-
 void config_set_layer (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "overlay"))

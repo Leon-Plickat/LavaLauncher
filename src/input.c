@@ -38,40 +38,10 @@
 #include"seat.h"
 #include"command.h"
 #include"cursor.h"
+#include"button.h"
 
 /* No-Op function. */
 static void noop () {}
-
-/* Return pointer to Lava_button struct from button list which includes the
- * given surface-local coordinates on the surface of the given output.
- */
-static struct Lava_button *button_from_coords (struct Lava_data *data,
-		struct Lava_output *output, int32_t x, int32_t y)
-{
-	int32_t ordinate;
-	int32_t pre_button_zone = 0;
-
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-	{
-		pre_button_zone += output->bar_x_offset + data->border_left;
-		ordinate         = x;
-	}
-	else
-	{
-		pre_button_zone += output->bar_y_offset + data->border_top;
-		ordinate         = y;
-	}
-
-	int32_t i = pre_button_zone;
-	struct Lava_button *bt_1, *bt_2;
-	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
-	{
-		i += data->icon_size;
-		if ( ordinate < i && ordinate >= pre_button_zone)
-			return bt_1;
-	}
-	return NULL;
-}
 
 static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 		uint32_t serial, struct wl_surface *surface)
@@ -97,13 +67,11 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 	seat->pointer.output = NULL;
 	struct Lava_output *op1, *op2;
 	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
-	{
 		if ( op1->wl_surface == surface )
 		{
 			seat->pointer.output = op1;
 			break;
 		}
-	}
 
 	seat->pointer.x = wl_fixed_to_int(x);
 	seat->pointer.y = wl_fixed_to_int(y);

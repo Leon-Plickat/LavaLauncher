@@ -38,16 +38,19 @@ struct Lava_output
 	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;
 
+	/* Is this output configured? */
+	bool configured;
+
 	/* Has the surface been configured? This is needed to prevent trying to
 	 * render an unconfigured surface.
 	 */
-	bool configured;
+	bool surface_configured;
 
 	struct Lava_buffer  buffers[2];
 	struct Lava_buffer *current_buffer;
 };
 
-
 bool create_output (struct Lava_data *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version);
+bool configure_output (struct Lava_data *data, struct Lava_output *output);
 
 #endif

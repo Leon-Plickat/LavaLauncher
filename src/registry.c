@@ -176,6 +176,17 @@ bool init_wayland (struct Lava_data *data)
 		return false;
 	if (! capability_test(data->layer_shell, "zwlr_layer_shell"))
 		return false;
+	if (! capability_test(data->xdg_output_manager, "xdg_output_manager"))
+		return false;
+
+	/* Configure all outputs that were created before xdg_output_manager or
+	 * the layer_shell were available.
+	 */
+	struct Lava_output *op_1, *op_2;
+	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
+		if (! op_1->configured )
+			if (! configure_output(data, op_1))
+				return false;
 
 	return true;
 }

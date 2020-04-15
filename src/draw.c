@@ -119,7 +119,7 @@ static void calculate_buffer_size (struct Lava_data *data, struct Lava_output *o
 
 void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 {
-	if (! output->surface_configured)
+	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED )
 		return;
 
 	/* Get new/next buffer. */

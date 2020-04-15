@@ -22,6 +22,23 @@
 
 struct Lava_data;
 
+enum Lava_output_status
+{
+	/* Output has been created, but does not yet have an xdg_output or a
+	 * layershell surface.
+	 */
+	OUTPUT_STATUS_UNCONFIGURED,
+
+	/* Output has xdg_output and layershell surface. */
+	OUTPUT_STATUS_CONFIGURED,
+
+	/* Layershell surface has been configured. */
+	OUTPUT_STATUS_SURFACE_CONFIGURED,
+
+	/* Output has xdg_output, but no layershell surface and is not in use. */
+	OUTPUT_STATUS_UNUSED
+};
+
 struct Lava_output
 {
 	struct wl_list    link;
@@ -38,13 +55,7 @@ struct Lava_output
 	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;
 
-	/* Is this output configured? */
-	bool configured;
-
-	/* Has the surface been configured? This is needed to prevent trying to
-	 * render an unconfigured surface.
-	 */
-	bool surface_configured;
+	enum Lava_output_status status;
 
 	struct Lava_buffer  buffers[2];
 	struct Lava_buffer *current_buffer;

@@ -193,24 +193,34 @@ bool configure_output (struct Lava_data *data, struct Lava_output *output)
 
 	if ( output->w == 0 || output->h == 0 )
 	{
-		fprintf(stderr, "ERROR: Nonsensical output: global_name=%d\n",
+		fprintf(stderr, "WARNING: Nonsensical output: global_name=%d\n"
+				"         This output has a width and/or height of 0.\n"
+				"         This is very likely a bug in your compositor.\n"
+				"         LavaLauncher will ignore this output.\n",
 				output->global_name);
-		return false;
+		goto unused;
 	}
 
 	/* If either the name of output equals only_output or if no only_output
 	 * has been given, create a surface for this new output.
 	 */
 	if ( data->only_output == NULL || ! strcmp(output->name, data->only_output) )
+	{
+		output->status = OUTPUT_STATUS_CONFIGURED;
 		if (! create_bar(data, output))
 		{
 			data->loop = false;
 			data->ret  = EXIT_FAILURE;
 			return false;
 		}
+		return true;
+	}
 
-	output->configured = true;
-
+unused:
+	if (data->verbose)
+		fprintf(stderr, "Output will not be used: global_name=%d\n",
+				output->global_name);
+	output->status = OUTPUT_STATUS_UNUSED;
 	return true;
 }
 
@@ -231,11 +241,10 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 		return false;
 	}
 
-	output->data               = data;
-	output->global_name        = name;
-	output->wl_output          = wl_output;
-	output->configured         = false;
-	output->surface_configured = false;
+	output->data        = data;
+	output->global_name = name;
+	output->wl_output   = wl_output;
+	output->status      = OUTPUT_STATUS_UNCONFIGURED;
 
 	wl_list_insert(&data->outputs, &output->link);
 	wl_output_set_user_data(wl_output, output);

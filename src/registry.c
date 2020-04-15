@@ -184,7 +184,7 @@ bool init_wayland (struct Lava_data *data)
 	 */
 	struct Lava_output *op_1, *op_2;
 	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
-		if (! op_1->configured )
+		if ( op_1->status == OUTPUT_STATUS_UNCONFIGURED )
 			if (! configure_output(data, op_1))
 				return false;
 

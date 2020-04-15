@@ -70,6 +70,12 @@ header of the files for more information.
 ## TODO
 
 * Include a simple clock widget (with a simple built-in numbers-only font).
+* Execute commands when swiping over the bar. One command for each direction,
+  up, right, bottom and left. These could be set with a single command for all
+  four side. These would to be implemented for the entire bar, as individual
+  buttons are to small. This feature is of special interest for phone/tablet
+  like devices, where users could use it to open an android like application
+  drawer by swiping up on the bar.
 * Test touch support.
 * Add support for other input methods, like drawing tablets
 * Speed up drawing, either by using something other than cairo for the icons or

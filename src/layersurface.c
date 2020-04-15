@@ -84,7 +84,7 @@ static uint32_t get_anchor (struct Lava_data *data)
  */
 void configure_surface (struct Lava_data *data, struct Lava_output *output)
 {
-	if (! output->configured)
+	if (! output->surface_configured)
 		return;
 
 	uint32_t width, height;
@@ -160,7 +160,7 @@ static void layer_surface_handle_configure (void *raw_data,
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	struct Lava_data   *data   = output->data;
-	output->configured         = true;
+	output->surface_configured = true;
 
 	if (data->verbose)
 		fprintf(stderr, "Layer surface configure request:"

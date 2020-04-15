@@ -163,37 +163,25 @@ static const struct zxdg_output_v1_listener xdg_output_listener = {
 	.done             = noop
 };
 
-bool create_output (struct Lava_data *data, struct wl_registry *registry,
-		uint32_t name, const char *interface, uint32_t version)
+bool configure_output (struct Lava_data *data, struct Lava_output *output)
 {
 	if (data->verbose)
-		fputs("Adding output.\n", stderr);
+		fprintf(stderr, "Configuring output: global_name=%d\n",
+				output->global_name);
 
-	struct wl_output *wl_output = wl_registry_bind(registry, name,
-			&wl_output_interface, 3);
-	struct Lava_output *output = calloc(1, sizeof(struct Lava_output));
-	if ( output == NULL )
+	/* Create xdg_output and attach listeners. */
+	output->xdg_output = zxdg_output_manager_v1_get_xdg_output(
+			data->xdg_output_manager, output->wl_output);
+	if ( output->xdg_output == NULL )
 	{
-		fputs("ERROR: Could not allocate.\n", stderr);
+		fputs("ERROR: Could not get XDG output.\n", stderr);
 		return false;
 	}
+	zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener,
+			output);
 
-	output->data        = data;
-	output->global_name = name;
-	output->wl_output   = wl_output;
-	output->xdg_output  = zxdg_output_manager_v1_get_xdg_output(
-			data->xdg_output_manager, output->wl_output);
-	output->configured  = false;
-
-	wl_list_insert(&data->outputs, &output->link);
-	wl_output_set_user_data(wl_output, output);
-	wl_output_add_listener(wl_output, &output_listener, output);
-	zxdg_output_v1_add_listener(output->xdg_output,
-			&xdg_output_listener, output);
-
-	/* Roundtrip to allow the output handlers to "catch up", as
-	 * the outputs dimensions as well as name are needed for
-	 * creating the bar.
+	/* Roundtrip to allow the output handlers to "catch up", as the outputs
+	 * dimensions as well as name are needed for creating the bar.
 	 */
 	if ( wl_display_roundtrip(data->display) == -1 )
 	{
@@ -201,21 +189,63 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 		return false;
 	}
 
-	assert(output->name);
-	if ( data->layer_shell == NULL )
-		return true;
+	if ( output->w == 0 || output->h == 0 )
+	{
+		fprintf(stderr, "ERROR: Nonsensical output: global_name=%d\n",
+				output->global_name);
+		return false;
+	}
 
-	/* If either the name of output equals only_output or if no
-	 * only_output has been given, create a surface for this new
-	 * output.
+	/* If either the name of output equals only_output or if no only_output
+	 * has been given, create a surface for this new output.
 	 */
-	if ( data->only_output == NULL
-			|| ! strcmp(output->name, data->only_output) )
+	if ( data->only_output == NULL || ! strcmp(output->name, data->only_output) )
 		if (! create_bar(data, output))
 		{
 			data->loop = false;
 			data->ret  = EXIT_FAILURE;
+			return false;
 		}
+
+	output->configured = true;
+
+	return true;
+}
+
+bool create_output (struct Lava_data *data, struct wl_registry *registry,
+		uint32_t name, const char *interface, uint32_t version)
+{
+	if (data->verbose)
+		fprintf(stderr, "Adding output: global_name=%d\n", name);
+
+	struct wl_output *wl_output = wl_registry_bind(registry, name,
+			&wl_output_interface, 3);
+	assert(wl_output);
+
+	struct Lava_output *output = calloc(1, sizeof(struct Lava_output));
+	if ( output == NULL )
+	{
+		fputs("ERROR: Could not allocate.\n", stderr);
+		return false;
+	}
+
+	output->data               = data;
+	output->global_name        = name;
+	output->wl_output          = wl_output;
+	output->configured         = false;
+	output->surface_configured = false;
+
+	wl_list_insert(&data->outputs, &output->link);
+	wl_output_set_user_data(wl_output, output);
+	wl_output_add_listener(wl_output, &output_listener, output);
+
+	/* We can only use the output if we have both xdg_output_manager and
+	 * the layer_shell. If either one is not available yet, we have to
+	 * configure the output later (see init_wayland()).
+	 */
+	if ( data->xdg_output_manager != NULL && data->layer_shell != NULL )
+		if (! configure_output (data, output))
+			return false;
 
 	return true;
 }

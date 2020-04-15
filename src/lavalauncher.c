@@ -69,7 +69,7 @@ static void main_loop (struct Lava_data *data)
 		.events = POLLIN
 	};
 
-	for (data->loop = true; data->loop;)
+	while (data->loop)
 	{
 		errno = 0;
 
@@ -239,6 +239,7 @@ int main (int argc, char *argv[])
 {
 	struct Lava_data data = {0};
 	data.ret              = EXIT_SUCCESS;
+	data.loop             = true;
 	wl_list_init(&(data.buttons));
 
 	/* Sensible configuration defaults. */

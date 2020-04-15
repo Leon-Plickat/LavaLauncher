@@ -201,6 +201,7 @@ bool configure_output (struct Lava_data *data, struct Lava_output *output)
 		goto unused;
 	}
 
+
 	/* If either the name of output equals only_output or if no only_output
 	 * has been given, create a surface for this new output.
 	 */
@@ -243,6 +244,7 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 
 	output->data        = data;
 	output->global_name = name;
+	output->scale       = 1;
 	output->wl_output   = wl_output;
 	output->status      = OUTPUT_STATUS_UNCONFIGURED;
 

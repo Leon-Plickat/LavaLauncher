@@ -84,8 +84,18 @@ static uint32_t get_anchor (struct Lava_data *data)
  */
 void configure_surface (struct Lava_data *data, struct Lava_output *output)
 {
-	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED )
+	/* It is possible that this function is called by output events before
+	 * the surface has been created. This function will return and abort
+	 * unless it is called either when a surface configure event has been
+	 * received at least once, it is called by a surface configure event or
+	 * it is called during the creation of the surface.
+	 */
+	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED
+			&& output->status != OUTPUT_STATUS_CONFIGURED )
 		return;
+
+	if (data->verbose)
+		fputs("Configuring bar.\n", stderr);
 
 	uint32_t width, height;
 	if ( data->mode == MODE_SIMPLE )

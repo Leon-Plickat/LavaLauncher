@@ -105,8 +105,8 @@ static void update_bar_offset (struct Lava_data *data, struct Lava_output *outpu
 		output->bar_y_offset += data->margin_top - data->margin_bottom;
 
 	if (data->verbose)
-		fprintf(stderr, "Aligning bar: x-offset=%d y-offset=%d\n",
-				output->bar_x_offset, output->bar_y_offset);
+		fprintf(stderr, "Aligning bar: global_name=%d x-offset=%d y-offset=%d\n",
+				output->global_name, output->bar_x_offset, output->bar_y_offset);
 }
 
 static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
@@ -116,7 +116,8 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 	output->scale              = factor;
 
 	if (output->data->verbose)
-		fprintf(stderr, "Output update scale: s=%d\n", output->scale);
+		fprintf(stderr, "Output update scale: global_name=%d scale=%d\n",
+				output->global_name, output->scale);
 
 	configure_surface(output->data, output);
 	update_bar_offset(output->data, output);
@@ -137,7 +138,8 @@ static void xdg_output_handle_name (void *raw_data,
 	output->name               = strdup(name);
 
 	if (output->data->verbose)
-		fprintf(stderr, "XDG-Output update name: name=%s\n", name);
+		fprintf(stderr, "XDG-Output update name: global_name=%d name=%s\n",
+				output->global_name, name);
 }
 
 static void xdg_output_handle_logical_size (void *raw_data,
@@ -148,8 +150,8 @@ static void xdg_output_handle_logical_size (void *raw_data,
 	output->h                  = h;
 
 	if (output->data->verbose)
-		fprintf(stderr, "XDG-Output update logical size: w=%d h=%d\n",
-				w, h);
+		fprintf(stderr, "XDG-Output update logical size: global_name=%d "
+				"w=%d h=%d\n", output->global_name, w, h);
 
 	update_bar_offset(output->data, output);
 	render_bar_frame(output->data, output);
@@ -244,8 +246,12 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	 * configure the output later (see init_wayland()).
 	 */
 	if ( data->xdg_output_manager != NULL && data->layer_shell != NULL )
+	{
 		if (! configure_output (data, output))
 			return false;
+	}
+	else if (data->verbose)
+		fputs("Output not yet configureable.\n", stderr);
 
 	return true;
 }

@@ -32,6 +32,9 @@
 void attach_cursor_surface (struct Lava_data *data, struct wl_pointer *wl_pointer,
 		uint32_t serial)
 {
+	if ( data->cursor.surface == NULL )
+		return;
+
 	if (data->verbose)
 		fputs("Attaching cursor surface.\n", stderr);
 
@@ -62,11 +65,18 @@ bool init_cursor (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Getting cursor.\n", stderr);
 	struct wl_cursor *cursor = wl_cursor_theme_get_cursor(data->cursor.theme,
-			"pointing_hand"); // TODO: Make configurable, '-p' flag
+			data->cursor.name);
 	if ( cursor == NULL )
 	{
-		fputs("ERROR: Could not get cursor.\n", stderr);
-		return false;
+		fprintf(stderr, "WARNING: Could not get cursor \"%s\".\n"
+				"         This cursor is likely missing from your cursor theme.\n"
+				"         Changing the cursor is disabled.\n",
+				data->cursor.name);
+		finish_cursor(data);
+		data->cursor.theme   = NULL;
+		data->cursor.image   = NULL;
+		data->cursor.surface = NULL;
+		return true;
 	}
 
 	if (data->verbose)

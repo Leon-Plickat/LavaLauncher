@@ -53,6 +53,8 @@ void sensible_defaults (struct Lava_data *data)
 	data->only_output       = NULL;
 	data->exclusive_zone    = 1;
 
+	data->cursor.name       = "pointing_hand";
+
 	data->bar_colour_hex    = "#000000FF";
 	data->bar_colour[0]     = 0.0f;
 	data->bar_colour[1]     = 0.0f;
@@ -247,4 +249,9 @@ void config_set_only_output (struct Lava_data *data, const char *arg)
 		data->only_output = NULL;
 	else
 		data->only_output = strdup(arg);
+}
+
+void config_set_cursor_name (struct Lava_data *data, const char *arg)
+{
+		data->cursor.name = strdup(arg);
 }

@@ -54,6 +54,7 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "  -M <top> <right> <bottom> <left>  Directional margins of the bar / icons.\n"
                             "  -o <name>                         Name of exclusive output.\n"
                             "  -p <position>                     Position of the bar.\n"
+                            "  -P <cursor>                       Name of the cursor when hovering over the bar.\n"
                             "  -s <size>                         Icon size.\n"
                             "  -S <size>                         All border sizes.\n"
                             "  -S <top> <right> <bottom> <left>  Individual border sizes.\n"
@@ -157,7 +158,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 	int arguments;
 	extern int optind;
 	extern char *optarg;
-	for (int c; (c = getopt(argc, argv, "a:b:c:C:e:hl:m:M:o:p:s:S:v")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "a:b:c:C:e:hl:m:M:o:p:P:s:S:v")) != -1 ;)
 	{
 		switch (c)
 		{
@@ -196,6 +197,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 
 			case 'o': config_set_only_output(data, optarg);   break;
 			case 'p': config_set_position(data, optarg);      break;
+			case 'P': config_set_cursor_name(data, optarg);   break;
 			case 's': config_set_icon_size(data, optarg);     break;
 
 			case 'S':
@@ -265,6 +267,8 @@ int main (int argc, char *argv[])
 
 	if ( data.only_output != NULL )
 		free(data.only_output);
+	if ( data.cursor.name != NULL )
+		free(data.cursor.name);
 
 	destroy_buttons(&data);
 	finish_cursor(&data);

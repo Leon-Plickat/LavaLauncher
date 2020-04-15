@@ -34,5 +34,6 @@ void config_set_border_size (struct Lava_data *data, int top, int right, int bot
 void config_set_bar_colour (struct Lava_data *data, const char *arg);
 void config_set_border_colour (struct Lava_data *data, const char *arg);
 void config_set_only_output (struct Lava_data *data, const char *arg);
+void config_set_cursor_name (struct Lava_data *data, const char *arg);
 
 #endif

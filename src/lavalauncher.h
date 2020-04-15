@@ -123,6 +123,7 @@ struct Lava_data
 
 	/* Everything that is needed for changing the cursor. */
 	struct {
+		char                   *name;
 		struct wl_cursor_theme *theme;
 		struct wl_cursor_image *image;
 		struct wl_surface      *surface;

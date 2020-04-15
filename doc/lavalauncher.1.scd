@@ -112,6 +112,15 @@ events to them.
 	Can be 'top', 'right', 'bottom', 'left'. The bar will dock to that edge
 	of the output(s). The default position is 'bottom'.
 
+*-P <cursor>*
+	Name of the cursor displayed when hovering over the bar.
+
+	The default cursor is 'pointing_hand'. Behold: What cursors are
+	available depends on the cursor theme.
+
+	If the cursor of the given name can not be loaded, LavaLauncher will
+	display a warning and disable changing the cursor.
+
 *-s <size>*
 	Size of the icons in pixel.
 

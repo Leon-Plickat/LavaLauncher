@@ -32,7 +32,7 @@ enum Lava_output_status
 	/* Output has xdg_output and layershell surface. */
 	OUTPUT_STATUS_CONFIGURED,
 
-	/* Layershell surface has been configured. */
+	/* Outputs layershell surface has received a configure event at least once. */
 	OUTPUT_STATUS_SURFACE_CONFIGURED,
 
 	/* Output has xdg_output, but no layershell surface and is not in use. */

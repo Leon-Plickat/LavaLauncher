@@ -1,4 +1,4 @@
-lavalauncher(1) ["Version 1.6" ["Version 1.6"]]
+lavalauncher(1) ["Version 1.7.0" ["Version 1.7.0"]]
 
 # NAME
 

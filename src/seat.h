@@ -49,5 +49,6 @@ struct Lava_seat
 };
 
 bool create_seat (struct Lava_data *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version);
+void destroy_all_seats (struct Lava_data *data);
 
 #endif

@@ -267,3 +267,33 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	return true;
 }
 
+struct Lava_output *get_output_from_global_name (struct Lava_data *data, uint32_t name)
+{
+	struct Lava_output *op_1, *op_2;
+	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
+		if ( op_1->global_name == name )
+			return op_1;
+	return NULL;
+}
+
+void destroy_output (struct Lava_output *output)
+{
+	if ( output == NULL )
+		return;
+
+	wl_list_remove(&output->link);
+	wl_output_destroy(output->wl_output);
+	if ( output->layer_surface != NULL )
+		zwlr_layer_surface_v1_destroy(output->layer_surface);
+	if ( output->wl_surface != NULL )
+		wl_surface_destroy(output->wl_surface);
+	free(output->name);
+	free(output);
+}
+
+void destroy_all_outputs (struct Lava_data *data)
+{
+	struct Lava_output *op_1, *op_2;
+	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
+		destroy_output(op_1);
+}

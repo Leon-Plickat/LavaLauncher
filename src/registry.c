@@ -92,27 +92,12 @@ error:
 static void registry_handle_global_remove (void *raw_data,
 		struct wl_registry *registry, uint32_t name)
 {
-	struct Lava_data   *data = (struct Lava_data *)raw_data;
-	struct Lava_output *op1, *op2;
+	struct Lava_data *data = (struct Lava_data *)raw_data;
 
 	if (data->verbose)
 		fputs("Global remove.\n", stderr);
 
-	wl_list_for_each_safe(op1, op2, &data->outputs, link)
-	{
-		if ( op1->global_name == name )
-		{
-			wl_list_remove(&op1->link);
-			wl_output_destroy(op1->wl_output);
-			if ( op1->layer_surface != NULL )
-				zwlr_layer_surface_v1_destroy(op1->layer_surface);
-			if ( op1->wl_surface != NULL )
-				wl_surface_destroy(op1->wl_surface);
-			free(op1->name);
-			free(op1);
-			break;
-		}
-	}
+	destroy_output(get_output_from_global_name(data, name));
 }
 
 static const struct wl_registry_listener registry_listener = {
@@ -196,31 +181,11 @@ void finish_wayland (struct Lava_data *data)
 {
 	if (data->verbose)
 		fputs("Finish Wayland.\nDestroying outputs.\n", stderr);
-
-	struct Lava_output *op_1, *op_2;
-	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
-	{
-		wl_list_remove(&op_1->link);
-		wl_output_destroy(op_1->wl_output);
-		if ( op_1->layer_surface != NULL )
-			zwlr_layer_surface_v1_destroy(op_1->layer_surface);
-		if ( op_1->wl_surface != NULL )
-			wl_surface_destroy(op_1->wl_surface);
-		free(op_1->name);
-		free(op_1);
-	}
+	destroy_all_outputs(data);
 
 	if (data->verbose)
 		fputs("Destroying seats.\n", stderr);
-	struct Lava_seat *st_1, *st_2;
-	wl_list_for_each_safe(st_1, st_2, &data->seats, link)
-	{
-		wl_list_remove(&st_1->link);
-		wl_seat_release(st_1->wl_seat);
-		if (st_1->pointer.wl_pointer)
-			wl_pointer_release(st_1->pointer.wl_pointer);
-		free(st_1);
-	}
+	destroy_all_seats(data);
 
 	if (data->verbose)
 		fputs("Destroying Wayland objects.\n", stderr);

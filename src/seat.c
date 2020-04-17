@@ -101,3 +101,19 @@ bool create_seat (struct Lava_data *data, struct wl_registry *registry,
 
 	return true;
 }
+
+static void destroy_seat (struct Lava_seat *seat)
+{
+	wl_list_remove(&seat->link);
+	wl_seat_release(seat->wl_seat);
+	if (seat->pointer.wl_pointer)
+		wl_pointer_release(seat->pointer.wl_pointer);
+	free(seat);
+}
+
+void destroy_all_seats (struct Lava_data *data)
+{
+	struct Lava_seat *st_1, *st_2;
+	wl_list_for_each_safe(st_1, st_2, &data->seats, link)
+		destroy_seat(st_1);
+}

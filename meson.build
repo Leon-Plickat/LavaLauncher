@@ -1,7 +1,7 @@
 project(
   'lavalauncher',
   'c',
-  version: '1.6',
+  version: '1.7.0',
   license: 'GPLv3',
   default_options: [
     'c_std=c11',

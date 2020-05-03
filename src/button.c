@@ -152,8 +152,10 @@ void destroy_buttons (struct Lava_data *data)
 	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
 	{
 		wl_list_remove(&bt_1->link);
-		cairo_surface_destroy(bt_1->img);
-		free(bt_1->cmd);
+		if ( bt_1->img != NULL )
+			cairo_surface_destroy(bt_1->img);
+		if ( bt_1->cmd != NULL )
+			free(bt_1->cmd);
 		free(bt_1);
 	}
 }

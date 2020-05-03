@@ -48,17 +48,18 @@ static void draw_single_icon (cairo_t *cairo, int32_t x, int32_t y,
 	cairo_restore(cairo);
 }
 
-static void draw_icons (cairo_t *cairo, int32_t x, int32_t y, int32_t icon_size,
-		float scale, enum Bar_orientation orientation, struct wl_list *button_list)
+static void draw_icons (cairo_t *cairo, int32_t x_offset, int32_t y_offset,
+		int32_t icon_size, float scale, enum Bar_orientation orientation,
+		struct wl_list *button_list)
 {
-	x *= scale, y *= scale, icon_size *= scale;
-	int *iterator = orientation == ORIENTATION_HORIZONTAL ? &x : &y;
+	x_offset *= scale, y_offset *= scale, icon_size *= scale;
 	struct Lava_button *bt_1, *bt_2;
-	wl_list_for_each_reverse_safe(bt_1, bt_2, button_list, link)
-	{
-		draw_single_icon(cairo, x, y, icon_size, bt_1->img);
-		*iterator += icon_size;
-	}
+	if ( orientation == ORIENTATION_HORIZONTAL )
+		wl_list_for_each_reverse_safe(bt_1, bt_2, button_list, link)
+			draw_single_icon(cairo, bt_1->ordinate + x_offset, y_offset, icon_size, bt_1->img);
+	else
+		wl_list_for_each_reverse_safe(bt_1, bt_2, button_list, link)
+			draw_single_icon(cairo, x_offset, bt_1->ordinate + y_offset, icon_size, bt_1->img);
 }
 
 /* Draw the bar background plus border. */

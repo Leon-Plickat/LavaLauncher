@@ -118,7 +118,7 @@ static void calculate_dimensions (struct Lava_data *data)
 			data->orientation = ORIENTATION_VERTICAL;
 			data->w = (uint32_t)(data->icon_size + data->border_right
 					+ data->border_left);
-			data->h = (uint32_t)((data->button_amount * data->icon_size)
+			data->h = (uint32_t)(get_button_length_sum(data)
 					+ data->border_top + data->border_bottom);
 			if ( data->exclusive_zone == 1 )
 				data->exclusive_zone = data->w;
@@ -127,7 +127,7 @@ static void calculate_dimensions (struct Lava_data *data)
 		case POSITION_TOP:
 		case POSITION_BOTTOM:
 			data->orientation = ORIENTATION_HORIZONTAL;
-			data->w = (uint32_t)((data->button_amount * data->icon_size)
+			data->w = (uint32_t)(get_button_length_sum(data)
 					+ data->border_left + data->border_right);
 			data->h = (uint32_t)(data->icon_size + data->border_top
 					+ data->border_bottom);

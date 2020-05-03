@@ -47,7 +47,7 @@ struct Lava_button *button_from_coords (struct Lava_data *data,
 	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
 	{
 		if ( ordinate >= bt_1->ordinate
-				&& ordinate < bt_1->ordinate + data->icon_size )
+				&& ordinate < bt_1->ordinate + bt_1->length )
 			return bt_1;
 	}
 	return NULL;
@@ -64,8 +64,12 @@ bool add_button (struct Lava_data *data, char *path, char *cmd)
 		return false;
 	}
 
-	new_button->cmd = strdup(cmd);
-	new_button->img = cairo_image_surface_create_from_png(path);
+	/* We do not know the icon size yet. init_buttons() will overwrite a
+	 * length of 0 with the icon size.
+	 */
+	new_button->length = 0;
+	new_button->cmd    = strdup(cmd);
+	new_button->img    = cairo_image_surface_create_from_png(path);
 	if ( errno != 0 )
 	{
 		fprintf(stderr, "ERROR: Failed loading image: %s\n"
@@ -76,6 +80,15 @@ bool add_button (struct Lava_data *data, char *path, char *cmd)
 
 	wl_list_insert(&data->buttons, &new_button->link);
 	return true;
+}
+
+unsigned int get_button_length_sum (struct Lava_data *data)
+{
+	unsigned int sum = 0;
+	struct Lava_button *bt_1, *bt_2;
+	wl_list_for_each_reverse_safe (bt_1, bt_2, &data->buttons, link)
+		sum += bt_1->length;
+	return sum;
 }
 
 bool init_buttons (struct Lava_data *data)
@@ -91,11 +104,14 @@ bool init_buttons (struct Lava_data *data)
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe (bt_1, bt_2, &data->buttons, link)
 	{
+		if ( bt_1->length == 0 )
+			bt_1->length = data->icon_size;
+
 		bt_1->index    = index;
 		bt_1->ordinate = ordinate;
 
 		index++;
-		ordinate += data->icon_size;
+		ordinate += bt_1->length;
 	}
 
 	return true;

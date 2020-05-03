@@ -28,11 +28,12 @@ struct Lava_button
 	struct wl_list   link;
 	cairo_surface_t *img;
 	char            *cmd;
-	unsigned int     index, ordinate;
+	unsigned int     index, ordinate, length;
 };
 
 struct Lava_button *button_from_coords (struct Lava_data *data, struct Lava_output *output, int32_t x, int32_t y);
 bool add_button (struct Lava_data *data, char *path, char *cmd);
+unsigned int get_button_length_sum (struct Lava_data *data);
 bool init_buttons (struct Lava_data *data);
 void destroy_buttons (struct Lava_data *data);
 

@@ -82,6 +82,29 @@ bool add_button (struct Lava_data *data, char *path, char *cmd)
 	return true;
 }
 
+bool add_spacer (struct Lava_data *data, int length)
+{
+	if ( length <= 0 )
+	{
+		fputs("ERROR: Spacer size must be above 0.", stderr);
+		return false;
+	}
+
+	struct Lava_button *new_spacer = calloc(1, sizeof(struct Lava_button));
+	if ( new_spacer == NULL )
+	{
+		fprintf(stderr, "ERROR: Could not allocate.\n");
+		return false;
+	}
+
+	new_spacer->length = length;
+	new_spacer->cmd    = NULL;
+	new_spacer->img    = NULL;
+
+	wl_list_insert(&data->buttons, &new_spacer->link);
+	return true;
+}
+
 unsigned int get_button_length_sum (struct Lava_data *data)
 {
 	unsigned int sum = 0;

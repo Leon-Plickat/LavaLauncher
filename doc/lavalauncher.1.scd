@@ -53,6 +53,11 @@ events to them.
 
 	The default border colour is 'white'
 
+*-d <size>*
+	Add a spacer between buttons.
+
+	The size of the spacer is in pixels.
+
 *-e <mode>*
 	Exclusive zone of the surface.
 

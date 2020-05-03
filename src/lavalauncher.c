@@ -47,6 +47,7 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "  -b <path> <command>               Add a button.\n"
                             "  -c <colour>                       Background colour.\n"
                             "  -C <colour>                       Border colour.\n"
+                            "  -d <size>                         Add a spacer.\n"
                             "  -e <mode>                         Exclusive zone.\n"
                             "  -h                                Display help text and exit.\n"
                             "  -l <layer>                        Layer of surface.\n"
@@ -158,7 +159,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 	int arguments;
 	extern int optind;
 	extern char *optarg;
-	for (int c; (c = getopt(argc, argv, "a:b:c:C:e:hl:m:M:o:p:P:s:S:v")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "a:b:c:C:d:e:hl:m:M:o:p:P:s:S:v")) != -1 ;)
 	{
 		switch (c)
 		{
@@ -177,6 +178,12 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 
 			case 'c': config_set_bar_colour(data, optarg);    break;
 			case 'C': config_set_border_colour(data, optarg); break;
+
+			case 'd':
+				if (! add_spacer(data, atoi(optarg)))
+					data->ret = EXIT_FAILURE;
+				break;
+
 			case 'e': config_set_exclusive(data, optarg);     break;
 			case 'h': fputs(usage, stderr);                   return EXIT_SUCCESS;
 			case 'l': config_set_layer(data, optarg);         break;
@@ -192,7 +199,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 				config_set_margin(data,
 						atoi(argv[optind-1]), atoi(argv[optind]),
 						atoi(argv[optind+1]), atoi(argv[optind+2]));
-				optind += 3; /* Tell getopt() to skip one argv field. */
+				optind += 3; /* Tell getopt() to skip three argv field. */
 				break;
 
 			case 'o': config_set_only_output(data, optarg);   break;

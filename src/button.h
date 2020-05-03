@@ -33,6 +33,7 @@ struct Lava_button
 
 struct Lava_button *button_from_coords (struct Lava_data *data, struct Lava_output *output, int32_t x, int32_t y);
 bool add_button (struct Lava_data *data, char *path, char *cmd);
+bool add_spacer (struct Lava_data *data, int length);
 unsigned int get_button_length_sum (struct Lava_data *data);
 bool init_buttons (struct Lava_data *data);
 void destroy_buttons (struct Lava_data *data);

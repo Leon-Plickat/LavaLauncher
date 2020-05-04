@@ -23,12 +23,19 @@
 struct Lava_data;
 struct Lava_output;
 
+enum Button_type
+{
+	TYPE_BUTTON,
+	TYPE_SPACER
+};
+
 struct Lava_button
 {
-	struct wl_list   link;
-	cairo_surface_t *img;
-	char            *cmd;
-	unsigned int     index, ordinate, length;
+	struct wl_list    link;
+	enum Button_type  type;
+	cairo_surface_t  *img;
+	char             *cmd;
+	unsigned int      index, ordinate, length;
 };
 
 struct Lava_button *button_from_coords (struct Lava_data *data, struct Lava_output *output, int32_t x, int32_t y);

@@ -64,10 +64,9 @@ bool add_button (struct Lava_data *data, char *path, char *cmd)
 		return false;
 	}
 
-	/* We do not know the icon size yet. init_buttons() will overwrite a
-	 * length of 0 with the icon size.
-	 */
+	/* We do not know the icon size yet. */
 	new_button->length = 0;
+	new_button->type   = TYPE_BUTTON;
 	new_button->cmd    = strdup(cmd);
 	new_button->img    = cairo_image_surface_create_from_png(path);
 	if ( errno != 0 )
@@ -98,6 +97,7 @@ bool add_spacer (struct Lava_data *data, int length)
 	}
 
 	new_spacer->length = length;
+	new_spacer->type   = TYPE_SPACER;
 	new_spacer->cmd    = NULL;
 	new_spacer->img    = NULL;
 
@@ -127,7 +127,7 @@ bool init_buttons (struct Lava_data *data)
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe (bt_1, bt_2, &data->buttons, link)
 	{
-		if ( bt_1->length == 0 )
+		if ( bt_1->type == TYPE_BUTTON )
 			bt_1->length = data->icon_size;
 
 		bt_1->index    = index;

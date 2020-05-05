@@ -96,7 +96,7 @@ static bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, fl
 	return true;
 }
 
-void config_set_position (struct Lava_data *data, const char *arg)
+bool config_set_position (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "top"))
 		data->position = POSITION_TOP;
@@ -110,11 +110,13 @@ void config_set_position (struct Lava_data *data, const char *arg)
 	{
 		fputs("ERROR: Possible positions are 'top', 'right',"
 				" 'bottom' and 'left'.\n", stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
+
+	return true;
 }
 
-void config_set_layer (struct Lava_data *data, const char *arg)
+bool config_set_layer (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "overlay"))
 		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
@@ -128,11 +130,13 @@ void config_set_layer (struct Lava_data *data, const char *arg)
 	{
 		fputs("ERROR: Possible layers are 'overlay', 'top',"
 				"'bottom' and 'background'.\n", stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
+
+	return true;
 }
 
-void config_set_mode (struct Lava_data *data, const char *arg)
+bool config_set_mode (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "default"))
 		data->mode = MODE_DEFAULT;
@@ -143,11 +147,13 @@ void config_set_mode (struct Lava_data *data, const char *arg)
 	else
 	{
 		fputs("ERROR: Possible modes are 'default', 'full' and 'simple'.\n", stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
+
+	return true;
 }
 
-void config_set_alignment (struct Lava_data *data, const char *arg)
+bool config_set_alignment (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "start"))
 		data->alignment = ALIGNMENT_START;
@@ -159,11 +165,13 @@ void config_set_alignment (struct Lava_data *data, const char *arg)
 	{
 		fputs("ERROR: Possible alignments are 'start', 'center',"
 				" and 'end'.\n", stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
+
+	return true;
 }
 
-void config_set_exclusive (struct Lava_data *data, const char *arg)
+bool config_set_exclusive (struct Lava_data *data, const char *arg)
 {
 	if (! strcmp(arg, "true"))
 		data->exclusive_zone = 1;
@@ -175,11 +183,13 @@ void config_set_exclusive (struct Lava_data *data, const char *arg)
 	{
 		fputs("ERROR: Exclusive zone can be 'true', 'false' or 'stationary'.\n",
 				stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
+
+	return true;
 }
 
-void config_set_margin (struct Lava_data *data, int top, int right, int bottom, int left)
+bool config_set_margin (struct Lava_data *data, int top, int right, int bottom, int left)
 {
 	data->margin_top    = top;
 	data->margin_right  = right;
@@ -189,21 +199,25 @@ void config_set_margin (struct Lava_data *data, int top, int right, int bottom, 
 	{
 		fputs("ERROR: Margins must be equal to or greater than zero.\n",
 				stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
+
+	return true;
 }
 
-void config_set_icon_size (struct Lava_data *data, const char *arg)
+bool config_set_icon_size (struct Lava_data *data, const char *arg)
 {
 	data->icon_size = atoi(arg);
 	if ( data->icon_size <= 0 )
 	{
 		fputs("ERROR: Icon size must be greater than zero.\n", stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
+
+	return true;
 }
 
-void config_set_border_size (struct Lava_data *data, int top, int right,
+bool config_set_border_size (struct Lava_data *data, int top, int right,
 		int bottom, int left)
 {
 	data->border_top    = top;
@@ -214,11 +228,13 @@ void config_set_border_size (struct Lava_data *data, int top, int right,
 	{
 		fputs("ERROR: Border size must be equal to or greater than zero.\n",
 				stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
+
+	return true;
 }
 
-void config_set_bar_colour (struct Lava_data *data, const char *arg)
+bool config_set_bar_colour (struct Lava_data *data, const char *arg)
 {
 	if ( arg == NULL || *arg == '\0' || *arg == ' '
 			|| ! hex_to_rgba(arg, &(data->bar_colour[0]),
@@ -226,32 +242,37 @@ void config_set_bar_colour (struct Lava_data *data, const char *arg)
 				&(data->bar_colour[3])))
 	{
 		fputs("ERROR: Bad colour configuration.\n", stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
 	data->bar_colour_hex = (char *)arg;
+	return true;
 }
 
-void config_set_border_colour (struct Lava_data *data, const char *arg)
+bool config_set_border_colour (struct Lava_data *data, const char *arg)
 {
 	if ( arg == NULL || *arg == '\0' || *arg == ' ' || !  hex_to_rgba(arg,
 				&(data->border_colour[0]), &(data->border_colour[1]),
 				&(data->border_colour[2]), &(data->border_colour[3])))
 	{
 		fputs("Bad colour configuration.\n", stderr);
-		data->ret = EXIT_FAILURE;
+		return false;
 	}
 	data->border_colour_hex = (char *)arg;
+	return true;
 }
 
-void config_set_only_output (struct Lava_data *data, const char *arg)
+bool config_set_only_output (struct Lava_data *data, const char *arg)
 {
 	if ( ! strcmp(arg, "all") || *arg == '*' )
 		data->only_output = NULL;
 	else
 		data->only_output = strdup(arg);
+
+	return true;
 }
 
-void config_set_cursor_name (struct Lava_data *data, const char *arg)
+bool config_set_cursor_name (struct Lava_data *data, const char *arg)
 {
 		data->cursor.name = strdup(arg);
+		return true;
 }

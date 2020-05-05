@@ -157,65 +157,60 @@ static int count_arguments (int optind, int argc, char *argv[])
 static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data)
 {
 	int arguments;
+	bool success = true;
 	extern int optind;
 	extern char *optarg;
 	for (int c; (c = getopt(argc, argv, "a:b:c:C:d:e:hl:m:M:o:p:P:s:S:v")) != -1 ;)
 	{
 		switch (c)
 		{
-			case 'a': config_set_alignment(data, optarg); break;
+			case 'a': success = config_set_alignment(data, optarg); break;
 			case 'b':
 				if( count_arguments(optind, argc, argv) != 2 )
 				{
 					fputs("ERROR: '-b' expects 2 arguments.\n", stderr);
-					data->ret = EXIT_FAILURE;
+					success = false;
 					break;
 				}
-				if (! add_button(data, argv[optind-1], argv[optind]))
-					data->ret = EXIT_FAILURE;
+				success = add_button(data, argv[optind-1], argv[optind]);
 				optind++; /* Tell getopt() to skip one argv field. */
 				break;
 
-			case 'c': config_set_bar_colour(data, optarg);    break;
-			case 'C': config_set_border_colour(data, optarg); break;
-
-			case 'd':
-				if (! add_spacer(data, atoi(optarg)))
-					data->ret = EXIT_FAILURE;
-				break;
-
-			case 'e': config_set_exclusive(data, optarg);     break;
-			case 'h': fputs(usage, stderr);                   return EXIT_SUCCESS;
-			case 'l': config_set_layer(data, optarg);         break;
-			case 'm': config_set_mode(data, optarg);          break;
+			case 'c': success = config_set_bar_colour(data, optarg);    break;
+			case 'C': success = config_set_border_colour(data, optarg); break;
+			case 'd': success = add_spacer(data, atoi(optarg));         break;
+			case 'e': success = config_set_exclusive(data, optarg);     break;
+			case 'h': fputs(usage, stderr);                             return false;
+			case 'l': success = config_set_layer(data, optarg);         break;
+			case 'm': success = config_set_mode(data, optarg);          break;
 
 			case 'M':
 				if( count_arguments(optind, argc, argv) != 4 )
 				{
 					fputs("ERROR: '-M' expects 4 arguments.\n", stderr);
-					data->ret = EXIT_FAILURE;
+					success = false;
 					break;
 				}
-				config_set_margin(data,
+				success = config_set_margin(data,
 						atoi(argv[optind-1]), atoi(argv[optind]),
 						atoi(argv[optind+1]), atoi(argv[optind+2]));
 				optind += 3; /* Tell getopt() to skip three argv field. */
 				break;
 
-			case 'o': config_set_only_output(data, optarg);   break;
-			case 'p': config_set_position(data, optarg);      break;
-			case 'P': config_set_cursor_name(data, optarg);   break;
-			case 's': config_set_icon_size(data, optarg);     break;
+			case 'o': success = config_set_only_output(data, optarg); break;
+			case 'p': success = config_set_position(data, optarg);    break;
+			case 'P': success = config_set_cursor_name(data, optarg); break;
+			case 's': success = config_set_icon_size(data, optarg);   break;
 
 			case 'S':
 				arguments = count_arguments(optind, argc, argv);
 				if ( arguments == 1 )
-					config_set_border_size(data,
+					success = config_set_border_size(data,
 							atoi(optarg), atoi(optarg),
 							atoi(optarg), atoi(optarg));
 				else if ( arguments == 4 )
 				{
-					config_set_border_size(data,
+					success = config_set_border_size(data,
 							atoi(argv[optind-1]), atoi(argv[optind]),
 							atoi(argv[optind+1]), atoi(argv[optind+2]));
 					optind += 3; /* Tell getopt() to "skip" three argv fields. */
@@ -223,18 +218,18 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 				else
 				{
 					fputs("ERROR: '-S' expects 1 or 4 arguments.\n", stderr);
-					data->ret = EXIT_FAILURE;
+					success = false;
 				}
 				break;
 
-			case 'v': data->verbose = true;    break;
+			case 'v': data->verbose = true; break;
 
 			default:
 				return false;
 		}
 
 		/* Check for errors during configuration. */
-		if ( data->ret == EXIT_FAILURE )
+		if (! success)
 		{
 			destroy_buttons(data);
 			return false;

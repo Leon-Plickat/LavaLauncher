@@ -30,9 +30,44 @@
 #include"draw.h"
 #include"button.h"
 
-// TODO Draw icons once on startup to a cairo_surface (and at scale updates)
-// TODO Possibly draw icons to a subsurface so only the bar needs redrawing for animations
-// TODO Maybe use something faster than cairo for drawing the icons?
+static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
+		float colour[4], enum Draw_effect effect)
+{
+	if ( effect == EFFECT_NONE )
+		return;
+
+	cairo_save(cairo);
+
+	x += 0.08 * size, y += 0.08 * size, size = size * 0.84;
+	double radius, degrees;
+	switch (effect)
+	{
+		case EFFECT_BOX:
+			cairo_rectangle(cairo, x, y, size, size);
+			break;
+
+		case EFFECT_PHONE:
+			radius = size / 10.0;
+			degrees = 3.1415927 / 180.0;
+
+			cairo_new_sub_path(cairo);
+			cairo_arc(cairo, x + size - radius, y + radius, radius, -90 * degrees, 0 * degrees);
+			cairo_arc(cairo, x + size - radius, y + size - radius, radius, 0 * degrees, 90 * degrees);
+			cairo_arc(cairo, x + radius, y + size - radius, radius, 90 * degrees, 180 * degrees);
+			cairo_arc(cairo, x + radius, y + radius, radius, 180 * degrees, 270 * degrees);
+			cairo_close_path(cairo);
+			break;
+
+		default:
+			break;
+	}
+
+	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
+	cairo_set_source_rgba(cairo, colour[0], colour[1], colour[2], colour[3]);
+	cairo_fill(cairo);
+
+	cairo_restore(cairo);
+}
 
 static void draw_icon (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t icon_size, cairo_surface_t *img)
@@ -48,25 +83,25 @@ static void draw_icon (cairo_t *cairo, int32_t x, int32_t y,
 	cairo_restore(cairo);
 }
 
-static void draw_buttons (cairo_t *cairo, int32_t x_offset, int32_t y_offset,
-		int32_t icon_size, float scale, enum Bar_orientation orientation,
-		struct wl_list *button_list)
+static void draw_buttons (cairo_t *cairo, struct Lava_data *data,
+		int32_t x_offset, int32_t y_offset, float scale)
 {
-	x_offset *= scale, y_offset *= scale, icon_size *= scale;
-
+	x_offset *= scale, y_offset *= scale;
+	int32_t size = data->icon_size * scale;
 	int32_t x = x_offset, y = y_offset, *increment, *increment_offset;
-	if ( orientation == ORIENTATION_HORIZONTAL )
+	if ( data->orientation == ORIENTATION_HORIZONTAL )
 		increment = &x, increment_offset = &x_offset;
 	else
 		increment = &y, increment_offset = &y_offset;
 
 	struct Lava_button *bt_1, *bt_2;
-	wl_list_for_each_reverse_safe(bt_1, bt_2, button_list, link)
+	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
 	{
 		if ( bt_1->type == TYPE_BUTTON )
 		{
 			*increment = (bt_1->ordinate * scale) + *increment_offset;
-			draw_icon(cairo, x, y, icon_size, bt_1->img);
+			draw_effect(cairo, x, y, size, data->effect_colour, data->effect);
+			draw_icon(cairo, x, y, size, bt_1->img);
 		}
 	}
 }
@@ -170,10 +205,9 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	/* Draw icons. */
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
-	draw_buttons(cairo, output->bar_x_offset + data->border_left,
+	draw_buttons(cairo, data, output->bar_x_offset + data->border_left,
 			output->bar_y_offset + data->border_top,
-			data->icon_size, output->scale, data->orientation,
-			&data->buttons);
+			output->scale);
 
 	/* Commit surface. */
 	if (data->verbose)

@@ -66,6 +66,14 @@ void sensible_defaults (struct Lava_data *data)
 	data->border_colour[1]  = 1.0f;
 	data->border_colour[2]  = 1.0f;
 	data->border_colour[3]  = 1.0f;
+
+	data->effect_colour_hex = "#FFFFFFFF";
+	data->effect_colour[0]  = 1.0f;
+	data->effect_colour[1]  = 1.0f;
+	data->effect_colour[2]  = 1.0f;
+	data->effect_colour[3]  = 1.0f;
+
+	data->effect            = EFFECT_NONE;
 }
 
 /* Convert a hex colour string with or without alpha channel into RGBA floats. */
@@ -275,4 +283,31 @@ bool config_set_cursor_name (struct Lava_data *data, const char *arg)
 {
 		data->cursor.name = strdup(arg);
 		return true;
+}
+
+bool config_set_effect (struct Lava_data *data, const char *effect, const char *colour)
+{
+	if (! strcmp(effect, "none"))
+		data->effect = EFFECT_NONE;
+	else if (! strcmp(effect, "box"))
+		data->effect = EFFECT_BOX;
+	else if (! strcmp(effect, "phone"))
+		data->effect = EFFECT_PHONE;
+	else
+	{
+		fputs("ERROR: Possible effects are 'none', 'box' or 'phone'.\n", stderr);
+		return false;
+	}
+
+	if ( colour == NULL || *colour == '\0' || *colour == ' '
+			|| ! hex_to_rgba(colour, &(data->effect_colour[0]),
+				&(data->effect_colour[1]), &(data->effect_colour[2]),
+				&(data->effect_colour[3])))
+	{
+		fputs("ERROR: Bad colour configuration.\n", stderr);
+		return false;
+	}
+	data->effect_colour_hex = (char *)colour;
+
+	return true;
 }

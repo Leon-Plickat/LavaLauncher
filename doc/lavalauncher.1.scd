@@ -73,6 +73,16 @@ events to them.
 	The exact implementation is compositor dependant; A compositor may
 	choose to ignore the requested exclusive zone of surfaces.
 
+*-E <effect> <colour>*
+	Drawing effect applied to the buttons.
+
+	Can be 'none', 'box' or 'phone'. If 'box', LavaLauncher will draw a
+	rectangle underneath the button icons. If 'phone', LavaLauncher will
+	draw a runded rectangle underneath the button icons, similar to how
+	application icons look on phones. The default is 'none'. The default
+	effect colour is 'white'.
+
+
 *-h*
 	Display a helpful help message and exit.
 

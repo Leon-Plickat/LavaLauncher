@@ -49,6 +49,7 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "  -C <colour>                       Border colour.\n"
                             "  -d <size>                         Add a spacer.\n"
                             "  -e <mode>                         Exclusive zone.\n"
+                            "  -E <effect> <colour>              Drawing effect.\n"
                             "  -h                                Display help text and exit.\n"
                             "  -l <layer>                        Layer of surface.\n"
                             "  -m <mode>                         Display mode of the bar.\n"
@@ -160,7 +161,7 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 	bool success = true;
 	extern int optind;
 	extern char *optarg;
-	for (int c; (c = getopt(argc, argv, "a:b:c:C:d:e:hl:m:M:o:p:P:s:S:v")) != -1 ;)
+	for (int c; (c = getopt(argc, argv, "a:b:c:C:d:e:E:hl:m:M:o:p:P:s:S:v")) != -1 ;)
 	{
 		switch (c)
 		{
@@ -180,6 +181,18 @@ static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data
 			case 'C': success = config_set_border_colour(data, optarg); break;
 			case 'd': success = add_spacer(data, atoi(optarg));         break;
 			case 'e': success = config_set_exclusive(data, optarg);     break;
+
+			case 'E':
+				if( count_arguments(optind, argc, argv) != 2 )
+				{
+					fputs("ERROR: '-E' expects 2 arguments.\n", stderr);
+					success = false;
+					break;
+				}
+				success = config_set_effect(data, argv[optind-1], argv[optind]);
+				optind++; /* Tell getopt() to skip one argv field. */
+				break;
+
 			case 'h': fputs(usage, stderr);                             return false;
 			case 'l': success = config_set_layer(data, optarg);         break;
 			case 'm': success = config_set_mode(data, optarg);          break;

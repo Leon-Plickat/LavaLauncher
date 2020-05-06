@@ -35,5 +35,6 @@ bool config_set_bar_colour (struct Lava_data *data, const char *arg);
 bool config_set_border_colour (struct Lava_data *data, const char *arg);
 bool config_set_only_output (struct Lava_data *data, const char *arg);
 bool config_set_cursor_name (struct Lava_data *data, const char *arg);
+bool config_set_effect (struct Lava_data *data, const char *effect, const char *colour);
 
 #endif

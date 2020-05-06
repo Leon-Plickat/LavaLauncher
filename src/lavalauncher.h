@@ -54,6 +54,13 @@ enum Bar_alignment
 	ALIGNMENT_END
 };
 
+enum Draw_effect
+{
+	EFFECT_NONE,
+	EFFECT_BOX,
+	EFFECT_PHONE
+};
+
 struct Lava_data
 {
 	struct wl_display             *display;
@@ -77,6 +84,7 @@ struct Lava_data
 	enum Bar_alignment   alignment;
 	enum Bar_orientation orientation;
 	enum Bar_mode        mode;
+	enum Draw_effect     effect;
 
 	/* Amount of buttons defined by the user. */
 	int button_amount;
@@ -98,6 +106,8 @@ struct Lava_data
 	char  *bar_colour_hex;
 	float  border_colour[4];
 	char  *border_colour_hex;
+	float  effect_colour[4];
+	char  *effect_colour_hex;
 
 	/* If *only_output is NULL, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.

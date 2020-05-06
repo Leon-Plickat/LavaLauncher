@@ -125,7 +125,7 @@ bool init_buttons (struct Lava_data *data)
 
 	unsigned int index = 0, ordinate = 0;
 	struct Lava_button *bt_1, *bt_2;
-	wl_list_for_each_reverse_safe (bt_1, bt_2, &data->buttons, link)
+	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
 	{
 		if ( bt_1->type == TYPE_BUTTON )
 			bt_1->length = data->icon_size;

@@ -30,7 +30,7 @@
 #include"draw.h"
 #include"button.h"
 
-static void button_replace_background(cairo_t *cairo, int32_t x, int32_t y,
+static void button_replace_background (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t size, float colour[4])
 {
 	cairo_save(cairo);
@@ -42,14 +42,14 @@ static void button_replace_background(cairo_t *cairo, int32_t x, int32_t y,
 }
 
 static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
-		float colour[4], enum Draw_effect effect)
+		int32_t padding, float colour[4], enum Draw_effect effect)
 {
 	if ( effect == EFFECT_NONE )
 		return;
 
 	cairo_save(cairo);
 
-	x += 0.08 * size, y += 0.08 * size, size = size * 0.84;
+	x += padding, y += padding, size -= 2 * padding;
 	double radius, degrees;
 	switch (effect)
 	{
@@ -117,7 +117,8 @@ static void draw_buttons (cairo_t *cairo, struct Lava_data *data,
 			if ( bt_1->background_colour_hex != NULL )
 				button_replace_background(cairo, x, y, bt_1->length,
 						bt_1->background_colour);
-			draw_effect(cairo, x, y, size, data->effect_colour, data->effect);
+			draw_effect(cairo, x, y, size, data->effect_padding,
+					data->effect_colour, data->effect);
 			draw_icon(cairo, x, y, size, bt_1->img);
 		}
 	}

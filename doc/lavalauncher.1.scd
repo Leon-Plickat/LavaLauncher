@@ -94,6 +94,9 @@ which can be made in this context are as follows.
 *effect-colour*
 	Colour of the drawing effect. The default is "#FFFFFF".
 
+*effect-padding*
+	Padding between drawing effect and bar outlines.
+
 *exclusive-zone*
 	Exclusive zone of the surface. Can be "true", "false" or "stationary".
 	If "true", the compositor is informed that it should not obstruct the

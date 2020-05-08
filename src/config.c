@@ -75,6 +75,7 @@ void sensible_defaults (struct Lava_data *data)
 	data->effect_colour[3]  = 1.0f;
 
 	data->effect            = EFFECT_NONE;
+	data->effect_padding    = 5;
 }
 
 static bool config_set_position (struct Lava_data *data, const char *arg, const char direction)
@@ -357,6 +358,18 @@ static bool config_set_effect (struct Lava_data *data, const char *arg, const ch
 	return true;
 }
 
+static bool config_set_effect_padding (struct Lava_data *data, const char *arg, const char direction)
+{
+	data->effect_padding = atoi(arg);
+	if ( data->effect_padding < 0 )
+	{
+		fputs("ERROR: Effect padding size must be equal to or "
+				"greater than zero.\n", stderr);
+		return false;
+	}
+	return true;
+}
+
 struct Configs
 {
 	enum Lava_config config;
@@ -382,7 +395,8 @@ struct Configs
 	{ .config = CONFIG_BAR_COLOUR,     .name = "background-colour", .set = config_set_bar_colour,     .direction = '0'},
 	{ .config = CONFIG_BORDER_COLOUR,  .name = "border-colour",     .set = config_set_border_colour,  .direction = '0'},
 	{ .config = CONFIG_EFFECT_COLOUR,  .name = "effect-colour",     .set = config_set_effect_colour,  .direction = '0'},
-	{ .config = CONFIG_EFFECT,         .name = "effect",            .set = config_set_effect,         .direction = '0'}
+	{ .config = CONFIG_EFFECT,         .name = "effect",            .set = config_set_effect,         .direction = '0'},
+	{ .config = CONFIG_EFFECT_PADDING, .name = "effect-padding",    .set = config_set_effect_padding, .direction = '0'}
 };
 
 enum Lava_config config_variable_from_string (const char *string)

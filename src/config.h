@@ -22,19 +22,34 @@
 
 #include"lavalauncher.h"
 
+enum Lava_config
+{
+	CONFIG_POSITION,
+	CONFIG_ALIGNMENT,
+	CONFIG_MODE,
+	CONFIG_LAYER,
+	CONFIG_ICON_SIZE,
+	CONFIG_BORDER_TOP,
+	CONFIG_BORDER_RIGHT,
+	CONFIG_BORDER_LEFT,
+	CONFIG_BORDER_BOTTOM,
+	CONFIG_MARGIN_TOP,
+	CONFIG_MARGIN_RIGHT,
+	CONFIG_MARGIN_LEFT,
+	CONFIG_MARGIN_BOTTOM,
+	CONFIG_ONLY_OUTPUT,
+	CONFIG_EXCLUSIVE_ZONE,
+	CONFIG_CURSOR_NAME,
+	CONFIG_BAR_COLOUR,
+	CONFIG_BORDER_COLOUR,
+	CONFIG_EFFECT_COLOUR,
+	CONFIG_EFFECT,
+
+	CONFIG_ERROR
+};
+
 void sensible_defaults (struct Lava_data *data);
-bool config_set_position (struct Lava_data *data, const char *arg);
-bool config_set_mode (struct Lava_data *data, const char *arg);
-bool config_set_alignment (struct Lava_data *data, const char *arg);
-bool config_set_layer (struct Lava_data *data, const char *arg);
-bool config_set_exclusive (struct Lava_data *data, const char *arg);
-bool config_set_margin (struct Lava_data *data, int top, int right, int bottom, int left);
-bool config_set_icon_size (struct Lava_data *data, const char *arg);
-bool config_set_border_size (struct Lava_data *data, int top, int right, int bottom, int left);
-bool config_set_bar_colour (struct Lava_data *data, const char *arg);
-bool config_set_border_colour (struct Lava_data *data, const char *arg);
-bool config_set_only_output (struct Lava_data *data, const char *arg);
-bool config_set_cursor_name (struct Lava_data *data, const char *arg);
-bool config_set_effect (struct Lava_data *data, const char *effect, const char *colour);
+enum Lava_config config_variable_from_string (const char *string);
+bool config_value_from_string (struct Lava_data *data, enum Lava_config config, const char *string);
 
 #endif

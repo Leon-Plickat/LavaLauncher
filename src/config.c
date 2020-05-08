@@ -24,6 +24,7 @@
 #include<stdbool.h>
 #include<errno.h>
 #include<string.h>
+#include<ctype.h>
 
 #include<wayland-server.h>
 #include<wayland-client.h>
@@ -76,6 +77,191 @@ void sensible_defaults (struct Lava_data *data)
 	data->effect            = EFFECT_NONE;
 }
 
+static bool config_set_position (struct Lava_data *data, const char *arg, const char direction)
+{
+	if (! strcmp(arg, "top"))
+		data->position = POSITION_TOP;
+	else if (! strcmp(arg, "right"))
+		data->position = POSITION_RIGHT;
+	else if (! strcmp(arg, "bottom"))
+		data->position = POSITION_BOTTOM;
+	else if (! strcmp(arg, "left"))
+		data->position = POSITION_LEFT;
+	else
+	{
+		fprintf(stderr, "ERROR: Unrecognized position \"%s\".\n"
+				"INFO: Possible positions are 'top', 'right', "
+				"'bottom' and 'left'.\n", arg);
+		return false;
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "position", arg);
+	return true;
+}
+
+static bool config_set_alignment (struct Lava_data *data, const char *arg, const char direction)
+{
+	if (! strcmp(arg, "start"))
+		data->alignment = ALIGNMENT_START;
+	else if (! strcmp(arg, "center"))
+		data->alignment = ALIGNMENT_CENTER;
+	else if (! strcmp(arg, "end"))
+		data->alignment = ALIGNMENT_END;
+	else
+	{
+		fprintf(stderr, "ERROR: Unrecognized alignment \"%s\".\n"
+				"INFO: Possible alignments are 'start', "
+				"'center' and 'end'.\n", arg);
+		return false;
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "alignment", arg);
+	return true;
+}
+
+static bool config_set_mode (struct Lava_data *data, const char *arg, const char direction)
+{
+	if (! strcmp(arg, "default"))
+		data->mode = MODE_DEFAULT;
+	else if (! strcmp(arg, "full"))
+		data->mode = MODE_FULL;
+	else if (! strcmp(arg, "simple"))
+		data->mode = MODE_SIMPLE;
+	else
+	{
+		fprintf(stderr, "ERROR: Unrecognized mode \"%s\".\n"
+				"INFO: Possible alignments are 'default', "
+				"'full' and 'simple'.\n", arg);
+		return false;
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "mode", arg);
+	return true;
+}
+
+static bool config_set_layer (struct Lava_data *data, const char *arg, const char direction)
+{
+	if (! strcmp(arg, "overlay"))
+		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
+	else if (! strcmp(arg, "top"))
+		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_TOP;
+	else if (! strcmp(arg, "bottom"))
+		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
+	else if (! strcmp(arg, "background"))
+		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
+	else
+	{
+		fprintf(stderr, "ERROR: Unrecognized layer \"%s\".\n"
+				"INFO: Possible layers are 'overlay', "
+				"'top', 'bottom', and 'background'.\n", arg);
+		return false;
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "layer", arg);
+	return true;
+}
+
+static bool config_set_icon_size (struct Lava_data *data, const char *arg, const char direction)
+{
+	// TODO check issdigit()
+	data->icon_size = atoi(arg);
+	if ( data->icon_size <= 0 )
+	{
+		fputs("ERROR: Icon size must be greater than zero.\n", stderr);
+		return false;
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "icon-size", arg);
+	return true;
+}
+
+static bool config_set_border_size (struct Lava_data *data, const char *arg, const char direction)
+{
+	int size = atoi(arg);
+	if ( size < 0 )
+	{
+		fputs("ERROR: Border size must be equal to or greater than zero.\n", stderr);
+		return false;
+	}
+
+	switch (direction)
+	{
+		case 't': data->border_top    = size; break;
+		case 'r': data->border_right  = size; break;
+		case 'b': data->border_bottom = size; break;
+		case 'l': data->border_left   = size; break;
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s direction=%c\n", "border", arg, direction);
+	return true;
+}
+
+static bool config_set_margin_size (struct Lava_data *data, const char *arg, const char direction)
+{
+	int size = atoi(arg);
+	if ( size < 0 )
+	{
+		fputs("ERROR: Margin size must be equal to or greater than zero.\n", stderr);
+		return false;
+	}
+
+	switch (direction)
+	{
+		case 't': data->margin_top    = size; break;
+		case 'r': data->margin_right  = size; break;
+		case 'b': data->margin_bottom = size; break;
+		case 'l': data->margin_left   = size; break;
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s direction=%c\n", "margin", arg, direction);
+	return true;
+}
+
+static bool config_set_only_output (struct Lava_data *data, const char *arg, const char direction)
+{
+	if ( ! strcmp(arg, "all") || *arg == '*' )
+		data->only_output = NULL;
+	else
+	{
+		if ( data->only_output != NULL )
+			free(data->only_output);
+		data->only_output = strdup(arg);
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "output", arg);
+	return true;
+}
+
+static bool config_set_exclusive_zone (struct Lava_data *data, const char *arg, const char direction)
+{
+	if (! strcmp(arg, "true"))
+		data->exclusive_zone = 1;
+	else if (! strcmp(arg, "false"))
+		data->exclusive_zone = 0;
+	else if (! strcmp(arg, "stationary"))
+		data->exclusive_zone = -1;
+	else
+	{
+		fprintf(stderr, "ERROR: Unrecognized exclusive zone option \"%s\".\n"
+				"INFO: Possible options are 'true', "
+				"'false' and 'stationary'.\n", arg);
+		return false;
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "exclusive-zone", arg);
+	return true;
+}
+
+static bool config_set_cursor_name (struct Lava_data *data, const char *arg, const char direction)
+{
+	if ( data->cursor.name != NULL )
+		free(data->cursor.name);
+	data->cursor.name = strdup(arg);
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "cursor-name", arg);
+	return true;
+}
+
 /* Convert a hex colour string with or without alpha channel into RGBA floats. */
 static bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
 {
@@ -89,12 +275,7 @@ static bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, fl
 		r = g = b = a = 255;
 	else if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a)
 			&& 3 != sscanf(hex, "#%02x%02x%02x", &r, &g, &b) )
-	{
-		fputs("ERROR: Colour codes are expected to be in the format"
-				" #RRGGBBAA or #RRGGBB\n",
-				stderr);
 		return false;
-	}
 
 	*c_r = r / 255.0f;
 	*c_g = g / 255.0f;
@@ -104,210 +285,119 @@ static bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, fl
 	return true;
 }
 
-bool config_set_position (struct Lava_data *data, const char *arg)
-{
-	if (! strcmp(arg, "top"))
-		data->position = POSITION_TOP;
-	else if (! strcmp(arg, "right"))
-		data->position = POSITION_RIGHT;
-	else if (! strcmp(arg, "bottom"))
-		data->position = POSITION_BOTTOM;
-	else if (! strcmp(arg, "left"))
-		data->position = POSITION_LEFT;
-	else
-	{
-		fputs("ERROR: Possible positions are 'top', 'right',"
-				" 'bottom' and 'left'.\n", stderr);
-		return false;
-	}
-
-	return true;
-}
-
-bool config_set_layer (struct Lava_data *data, const char *arg)
-{
-	if (! strcmp(arg, "overlay"))
-		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
-	else if (! strcmp(arg, "top"))
-		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_TOP;
-	else if (! strcmp(arg, "bottom"))
-		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
-	else if (! strcmp(arg, "background"))
-		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
-	else
-	{
-		fputs("ERROR: Possible layers are 'overlay', 'top',"
-				"'bottom' and 'background'.\n", stderr);
-		return false;
-	}
-
-	return true;
-}
-
-bool config_set_mode (struct Lava_data *data, const char *arg)
-{
-	if (! strcmp(arg, "default"))
-		data->mode = MODE_DEFAULT;
-	else if (! strcmp(arg, "full"))
-		data->mode = MODE_FULL;
-	else if (! strcmp(arg, "simple"))
-		data->mode = MODE_SIMPLE;
-	else
-	{
-		fputs("ERROR: Possible modes are 'default', 'full' and 'simple'.\n", stderr);
-		return false;
-	}
-
-	return true;
-}
-
-bool config_set_alignment (struct Lava_data *data, const char *arg)
-{
-	if (! strcmp(arg, "start"))
-		data->alignment = ALIGNMENT_START;
-	else if (! strcmp(arg, "center"))
-		data->alignment = ALIGNMENT_CENTER;
-	else if (! strcmp(arg, "end"))
-		data->alignment = ALIGNMENT_END;
-	else
-	{
-		fputs("ERROR: Possible alignments are 'start', 'center',"
-				" and 'end'.\n", stderr);
-		return false;
-	}
-
-	return true;
-}
-
-bool config_set_exclusive (struct Lava_data *data, const char *arg)
-{
-	if (! strcmp(arg, "true"))
-		data->exclusive_zone = 1;
-	else if (! strcmp(arg, "false"))
-		data->exclusive_zone = 0;
-	else if (! strcmp(arg, "stationary"))
-		data->exclusive_zone = -1;
-	else
-	{
-		fputs("ERROR: Exclusive zone can be 'true', 'false' or 'stationary'.\n",
-				stderr);
-		return false;
-	}
-
-	return true;
-}
-
-bool config_set_margin (struct Lava_data *data, int top, int right, int bottom, int left)
-{
-	data->margin_top    = top;
-	data->margin_right  = right;
-	data->margin_bottom = bottom;
-	data->margin_left   = left;
-	if ( top < 0 || right < 0 || bottom < 0 || left < 0 )
-	{
-		fputs("ERROR: Margins must be equal to or greater than zero.\n",
-				stderr);
-		return false;
-	}
-
-	return true;
-}
-
-bool config_set_icon_size (struct Lava_data *data, const char *arg)
-{
-	data->icon_size = atoi(arg);
-	if ( data->icon_size <= 0 )
-	{
-		fputs("ERROR: Icon size must be greater than zero.\n", stderr);
-		return false;
-	}
-
-	return true;
-}
-
-bool config_set_border_size (struct Lava_data *data, int top, int right,
-		int bottom, int left)
-{
-	data->border_top    = top;
-	data->border_right  = right;
-	data->border_bottom = bottom;
-	data->border_left   = left;
-	if ( top < 0 || right < 0 || bottom < 0 || left < 0 )
-	{
-		fputs("ERROR: Border size must be equal to or greater than zero.\n",
-				stderr);
-		return false;
-	}
-
-	return true;
-}
-
-bool config_set_bar_colour (struct Lava_data *data, const char *arg)
+static bool config_set_bar_colour (struct Lava_data *data, const char *arg, const char direction)
 {
 	if ( arg == NULL || *arg == '\0' || *arg == ' '
 			|| ! hex_to_rgba(arg, &(data->bar_colour[0]),
 				&(data->bar_colour[1]), &(data->bar_colour[2]),
 				&(data->bar_colour[3])))
 	{
-		fputs("ERROR: Bad colour configuration.\n", stderr);
+		fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
+				"INFO: Colour codes are expected to be in the "
+				"format #RRGGBBAA or #RRGGBB\n", arg);
 		return false;
 	}
 	data->bar_colour_hex = (char *)arg;
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "background-colour", arg);
 	return true;
 }
 
-bool config_set_border_colour (struct Lava_data *data, const char *arg)
+static bool config_set_border_colour (struct Lava_data *data, const char *arg, const char direction)
 {
 	if ( arg == NULL || *arg == '\0' || *arg == ' ' || !  hex_to_rgba(arg,
 				&(data->border_colour[0]), &(data->border_colour[1]),
 				&(data->border_colour[2]), &(data->border_colour[3])))
 	{
-		fputs("Bad colour configuration.\n", stderr);
+		fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
+				"INFO: Colour codes are expected to be in the "
+				"format #RRGGBBAA or #RRGGBB\n", arg);
 		return false;
 	}
 	data->border_colour_hex = (char *)arg;
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "border-colour", arg);
 	return true;
 }
 
-bool config_set_only_output (struct Lava_data *data, const char *arg)
+static bool config_set_effect_colour (struct Lava_data *data, const char *arg, const char direction)
 {
-	if ( ! strcmp(arg, "all") || *arg == '*' )
-		data->only_output = NULL;
-	else
-		data->only_output = strdup(arg);
-
+	if ( arg == NULL || *arg == '\0' || *arg == ' ' || !  hex_to_rgba(arg,
+				&(data->effect_colour[0]), &(data->effect_colour[1]),
+				&(data->effect_colour[2]), &(data->effect_colour[3])))
+	{
+		fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
+				"INFO: Colour codes are expected to be in the "
+				"format #RRGGBBAA or #RRGGBB\n", arg);
+		return false;
+	}
+	data->effect_colour_hex = (char *)arg;
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "effect-colour", arg);
 	return true;
 }
 
-bool config_set_cursor_name (struct Lava_data *data, const char *arg)
+static bool config_set_effect (struct Lava_data *data, const char *arg, const char direction)
 {
-		data->cursor.name = strdup(arg);
-		return true;
-}
-
-bool config_set_effect (struct Lava_data *data, const char *effect, const char *colour)
-{
-	if (! strcmp(effect, "none"))
+	if (! strcmp(arg, "none"))
 		data->effect = EFFECT_NONE;
-	else if (! strcmp(effect, "box"))
+	else if (! strcmp(arg, "box"))
 		data->effect = EFFECT_BOX;
-	else if (! strcmp(effect, "phone"))
+	else if (! strcmp(arg, "phone"))
 		data->effect = EFFECT_PHONE;
 	else
 	{
-		fputs("ERROR: Possible effects are 'none', 'box' or 'phone'.\n", stderr);
+		fprintf(stderr, "ERROR: Unrecognized effect \"%s\".\n"
+				"INFO: Possible options are 'none', "
+				"'box' and 'phone'.\n", arg);
 		return false;
 	}
-
-	if ( colour == NULL || *colour == '\0' || *colour == ' '
-			|| ! hex_to_rgba(colour, &(data->effect_colour[0]),
-				&(data->effect_colour[1]), &(data->effect_colour[2]),
-				&(data->effect_colour[3])))
-	{
-		fputs("ERROR: Bad colour configuration.\n", stderr);
-		return false;
-	}
-	data->effect_colour_hex = (char *)colour;
-
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n", "effect", arg);
 	return true;
+}
+
+struct Configs
+{
+	enum Lava_config config;
+	const char *name, direction;
+	bool (*set)(struct Lava_data*, const char*, const char);
+} configs[CONFIG_ERROR] = {
+	{ .config = CONFIG_POSITION,       .name = "position",          .set = config_set_position,       .direction = '0'},
+	{ .config = CONFIG_ALIGNMENT,      .name = "alignment",         .set = config_set_alignment,      .direction = '0'},
+	{ .config = CONFIG_MODE,           .name = "mode",              .set = config_set_mode,           .direction = '0'},
+	{ .config = CONFIG_LAYER,          .name = "layer",             .set = config_set_layer,          .direction = '0'},
+	{ .config = CONFIG_ICON_SIZE,      .name = "icon-size",         .set = config_set_icon_size,      .direction = '0'},
+	{ .config = CONFIG_BORDER_TOP,     .name = "border-top",        .set = config_set_border_size,    .direction = 't'},
+	{ .config = CONFIG_BORDER_RIGHT,   .name = "border-right",      .set = config_set_border_size,    .direction = 'r'},
+	{ .config = CONFIG_BORDER_BOTTOM,  .name = "border-bottom",     .set = config_set_border_size,    .direction = 'b'},
+	{ .config = CONFIG_BORDER_LEFT,    .name = "border-left",       .set = config_set_border_size,    .direction = 'l'},
+	{ .config = CONFIG_MARGIN_TOP,     .name = "margin-top",        .set = config_set_margin_size,    .direction = 't'},
+	{ .config = CONFIG_MARGIN_RIGHT,   .name = "margin-right",      .set = config_set_margin_size,    .direction = 'r'},
+	{ .config = CONFIG_MARGIN_BOTTOM,  .name = "margin-bottom",     .set = config_set_margin_size,    .direction = 'b'},
+	{ .config = CONFIG_MARGIN_LEFT,    .name = "margin-left",       .set = config_set_margin_size,    .direction = 'l'},
+	{ .config = CONFIG_ONLY_OUTPUT,    .name = "output",            .set = config_set_only_output,    .direction = '0'},
+	{ .config = CONFIG_EXCLUSIVE_ZONE, .name = "exclusive-zone",    .set = config_set_exclusive_zone, .direction = '0'},
+	{ .config = CONFIG_CURSOR_NAME,    .name = "cursor-name",       .set = config_set_cursor_name,    .direction = '0'},
+	{ .config = CONFIG_BAR_COLOUR,     .name = "background-colour", .set = config_set_bar_colour,     .direction = '0'},
+	{ .config = CONFIG_BORDER_COLOUR,  .name = "border-colour",     .set = config_set_border_colour,  .direction = '0'},
+	{ .config = CONFIG_EFFECT_COLOUR,  .name = "effect-colour",     .set = config_set_effect_colour,  .direction = '0'},
+	{ .config = CONFIG_EFFECT,         .name = "effect",            .set = config_set_effect,         .direction = '0'}
+};
+
+enum Lava_config config_variable_from_string (const char *string)
+{
+	for (int i = 0; i < CONFIG_ERROR; i++)
+		if (! strcmp(string, configs[i].name))
+			return configs[i].config;
+	return CONFIG_ERROR;
+}
+
+bool config_value_from_string (struct Lava_data *data, enum Lava_config config,
+		const char *string)
+{
+	for (int i = 0; i < CONFIG_ERROR; i++)
+		if ( configs[i].config == config )
+			return configs[i].set(data, string, configs[i].direction);
+	return false;
 }

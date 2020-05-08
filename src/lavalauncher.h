@@ -61,6 +61,8 @@ enum Draw_effect
 	EFFECT_PHONE
 };
 
+struct Lava_button;
+
 struct Lava_data
 {
 	struct wl_display             *display;
@@ -73,6 +75,7 @@ struct Lava_data
 	struct wl_list outputs;
 	struct wl_list seats;
 	struct wl_list buttons;
+	struct Lava_button *last_button;
 
 	/* Return value. */
 	int ret;

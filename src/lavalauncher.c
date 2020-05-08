@@ -40,27 +40,14 @@
 #include"registry.h"
 #include"cursor.h"
 #include"button.h"
+#include"parser.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
-                            "  -a <alignment>                    Alignment of the bar / icons.\n"
-                            "  -b <path> <command>               Add a button.\n"
-                            "  -c <colour>                       Background colour.\n"
-                            "  -C <colour>                       Border colour.\n"
-                            "  -d <size>                         Add a spacer.\n"
-                            "  -e <mode>                         Exclusive zone.\n"
-                            "  -E <effect> <colour>              Drawing effect.\n"
-                            "  -h                                Display help text and exit.\n"
-                            "  -l <layer>                        Layer of surface.\n"
-                            "  -m <mode>                         Display mode of the bar.\n"
-                            "  -M <top> <right> <bottom> <left>  Directional margins of the bar / icons.\n"
-                            "  -o <name>                         Name of exclusive output.\n"
-                            "  -p <position>                     Position of the bar.\n"
-                            "  -P <cursor>                       Name of the cursor when hovering over the bar.\n"
-                            "  -s <size>                         Icon size.\n"
-                            "  -S <size>                         All border sizes.\n"
-                            "  -S <top> <right> <bottom> <left>  Individual border sizes.\n"
-                            "  -v                                Verbose output.\n";
+			    "  -c <path> Path to config file.\n"
+			    "  -h        Print this help text.\n"
+			    "  -v        Enable verbose output.\n\n"
+			    "The configuration syntax is documented in the man page.\n";
 
 static void main_loop (struct Lava_data *data)
 {
@@ -139,131 +126,55 @@ static void calculate_dimensions (struct Lava_data *data)
 	}
 }
 
-/* getopts() only handles command flags with none or a single argument directly;
- * For multiple argument we have to do some of the work ourself. This function
- * counts the arguments to a command flag.
- */
-static int count_arguments (int optind, int argc, char *argv[])
-{
-	int args = 0, index = optind - 1;
-	while ( index < argc )
-	{
-		if ( *argv[index] == '-' )
-			break;
-		args++, index++;
-	}
-	return args;
-}
-
-static bool handle_command_flags (int argc, char *argv[], struct Lava_data *data)
-{
-	int arguments;
-	bool success = true;
-	extern int optind;
-	extern char *optarg;
-	for (int c; (c = getopt(argc, argv, "a:b:c:C:d:e:E:hl:m:M:o:p:P:s:S:v")) != -1 ;)
-	{
-		switch (c)
-		{
-			case 'a': success = config_set_alignment(data, optarg); break;
-			case 'b':
-				if( count_arguments(optind, argc, argv) != 2 )
-				{
-					fputs("ERROR: '-b' expects 2 arguments.\n", stderr);
-					success = false;
-					break;
-				}
-				success = add_button(data, argv[optind-1], argv[optind]);
-				optind++; /* Tell getopt() to skip one argv field. */
-				break;
-
-			case 'c': success = config_set_bar_colour(data, optarg);    break;
-			case 'C': success = config_set_border_colour(data, optarg); break;
-			case 'd': success = add_spacer(data, atoi(optarg));         break;
-			case 'e': success = config_set_exclusive(data, optarg);     break;
-
-			case 'E':
-				if( count_arguments(optind, argc, argv) != 2 )
-				{
-					fputs("ERROR: '-E' expects 2 arguments.\n", stderr);
-					success = false;
-					break;
-				}
-				success = config_set_effect(data, argv[optind-1], argv[optind]);
-				optind++; /* Tell getopt() to skip one argv field. */
-				break;
-
-			case 'h': fputs(usage, stderr);                             return false;
-			case 'l': success = config_set_layer(data, optarg);         break;
-			case 'm': success = config_set_mode(data, optarg);          break;
-
-			case 'M':
-				if( count_arguments(optind, argc, argv) != 4 )
-				{
-					fputs("ERROR: '-M' expects 4 arguments.\n", stderr);
-					success = false;
-					break;
-				}
-				success = config_set_margin(data,
-						atoi(argv[optind-1]), atoi(argv[optind]),
-						atoi(argv[optind+1]), atoi(argv[optind+2]));
-				optind += 3; /* Tell getopt() to skip three argv field. */
-				break;
-
-			case 'o': success = config_set_only_output(data, optarg); break;
-			case 'p': success = config_set_position(data, optarg);    break;
-			case 'P': success = config_set_cursor_name(data, optarg); break;
-			case 's': success = config_set_icon_size(data, optarg);   break;
-
-			case 'S':
-				arguments = count_arguments(optind, argc, argv);
-				if ( arguments == 1 )
-					success = config_set_border_size(data,
-							atoi(optarg), atoi(optarg),
-							atoi(optarg), atoi(optarg));
-				else if ( arguments == 4 )
-				{
-					success = config_set_border_size(data,
-							atoi(argv[optind-1]), atoi(argv[optind]),
-							atoi(argv[optind+1]), atoi(argv[optind+2]));
-					optind += 3; /* Tell getopt() to "skip" three argv fields. */
-				}
-				else
-				{
-					fputs("ERROR: '-S' expects 1 or 4 arguments.\n", stderr);
-					success = false;
-				}
-				break;
-
-			case 'v': data->verbose = true; break;
-
-			default:
-				return false;
-		}
-
-		/* Check for errors during configuration. */
-		if (! success)
-		{
-			destroy_buttons(data);
-			return false;
-		}
-	}
-
-	return true;
-}
-
 int main (int argc, char *argv[])
 {
-	struct Lava_data data = {0};
-	data.ret              = EXIT_SUCCESS;
-	data.loop             = true;
+	/* This struct holds all the global data. */
+	struct Lava_data data = {
+		.ret  = EXIT_SUCCESS,
+		.loop = true
+	};
+	char *config_path = NULL;
+
 	wl_list_init(&(data.buttons));
+	wl_list_init(&(data.outputs));
+	wl_list_init(&(data.seats));
 
 	/* Sensible configuration defaults. */
 	sensible_defaults(&data);
 
-	if (! handle_command_flags(argc, argv, &data) || ! init_buttons(&data) )
+	/* Parse command flags. */
+	extern int optind;
+	extern char *optarg;
+	for (int c; (c = getopt(argc, argv, "c:hv")) != -1 ;)
+		switch (c)
+		{
+			case 'c':
+				if ( config_path != NULL )
+					free(config_path);
+				config_path = strdup(optarg);
+				break;
+
+			case 'h':
+				fputs(usage, stderr);
+				return EXIT_SUCCESS;
+
+			case 'v':
+				data.verbose = true;
+				break;
+
+			default:
+				return EXIT_FAILURE;
+		}
+
+	/* There is no default configuration file. */
+	if ( config_path == NULL)
+	{
+		fputs("You need to provide the path to a config file.\n", stderr);
 		return EXIT_FAILURE;
+	}
+
+	if (! parse_config(&data, config_path) || ! init_buttons(&data) )
+		goto exit;
 
 	calculate_dimensions(&data);
 
@@ -280,11 +191,11 @@ int main (int argc, char *argv[])
 	else
 		data.ret = EXIT_FAILURE;
 
+exit:
 	if ( data.only_output != NULL )
 		free(data.only_output);
 	if ( data.cursor.name != NULL )
 		free(data.cursor.name);
-
 	destroy_buttons(&data);
 	finish_cursor(&data);
 	finish_wayland(&data);

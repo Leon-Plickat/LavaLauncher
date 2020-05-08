@@ -72,6 +72,9 @@ static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
 static void draw_icon (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t icon_size, cairo_surface_t *img)
 {
+	if ( img == NULL )
+		return;
+
 	float w = cairo_image_surface_get_width(img);
 	float h = cairo_image_surface_get_height(img);
 

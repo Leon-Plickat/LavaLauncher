@@ -53,10 +53,8 @@ struct Lava_button *button_from_coords (struct Lava_data *data,
 	return NULL;
 }
 
-bool add_button (struct Lava_data *data, char *path, char *cmd)
+bool create_button (struct Lava_data *data)
 {
-	errno = 0;
-
 	struct Lava_button *new_button = calloc(1, sizeof(struct Lava_button));
 	if ( new_button == NULL )
 	{
@@ -67,8 +65,28 @@ bool add_button (struct Lava_data *data, char *path, char *cmd)
 	/* We do not know the icon size yet. */
 	new_button->length = 0;
 	new_button->type   = TYPE_BUTTON;
-	new_button->cmd    = strdup(cmd);
-	new_button->img    = cairo_image_surface_create_from_png(path);
+	new_button->cmd    = NULL;
+	new_button->img    = NULL;
+
+	data->last_button = new_button;
+	wl_list_insert(&data->buttons, &new_button->link);
+	return true;
+}
+
+static bool button_set_command (struct Lava_button *button, const char *command)
+{
+	if ( button->cmd != NULL )
+		free(button->cmd);
+	button->cmd = strdup(command);
+	return true;
+}
+
+static bool button_set_image_path (struct Lava_button *button, const char *path)
+{
+	if ( button->img != NULL )
+		cairo_surface_destroy(button->img);
+	errno = 0;
+	button->img = cairo_image_surface_create_from_png(path);
 	if ( errno != 0 )
 	{
 		fprintf(stderr, "ERROR: Failed loading image: %s\n"
@@ -76,19 +94,38 @@ bool add_button (struct Lava_data *data, char *path, char *cmd)
 				path, strerror(errno));
 		return false;
 	}
-
-	wl_list_insert(&data->buttons, &new_button->link);
 	return true;
 }
 
-bool add_spacer (struct Lava_data *data, int length)
+struct Button_configs
 {
-	if ( length <= 0 )
-	{
-		fputs("ERROR: Spacer size must be above 0.", stderr);
-		return false;
-	}
+	enum Button_config config;
+	const char *name;
+	bool (*set)(struct Lava_button*, const char*);
+} button_configs[BUTTON_CONFIG_ERROR] = {
+	{ .config = BUTTON_CONFIG_COMMAND,    .name = "command",    .set = button_set_command },
+	{ .config = BUTTON_CONFIG_IMAGE_PATH, .name = "image-path", .set = button_set_image_path },
+};
 
+enum Button_config button_variable_from_string (const char *string)
+{
+	for (int i = 0; i < BUTTON_CONFIG_ERROR; i++)
+		if (! strcmp(string, button_configs[i].name))
+			return button_configs[i].config;
+	return BUTTON_CONFIG_ERROR;
+}
+
+bool button_value_from_string (struct Lava_data *data, enum Button_config config,
+		const char *string)
+{
+	for (int i = 0; i < BUTTON_CONFIG_ERROR; i++)
+		if ( button_configs[i].config == config )
+			return button_configs[i].set(data->last_button, string);
+	return false;
+}
+
+bool create_spacer (struct Lava_data *data)
+{
 	struct Lava_button *new_spacer = calloc(1, sizeof(struct Lava_button));
 	if ( new_spacer == NULL )
 	{
@@ -96,13 +133,52 @@ bool add_spacer (struct Lava_data *data, int length)
 		return false;
 	}
 
-	new_spacer->length = length;
+	new_spacer->length = 0;
 	new_spacer->type   = TYPE_SPACER;
 	new_spacer->cmd    = NULL;
 	new_spacer->img    = NULL;
 
+	data->last_button = new_spacer;
 	wl_list_insert(&data->buttons, &new_spacer->link);
 	return true;
+}
+
+static bool spacer_set_length (struct Lava_button *button, const char *length)
+{
+	int l = atoi(length);
+	if ( l <= 0 )
+	{
+		fputs("ERROR: Spacer size must be greater than 0.\n", stderr);
+		return false;
+	}
+	button->length = (unsigned int)l;
+	return true;
+}
+
+struct Spacer_configs
+{
+	enum Spacer_config config;
+	const char *name;
+	bool (*set)(struct Lava_button*, const char*);
+} spacer_configs[SPACER_CONFIG_ERROR] = {
+	{ .config = SPACER_CONFIG_LENGTH, .name = "length", .set = spacer_set_length }
+};
+
+enum Spacer_config spacer_variable_from_string (const char *string)
+{
+	for (int i = 0; i < SPACER_CONFIG_ERROR; i++)
+		if (! strcmp(string, spacer_configs[i].name))
+			return spacer_configs[i].config;
+	return SPACER_CONFIG_ERROR;
+}
+
+bool spacer_value_from_string (struct Lava_data *data, enum Spacer_config config,
+		const char *string)
+{
+	for (int i = 0; i < SPACER_CONFIG_ERROR; i++)
+		if ( spacer_configs[i].config == config )
+			return spacer_configs[i].set(data->last_button, string);
+	return false;
 }
 
 unsigned int get_button_length_sum (struct Lava_data *data)
@@ -117,7 +193,7 @@ unsigned int get_button_length_sum (struct Lava_data *data)
 bool init_buttons (struct Lava_data *data)
 {
 	data->button_amount = wl_list_length(&(data->buttons));
-	if (! data->button_amount)
+	if ( data->button_amount == 0 )
 	{
 		fputs("ERROR: No buttons defined.\n", stderr);
 		return false;
@@ -142,12 +218,8 @@ bool init_buttons (struct Lava_data *data)
 
 void destroy_buttons (struct Lava_data *data)
 {
-	if ( wl_list_length(&(data->buttons)) <= 0 )
-		return;
-
 	if (data->verbose)
 		fputs("Destroying buttons and freeing icons.\n", stderr);
-
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_safe(bt_1, bt_2, &data->buttons, link)
 	{

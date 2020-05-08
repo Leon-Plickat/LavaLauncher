@@ -109,7 +109,7 @@ static const struct wl_buffer_listener buffer_listener = {
 static bool create_buffer (struct wl_shm *shm, struct Lava_buffer *buffer,
 		int32_t w, int32_t h)
 {
-	const enum wl_shm_format wl_fmt    = WL_SHM_FORMAT_ARGB8888; // TODO configurable?
+	const enum wl_shm_format wl_fmt    = WL_SHM_FORMAT_ARGB8888;
 	const cairo_format_t     cairo_fmt = CAIRO_FORMAT_ARGB32;
 
 	uint32_t stride = cairo_format_stride_for_width(cairo_fmt, w);

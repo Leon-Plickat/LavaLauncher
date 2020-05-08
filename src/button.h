@@ -33,6 +33,7 @@ enum Button_config
 {
 	BUTTON_CONFIG_COMMAND,
 	BUTTON_CONFIG_IMAGE_PATH,
+	BUTTON_CONFIG_BACKGROUND_COLOUR,
 	BUTTON_CONFIG_ERROR
 };
 
@@ -49,6 +50,8 @@ struct Lava_button
 	cairo_surface_t  *img;
 	char             *cmd;
 	unsigned int      index, ordinate, length;
+	float             background_colour[4];
+	char             *background_colour_hex;
 };
 
 struct Lava_button *button_from_coords (struct Lava_data *data, struct Lava_output *output, int32_t x, int32_t y);

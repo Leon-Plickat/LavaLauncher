@@ -51,5 +51,6 @@ enum Lava_config
 void sensible_defaults (struct Lava_data *data);
 enum Lava_config config_variable_from_string (const char *string);
 bool config_value_from_string (struct Lava_data *data, enum Lava_config config, const char *string);
+bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a);
 
 #endif

@@ -30,6 +30,7 @@
 #include"lavalauncher.h"
 #include"button.h"
 #include"output.h"
+#include"config.h"
 
 /* Return pointer to Lava_button struct from button list which includes the
  * given surface-local coordinates on the surface of the given output.
@@ -68,6 +69,12 @@ bool create_button (struct Lava_data *data)
 	new_button->cmd    = NULL;
 	new_button->img    = NULL;
 
+	new_button->background_colour_hex = NULL;
+	new_button->background_colour[0]  = 0.0;
+	new_button->background_colour[1]  = 0.0;
+	new_button->background_colour[2]  = 0.0;
+	new_button->background_colour[3]  = 1.0;
+
 	data->last_button = new_button;
 	wl_list_insert(&data->buttons, &new_button->link);
 	return true;
@@ -97,14 +104,31 @@ static bool button_set_image_path (struct Lava_button *button, const char *path)
 	return true;
 }
 
+static bool button_set_background_colour (struct Lava_button *button, const char *arg)
+{
+	if ( arg == NULL || *arg == '\0' || *arg == ' '
+			|| ! hex_to_rgba(arg, &(button->background_colour[0]),
+				&(button->background_colour[1]), &(button->background_colour[2]),
+				&(button->background_colour[3])))
+	{
+		fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
+				"INFO: Colour codes are expected to be in the "
+				"format #RRGGBBAA or #RRGGBB\n", arg);
+		return false;
+	}
+	button->background_colour_hex = (char *)arg;
+	return true;
+}
+
 struct Button_configs
 {
 	enum Button_config config;
 	const char *name;
 	bool (*set)(struct Lava_button*, const char*);
 } button_configs[BUTTON_CONFIG_ERROR] = {
-	{ .config = BUTTON_CONFIG_COMMAND,    .name = "command",    .set = button_set_command },
-	{ .config = BUTTON_CONFIG_IMAGE_PATH, .name = "image-path", .set = button_set_image_path },
+	{ .config = BUTTON_CONFIG_COMMAND,           .name = "command",           .set = button_set_command },
+	{ .config = BUTTON_CONFIG_IMAGE_PATH,        .name = "image-path",        .set = button_set_image_path },
+	{ .config = BUTTON_CONFIG_BACKGROUND_COLOUR, .name = "background-colour", .set = button_set_background_colour }
 };
 
 enum Button_config button_variable_from_string (const char *string)

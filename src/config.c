@@ -263,7 +263,7 @@ static bool config_set_cursor_name (struct Lava_data *data, const char *arg, con
 }
 
 /* Convert a hex colour string with or without alpha channel into RGBA floats. */
-static bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
+bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
 {
 	unsigned int r = 0, g = 0, b = 0, a = 255;
 

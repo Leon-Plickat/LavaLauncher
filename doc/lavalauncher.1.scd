@@ -164,6 +164,10 @@ this context are as follows.
 	The path to a PNG image file, which will be used as the icon of the
 	button. It is recommended to use square images.
 
+*background-colour*
+	The background colour of the individual button. This overrides the
+	global background colour.
+
 ## SPACER
 Every "spacer" context will add a spacer to the bar. This context is nested
 inside the "items" context. The assignments possible in this context are as

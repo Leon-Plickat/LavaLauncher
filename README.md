@@ -17,8 +17,8 @@ rotating your screen, sending your cat an email, playing a funny sound, muting
 all audio, toggling your lamps, etc. You can turn practically anything you could
 do in your shell into a button.
 
-LavaLauncher is opinionated, yet remains configurable. The configuration is done
-entirely via command flags. See the manpage for details and an example.
+LavaLauncher is opinionated, yet remains configurable. The configuration syntax
+is documented in the man page.
 
 LavaLauncher has been successfully tested with [sway](https://github.com/swaywm/sway)
 and [wayfire](https://github.com/WayfireWM/wayfire).
@@ -65,24 +65,6 @@ LavaLauncher is licensed under the GPLv3.
 
 The contents of the `protocol` directory are licensed differently.  See the
 header of the files for more information.
-
-
-## TODO
-
-* Include a simple clock widget (with a simple built-in numbers-only font).
-* Execute commands when swiping over the bar. One command for each direction,
-  up, right, bottom and left. These could be set with a single command for all
-  four side. These would to be implemented for the entire bar, as individual
-  buttons are to small. This feature is of special interest for phone/tablet
-  like devices, where users could use it to open an android like application
-  drawer by swiping up on the bar.
-* Test touch support.
-* Add support for other input methods, like drawing tablets
-* Speed up drawing, either by using something other than cairo for the icons or
-  by drawing icons to a subsurface.
-* Different background for button the pointer hovers over. This likely requires
-  speeding up of the drawing code.
-* clone() instead of fork()?
 
 
 ## Authors

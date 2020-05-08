@@ -122,29 +122,22 @@ static bool button_set_background_colour (struct Lava_button *button, const char
 
 struct Button_configs
 {
-	enum Button_config config;
-	const char *name;
+	const char *variable;
 	bool (*set)(struct Lava_button*, const char*);
-} button_configs[BUTTON_CONFIG_ERROR] = {
-	{ .config = BUTTON_CONFIG_COMMAND,           .name = "command",           .set = button_set_command },
-	{ .config = BUTTON_CONFIG_IMAGE_PATH,        .name = "image-path",        .set = button_set_image_path },
-	{ .config = BUTTON_CONFIG_BACKGROUND_COLOUR, .name = "background-colour", .set = button_set_background_colour }
+} button_configs[] = {
+	{ .variable = "command",           .set = button_set_command },
+	{ .variable = "image-path",        .set = button_set_image_path },
+	{ .variable = "background-colour", .set = button_set_background_colour }
 };
 
-enum Button_config button_variable_from_string (const char *string)
+bool button_set_variable (struct Lava_data *data, const char *variable,
+		const char *value, int line)
 {
-	for (int i = 0; i < BUTTON_CONFIG_ERROR; i++)
-		if (! strcmp(string, button_configs[i].name))
-			return button_configs[i].config;
-	return BUTTON_CONFIG_ERROR;
-}
-
-bool button_value_from_string (struct Lava_data *data, enum Button_config config,
-		const char *string)
-{
-	for (int i = 0; i < BUTTON_CONFIG_ERROR; i++)
-		if ( button_configs[i].config == config )
-			return button_configs[i].set(data->last_button, string);
+	for (unsigned int i = 0; i < (sizeof(button_configs) / sizeof(button_configs[0])); i++)
+		if (! strcmp(button_configs[i].variable, variable))
+			return button_configs[i].set(data->last_button, value);
+	fprintf(stderr, "ERROR: Unrecognized button setting \"%s\": "
+			"line=%d\n", variable, line);
 	return false;
 }
 
@@ -181,27 +174,20 @@ static bool spacer_set_length (struct Lava_button *button, const char *length)
 
 struct Spacer_configs
 {
-	enum Spacer_config config;
-	const char *name;
+	const char *variable;
 	bool (*set)(struct Lava_button*, const char*);
-} spacer_configs[SPACER_CONFIG_ERROR] = {
-	{ .config = SPACER_CONFIG_LENGTH, .name = "length", .set = spacer_set_length }
+} spacer_configs[] = {
+	{ .variable = "length", .set = spacer_set_length }
 };
 
-enum Spacer_config spacer_variable_from_string (const char *string)
+bool spacer_set_variable (struct Lava_data *data, const char *variable,
+		const char *value, int line)
 {
-	for (int i = 0; i < SPACER_CONFIG_ERROR; i++)
-		if (! strcmp(string, spacer_configs[i].name))
-			return spacer_configs[i].config;
-	return SPACER_CONFIG_ERROR;
-}
-
-bool spacer_value_from_string (struct Lava_data *data, enum Spacer_config config,
-		const char *string)
-{
-	for (int i = 0; i < SPACER_CONFIG_ERROR; i++)
-		if ( spacer_configs[i].config == config )
-			return spacer_configs[i].set(data->last_button, string);
+	for (unsigned int i = 0; i < (sizeof(spacer_configs) / sizeof(spacer_configs[0])); i++)
+		if (! strcmp(spacer_configs[i].variable, variable))
+			return spacer_configs[i].set(data->last_button, value);
+	fprintf(stderr, "ERROR: Unrecognized spacer setting \"%s\": "
+			"line=%d\n", variable, line);
 	return false;
 }
 

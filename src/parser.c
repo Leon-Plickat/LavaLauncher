@@ -217,8 +217,8 @@ static void parser_get_string (struct Lava_parser *parser)
 		parser->buffer_length++;
 		parser->buffer[parser->buffer_length] = '\0';
 	}
-
 seek:
+	parser->buffer[1024-1] = '\0'; /* Overflow protection. */
 	fseek(parser->file, -1, SEEK_CUR);
 	return;
 }
@@ -236,89 +236,49 @@ static bool parser_get_quoted_string (struct Lava_parser *parser)
 			return false;
 		}
 		else if ( ch == '"' )
+		{
+			parser->buffer[1024-1] = '\0'; /* Overflow protection. */
 			return true;
+		}
 		parser->buffer[parser->buffer_length] = ch;
 		parser->buffer_length++;
 		parser->buffer[parser->buffer_length] = '\0';
 	}
 }
 
-/* Handle string inside settings context. */
 static bool parser_handle_settings (struct Lava_parser *parser)
 {
-	if ( parser->action == ACTION_NONE ) /* What variable to change? */
+	if ( parser->action == ACTION_NONE )
 	{
-		parser->global_config = config_variable_from_string(parser->buffer);
-		if ( parser->global_config == CONFIG_ERROR )
-		{
-			fprintf(stderr, "ERROR: Unrecognized setting \"%s\": "
-					"line=%d\n", parser->buffer, parser->line);
-			return false;
-		}
+		strncpy(parser->buffer_2, parser->buffer, 1024-1);
+		parser->buffer_2_length = parser->buffer_length;
 		parser->action = ACTION_ASSIGN;
+		return true;
 	}
-	else if ( parser->action == ACTION_ASSIGN ) /* What is the new value? */
+	else if ( parser->action == ACTION_ASSIGN )
 	{
-		if (! config_value_from_string(parser->data,
-					parser->global_config, parser->buffer))
-			return false;
 		parser->action = ACTION_ASSIGNED;
-	}
-	else
-		return false;
-	return true;
-}
+		switch (parser->context)
+		{
+			case CONTEXT_SETTINGS:
+				return config_set_variable(parser->data,
+						parser->buffer_2, parser->buffer,
+						parser->line);
 
-/* Handle string inside button context. */
-static bool parser_handle_button (struct Lava_parser *parser)
-{
-	if ( parser->action == ACTION_NONE ) /* What variable to change? */
-	{
-		parser->button_config = button_variable_from_string(parser->buffer);
-		if ( parser->button_config == BUTTON_CONFIG_ERROR )
-		{
-			fprintf(stderr, "ERROR: Unrecognized button setting \"%s\": "
-					"line=%d\n", parser->buffer, parser->line);
-			return false;
-		}
-		parser->action = ACTION_ASSIGN;
-	}
-	else if ( parser->action == ACTION_ASSIGN ) /* What is the new value? */
-	{
-		if (! button_value_from_string(parser->data,
-					parser->button_config, parser->buffer))
-			return false;
-		parser->action = ACTION_ASSIGNED;
-	}
-	else
-		return false;
-	return true;
-}
+			case CONTEXT_BUTTON:
+				return button_set_variable(parser->data,
+						parser->buffer_2, parser->buffer,
+						parser->line);
 
-/* Handle string inside spacer context. */
-static bool parser_handle_spacer (struct Lava_parser *parser)
-{
-	if ( parser->action == ACTION_NONE ) /* What variable to change? */
-	{
-		parser->spacer_config = spacer_variable_from_string(parser->buffer);
-		if ( parser->spacer_config == SPACER_CONFIG_ERROR )
-		{
-			fprintf(stderr, "ERROR: Unrecognized spacer setting \"%s\": "
-					"line=%d\n", parser->buffer, parser->line);
-			return false;
+			case CONTEXT_SPACER:
+				return spacer_set_variable(parser->data,
+						parser->buffer_2, parser->buffer,
+						parser->line);
+			default:
+				break;
 		}
-		parser->action = ACTION_ASSIGN;
 	}
-	else if ( parser->action == ACTION_ASSIGN ) /* What is the new value? */
-	{
-		if (! spacer_value_from_string(parser->data,
-					parser->spacer_config, parser->buffer))
-			return false;
-		parser->action = ACTION_ASSIGNED;
-	}
-	else
-		return false;
-	return true;
+	return false;
 }
 
 static bool parser_handle_string (struct Lava_parser *parser)
@@ -338,11 +298,9 @@ static bool parser_handle_string (struct Lava_parser *parser)
 			return true;
 
 		case CONTEXT_SETTINGS:
-			return parser_handle_settings(parser);
 		case CONTEXT_BUTTON:
-			return parser_handle_button(parser);
 		case CONTEXT_SPACER:
-			return parser_handle_spacer(parser);
+			return parser_handle_settings(parser);
 
 		case CONTEXT_SETTINGS_PRE:
 		case CONTEXT_ITEMS_PRE:

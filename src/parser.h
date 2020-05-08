@@ -20,8 +20,6 @@
 #ifndef LAVALAUNCHER_PARSER_H
 #define LAVALAUNCHER_PARSER_H
 
-#include"button.h"
-
 struct Lava_data;
 struct Lava_button;
 
@@ -62,12 +60,11 @@ struct Lava_parser
 
 	enum Parser_context context;
 	enum Parser_action  action;
-	enum Lava_config    global_config;
-	enum Button_config  button_config;
-	enum Spacer_config  spacer_config;
 
 	char buffer[1024];
 	size_t buffer_length;
+	char buffer_2[1024];
+	size_t buffer_2_length;
 
 	/* The button whichs config is currently read. */
 	struct Lava_button *button;

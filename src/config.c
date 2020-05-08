@@ -372,46 +372,39 @@ static bool config_set_effect_padding (struct Lava_data *data, const char *arg, 
 
 struct Configs
 {
-	enum Lava_config config;
-	const char *name, direction;
+	const char *variable, direction;
 	bool (*set)(struct Lava_data*, const char*, const char);
-} configs[CONFIG_ERROR] = {
-	{ .config = CONFIG_POSITION,       .name = "position",          .set = config_set_position,       .direction = '0'},
-	{ .config = CONFIG_ALIGNMENT,      .name = "alignment",         .set = config_set_alignment,      .direction = '0'},
-	{ .config = CONFIG_MODE,           .name = "mode",              .set = config_set_mode,           .direction = '0'},
-	{ .config = CONFIG_LAYER,          .name = "layer",             .set = config_set_layer,          .direction = '0'},
-	{ .config = CONFIG_ICON_SIZE,      .name = "icon-size",         .set = config_set_icon_size,      .direction = '0'},
-	{ .config = CONFIG_BORDER_TOP,     .name = "border-top",        .set = config_set_border_size,    .direction = 't'},
-	{ .config = CONFIG_BORDER_RIGHT,   .name = "border-right",      .set = config_set_border_size,    .direction = 'r'},
-	{ .config = CONFIG_BORDER_BOTTOM,  .name = "border-bottom",     .set = config_set_border_size,    .direction = 'b'},
-	{ .config = CONFIG_BORDER_LEFT,    .name = "border-left",       .set = config_set_border_size,    .direction = 'l'},
-	{ .config = CONFIG_MARGIN_TOP,     .name = "margin-top",        .set = config_set_margin_size,    .direction = 't'},
-	{ .config = CONFIG_MARGIN_RIGHT,   .name = "margin-right",      .set = config_set_margin_size,    .direction = 'r'},
-	{ .config = CONFIG_MARGIN_BOTTOM,  .name = "margin-bottom",     .set = config_set_margin_size,    .direction = 'b'},
-	{ .config = CONFIG_MARGIN_LEFT,    .name = "margin-left",       .set = config_set_margin_size,    .direction = 'l'},
-	{ .config = CONFIG_ONLY_OUTPUT,    .name = "output",            .set = config_set_only_output,    .direction = '0'},
-	{ .config = CONFIG_EXCLUSIVE_ZONE, .name = "exclusive-zone",    .set = config_set_exclusive_zone, .direction = '0'},
-	{ .config = CONFIG_CURSOR_NAME,    .name = "cursor-name",       .set = config_set_cursor_name,    .direction = '0'},
-	{ .config = CONFIG_BAR_COLOUR,     .name = "background-colour", .set = config_set_bar_colour,     .direction = '0'},
-	{ .config = CONFIG_BORDER_COLOUR,  .name = "border-colour",     .set = config_set_border_colour,  .direction = '0'},
-	{ .config = CONFIG_EFFECT_COLOUR,  .name = "effect-colour",     .set = config_set_effect_colour,  .direction = '0'},
-	{ .config = CONFIG_EFFECT,         .name = "effect",            .set = config_set_effect,         .direction = '0'},
-	{ .config = CONFIG_EFFECT_PADDING, .name = "effect-padding",    .set = config_set_effect_padding, .direction = '0'}
+} configs[] = {
+	{ .variable = "position",          .set = config_set_position,       .direction = '0'},
+	{ .variable = "alignment",         .set = config_set_alignment,      .direction = '0'},
+	{ .variable = "mode",              .set = config_set_mode,           .direction = '0'},
+	{ .variable = "layer",             .set = config_set_layer,          .direction = '0'},
+	{ .variable = "icon-size",         .set = config_set_icon_size,      .direction = '0'},
+	{ .variable = "border-top",        .set = config_set_border_size,    .direction = 't'},
+	{ .variable = "border-right",      .set = config_set_border_size,    .direction = 'r'},
+	{ .variable = "border-bottom",     .set = config_set_border_size,    .direction = 'b'},
+	{ .variable = "border-left",       .set = config_set_border_size,    .direction = 'l'},
+	{ .variable = "margin-top",        .set = config_set_margin_size,    .direction = 't'},
+	{ .variable = "margin-right",      .set = config_set_margin_size,    .direction = 'r'},
+	{ .variable = "margin-bottom",     .set = config_set_margin_size,    .direction = 'b'},
+	{ .variable = "margin-left",       .set = config_set_margin_size,    .direction = 'l'},
+	{ .variable = "output",            .set = config_set_only_output,    .direction = '0'},
+	{ .variable = "exclusive-zone",    .set = config_set_exclusive_zone, .direction = '0'},
+	{ .variable = "cursor-name",       .set = config_set_cursor_name,    .direction = '0'},
+	{ .variable = "background-colour", .set = config_set_bar_colour,     .direction = '0'},
+	{ .variable = "border-colour",     .set = config_set_border_colour,  .direction = '0'},
+	{ .variable = "effect-colour",     .set = config_set_effect_colour,  .direction = '0'},
+	{ .variable = "effect",            .set = config_set_effect,         .direction = '0'},
+	{ .variable = "effect-padding",    .set = config_set_effect_padding, .direction = '0'}
 };
 
-enum Lava_config config_variable_from_string (const char *string)
+bool config_set_variable (struct Lava_data *data, const char *variable,
+		const char *value, int line)
 {
-	for (int i = 0; i < CONFIG_ERROR; i++)
-		if (! strcmp(string, configs[i].name))
-			return configs[i].config;
-	return CONFIG_ERROR;
-}
-
-bool config_value_from_string (struct Lava_data *data, enum Lava_config config,
-		const char *string)
-{
-	for (int i = 0; i < CONFIG_ERROR; i++)
-		if ( configs[i].config == config )
-			return configs[i].set(data, string, configs[i].direction);
+	for (unsigned int i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
+		if (! strcmp(configs[i].variable, variable))
+			return configs[i].set(data, value, configs[i].direction);
+	fprintf(stderr, "ERROR: Unrecognized setting \"%s\": "
+			"line=%d\n", variable, line);
 	return false;
 }

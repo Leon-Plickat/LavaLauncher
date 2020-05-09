@@ -38,7 +38,6 @@
 #include"lavalauncher.h"
 #include"config.h"
 #include"registry.h"
-#include"cursor.h"
 #include"button.h"
 #include"parser.h"
 
@@ -128,19 +127,16 @@ static void calculate_dimensions (struct Lava_data *data)
 
 int main (int argc, char *argv[])
 {
-	/* This struct holds all the global data. */
+	/* This struct holds the global data. Here we quickly initialise it with
+	 * everything we need for early startup, before the configuration
+	 * options are populated
+	 */
 	struct Lava_data data = {
-		.ret  = EXIT_SUCCESS,
-		.loop = true
+		.ret     = EXIT_FAILURE,
+		.loop    = true,
+		.verbose = false
 	};
 	char *config_path = NULL;
-
-	wl_list_init(&(data.buttons));
-	wl_list_init(&(data.outputs));
-	wl_list_init(&(data.seats));
-
-	/* Sensible configuration defaults. */
-	sensible_defaults(&data);
 
 	/* Parse command flags. */
 	extern int optind;
@@ -149,9 +145,7 @@ int main (int argc, char *argv[])
 		switch (c)
 		{
 			case 'c':
-				if ( config_path != NULL )
-					free(config_path);
-				config_path = strdup(optarg);
+				config_path = optarg;
 				break;
 
 			case 'h':
@@ -166,16 +160,32 @@ int main (int argc, char *argv[])
 				return EXIT_FAILURE;
 		}
 
-	/* There is no default configuration file. */
+	/* There is no default configuration file, meaning the user providing
+	 * the path to one is mandatory.
+	 */
 	if ( config_path == NULL)
 	{
 		fputs("You need to provide the path to a config file.\n", stderr);
 		return EXIT_FAILURE;
 	}
 
-	if (! parse_config(&data, config_path) || ! init_buttons(&data) )
-		goto exit;
+	/* Initialise the rest of the data struct with sensible configuration
+	 * defaults.
+	 */
+	config_sensible_defaults(&data);
+	wl_list_init(&(data.buttons));
 
+	/* When either reading the configuration file or initialising the
+	 * buttons fails, we already have heap objects and possibly buttons that
+	 * need to be freed.
+	 */
+	if (! (parse_config_file(&data, config_path) && init_buttons(&data)))
+		goto early_exit;
+
+	/* Now we have the amount of items to be displayed on the bar as well as
+	 * the icon size and other settings, so we can calculate what size the
+	 * visible part of the bar will have.
+	 */
 	calculate_dimensions(&data);
 
 	if (data.verbose)
@@ -186,18 +196,16 @@ int main (int argc, char *argv[])
 	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);
 
-	if ( init_wayland(&data) && init_cursor(&data) )
+	/* At this point we can finally connect to the Wayland server. */
+	if (init_wayland(&data))
+	{
+		data.ret = EXIT_SUCCESS;
 		main_loop(&data);
-	else
-		data.ret = EXIT_FAILURE;
+	}
 
-exit:
-	if ( data.only_output != NULL )
-		free(data.only_output);
-	if ( data.cursor.name != NULL )
-		free(data.cursor.name);
-	destroy_buttons(&data);
-	finish_cursor(&data);
 	finish_wayland(&data);
+early_exit:
+	config_free_settings(&data);
+	destroy_buttons(&data);
 	return data.ret;
 }

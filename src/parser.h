@@ -70,6 +70,6 @@ struct Lava_parser
 	struct Lava_button *button;
 };
 
-bool parse_config (struct Lava_data *data, const char *config_path);
+bool parse_config_file (struct Lava_data *data, const char *config_path);
 
 #endif

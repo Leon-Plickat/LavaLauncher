@@ -33,7 +33,7 @@
 #include"lavalauncher.h"
 #include"config.h"
 
-void sensible_defaults (struct Lava_data *data)
+void config_sensible_defaults (struct Lava_data *data)
 {
 	data->position          = POSITION_BOTTOM;
 	data->alignment         = ALIGNMENT_CENTER;
@@ -50,7 +50,6 @@ void sensible_defaults (struct Lava_data *data)
 	data->margin_bottom     = 0;
 	data->margin_left       = 0;
 
-	data->verbose           = false;
 	data->only_output       = NULL;
 	data->exclusive_zone    = 1;
 
@@ -76,6 +75,17 @@ void sensible_defaults (struct Lava_data *data)
 
 	data->effect            = EFFECT_NONE;
 	data->effect_padding    = 5;
+}
+
+/* Free all heap object created by config. */
+void config_free_settings (struct Lava_data *data)
+{
+	if (data->verbose)
+		fputs("Freeing configuration.\n", stderr);
+	if ( data->only_output != NULL )
+		free(data->only_output);
+	if ( data->cursor.name != NULL )
+		free(data->cursor.name);
 }
 
 static bool config_set_position (struct Lava_data *data, const char *arg, const char direction)

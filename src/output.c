@@ -293,6 +293,8 @@ void destroy_output (struct Lava_output *output)
 
 void destroy_all_outputs (struct Lava_data *data)
 {
+	if (data->verbose)
+		fputs("Destroying outputs.\n", stderr);
 	struct Lava_output *op_1, *op_2;
 	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
 		destroy_output(op_1);

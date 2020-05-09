@@ -42,9 +42,12 @@ static bool parser_get_char (struct Lava_parser *parser, char *ch)
 	{
 		case EOF:
 			if ( errno != 0 )
+			{
 				fprintf(stderr, "ERROR: fgetc: %s\n", strerror(errno));
+				return false;
+			}
 			*ch = '\0';
-			return false;
+			break;
 
 		case '\n':
 			parser->line++;
@@ -180,7 +183,6 @@ static bool parser_is_waiting_for_bracket (struct Lava_parser *parser, const cha
 		return false;
 }
 
-/* Handle brackets. { } */
 static bool parser_handle_bracket (struct Lava_parser *parser, const char ch)
 {
 	if (! parser_is_waiting_for_bracket(parser, ch))
@@ -198,14 +200,28 @@ static bool parser_handle_bracket (struct Lava_parser *parser, const char ch)
 	return true;
 }
 
-static void parser_get_string (struct Lava_parser *parser)
+static bool parser_handle_semicolon (struct Lava_parser *parser, const char ch)
+{
+	if ( parser->action != ACTION_ASSIGNED )
+	{
+		fprintf(stderr, "ERROR: Unexpected ';' in config file: line=%d\n",
+				parser->line);
+		return false;
+	}
+	parser->action = ACTION_NONE;
+	return true;
+}
+
+static bool parser_get_unquoted_string (struct Lava_parser *parser)
 {
 	parser->buffer[0]     = parser->last_char;
 	parser->buffer[1]     = '\0';
 	parser->buffer_length = 1;
+
 	for (char ch;;)
 	{
-		parser_get_char(parser, &ch);
+		if (! parser_get_char(parser, &ch))
+			return false;
 		if ( ch == '\n' )
 		{
 			parser->line--;
@@ -217,35 +233,59 @@ static void parser_get_string (struct Lava_parser *parser)
 		parser->buffer_length++;
 		parser->buffer[parser->buffer_length] = '\0';
 	}
+
 seek:
 	parser->buffer[1024-1] = '\0'; /* Overflow protection. */
 	fseek(parser->file, -1, SEEK_CUR);
-	return;
+	return true;;
 }
 
 static bool parser_get_quoted_string (struct Lava_parser *parser)
 {
+	/* This is a simple but effective protection against the case were no
+	 * chars are between the quotes.
+	 */
 	parser->buffer_length = 0;
+	parser->buffer[0] = '\0';
+
 	for (char ch;;)
 	{
-		parser_get_char(parser, &ch);
-		if ( ch == '\0' || ch == '\n' )
-		{
-			fprintf(stderr, "ERROR: Unterminated quoted string: line=%d\n",
-					parser->line);
+		if (! parser_get_char(parser, &ch))
 			return false;
-		}
+		if ( ch == '\0' )
+			goto error;
+		else if ( ch == '\n' )
+			goto error_on_prev_line;
 		else if ( ch == '"' )
 		{
-			parser->buffer[1024-1] = '\0'; /* Overflow protection. */
+			/* Overflow protection. */
+			parser->buffer[1024-1] = '\0';
 			return true;
 		}
 		parser->buffer[parser->buffer_length] = ch;
 		parser->buffer_length++;
 		parser->buffer[parser->buffer_length] = '\0';
 	}
+
+error_on_prev_line:
+	parser->line--;
+error:
+	fprintf(stderr, "ERROR: Unterminated quoted string: line=%d\n",
+			parser->line);
+	return false;
 }
 
+static bool parser_get_string (struct Lava_parser *parser, const char ch)
+{
+	if ( ch == '"' )
+		return parser_get_quoted_string(parser);
+	else
+		return parser_get_unquoted_string(parser);
+}
+
+/* Handle a string which is part of an assign-operation. The string could be
+ * either value or variable (tracked in parser->action) in one of three contexts.
+ */
 static bool parser_handle_settings (struct Lava_parser *parser)
 {
 	if ( parser->action == ACTION_NONE )
@@ -337,65 +377,36 @@ bool parse_config_file (struct Lava_data *data, const char *config_path)
 	bool ret = true;
 	for(char ch;;)
 	{
-		parser_get_char(&parser, &ch);
+		if (! parser_get_char(&parser, &ch))
+		{
+			ret = false;
+			goto exit;
+		}
 
 		/* We have to check both the current read char as well as the
-		 * last one, as parser_ignore_line() can encounter a EOF but
+		 * last one, as parser_ignore_line() can encounter an EOF but
 		 * does not handle it.
 		 */
-		if ( parser.last_char == '\0' || ch == '\0' ) /* Handle EOF. */
+		if ( parser.last_char == '\0' || ch == '\0' )
 		{
 			ret = parser_handle_eof(&parser);
 			goto exit;
 		}
-		else if ( ch == '#' ) /* Skip comments. */
-		{
-			if (! parser_ignore_line(&parser))
-			{
-				ret = false;
-				goto exit;
-			}
-		}
-		else if (isspace(ch)) /* Skip whitespace. */
+		else if ( ch == '#' )
+			ret = parser_ignore_line(&parser);
+		else if (isspace(ch))
 			continue;
-		else if ( ch == '{' || ch == '}' ) /* Handle brackets. */
-		{
-			if (! parser_handle_bracket(&parser, ch))
-			{
-				ret = false;
-				goto exit;
-			}
-		}
+		else if ( ch == '{' || ch == '}' )
+			ret = parser_handle_bracket(&parser, ch);
 		else if ( ch == ';' )
-		{
-			if ( parser.action != ACTION_ASSIGNED )
-			{
-				fprintf(stderr, "ERROR: Unexpected ';' in config file: line=%d\n",
-						parser.line);
-				ret = false;
-				goto exit;
-			}
-			parser.action = ACTION_NONE;
-		}
-		else /* Parse commands. */
-		{
-			if ( ch == '\"' )
-			{
-				if (! parser_get_quoted_string(&parser))
-				{
-					ret = false;
-					goto exit;
-				}
-			}
-			else
-				parser_get_string(&parser);
+			ret = parser_handle_semicolon(&parser, ch);
+		else
+			ret = (parser_get_string(&parser, ch)
+					&& parser_handle_string(&parser));
 
-			if (! parser_handle_string(&parser))
-			{
-				ret = false;
-				goto exit;
-			}
-		}
+		/* If an error occurred, exit. */
+		if (! ret)
+			goto exit;
 	}
 
 exit:

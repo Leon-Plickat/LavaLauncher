@@ -172,9 +172,8 @@ bool configure_output (struct Lava_data *data, struct Lava_output *output)
 				output->global_name);
 
 	/* Create xdg_output and attach listeners. */
-	output->xdg_output = zxdg_output_manager_v1_get_xdg_output(
-			data->xdg_output_manager, output->wl_output);
-	if ( output->xdg_output == NULL )
+	if ( NULL == (output->xdg_output = zxdg_output_manager_v1_get_xdg_output(
+					data->xdg_output_manager, output->wl_output)) )
 	{
 		fputs("ERROR: Could not get XDG output.\n", stderr);
 		return false;
@@ -267,7 +266,8 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	return true;
 }
 
-struct Lava_output *get_output_from_global_name (struct Lava_data *data, uint32_t name)
+struct Lava_output *get_output_from_global_name (struct Lava_data *data,
+		uint32_t name)
 {
 	struct Lava_output *op_1, *op_2;
 	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)

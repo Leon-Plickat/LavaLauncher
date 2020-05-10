@@ -199,17 +199,15 @@ bool create_bar (struct Lava_data *data, struct Lava_output *output)
 	if (data->verbose)
 		fputs("Creating bar.\n", stderr);
 
-	output->wl_surface = wl_compositor_create_surface(data->compositor);
-	if ( output->wl_surface == NULL )
+	if ( NULL == (output->wl_surface = wl_compositor_create_surface(data->compositor)) )
 	{
 		fputs("ERROR: Compositor did not create wl_surface.\n", stderr);
 		return false;
 	}
 
-	output->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-			data->layer_shell, output->wl_surface,
-			output->wl_output, data->layer, "LavaLauncher");
-	if ( output->layer_surface == NULL )
+	if ( NULL == (output->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
+					data->layer_shell, output->wl_surface,
+					output->wl_output, data->layer, "LavaLauncher")) )
 	{
 		fputs("ERROR: Compositor did not create layer_surface.\n", stderr);
 		return false;

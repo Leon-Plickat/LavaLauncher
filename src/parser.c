@@ -43,7 +43,8 @@ static bool parser_get_char (struct Lava_parser *parser, char *ch)
 		case EOF:
 			if ( errno != 0 )
 			{
-				fprintf(stderr, "ERROR: fgetc: %s\n", strerror(errno));
+				fprintf(stderr, "ERROR: fgetc: %s\n",
+						strerror(errno));
 				return false;
 			}
 			*ch = '\0';
@@ -150,7 +151,8 @@ static void parser_leave_context (struct Lava_parser *parser)
 }
 
 /* Check if the parser is currently waiting for a bracket. { } */
-static bool parser_is_waiting_for_bracket (struct Lava_parser *parser, const char bracket)
+static bool parser_is_waiting_for_bracket (struct Lava_parser *parser,
+		const char bracket)
 {
 	if ( parser->action != ACTION_NONE )
 		return false;
@@ -361,13 +363,13 @@ bool parse_config_file (struct Lava_data *data, const char *config_path)
 	errno = 0;
 	struct Lava_parser parser = {
 		.data    = data,
-		.file    = fopen(config_path, "r"),
+		.file    = NULL,
 		.line    = 1,
 		.column  = 0,
 		.context = CONTEXT_NONE,
 		.action  = ACTION_NONE
 	};
-	if ( parser.file == NULL )
+	if ( NULL == (parser.file = fopen(config_path, "r")) )
 	{
 		fprintf(stderr, "ERROR: Can not open config file.\n"
 				"ERROR: fopen: %s\n", strerror(errno));

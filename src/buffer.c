@@ -48,7 +48,9 @@ static void randomize_string (char *str, size_t len)
 	}
 }
 
-/* Tries to create a shared memory object and returns its file descriptor if successful. */
+/* Tries to create a shared memory object and returns its file descriptor if
+ * successful.
+ */
 static bool get_shm_fd (int *fd, size_t size)
 {
 	char name[] = "/lavalauncher-RANDOM";
@@ -67,7 +69,7 @@ static bool get_shm_fd (int *fd, size_t size)
 		 * memory object already exists.
 		 */
 		errno = 0;
-		*fd = shm_open(name, O_RDWR | O_CREAT | O_EXCL, 0600);
+		*fd   = shm_open(name, O_RDWR | O_CREAT | O_EXCL, 0600);
 
 		/* If a shared memory object was created, set its size and
 		 * return its file descriptor.
@@ -83,8 +85,8 @@ static bool get_shm_fd (int *fd, size_t size)
 			return true;
 		}
 
-		/* The EEXIST error means that the name is not unique and we must
-		 * try again.
+		/* The EEXIST error means that the name is not unique and we
+		 * must try again.
 		 */
 		if ( errno != EEXIST )
 		{
@@ -99,7 +101,7 @@ static bool get_shm_fd (int *fd, size_t size)
 static void buffer_handle_release (void *data, struct wl_buffer *wl_buffer)
 {
 	struct Lava_buffer *buffer = (struct Lava_buffer *)data;
-	buffer->busy = false;
+	buffer->busy               = false;
 }
 
 static const struct wl_buffer_listener buffer_listener = {
@@ -132,9 +134,9 @@ static bool create_buffer (struct wl_shm *shm, struct Lava_buffer *buffer,
 		return false;
 
 	errno = 0;
-	buffer->memory_object = mmap(NULL, size,
-			PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	if ( buffer->memory_object == MAP_FAILED )
+	if ( MAP_FAILED == (buffer->memory_object = mmap(NULL, size,
+					PROT_READ | PROT_WRITE, MAP_SHARED,
+					fd, 0)) )
 	{
 		close(fd);
 		fprintf(stderr, "ERROR: mmap: %s\n", strerror(errno));
@@ -149,8 +151,8 @@ static bool create_buffer (struct wl_shm *shm, struct Lava_buffer *buffer,
 
 	close(fd);
 
-	buffer->surface = cairo_image_surface_create_for_data(buffer->memory_object,
-			cairo_fmt, w, h, stride);
+	buffer->surface = cairo_image_surface_create_for_data(
+		buffer->memory_object, cairo_fmt, w, h, stride);
 	buffer->cairo = cairo_create(buffer->surface);
 
 	return true;

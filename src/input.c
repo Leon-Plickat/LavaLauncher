@@ -188,13 +188,11 @@ static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
 	seat->touch.output = NULL;
 	struct Lava_output *op1, *op2;
 	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
-	{
 		if ( op1->wl_surface == surface )
 		{
 			seat->touch.output = op1;
 			break;
 		}
-	}
 
 	seat->touch.id     = id;
 	seat->touch.button = button_from_coords(seat->data, seat->touch.output,

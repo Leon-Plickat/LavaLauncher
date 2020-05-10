@@ -24,7 +24,8 @@
 
 void config_sensible_defaults (struct Lava_data *data);
 void config_free_settings (struct Lava_data *data);
-bool config_set_variable (struct Lava_data *data, const char *variable, const char *value, int line);
+bool config_set_variable (struct Lava_data *data, const char *variable,
+		const char *value, int line);
 bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a);
 
 #endif

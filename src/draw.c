@@ -62,10 +62,14 @@ static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
 			degrees = 3.1415927 / 180.0;
 
 			cairo_new_sub_path(cairo);
-			cairo_arc(cairo, x + size - radius, y + radius, radius, -90 * degrees, 0 * degrees);
-			cairo_arc(cairo, x + size - radius, y + size - radius, radius, 0 * degrees, 90 * degrees);
-			cairo_arc(cairo, x + radius, y + size - radius, radius, 90 * degrees, 180 * degrees);
-			cairo_arc(cairo, x + radius, y + radius, radius, 180 * degrees, 270 * degrees);
+			cairo_arc(cairo, x + size - radius, y + radius, radius,
+					-90 * degrees, 0 * degrees);
+			cairo_arc(cairo, x + size - radius, y + size - radius,
+					radius, 0 * degrees, 90 * degrees);
+			cairo_arc(cairo, x + radius, y + size - radius, radius,
+					90 * degrees, 180 * degrees);
+			cairo_arc(cairo, x + radius, y + radius, radius,
+					180 * degrees, 270 * degrees);
 			cairo_close_path(cairo);
 			break;
 
@@ -110,7 +114,6 @@ static void draw_buttons (cairo_t *cairo, struct Lava_data *data,
 
 	struct Lava_button *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
-	{
 		if ( bt_1->type == TYPE_BUTTON )
 		{
 			*increment = (bt_1->ordinate * scale) + *increment_offset;
@@ -121,7 +124,6 @@ static void draw_buttons (cairo_t *cairo, struct Lava_data *data,
 					data->effect_colour, data->effect);
 			draw_icon(cairo, x, y, size, bt_1->img);
 		}
-	}
 }
 
 /* Draw the bar background plus border. */

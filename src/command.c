@@ -37,7 +37,8 @@
  * integer (repl_i, when *repl_s == NULL).
  */
 // This likely sucks...
-static void replace_token (char **str, char *srch, char *repl_s, int repl_i, size_t size)
+static void replace_token (char **str, const char *srch, const char *repl_s,
+		const int repl_i, size_t size)
 {
 	char  buffer[STRING_BUFFER_SIZE+1]; /* Local editing buffer. */
 	char *p;                            /* Pointer to beginning of *srch. */
@@ -62,21 +63,32 @@ static void replace_token (char **str, char *srch, char *repl_s, int repl_i, siz
 static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
 		struct Lava_button *button, char *buffer)
 {
-	replace_token(&buffer, "%index%",         NULL,                    button->index,       STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%buttons%",       NULL,                    data->button_amount, STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%icon-size%",     NULL,                    data->icon_size,     STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%border-top%",    NULL,                    data->border_top,    STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%border-left%",   NULL,                    data->border_left,   STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%border-bottom%", NULL,                    data->border_bottom, STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%border-right%",  NULL,                    data->border_right,  STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%margin-top%",    NULL,                    data->margin_top,    STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%margin-right%",  NULL,                    data->margin_right,  STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%margin-bottom%", NULL,                    data->margin_bottom, STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%margin-left%",   NULL,                    data->margin_left,   STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%colour%",        data->bar_colour_hex,    0,                   STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%border-colour%", data->border_colour_hex, 0,                   STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%output%",        output->name,            0,                   STRING_BUFFER_SIZE);
-	replace_token(&buffer, "%scale%",         NULL,                    output->scale,       STRING_BUFFER_SIZE);
+	struct
+	{
+		const char *token;
+		const char *replacement_string;
+		const int   replacement_int;
+	} tokens[] = {
+		{ .token = "%index%",         .replacement_string = NULL,                    .replacement_int = button->index,       },
+		{ .token = "%buttons%",       .replacement_string = NULL,                    .replacement_int = data->button_amount, },
+		{ .token = "%icon-size%",     .replacement_string = NULL,                    .replacement_int = data->icon_size,     },
+		{ .token = "%border-top%",    .replacement_string = NULL,                    .replacement_int = data->border_top,    },
+		{ .token = "%border-left%",   .replacement_string = NULL,                    .replacement_int = data->border_left,   },
+		{ .token = "%border-bottom%", .replacement_string = NULL,                    .replacement_int = data->border_bottom, },
+		{ .token = "%border-right%",  .replacement_string = NULL,                    .replacement_int = data->border_right,  },
+		{ .token = "%margin-top%",    .replacement_string = NULL,                    .replacement_int = data->margin_top,    },
+		{ .token = "%margin-right%",  .replacement_string = NULL,                    .replacement_int = data->margin_right,  },
+		{ .token = "%margin-bottom%", .replacement_string = NULL,                    .replacement_int = data->margin_bottom, },
+		{ .token = "%margin-left%",   .replacement_string = NULL,                    .replacement_int = data->margin_left,   },
+		{ .token = "%colour%",        .replacement_string = data->bar_colour_hex,    .replacement_int = 0,                   },
+		{ .token = "%border-colour%", .replacement_string = data->border_colour_hex, .replacement_int = 0,                   },
+		{ .token = "%output%",        .replacement_string = output->name,            .replacement_int = 0,                   },
+		{ .token = "%scale%",         .replacement_string = NULL,                    .replacement_int = output->scale,       }
+	};
+	for (size_t i = 0; i < (sizeof(tokens) / sizeof(tokens[0])); i++)
+		replace_token(&buffer, tokens[i].token,
+				tokens[i].replacement_string,
+				tokens[i].replacement_int, STRING_BUFFER_SIZE);
 }
 
 static void exec_cmd (struct Lava_data *data, struct Lava_output *output,

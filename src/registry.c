@@ -111,7 +111,8 @@ static bool capability_test (void *ptr, const char *name)
 {
 	if ( ptr == NULL )
 	{
-		fprintf(stderr, "ERROR: Wayland compositor does not support %s.\n", name);
+		fprintf(stderr, "ERROR: Wayland compositor does not support %s.\n",
+				name);
 		return false;
 	}
 	return true;
@@ -130,8 +131,8 @@ bool init_wayland (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Connecting to server.\n", stderr);
 	const char *wayland_display = getenv("WAYLAND_DISPLAY");
-	data->display = wl_display_connect(wayland_display);
-	if ( data->display == NULL || wayland_display == NULL )
+	if ( wayland_display == NULL
+			|| NULL == (data->display = wl_display_connect(wayland_display)) )
 	{
 		fputs("ERROR: Can not connect to a Wayland server.\n", stderr);
 		return false;
@@ -140,8 +141,7 @@ bool init_wayland (struct Lava_data *data)
 	/* Get registry and add listeners. */
 	if (data->verbose)
 		fputs("Get wl_registry.\n", stderr);
-	data->registry = wl_display_get_registry(data->display);
-	if ( data->registry == NULL )
+	if ( NULL == (data->registry = wl_display_get_registry(data->display)) )
 	{
 		fputs("ERROR: Can not get registry.\n", stderr);
 		return false;

@@ -61,9 +61,11 @@ struct Lava_output
 	struct Lava_buffer *current_buffer;
 };
 
-bool create_output (struct Lava_data *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version);
+bool create_output (struct Lava_data *data, struct wl_registry *registry,
+		uint32_t name, const char *interface, uint32_t version);
 bool configure_output (struct Lava_data *data, struct Lava_output *output);
-struct Lava_output *get_output_from_global_name (struct Lava_data *data, uint32_t name);
+struct Lava_output *get_output_from_global_name (struct Lava_data *data,
+		uint32_t name);
 void destroy_output (struct Lava_output *output);
 void destroy_all_outputs (struct Lava_data *data);
 

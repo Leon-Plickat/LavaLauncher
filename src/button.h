@@ -40,13 +40,16 @@ struct Lava_button
 	char             *background_colour_hex;
 };
 
-struct Lava_button *button_from_coords (struct Lava_data *data, struct Lava_output *output, int32_t x, int32_t y);
+struct Lava_button *button_from_coords (struct Lava_data *data,
+		struct Lava_output *output, int32_t x, int32_t y);
 unsigned int get_button_length_sum (struct Lava_data *data);
 bool init_buttons (struct Lava_data *data);
 void destroy_buttons (struct Lava_data *data);
 bool create_button (struct Lava_data *data);
-bool button_set_variable (struct Lava_data *data, const char *variable, const char *value, int line);
+bool button_set_variable (struct Lava_data *data, const char *variable,
+		const char *value, int line);
 bool create_spacer (struct Lava_data *data);
-bool spacer_set_variable (struct Lava_data *data, const char *variable, const char *value, int line);
+bool spacer_set_variable (struct Lava_data *data, const char *variable,
+		const char *value, int line);
 
 #endif

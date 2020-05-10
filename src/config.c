@@ -88,7 +88,40 @@ void config_free_settings (struct Lava_data *data)
 		free(data->cursor.name);
 }
 
-static bool config_set_position (struct Lava_data *data, const char *arg, const char direction)
+/* Convert a hex colour string with or without alpha channel into RGBA floats. */
+bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
+{
+	if ( hex == NULL || *hex == '\0' || *hex == ' ' )
+		goto error;
+
+	unsigned int r = 0, g = 0, b = 0, a = 255;
+
+	if (! strcmp(hex, "transparent"))
+		r = g = b = a = 0;
+	else if (! strcmp(hex, "black"))
+		r = g = b = 0, a = 255;
+	else if (! strcmp(hex, "white"))
+		r = g = b = a = 255;
+	else if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a)
+			&& 3 != sscanf(hex, "#%02x%02x%02x", &r, &g, &b) )
+		goto error;
+
+	*c_r = r / 255.0f;
+	*c_g = g / 255.0f;
+	*c_b = b / 255.0f;
+	*c_a = a / 255.0f;
+
+	return true;
+
+error:
+	fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
+			"INFO: Colour codes are expected to be in the "
+			"format #RRGGBBAA or #RRGGBB\n", hex);
+	return false;
+}
+
+static bool config_set_position (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	if (! strcmp(arg, "top"))
 		data->position = POSITION_TOP;
@@ -106,11 +139,13 @@ static bool config_set_position (struct Lava_data *data, const char *arg, const 
 		return false;
 	}
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s\n", "position", arg);
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"position", arg);
 	return true;
 }
 
-static bool config_set_alignment (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_alignment (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	if (! strcmp(arg, "start"))
 		data->alignment = ALIGNMENT_START;
@@ -126,11 +161,13 @@ static bool config_set_alignment (struct Lava_data *data, const char *arg, const
 		return false;
 	}
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s\n", "alignment", arg);
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"alignment", arg);
 	return true;
 }
 
-static bool config_set_mode (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_mode (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	if (! strcmp(arg, "default"))
 		data->mode = MODE_DEFAULT;
@@ -150,7 +187,8 @@ static bool config_set_mode (struct Lava_data *data, const char *arg, const char
 	return true;
 }
 
-static bool config_set_layer (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_layer (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	if (! strcmp(arg, "overlay"))
 		data->layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
@@ -172,7 +210,8 @@ static bool config_set_layer (struct Lava_data *data, const char *arg, const cha
 	return true;
 }
 
-static bool config_set_icon_size (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_icon_size (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	// TODO check issdigit()
 	data->icon_size = atoi(arg);
@@ -182,16 +221,19 @@ static bool config_set_icon_size (struct Lava_data *data, const char *arg, const
 		return false;
 	}
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s\n", "icon-size", arg);
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"icon-size", arg);
 	return true;
 }
 
-static bool config_set_border_size (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_border_size (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	int size = atoi(arg);
 	if ( size < 0 )
 	{
-		fputs("ERROR: Border size must be equal to or greater than zero.\n", stderr);
+		fputs("ERROR: Border size must be equal to or greater than zero.\n",
+				stderr);
 		return false;
 	}
 
@@ -203,16 +245,19 @@ static bool config_set_border_size (struct Lava_data *data, const char *arg, con
 		case 'l': data->border_left   = size; break;
 	}
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s direction=%c\n", "border", arg, direction);
+		fprintf(stderr, "Config: setting=%s value=%s direction=%c\n",
+				"border", arg, direction);
 	return true;
 }
 
-static bool config_set_margin_size (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_margin_size (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	int size = atoi(arg);
 	if ( size < 0 )
 	{
-		fputs("ERROR: Margin size must be equal to or greater than zero.\n", stderr);
+		fputs("ERROR: Margin size must be equal to or greater than zero.\n",
+				stderr);
 		return false;
 	}
 
@@ -224,26 +269,27 @@ static bool config_set_margin_size (struct Lava_data *data, const char *arg, con
 		case 'l': data->margin_left   = size; break;
 	}
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s direction=%c\n", "margin", arg, direction);
+		fprintf(stderr, "Config: setting=%s value=%s direction=%c\n",
+				"margin", arg, direction);
 	return true;
 }
 
-static bool config_set_only_output (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_only_output (struct Lava_data *data, const char *arg,
+		const char direction)
 {
+	if ( data->only_output != NULL )
+		free(data->only_output);
 	if ( ! strcmp(arg, "all") || *arg == '*' )
 		data->only_output = NULL;
 	else
-	{
-		if ( data->only_output != NULL )
-			free(data->only_output);
 		data->only_output = strdup(arg);
-	}
 	if (data->verbose)
 		fprintf(stderr, "Config: setting=%s value=%s\n", "output", arg);
 	return true;
 }
 
-static bool config_set_exclusive_zone (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_exclusive_zone (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	if (! strcmp(arg, "true"))
 		data->exclusive_zone = 1;
@@ -259,96 +305,64 @@ static bool config_set_exclusive_zone (struct Lava_data *data, const char *arg, 
 		return false;
 	}
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s\n", "exclusive-zone", arg);
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"exclusive-zone", arg);
 	return true;
 }
 
-static bool config_set_cursor_name (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_cursor_name (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	if ( data->cursor.name != NULL )
 		free(data->cursor.name);
 	data->cursor.name = strdup(arg);
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s\n", "cursor-name", arg);
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"cursor-name", arg);
 	return true;
 }
 
-/* Convert a hex colour string with or without alpha channel into RGBA floats. */
-bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
+static bool config_set_bar_colour (struct Lava_data *data, const char *arg,
+		const char direction)
 {
-	unsigned int r = 0, g = 0, b = 0, a = 255;
-
-	if (! strcmp(hex, "transparent"))
-		r = g = b = a = 0;
-	else if (! strcmp(hex, "black"))
-		r = g = b = 0, a = 255;
-	else if (! strcmp(hex, "white"))
-		r = g = b = a = 255;
-	else if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a)
-			&& 3 != sscanf(hex, "#%02x%02x%02x", &r, &g, &b) )
+	if (! hex_to_rgba(arg, &(data->bar_colour[0]), &(data->bar_colour[1]),
+				&(data->bar_colour[2]), &(data->bar_colour[3])))
 		return false;
-
-	*c_r = r / 255.0f;
-	*c_g = g / 255.0f;
-	*c_b = b / 255.0f;
-	*c_a = a / 255.0f;
-
-	return true;
-}
-
-static bool config_set_bar_colour (struct Lava_data *data, const char *arg, const char direction)
-{
-	if ( arg == NULL || *arg == '\0' || *arg == ' '
-			|| ! hex_to_rgba(arg, &(data->bar_colour[0]),
-				&(data->bar_colour[1]), &(data->bar_colour[2]),
-				&(data->bar_colour[3])))
-	{
-		fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
-				"INFO: Colour codes are expected to be in the "
-				"format #RRGGBBAA or #RRGGBB\n", arg);
-		return false;
-	}
 	data->bar_colour_hex = (char *)arg;
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s\n", "background-colour", arg);
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"background-colour", arg);
 	return true;
 }
 
-static bool config_set_border_colour (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_border_colour (struct Lava_data *data, const char *arg,
+		const char direction)
 {
-	if ( arg == NULL || *arg == '\0' || *arg == ' ' || !  hex_to_rgba(arg,
-				&(data->border_colour[0]), &(data->border_colour[1]),
+	if (!  hex_to_rgba(arg, &(data->border_colour[0]), &(data->border_colour[1]),
 				&(data->border_colour[2]), &(data->border_colour[3])))
-	{
-		fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
-				"INFO: Colour codes are expected to be in the "
-				"format #RRGGBBAA or #RRGGBB\n", arg);
 		return false;
-	}
 	data->border_colour_hex = (char *)arg;
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s\n", "border-colour", arg);
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"border-colour", arg);
 	return true;
 }
 
-static bool config_set_effect_colour (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_effect_colour (struct Lava_data *data, const char *arg,
+		const char direction)
 {
-	if ( arg == NULL || *arg == '\0' || *arg == ' ' || !  hex_to_rgba(arg,
-				&(data->effect_colour[0]), &(data->effect_colour[1]),
+	if (!  hex_to_rgba(arg, &(data->effect_colour[0]), &(data->effect_colour[1]),
 				&(data->effect_colour[2]), &(data->effect_colour[3])))
-	{
-		fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
-				"INFO: Colour codes are expected to be in the "
-				"format #RRGGBBAA or #RRGGBB\n", arg);
 		return false;
-	}
 	data->effect_colour_hex = (char *)arg;
 	if (data->verbose)
-		fprintf(stderr, "Config: setting=%s value=%s\n", "effect-colour", arg);
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"effect-colour", arg);
 	return true;
 }
 
-static bool config_set_effect (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_effect (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	if (! strcmp(arg, "none"))
 		data->effect = EFFECT_NONE;
@@ -368,7 +382,8 @@ static bool config_set_effect (struct Lava_data *data, const char *arg, const ch
 	return true;
 }
 
-static bool config_set_effect_padding (struct Lava_data *data, const char *arg, const char direction)
+static bool config_set_effect_padding (struct Lava_data *data, const char *arg,
+		const char direction)
 {
 	data->effect_padding = atoi(arg);
 	if ( data->effect_padding < 0 )
@@ -411,7 +426,7 @@ struct Configs
 bool config_set_variable (struct Lava_data *data, const char *variable,
 		const char *value, int line)
 {
-	for (unsigned int i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
+	for (size_t i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
 		if (! strcmp(configs[i].variable, variable))
 			return configs[i].set(data, value, configs[i].direction);
 	fprintf(stderr, "ERROR: Unrecognized setting \"%s\": "

@@ -55,8 +55,7 @@ bool init_cursor (struct Lava_data *data)
 {
 	if (data->verbose)
 		fputs("Loading cursor theme.\n", stderr);
-	data->cursor.theme = wl_cursor_theme_load(NULL, 16, data->shm);
-	if ( data->cursor.theme == NULL )
+	if ( NULL == (data->cursor.theme = wl_cursor_theme_load(NULL, 16, data->shm)) )
 	{
 		fputs("ERROR: Could not load cursor theme.\n", stderr);
 		return false;
@@ -86,8 +85,7 @@ bool init_cursor (struct Lava_data *data)
 
 	if (data->verbose)
 		fputs("Creating cursor surface.\n", stderr);
-	data->cursor.surface = wl_compositor_create_surface(data->compositor);
-	if ( data->cursor.surface == NULL )
+	if ( NULL == (data->cursor.surface = wl_compositor_create_surface(data->compositor)) )
 	{
 		fputs("ERROR: Could not create cursor surface.\n", stderr);
 		return false;

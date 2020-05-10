@@ -20,7 +20,8 @@
 #ifndef LAVALAUNCHER_CURSOR_H
 #define LAVALAUNCHER_CURSOR_H
 
-void attach_cursor_surface (struct Lava_data *data, struct wl_pointer *wl_pointer, uint32_t serial);
+void attach_cursor_surface (struct Lava_data *data, struct wl_pointer *wl_pointer,
+		uint32_t serial);
 bool init_cursor (struct Lava_data *data);
 void finish_cursor (struct Lava_data *data);
 

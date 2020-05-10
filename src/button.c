@@ -92,7 +92,7 @@ static bool button_set_image_path (struct Lava_button *button, const char *path)
 {
 	if ( button->img != NULL )
 		cairo_surface_destroy(button->img);
-	errno = 0;
+	errno       = 0;
 	button->img = cairo_image_surface_create_from_png(path);
 	if ( errno != 0 )
 	{
@@ -104,36 +104,32 @@ static bool button_set_image_path (struct Lava_button *button, const char *path)
 	return true;
 }
 
-static bool button_set_background_colour (struct Lava_button *button, const char *arg)
+static bool button_set_background_colour (struct Lava_button *button,
+		const char *arg)
 {
-	if ( arg == NULL || *arg == '\0' || *arg == ' '
-			|| ! hex_to_rgba(arg, &(button->background_colour[0]),
-				&(button->background_colour[1]), &(button->background_colour[2]),
+	if (! hex_to_rgba(arg, &(button->background_colour[0]),
+				&(button->background_colour[1]),
+				&(button->background_colour[2]),
 				&(button->background_colour[3])))
-	{
-		fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
-				"INFO: Colour codes are expected to be in the "
-				"format #RRGGBBAA or #RRGGBB\n", arg);
 		return false;
-	}
 	button->background_colour_hex = (char *)arg;
 	return true;
 }
 
-struct Button_configs
+struct
 {
 	const char *variable;
 	bool (*set)(struct Lava_button*, const char*);
 } button_configs[] = {
-	{ .variable = "command",           .set = button_set_command },
-	{ .variable = "image-path",        .set = button_set_image_path },
+	{ .variable = "command",           .set = button_set_command           },
+	{ .variable = "image-path",        .set = button_set_image_path        },
 	{ .variable = "background-colour", .set = button_set_background_colour }
 };
 
 bool button_set_variable (struct Lava_data *data, const char *variable,
 		const char *value, int line)
 {
-	for (unsigned int i = 0; i < (sizeof(button_configs) / sizeof(button_configs[0])); i++)
+	for (size_t i = 0; i < (sizeof(button_configs) / sizeof(button_configs[0])); i++)
 		if (! strcmp(button_configs[i].variable, variable))
 			return button_configs[i].set(data->last_button, value);
 	fprintf(stderr, "ERROR: Unrecognized button setting \"%s\": "
@@ -172,7 +168,7 @@ static bool spacer_set_length (struct Lava_button *button, const char *length)
 	return true;
 }
 
-struct Spacer_configs
+struct
 {
 	const char *variable;
 	bool (*set)(struct Lava_button*, const char*);
@@ -183,7 +179,7 @@ struct Spacer_configs
 bool spacer_set_variable (struct Lava_data *data, const char *variable,
 		const char *value, int line)
 {
-	for (unsigned int i = 0; i < (sizeof(spacer_configs) / sizeof(spacer_configs[0])); i++)
+	for (size_t i = 0; i < (sizeof(spacer_configs) / sizeof(spacer_configs[0])); i++)
 		if (! strcmp(spacer_configs[i].variable, variable))
 			return spacer_configs[i].set(data->last_button, value);
 	fprintf(stderr, "ERROR: Unrecognized spacer setting \"%s\": "

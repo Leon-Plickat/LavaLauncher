@@ -37,7 +37,8 @@ struct Lava_buffer
 	bool              busy;
 };
 
-bool next_buffer (struct Lava_buffer **buffer, struct wl_shm *shm, struct Lava_buffer buffers[static 2], uint32_t w, uint32_t h);
+bool next_buffer (struct Lava_buffer **buffer, struct wl_shm *shm,
+		struct Lava_buffer buffers[static 2], uint32_t w, uint32_t h);
 void finish_buffer (struct Lava_buffer *buffer);
 
 #endif

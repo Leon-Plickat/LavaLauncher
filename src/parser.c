@@ -292,9 +292,10 @@ static bool parser_handle_settings (struct Lava_parser *parser)
 {
 	if ( parser->action == ACTION_NONE )
 	{
-		strncpy(parser->buffer_2, parser->buffer, 1024-1);
-		parser->buffer_2_length = parser->buffer_length;
-		parser->action = ACTION_ASSIGN;
+		strncpy(parser->buffer_2, parser->buffer, 1024);
+		parser->buffer_2[1024-1] = '\0';
+		parser->buffer_2_length  = parser->buffer_length;
+		parser->action           = ACTION_ASSIGN;
 		return true;
 	}
 	else if ( parser->action == ACTION_ASSIGN )

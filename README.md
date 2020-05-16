@@ -24,7 +24,13 @@ LavaLauncher has been successfully tested with [sway](https://github.com/swaywm/
 and [wayfire](https://github.com/WayfireWM/wayfire).
 
 
-## Building
+## Installation
+
+### Packages
+
+Fedora has an official LavaLauncher package in its repository.
+
+### Building
 
 LavaLauncher depends on Wayland, Wayland protocols and Cairo. To build
 this program you will need a C compiler, the meson & ninja build system and

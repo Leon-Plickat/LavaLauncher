@@ -1,0 +1,17 @@
+image: archlinux
+packages:
+  - meson
+  - cairo
+  - wayland
+  - wayland-protocols
+  - scdoc
+sources:
+  - https://git.sr.ht/~leon_plickat/lavalauncher
+tasks:
+  - setup: |
+      cd lavalauncher
+      meson --buildtype=release build
+  - build: |
+      cd lavalauncher
+      ninja -C build
+

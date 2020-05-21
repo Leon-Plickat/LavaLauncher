@@ -27,8 +27,6 @@ realtime          = cc.find_library('rt')
 
 subdir('protocol')
 
-lavalauncher_inc = include_directories('src')
-
 executable(
   'lavalauncher',
   files(
@@ -54,7 +52,7 @@ executable(
     wl_protocols,
     realtime,
   ],
-  include_directories: lavalauncher_inc,
+  include_directories: include_directories('src'),
   install: true,
 )
 
@@ -62,6 +60,7 @@ scdoc = dependency(
   'scdoc',
   version: '>=1.9.2',
   native: true,
+  required: get_option('man-page'),
 )
 if scdoc.found()
   scdoc_prog = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)

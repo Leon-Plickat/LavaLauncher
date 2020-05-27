@@ -28,9 +28,9 @@
 #include"output.h"
 #include"seat.h"
 #include"draw.h"
-#include"button.h"
+#include"item.h"
 
-static void button_replace_background (cairo_t *cairo, int32_t x, int32_t y,
+static void item_replace_background (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t size, float colour[4])
 {
 	cairo_save(cairo);
@@ -101,7 +101,7 @@ static void draw_icon (cairo_t *cairo, int32_t x, int32_t y,
 	cairo_restore(cairo);
 }
 
-static void draw_buttons (cairo_t *cairo, struct Lava_data *data,
+static void draw_items (cairo_t *cairo, struct Lava_data *data,
 		int32_t x_offset, int32_t y_offset, float scale)
 {
 	x_offset *= scale, y_offset *= scale;
@@ -112,17 +112,17 @@ static void draw_buttons (cairo_t *cairo, struct Lava_data *data,
 	else
 		increment = &y, increment_offset = &y_offset;
 
-	struct Lava_button *bt_1, *bt_2;
-	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->buttons, link)
-		if ( bt_1->type == TYPE_BUTTON )
+	struct Lava_item *it_1, *it_2;
+	wl_list_for_each_reverse_safe(it_1, it_2, &data->items, link)
+		if ( it_1->type == TYPE_BUTTON )
 		{
-			*increment = (bt_1->ordinate * scale) + *increment_offset;
-			if ( bt_1->background_colour_hex != NULL )
-				button_replace_background(cairo, x, y, bt_1->length,
-						bt_1->background_colour);
+			*increment = (it_1->ordinate * scale) + *increment_offset;
+			if ( it_1->background_colour_hex != NULL )
+				item_replace_background(cairo, x, y, it_1->length,
+						it_1->background_colour);
 			draw_effect(cairo, x, y, size, data->effect_padding,
 					data->effect_colour, data->effect);
-			draw_icon(cairo, x, y, size, bt_1->img);
+			draw_icon(cairo, x, y, size, it_1->img);
 		}
 }
 
@@ -225,7 +225,7 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 	/* Draw icons. */
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
-	draw_buttons(cairo, data, output->bar_x_offset + data->border_left,
+	draw_items(cairo, data, output->bar_x_offset + data->border_left,
 			output->bar_y_offset + data->border_top,
 			output->scale);
 

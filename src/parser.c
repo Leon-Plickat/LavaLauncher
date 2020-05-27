@@ -29,7 +29,7 @@
 #include"lavalauncher.h"
 #include"config.h"
 #include"parser.h"
-#include"button.h"
+#include"item.h"
 
 /* Get the next char from file stream. */
 static bool parser_get_char (struct Lava_parser *parser, char *ch)
@@ -123,12 +123,12 @@ static bool parser_enter_context (struct Lava_parser *parser)
 		case CONTEXT_ITEMS_PRE:    parser->context = CONTEXT_ITEMS;    break;
 
 		case CONTEXT_BUTTON_PRE:
-			ret = create_button(parser->data);
+			ret = create_item(parser->data, TYPE_BUTTON);
 			parser->context = CONTEXT_BUTTON;
 			break;
 
 		case CONTEXT_SPACER_PRE:
-			ret = create_spacer(parser->data);
+			ret = create_item(parser->data, TYPE_SPACER);
 			parser->context = CONTEXT_SPACER;
 			break;
 
@@ -309,12 +309,12 @@ static bool parser_handle_settings (struct Lava_parser *parser)
 						parser->line);
 
 			case CONTEXT_BUTTON:
-				return button_set_variable(parser->data,
+				return item_set_variable(parser->data, TYPE_BUTTON,
 						parser->buffer_2, parser->buffer,
 						parser->line);
 
 			case CONTEXT_SPACER:
-				return spacer_set_variable(parser->data,
+				return item_set_variable(parser->data, TYPE_SPACER,
 						parser->buffer_2, parser->buffer,
 						parser->line);
 			default:

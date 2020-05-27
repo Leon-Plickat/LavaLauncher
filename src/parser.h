@@ -21,7 +21,7 @@
 #define LAVALAUNCHER_PARSER_H
 
 struct Lava_data;
-struct Lava_button;
+struct Lava_item;
 
 enum Parser_context
 {
@@ -66,8 +66,8 @@ struct Lava_parser
 	char buffer_2[1024];
 	size_t buffer_2_length;
 
-	/* The button whichs config is currently read. */
-	struct Lava_button *button;
+	/* The item whichs config is currently read. */
+	struct Lava_item *item;
 };
 
 bool parse_config_file (struct Lava_data *data, const char *config_path);

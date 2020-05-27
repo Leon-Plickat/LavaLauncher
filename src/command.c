@@ -30,7 +30,7 @@
 #include"lavalauncher.h"
 #include"output.h"
 #include"command.h"
-#include"button.h"
+#include"item.h"
 
 /* This function will search for a string (*srch) inside a given string (**str)
  * and replace it either with another string (*repl_s) or with a string-ified
@@ -61,7 +61,7 @@ static void replace_token (char **str, const char *srch, const char *repl_s,
 }
 
 static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
-		struct Lava_button *button, char *buffer)
+		struct Lava_item *item, char *buffer)
 {
 	struct
 	{
@@ -69,8 +69,8 @@ static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
 		const char *replacement_string;
 		const int   replacement_int;
 	} tokens[] = {
-		{ .token = "%index%",         .replacement_string = NULL,                    .replacement_int = button->index,       },
-		{ .token = "%buttons%",       .replacement_string = NULL,                    .replacement_int = data->button_amount, },
+		{ .token = "%index%",         .replacement_string = NULL,                    .replacement_int = item->index,         },
+		{ .token = "%items%",         .replacement_string = NULL,                    .replacement_int = data->item_amount,   },
 		{ .token = "%icon-size%",     .replacement_string = NULL,                    .replacement_int = data->icon_size,     },
 		{ .token = "%border-top%",    .replacement_string = NULL,                    .replacement_int = data->border_top,    },
 		{ .token = "%border-left%",   .replacement_string = NULL,                    .replacement_int = data->border_left,   },
@@ -92,7 +92,7 @@ static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
 }
 
 static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
-		struct Lava_button *button)
+		struct Lava_item *item)
 {
 	errno   = 0;
 	int ret = fork();
@@ -106,12 +106,12 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 		}
 
 		char buffer[STRING_BUFFER_SIZE+1];
-		strncpy(buffer, button->cmd, STRING_BUFFER_SIZE);
-		handle_tokens(data, output, button, buffer);
+		strncpy(buffer, item->cmd, STRING_BUFFER_SIZE);
+		handle_tokens(data, output, item, buffer);
 
 		if (data->verbose)
 			fprintf(stderr, "Executing: cmd='%s' raw='%s'\n",
-					buffer, button->cmd);
+					buffer, item->cmd);
 
 		/* execl() only returns on error. */
 		errno = 0;
@@ -123,19 +123,19 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 		fprintf(stderr, "ERROR: fork: %s\n", strerror(errno));
 }
 
-/* Helper function that catches any special cases before executing the button
+/* Helper function that catches any special cases before executing the item
  * command.
  */
-bool button_command (struct Lava_data *data, struct Lava_button *button,
+bool item_command (struct Lava_data *data, struct Lava_item *item,
 		struct Lava_output *output)
 {
-	if ( button->cmd == NULL )
+	if ( item->cmd == NULL )
 		return false;
 
-	if (! strcmp(button->cmd, "exit"))
+	if (! strcmp(item->cmd, "exit"))
 		data->loop = false;
 	else
-		exec_cmd(data, output, button);
+		exec_cmd(data, output, item);
 
 	return true;
 }

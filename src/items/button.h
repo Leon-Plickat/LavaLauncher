@@ -17,14 +17,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_COMMAND_H
-#define LAVALAUNCHER_COMMAND_H
+#ifndef LAVALAUNCHER_ITEM_BUTTON_H
+#define LAVALAUNCHER_ITEM_BUTTON_H
 
 struct Lava_data;
-struct Lava_output;
-struct Lava_item;
 
-bool item_command (struct Lava_data *data, struct Lava_item *item,
-		struct Lava_output *output);
+bool create_button (struct Lava_data *data);
+bool button_set_variable (struct Lava_data *data, const char *variable,
+		const char *value, int line);
 
 #endif

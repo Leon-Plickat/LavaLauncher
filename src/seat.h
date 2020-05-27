@@ -36,7 +36,7 @@ struct Lava_seat
 		int32_t             x;
 		int32_t             y;
 		struct Lava_output *output;
-		struct Lava_button *button;
+		struct Lava_item   *item;
 	} pointer;
 
 	struct
@@ -44,7 +44,7 @@ struct Lava_seat
 		struct wl_touch    *wl_touch;
 		int32_t             id;
 		struct Lava_output *output;
-		struct Lava_button *button;
+		struct Lava_item   *item;
 	} touch;
 };
 

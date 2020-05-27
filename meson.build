@@ -41,8 +41,10 @@ executable(
     'src/output.c',
     'src/registry.c',
     'src/cursor.c',
-    'src/button.c',
     'src/parser.c',
+    'src/items/item.c',
+    'src/items/button.c',
+    'src/items/spacer.c',
   ),
   dependencies: [
     wayland_client,
@@ -52,7 +54,7 @@ executable(
     wl_protocols,
     realtime,
   ],
-  include_directories: include_directories('src'),
+  include_directories: include_directories('src', 'src/items'),
   install: true,
 )
 

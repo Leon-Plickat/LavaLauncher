@@ -61,7 +61,7 @@ enum Draw_effect
 	EFFECT_PHONE
 };
 
-struct Lava_button;
+struct Lava_item;
 
 struct Lava_data
 {
@@ -74,8 +74,8 @@ struct Lava_data
 
 	struct wl_list outputs;
 	struct wl_list seats;
-	struct wl_list buttons;
-	struct Lava_button *last_button;
+	struct wl_list items;
+	struct Lava_item *last_item;
 
 	/* Return value. */
 	int ret;
@@ -88,8 +88,8 @@ struct Lava_data
 	enum Bar_orientation orientation;
 	enum Bar_mode        mode;
 
-	/* Amount of buttons defined by the user. */
-	int button_amount;
+	/* Amount of items defined by the user. */
+	int item_amount;
 
 	/* Layer the surface will be rendered on. */
 	enum zwlr_layer_shell_v1_layer layer;
@@ -111,7 +111,7 @@ struct Lava_data
 	float  effect_colour[4];
 	char  *effect_colour_hex;
 
-	/* Draw effect applied to button. */
+	/* Draw effect applied to item. */
 	enum Draw_effect effect;
 	int effect_padding;
 

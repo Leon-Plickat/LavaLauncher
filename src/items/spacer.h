@@ -17,37 +17,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_BUTTON_H
-#define LAVALAUNCHER_BUTTON_H
+#ifndef LAVALAUNCHER_ITEM_SPACER_H
+#define LAVALAUNCHER_ITEM_SPACER_H
 
 struct Lava_data;
-struct Lava_output;
 
-enum Button_type
-{
-	TYPE_BUTTON,
-	TYPE_SPACER
-};
-
-struct Lava_button
-{
-	struct wl_list    link;
-	enum Button_type  type;
-	cairo_surface_t  *img;
-	char             *cmd;
-	unsigned int      index, ordinate, length;
-	float             background_colour[4];
-	char             *background_colour_hex;
-};
-
-struct Lava_button *button_from_coords (struct Lava_data *data,
-		struct Lava_output *output, int32_t x, int32_t y);
-unsigned int get_button_length_sum (struct Lava_data *data);
-bool init_buttons (struct Lava_data *data);
-void destroy_buttons (struct Lava_data *data);
-bool create_button (struct Lava_data *data);
-bool button_set_variable (struct Lava_data *data, const char *variable,
-		const char *value, int line);
 bool create_spacer (struct Lava_data *data);
 bool spacer_set_variable (struct Lava_data *data, const char *variable,
 		const char *value, int line);

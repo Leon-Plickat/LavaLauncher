@@ -17,14 +17,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_COMMAND_H
-#define LAVALAUNCHER_COMMAND_H
+#ifndef LAVALAUNCHER_ITEM_H
+#define LAVALAUNCHER_ITEM_H
 
 struct Lava_data;
 struct Lava_output;
-struct Lava_item;
 
-bool item_command (struct Lava_data *data, struct Lava_item *item,
-		struct Lava_output *output);
+enum Item_type
+{
+	TYPE_BUTTON,
+	TYPE_SPACER
+};
+
+struct Lava_item
+{
+	struct wl_list   link;
+	enum Item_type   type;
+	cairo_surface_t *img;
+	char            *cmd;
+	unsigned int     index, ordinate, length;
+	float            background_colour[4];
+	char            *background_colour_hex;
+};
+
+bool create_item (struct Lava_data *data, enum Item_type type);
+bool item_set_variable (struct Lava_data *data, enum Item_type type,
+		const char *variable, const char *value, int line);
+struct Lava_item *item_from_coords (struct Lava_data *data,
+		struct Lava_output *output, int32_t x, int32_t y);
+unsigned int get_item_length_sum (struct Lava_data *data);
+bool init_items (struct Lava_data *data);
+void destroy_items (struct Lava_data *data);
 
 #endif

@@ -38,7 +38,7 @@
 #include"lavalauncher.h"
 #include"config.h"
 #include"registry.h"
-#include"button.h"
+#include"item.h"
 #include"parser.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
@@ -106,7 +106,7 @@ static void calculate_dimensions (struct Lava_data *data)
 			data->orientation = ORIENTATION_VERTICAL;
 			data->w = (uint32_t)(data->icon_size + data->border_right
 					+ data->border_left);
-			data->h = (uint32_t)(get_button_length_sum(data)
+			data->h = (uint32_t)(get_item_length_sum(data)
 					+ data->border_top + data->border_bottom);
 			if ( data->exclusive_zone == 1 )
 				data->exclusive_zone = data->w;
@@ -115,7 +115,7 @@ static void calculate_dimensions (struct Lava_data *data)
 		case POSITION_TOP:
 		case POSITION_BOTTOM:
 			data->orientation = ORIENTATION_HORIZONTAL;
-			data->w = (uint32_t)(get_button_length_sum(data)
+			data->w = (uint32_t)(get_item_length_sum(data)
 					+ data->border_left + data->border_right);
 			data->h = (uint32_t)(data->icon_size + data->border_top
 					+ data->border_bottom);
@@ -173,13 +173,13 @@ int main (int argc, char *argv[])
 	 * defaults.
 	 */
 	config_sensible_defaults(&data);
-	wl_list_init(&(data.buttons));
+	wl_list_init(&(data.items));
 
 	/* When either reading the configuration file or initialising the
-	 * buttons fails, we already have heap objects and possibly buttons that
+	 * items fails, we already have heap objects and possibly items that
 	 * need to be freed.
 	 */
-	if (! (parse_config_file(&data, config_path) && init_buttons(&data)))
+	if (! (parse_config_file(&data, config_path) && init_items(&data)))
 		goto early_exit;
 
 	/* Now we have the amount of items to be displayed on the bar as well as
@@ -190,8 +190,8 @@ int main (int argc, char *argv[])
 
 	if (data.verbose)
 		fprintf(stderr, "LavaLauncher Version "VERSION"\n"
-				"Bar: w=%d h=%d buttons=%d\n",
-				data.w, data.h, data.button_amount);
+				"Bar: w=%d h=%d items=%d\n",
+				data.w, data.h, data.item_amount);
 
 	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);
@@ -206,6 +206,6 @@ int main (int argc, char *argv[])
 	finish_wayland(&data);
 early_exit:
 	config_free_settings(&data);
-	destroy_buttons(&data);
+	destroy_items(&data);
 	return data.ret;
 }

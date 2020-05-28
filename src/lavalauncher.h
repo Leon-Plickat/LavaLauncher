@@ -68,6 +68,7 @@ struct Lava_data
 	struct wl_display             *display;
 	struct wl_registry            *registry;
 	struct wl_compositor          *compositor;
+	struct wl_subcompositor       *subcompositor;
 	struct wl_shm                 *shm;
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;

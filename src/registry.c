@@ -52,6 +52,13 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		data->compositor = wl_registry_bind(registry, name,
 				&wl_compositor_interface, 4);
 	}
+	if (! strcmp(interface, wl_subcompositor_interface.name))
+	{
+		if (data->verbose)
+			fputs("Get wl_subcompositor.\n", stderr);
+		data->subcompositor = wl_registry_bind(registry, name,
+				&wl_subcompositor_interface, 1);
+	}
 	else if (! strcmp(interface, wl_shm_interface.name))
 	{
 		if (data->verbose)
@@ -158,6 +165,8 @@ bool init_wayland (struct Lava_data *data)
 	/* Testing compatibilities. */
 	if (! capability_test(data->compositor, "wl_compositor"))
 		return false;
+	if (! capability_test(data->subcompositor, "wl_subcompositor"))
+		return false;
 	if (! capability_test(data->shm, "wl_shm"))
 		return false;
 	if (! capability_test(data->layer_shell, "zwlr_layer_shell"))
@@ -199,6 +208,8 @@ void finish_wayland (struct Lava_data *data)
 		zwlr_layer_shell_v1_destroy(data->layer_shell);
 	if ( data->compositor != NULL )
 		wl_compositor_destroy(data->compositor);
+	if ( data->subcompositor != NULL )
+		wl_subcompositor_destroy(data->subcompositor);
 	if ( data->shm != NULL )
 		wl_shm_destroy(data->shm);
 	if ( data->registry != NULL )

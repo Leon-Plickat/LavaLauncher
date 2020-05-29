@@ -29,7 +29,8 @@
 
 #include"lavalauncher.h"
 #include"items/item.h"
-#include"config.h"
+#include"config/config.h"
+#include"config/colour.h"
 
 bool create_button (struct Lava_data *data)
 {
@@ -42,6 +43,7 @@ bool create_button (struct Lava_data *data)
 
 	item_nullify(new_button);
 	new_button->type = TYPE_BUTTON;
+
 
 	data->last_item = new_button;
 	wl_list_insert(&data->items, &new_button->link);
@@ -184,12 +186,12 @@ struct
 	{ .variable = "widget-border-left",       .set = button_set_widget_border_size,       .direction = 'l'}
 };
 
-bool button_set_variable (struct Lava_data *data, const char *variable,
+bool button_set_variable (struct Lava_item *button, const char *variable,
 		const char *value, int line)
 {
 	for (size_t i = 0; i < (sizeof(button_configs) / sizeof(button_configs[0])); i++)
 		if (! strcmp(button_configs[i].variable, variable))
-			return button_configs[i].set(data->last_item, value,
+			return button_configs[i].set(button, value,
 					button_configs[i].direction);
 	fprintf(stderr, "ERROR: Unrecognized button setting \"%s\": "
 			"line=%d\n", variable, line);

@@ -28,11 +28,11 @@
 
 #include"lavalauncher.h"
 #include"items/item.h"
+#include"items/command.h"
 #include"bar/bar.h"
 #include"widget/widget.h"
 #include"output.h"
-#include"config.h"
-#include"command.h"
+#include"config/config.h"
 
 #include"items/button.h"
 #include"items/spacer.h"
@@ -47,13 +47,13 @@ bool create_item (struct Lava_data *data, enum Item_type type)
 	}
 }
 
-bool item_set_variable (struct Lava_data *data, enum Item_type type,
-		const char *variable, const char *value, int line)
+bool item_set_variable (struct Lava_item *item, const char *variable,
+		const char *value, int line)
 {
-	switch (type)
+	switch (item->type)
 	{
-		case TYPE_BUTTON: return button_set_variable(data, variable, value, line);
-		case TYPE_SPACER: return spacer_set_variable(data, variable, value, line);
+		case TYPE_BUTTON: return button_set_variable(item, variable, value, line);
+		case TYPE_SPACER: return spacer_set_variable(item, variable, value, line);
 		default:          return false;
 	}
 }
@@ -111,11 +111,12 @@ void item_nullify (struct Lava_item *item)
 struct Lava_item *item_from_coords (struct Lava_data *data,
 		struct Lava_bar *bar, int32_t x, int32_t y)
 {
+	struct Lava_config *config = data->config;
 	unsigned int ordinate;
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		ordinate = x - (bar->x_offset + data->border_left);
+	if ( config->orientation == ORIENTATION_HORIZONTAL )
+		ordinate = x - (bar->x_offset + config->border_left);
 	else
-		ordinate = y - (bar->y_offset + data->border_top);
+		ordinate = y - (bar->y_offset + config->border_top);
 
 	struct Lava_item *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->items, link)
@@ -130,13 +131,16 @@ struct Lava_item *item_from_coords (struct Lava_data *data,
 unsigned int get_item_length_sum (struct Lava_data *data)
 {
 	unsigned int sum = 0;
-	struct Lava_item *bt_1, *bt_2;
-	wl_list_for_each_reverse_safe (bt_1, bt_2, &data->items, link)
-		sum += bt_1->length;
+	struct Lava_item *it_1, *it_2;
+	wl_list_for_each_reverse_safe (it_1, it_2, &data->items, link)
+		sum += it_1->length;
 	return sum;
 }
 
-bool init_items (struct Lava_data *data)
+/* When items are created when parsing the config file, the icon size is not yet
+ * available, so items need to be finalized later.
+ */
+bool finalize_items (struct Lava_data *data, const int icon_size)
 {
 	data->item_amount = wl_list_length(&(data->items));
 	if ( data->item_amount == 0 )
@@ -150,7 +154,7 @@ bool init_items (struct Lava_data *data)
 	wl_list_for_each_reverse_safe(it_1, it_2, &data->items, link)
 	{
 		if ( it_1->type == TYPE_BUTTON )
-			it_1->length = data->icon_size;
+			it_1->length = icon_size;
 
 		it_1->index    = index;
 		it_1->ordinate = ordinate;

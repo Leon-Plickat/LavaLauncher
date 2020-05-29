@@ -20,6 +20,10 @@
 #ifndef LAVALAUNCHER_ITEM_H
 #define LAVALAUNCHER_ITEM_H
 
+#include<stdbool.h>
+#include<wayland-server.h>
+#include<cairo/cairo.h>
+
 struct Lava_data;
 struct Lava_bar;
 
@@ -50,15 +54,15 @@ struct Lava_item
 };
 
 bool create_item (struct Lava_data *data, enum Item_type type);
-bool item_set_variable (struct Lava_data *data, enum Item_type type,
-		const char *variable, const char *value, int line);
+bool item_set_variable (struct Lava_item *item, const char *variable,
+		const char *value, int line);
 void item_interaction (struct Lava_data *data, struct Lava_bar *bar,
 		struct Lava_item *item);
 void item_nullify (struct Lava_item *item);
 struct Lava_item *item_from_coords (struct Lava_data *data,
 		struct Lava_bar *bar, int32_t x, int32_t y);
 unsigned int get_item_length_sum (struct Lava_data *data);
-bool init_items (struct Lava_data *data);
+bool finalize_items (struct Lava_data *data, const int icon_size);
 void destroy_all_items (struct Lava_data *data);
 
 #endif

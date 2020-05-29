@@ -24,6 +24,7 @@
 #include<stdbool.h>
 #include<unistd.h>
 #include<string.h>
+
 #include<cairo/cairo.h>
 #include<wayland-server.h>
 #include<wayland-client.h>
@@ -34,6 +35,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"config/config.h"
 #include"output.h"
 #include"draw-generics.h"
 #include"bar/bar.h"
@@ -60,7 +62,7 @@ struct Lava_bar *create_bar (struct Lava_data *data, struct Lava_output *output)
 
 	if ( NULL == (bar->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
 					data->layer_shell, bar->wl_surface,
-					output->wl_output, data->layer, "LavaLauncher")) )
+					output->wl_output, data->config->layer, "LavaLauncher")) )
 	{
 		fputs("ERROR: Compositor did not create layer_surface.\n", stderr);
 		goto error;
@@ -98,18 +100,19 @@ static void update_offset (struct Lava_bar *bar)
 		return;
 
 	struct Lava_data   *data   = bar->data;
+	struct Lava_config *config = data->config;
 	struct Lava_output *output = bar->output;
 
 	if ( output->w == 0 || output->h == 0 )
 		return;
 
-	if ( data->mode == MODE_SIMPLE )
+	if ( config->mode == MODE_SIMPLE )
 	{
 		bar->x_offset = bar->y_offset = 0;
 		return;
 	}
 
-	switch (data->alignment)
+	switch (config->alignment)
 	{
 		case ALIGNMENT_START:
 			bar->x_offset = 0;
@@ -117,28 +120,28 @@ static void update_offset (struct Lava_bar *bar)
 			break;
 
 		case ALIGNMENT_CENTER:
-			if ( data->orientation == ORIENTATION_HORIZONTAL )
+			if ( config->orientation == ORIENTATION_HORIZONTAL )
 			{
-				bar->x_offset = (output->w / 2) - (data->w / 2);
+				bar->x_offset = (output->w / 2) - (config->w / 2);
 				bar->y_offset = 0;
 			}
 			else
 			{
 				bar->x_offset = 0;
-				bar->y_offset = (output->h / 2) - (data->h / 2);
+				bar->y_offset = (output->h / 2) - (config->h / 2);
 			}
 			break;
 
 		case ALIGNMENT_END:
-			if ( data->orientation == ORIENTATION_HORIZONTAL )
+			if ( config->orientation == ORIENTATION_HORIZONTAL )
 			{
-				bar->x_offset = output->w  - data->w;
+				bar->x_offset = output->w  - config->w;
 				bar->y_offset = 0;
 			}
 			else
 			{
 				bar->x_offset = 0;
-				bar->y_offset = output->h - data->h;
+				bar->y_offset = output->h - config->h;
 			}
 			break;
 	}
@@ -155,10 +158,10 @@ static void update_offset (struct Lava_bar *bar)
 	 * Here we set the margins parallel to the edges length, which are
 	 * "fake", by adjusting the offset of the bar.
 	 */
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		bar->x_offset += data->margin_left - data->margin_right;
+	if ( config->orientation == ORIENTATION_HORIZONTAL )
+		bar->x_offset += config->margin_left - config->margin_right;
 	else
-		bar->y_offset += data->margin_top - data->margin_bottom;
+		bar->y_offset += config->margin_top - config->margin_bottom;
 
 	if (data->verbose)
 		fprintf(stderr, "Aligning bar: global_name=%d x-offset=%d y-offset=%d\n",

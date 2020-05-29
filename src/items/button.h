@@ -23,7 +23,7 @@
 struct Lava_data;
 
 bool create_button (struct Lava_data *data);
-bool button_set_variable (struct Lava_data *data, const char *variable,
+bool button_set_variable (struct Lava_item *button, const char *variable,
 		const char *value, int line);
 
 #endif

@@ -17,13 +17,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_ITEM_SPACER_H
-#define LAVALAUNCHER_ITEM_SPACER_H
+#ifndef LAVALAUNCHER_CONFIG_GLOBAL_H
+#define LAVALAUNCHER_CONFIG_GLOBAL_H
 
-struct Lava_data;
+#include<stdbool.h>
 
-bool create_spacer (struct Lava_data *data);
-bool spacer_set_variable (struct Lava_item *spacer, const char *variable,
+struct Lava_config;
+
+bool config_set_variable (struct Lava_config *config, const char *variable,
 		const char *value, int line);
 
 #endif

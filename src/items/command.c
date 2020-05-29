@@ -31,6 +31,7 @@
 #include"output.h"
 #include"command.h"
 #include"items/item.h"
+#include"config/config.h"
 
 /* This function will search for a string (*srch) inside a given string (**str)
  * and replace it either with another string (*repl_s) or with a string-ified
@@ -63,27 +64,28 @@ static void replace_token (char **str, const char *srch, const char *repl_s,
 static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
 		struct Lava_item *item, char *buffer)
 {
+	struct Lava_config *config = data->config;
 	struct
 	{
 		const char *token;
 		const char *replacement_string;
 		const int   replacement_int;
 	} tokens[] = {
-		{ .token = "%index%",         .replacement_string = NULL,                    .replacement_int = item->index,         },
-		{ .token = "%items%",         .replacement_string = NULL,                    .replacement_int = data->item_amount,   },
-		{ .token = "%icon-size%",     .replacement_string = NULL,                    .replacement_int = data->icon_size,     },
-		{ .token = "%border-top%",    .replacement_string = NULL,                    .replacement_int = data->border_top,    },
-		{ .token = "%border-left%",   .replacement_string = NULL,                    .replacement_int = data->border_left,   },
-		{ .token = "%border-bottom%", .replacement_string = NULL,                    .replacement_int = data->border_bottom, },
-		{ .token = "%border-right%",  .replacement_string = NULL,                    .replacement_int = data->border_right,  },
-		{ .token = "%margin-top%",    .replacement_string = NULL,                    .replacement_int = data->margin_top,    },
-		{ .token = "%margin-right%",  .replacement_string = NULL,                    .replacement_int = data->margin_right,  },
-		{ .token = "%margin-bottom%", .replacement_string = NULL,                    .replacement_int = data->margin_bottom, },
-		{ .token = "%margin-left%",   .replacement_string = NULL,                    .replacement_int = data->margin_left,   },
-		{ .token = "%colour%",        .replacement_string = data->bar_colour_hex,    .replacement_int = 0,                   },
-		{ .token = "%border-colour%", .replacement_string = data->border_colour_hex, .replacement_int = 0,                   },
-		{ .token = "%output%",        .replacement_string = output->name,            .replacement_int = 0,                   },
-		{ .token = "%scale%",         .replacement_string = NULL,                    .replacement_int = output->scale,       }
+		{ .token = "%index%",         .replacement_string = NULL,                      .replacement_int = item->index,         },
+		{ .token = "%items%",         .replacement_string = NULL,                      .replacement_int = data->item_amount,   },
+		{ .token = "%icon-size%",     .replacement_string = NULL,                      .replacement_int = config->icon_size,     },
+		{ .token = "%border-top%",    .replacement_string = NULL,                      .replacement_int = config->border_top,    },
+		{ .token = "%border-left%",   .replacement_string = NULL,                      .replacement_int = config->border_left,   },
+		{ .token = "%border-bottom%", .replacement_string = NULL,                      .replacement_int = config->border_bottom, },
+		{ .token = "%border-right%",  .replacement_string = NULL,                      .replacement_int = config->border_right,  },
+		{ .token = "%margin-top%",    .replacement_string = NULL,                      .replacement_int = config->margin_top,    },
+		{ .token = "%margin-right%",  .replacement_string = NULL,                      .replacement_int = config->margin_right,  },
+		{ .token = "%margin-bottom%", .replacement_string = NULL,                      .replacement_int = config->margin_bottom, },
+		{ .token = "%margin-left%",   .replacement_string = NULL,                      .replacement_int = config->margin_left,   },
+		{ .token = "%colour%",        .replacement_string = config->bar_colour_hex,    .replacement_int = 0,                   },
+		{ .token = "%border-colour%", .replacement_string = config->border_colour_hex, .replacement_int = 0,                   },
+		{ .token = "%output%",        .replacement_string = output->name,              .replacement_int = 0,                   },
+		{ .token = "%scale%",         .replacement_string = NULL,                      .replacement_int = output->scale,       }
 	};
 	for (size_t i = 0; i < (sizeof(tokens) / sizeof(tokens[0])); i++)
 		replace_token(&buffer, tokens[i].token,

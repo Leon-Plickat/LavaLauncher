@@ -21,6 +21,7 @@
 #define LAVALAUNCHER_PARSER_H
 
 struct Lava_data;
+struct Lava_config;
 struct Lava_item;
 
 enum Parser_context
@@ -53,7 +54,8 @@ enum Parser_action
 
 struct Lava_parser
 {
-	struct Lava_data *data;
+	struct Lava_config *config;
+	struct Lava_data   *data;
 	FILE *file;
 	int line, column;
 	char last_char;
@@ -70,6 +72,6 @@ struct Lava_parser
 	struct Lava_item *item;
 };
 
-bool parse_config_file (struct Lava_data *data, const char *config_path);
+bool parse_config_file (struct Lava_config *config, const char *config_path);
 
 #endif

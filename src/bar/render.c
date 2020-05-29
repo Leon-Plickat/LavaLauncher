@@ -35,6 +35,7 @@
 #include"bar/bar.h"
 #include"bar/render.h"
 #include"items/item.h"
+#include"config/config.h"
 
 static void item_replace_background (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t size, float colour[4])
@@ -90,26 +91,32 @@ static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
 	cairo_restore(cairo);
 }
 
-static void calculate_bar_buffer_size (struct Lava_data *data, struct Lava_output *output,
-		int *w, int *h)
+static void calculate_bar_buffer_size (struct Lava_output *output, int *w, int *h)
 {
-	if ( data->mode == MODE_SIMPLE )
-		*w = data->w, *h = data->h;
-	else if ( data->orientation == ORIENTATION_HORIZONTAL )
-		*w = output->w, *h = data->h;
+	struct Lava_config *config = output->data->config;
+
+	if ( config->mode == MODE_SIMPLE )
+		*w = config->w, *h = config->h;
+	else if ( config->orientation == ORIENTATION_HORIZONTAL )
+		*w = output->w, *h = config->h;
 	else
-		*w = data->w, *h = output->h;
+		*w = config->w, *h = output->h;
 
 	*w *= output->scale, *h *= output->scale;
 }
 
-static void draw_items (cairo_t *cairo, struct Lava_data *data,
-		int32_t x_offset, int32_t y_offset, float scale)
+static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 {
-	x_offset *= scale, y_offset *= scale;
-	int32_t size = data->icon_size * scale;
+	struct Lava_data   *data     = bar->data;
+	struct Lava_config *config   = data->config;
+
+	int scale    = bar->output->scale,
+	    x_offset = (bar->x_offset + config->border_top)  * scale,
+	    y_offset = (bar->y_offset + config->border_left) * scale;
+
+	int32_t size = config->icon_size * scale;
 	int32_t x = x_offset, y = y_offset, *increment, *increment_offset;
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
+	if ( config->orientation == ORIENTATION_HORIZONTAL )
 		increment = &x, increment_offset = &x_offset;
 	else
 		increment = &y, increment_offset = &y_offset;
@@ -122,8 +129,8 @@ static void draw_items (cairo_t *cairo, struct Lava_data *data,
 			if ( it_1->background_colour_hex != NULL )
 				item_replace_background(cairo, x, y, it_1->length,
 						it_1->background_colour);
-			draw_effect(cairo, x, y, size, data->effect_padding,
-					data->effect_colour, data->effect);
+			draw_effect(cairo, x, y, size, config->effect_padding,
+					config->effect_colour, config->effect);
 			lldg_draw_square_image(cairo, x, y, size, it_1->img);
 		}
 }
@@ -134,6 +141,7 @@ void render_bar_frame (struct Lava_bar *bar)
 		return;
 
 	struct Lava_data   *data   = bar->data;
+	struct Lava_config *config = data->config;
 	struct Lava_output *output = bar->output;
 
 	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED )
@@ -141,7 +149,7 @@ void render_bar_frame (struct Lava_bar *bar)
 
 	/* Get new/next buffer. */
 	int buffer_w, buffer_h;
-	calculate_bar_buffer_size(data, output, &buffer_w, &buffer_h);
+	calculate_bar_buffer_size(output, &buffer_w, &buffer_h);
 	if (! next_buffer(&bar->current_buffer, data->shm, bar->buffers,
 				buffer_w, buffer_h))
 		return;
@@ -152,32 +160,31 @@ void render_bar_frame (struct Lava_bar *bar)
 	/* Draw bar. */
 	if (data->verbose)
 		fputs("Drawing bar.\n", stderr);
-	if ( data->mode == MODE_FULL )
+	if ( config->mode == MODE_FULL )
 	{
 		int bar_w, bar_h;
-		if ( data->orientation == ORIENTATION_HORIZONTAL )
-			bar_w = output->w, bar_h = data->h;
+		if ( config->orientation == ORIENTATION_HORIZONTAL )
+			bar_w = output->w, bar_h = config->h;
 		else
-			bar_w = data->w, bar_h = output->h;
+			bar_w = config->w, bar_h = config->h;
 
 		lldg_draw_bordered_rectangle(cairo, 0, 0, bar_w, bar_h,
-				data->border_top, data->border_right,
-				data->border_bottom, data->border_left,
+				config->border_top, config->border_right,
+				config->border_bottom, config->border_left,
 				bar->output->scale,
-				data->bar_colour, data->border_colour);
+				config->bar_colour, config->border_colour);
 	}
 	else
 		lldg_draw_bordered_rectangle(cairo,
-				bar->x_offset, bar->y_offset, data->w, data->h,
-				data->border_top, data->border_right,
-				data->border_bottom, data->border_left,
-				output->scale, data->bar_colour, data->border_colour);
+				bar->x_offset, bar->y_offset, config->w, config->h,
+				config->border_top, config->border_right,
+				config->border_bottom, config->border_left,
+				output->scale, config->bar_colour, config->border_colour);
 
 	/* Draw icons. */
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
-	draw_items(cairo, data, bar->x_offset + data->border_left,
-			bar->y_offset + data->border_top, output->scale);
+	draw_items(bar, cairo);
 
 	/* Commit surface. */
 	if (data->verbose)

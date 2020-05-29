@@ -27,7 +27,8 @@
 #include<ctype.h>
 
 #include"lavalauncher.h"
-#include"config.h"
+#include"config/config.h"
+#include"config/global.h"
 #include"parser.h"
 #include"items/item.h"
 
@@ -304,19 +305,16 @@ static bool parser_handle_settings (struct Lava_parser *parser)
 		switch (parser->context)
 		{
 			case CONTEXT_SETTINGS:
-				return config_set_variable(parser->data,
+				return config_set_variable(parser->config,
 						parser->buffer_2, parser->buffer,
 						parser->line);
 
 			case CONTEXT_BUTTON:
-				return item_set_variable(parser->data, TYPE_BUTTON,
+			case CONTEXT_SPACER:
+				return item_set_variable(parser->data->last_item,
 						parser->buffer_2, parser->buffer,
 						parser->line);
 
-			case CONTEXT_SPACER:
-				return item_set_variable(parser->data, TYPE_SPACER,
-						parser->buffer_2, parser->buffer,
-						parser->line);
 			default:
 				break;
 		}
@@ -359,11 +357,12 @@ error:
 	return false;
 }
 
-bool parse_config_file (struct Lava_data *data, const char *config_path)
+bool parse_config_file (struct Lava_config *config, const char *config_path)
 {
 	errno = 0;
 	struct Lava_parser parser = {
-		.data    = data,
+		.data    = config->data,
+		.config  = config,
 		.file    = NULL,
 		.line    = 1,
 		.column  = 0,

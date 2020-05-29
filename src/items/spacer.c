@@ -66,12 +66,12 @@ struct
 	{ .variable = "length", .set = spacer_set_length }
 };
 
-bool spacer_set_variable (struct Lava_data *data, const char *variable,
+bool spacer_set_variable (struct Lava_item *spacer, const char *variable,
 		const char *value, int line)
 {
 	for (size_t i = 0; i < (sizeof(spacer_configs) / sizeof(spacer_configs[0])); i++)
 		if (! strcmp(spacer_configs[i].variable, variable))
-			return spacer_configs[i].set(data->last_item, value);
+			return spacer_configs[i].set(spacer, value);
 	fprintf(stderr, "ERROR: Unrecognized spacer setting \"%s\": "
 			"line=%d\n", variable, line);
 	return false;

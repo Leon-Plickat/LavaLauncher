@@ -24,9 +24,13 @@
 #include<stdbool.h>
 #include<assert.h>
 
+#include<wayland-server.h>
+#include<wayland-client.h>
+#include<wayland-client-protocol.h>
 #include<wayland-cursor.h>
 
 #include"lavalauncher.h"
+#include"config/config.h"
 #include"cursor.h"
 
 struct Lava_cursor *create_cursor (struct Lava_data *data)
@@ -51,12 +55,12 @@ struct Lava_cursor *create_cursor (struct Lava_data *data)
 	}
 
 	struct wl_cursor *wl_cursor = wl_cursor_theme_get_cursor(cursor->theme,
-			data->cursor_name);
+			data->config->cursor_name);
 	if ( wl_cursor == NULL )
 	{
 		fprintf(stderr, "WARNING: Could not get cursor \"%s\".\n"
 				"         This cursor is likely missing from your cursor theme.\n",
-				data->cursor_name);
+				data->config->cursor_name);
 		destroy_cursor(cursor);
 		return NULL;
 	}

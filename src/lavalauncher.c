@@ -36,10 +36,9 @@
 #include<wayland-client-protocol.h>
 
 #include"lavalauncher.h"
-#include"config.h"
+#include"config/config.h"
 #include"registry.h"
 #include"items/item.h"
-#include"parser.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
@@ -96,41 +95,8 @@ static void main_loop (struct Lava_data *data)
 	}
 }
 
-/* Calculate the dimensions of the visible part of the bar. */
-static void calculate_dimensions (struct Lava_data *data)
-{
-	switch (data->position)
-	{
-		case POSITION_LEFT:
-		case POSITION_RIGHT:
-			data->orientation = ORIENTATION_VERTICAL;
-			data->w = (uint32_t)(data->icon_size + data->border_right
-					+ data->border_left);
-			data->h = (uint32_t)(get_item_length_sum(data)
-					+ data->border_top + data->border_bottom);
-			if ( data->exclusive_zone == 1 )
-				data->exclusive_zone = data->w;
-			break;
-
-		case POSITION_TOP:
-		case POSITION_BOTTOM:
-			data->orientation = ORIENTATION_HORIZONTAL;
-			data->w = (uint32_t)(get_item_length_sum(data)
-					+ data->border_left + data->border_right);
-			data->h = (uint32_t)(data->icon_size + data->border_top
-					+ data->border_bottom);
-			if ( data->exclusive_zone == 1 )
-				data->exclusive_zone = data->h;
-			break;
-	}
-}
-
 int main (int argc, char *argv[])
 {
-	/* This struct holds the global data. Here we quickly initialise it with
-	 * everything we need for early startup, before the configuration
-	 * options are populated
-	 */
 	struct Lava_data data = {
 		.ret     = EXIT_FAILURE,
 		.loop    = true,
@@ -138,7 +104,6 @@ int main (int argc, char *argv[])
 	};
 	char *config_path = NULL;
 
-	/* Parse command flags. */
 	extern int optind;
 	extern char *optarg;
 	for (int c; (c = getopt(argc, argv, "c:hv")) != -1 ;)
@@ -160,43 +125,25 @@ int main (int argc, char *argv[])
 				return EXIT_FAILURE;
 		}
 
-	/* There is no default configuration file, meaning the user providing
-	 * the path to one is mandatory.
-	 */
 	if ( config_path == NULL)
 	{
 		fputs("You need to provide the path to a config file.\n", stderr);
 		return EXIT_FAILURE;
 	}
 
-	/* Initialise the rest of the data struct with sensible configuration
-	 * defaults.
-	 */
-	config_sensible_defaults(&data);
 	wl_list_init(&(data.items));
 
-	/* When either reading the configuration file or initialising the
-	 * items fails, we already have heap objects and possibly items that
-	 * need to be freed.
-	 */
-	if (! (parse_config_file(&data, config_path) && init_items(&data)))
+	if ( NULL == (data.config = create_config(&data, config_path)) )
 		goto early_exit;
-
-	/* Now we have the amount of items to be displayed on the bar as well as
-	 * the icon size and other settings, so we can calculate what size the
-	 * visible part of the bar will have.
-	 */
-	calculate_dimensions(&data);
 
 	if (data.verbose)
 		fprintf(stderr, "LavaLauncher Version "VERSION"\n"
 				"Bar: w=%d h=%d items=%d\n",
-				data.w, data.h, data.item_amount);
+				data.config->w, data.config->h, data.item_amount);
 
 	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);
 
-	/* At this point we can finally connect to the Wayland server. */
 	if (init_wayland(&data))
 	{
 		data.ret = EXIT_SUCCESS;
@@ -205,7 +152,7 @@ int main (int argc, char *argv[])
 
 	finish_wayland(&data);
 early_exit:
-	config_free_settings(&data);
+	destroy_config(data.config);
 	destroy_all_items(&data);
 	return data.ret;
 }

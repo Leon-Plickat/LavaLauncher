@@ -21,48 +21,12 @@
 #define LAVALAUNCHER_LAVALAUNCHER_H
 
 #include<stdbool.h>
-
-#include"wlr-layer-shell-unstable-v1-protocol.h"
-#include"xdg-output-unstable-v1-protocol.h"
-#include"buffer.h"
-
-enum Bar_position
-{
-	POSITION_TOP,
-	POSITION_RIGHT,
-	POSITION_BOTTOM,
-	POSITION_LEFT
-};
-
-enum Bar_orientation
-{
-	ORIENTATION_VERTICAL,
-	ORIENTATION_HORIZONTAL
-};
-
-enum Bar_mode
-{
-	MODE_DEFAULT,
-	MODE_FULL,
-	MODE_SIMPLE
-};
-
-enum Bar_alignment
-{
-	ALIGNMENT_START,
-	ALIGNMENT_CENTER,
-	ALIGNMENT_END
-};
-
-enum Draw_effect
-{
-	EFFECT_NONE,
-	EFFECT_BOX,
-	EFFECT_PHONE
-};
+#include<stdint.h>
+#include<wayland-server.h>
 
 struct Lava_item;
 struct Lava_cursor;
+struct Lava_config;
 
 struct Lava_data
 {
@@ -74,81 +38,19 @@ struct Lava_data
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 
+	struct Lava_cursor *cursor;
+	struct Lava_config *config;
+
 	struct wl_list outputs;
 	struct wl_list seats;
-	struct wl_list items;
+
+	struct wl_list    items;
 	struct Lava_item *last_item;
+	int               item_amount;
 
-	/* Return value. */
-	int ret;
-
-	/* Mode and positioning of the bar. These re responsible for the shape
-	 * of the visual bar and the actual surface.
-	 */
-	enum Bar_position    position;
-	enum Bar_alignment   alignment;
-	enum Bar_orientation orientation;
-	enum Bar_mode        mode;
-
-	/* Amount of items defined by the user. */
-	int item_amount;
-
-	/* Layer the surface will be rendered on. */
-	enum zwlr_layer_shell_v1_layer layer;
-
-	/* Size of icons and bar borders. */
-	int icon_size;
-	int border_top, border_right, border_bottom, border_left;
-
-	/* Expected (and enforced) width and height of the bar. */
-	uint32_t w, h;
-
-	/* Colours of the bar and its border; In float for actual usage and as
-	 * hex string for insertion into commands.
-	 */
-	float  bar_colour[4];
-	char  *bar_colour_hex;
-	float  border_colour[4];
-	char  *border_colour_hex;
-	float  effect_colour[4];
-	char  *effect_colour_hex;
-
-	/* Draw effect applied to item. */
-	enum Draw_effect effect;
-	int effect_padding;
-
-	/* Widget configuration. */
-	unsigned int  widget_border_t, widget_border_r, widget_border_b, widget_border_l;
-	unsigned int  widget_margin;
-	float         widget_background_colour[4];
-	char         *widget_background_colour_hex;
-	float         widget_border_colour[4];
-	char         *widget_border_colour_hex;
-
-	/* If *only_output is NULL, a surface will be created for all outputs.
-	 * Otherwise only on the output which name is equal to *only_output.
-	 * Examples of valid names are "eDP-1" or "HDMI-A-1" (likely compositor
-	 * dependant).
-	 */
-	char *only_output;
-
-	/* If exclusive_zone is 1, it will be set to the width/height of the bar
-	 * at startup, otherwise its exact value is used, which should be either
-	 * 0 or -1.
-	 */
-	uint32_t exclusive_zone;
-
-	/* Directional margins of the surface. */
-	int margin_top, margin_right, margin_bottom, margin_left;
-
-	/* Still running? */
 	bool loop;
-
-	/* Verbose output? */
 	bool verbose;
-
-	struct Lava_cursor *cursor;
-	char *cursor_name;
+	int  ret;
 };
 
 #endif

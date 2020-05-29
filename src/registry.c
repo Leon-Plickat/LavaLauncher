@@ -174,9 +174,9 @@ bool init_wayland (struct Lava_data *data)
 	if (! capability_test(data->xdg_output_manager, "xdg_output_manager"))
 		return false;
 
-	/* Initialise cursor surface. */
-	if (! init_cursor(data))
-		return false;
+	if ( NULL == (data->cursor = create_cursor(data)) )
+		fputs("WARNING: Changing the cursor is disabled due to an error.\n",
+				stderr);
 
 	/* Configure all outputs that were created before xdg_output_manager or
 	 * the layer_shell were available.
@@ -198,7 +198,7 @@ void finish_wayland (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Finish Wayland.\n", stderr);
 
-	finish_cursor(data);
+	destroy_cursor(data->cursor);
 	destroy_all_outputs(data);
 	destroy_all_seats(data);
 

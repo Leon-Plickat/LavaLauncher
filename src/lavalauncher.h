@@ -62,6 +62,7 @@ enum Draw_effect
 };
 
 struct Lava_item;
+struct Lava_cursor;
 
 struct Lava_data
 {
@@ -146,13 +147,8 @@ struct Lava_data
 	/* Verbose output? */
 	bool verbose;
 
-	/* Everything that is needed for changing the cursor. */
-	struct {
-		char                   *name;
-		struct wl_cursor_theme *theme;
-		struct wl_cursor_image *image;
-		struct wl_surface      *surface;
-	} cursor;
+	struct Lava_cursor *cursor;
+	char *cursor_name;
 };
 
 #endif

@@ -53,7 +53,7 @@ void config_sensible_defaults (struct Lava_data *data)
 	data->only_output       = NULL;
 	data->exclusive_zone    = 1;
 
-	data->cursor.name       = strdup("pointing_hand");
+	data->cursor_name       = strdup("pointing_hand");
 
 	data->bar_colour_hex    = strdup("#000000FF");
 	data->bar_colour[0]     = 0.0f;
@@ -102,8 +102,8 @@ void config_free_settings (struct Lava_data *data)
 		fputs("Freeing configuration.\n", stderr);
 	if ( data->only_output != NULL )
 		free(data->only_output);
-	if ( data->cursor.name != NULL )
-		free(data->cursor.name);
+	if ( data->cursor_name != NULL )
+		free(data->cursor_name);
 	if ( data->bar_colour_hex != NULL )
 		free(data->bar_colour_hex);
 	if ( data->border_colour_hex != NULL )
@@ -347,9 +347,9 @@ static bool config_set_exclusive_zone (struct Lava_data *data, const char *arg,
 static bool config_set_cursor_name (struct Lava_data *data, const char *arg,
 		const char direction)
 {
-	if ( data->cursor.name != NULL )
-		free(data->cursor.name);
-	data->cursor.name = strdup(arg);
+	if ( data->cursor_name != NULL )
+		free(data->cursor_name);
+	data->cursor_name = strdup(arg);
 	if (data->verbose)
 		fprintf(stderr, "Config: setting=%s value=%s\n",
 				"cursor-name", arg);

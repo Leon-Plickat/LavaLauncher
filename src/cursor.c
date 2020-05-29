@@ -29,79 +29,86 @@
 #include"lavalauncher.h"
 #include"cursor.h"
 
-void attach_cursor_surface (struct Lava_data *data, struct wl_pointer *wl_pointer,
+struct Lava_cursor *create_cursor (struct Lava_data *data)
+{
+	if (data->verbose)
+		fputs("Creating cursor.\n", stderr);
+
+	struct Lava_cursor *cursor = calloc(1, sizeof(struct Lava_cursor));
+	if ( cursor == NULL )
+	{
+		fputs("ERROR: Could not allocate.\n", stderr);
+		return NULL;
+	}
+
+	cursor->data = data;
+
+	if ( NULL == (cursor->theme = wl_cursor_theme_load(NULL, 16, data->shm)) )
+	{
+		fputs("ERROR: Could not load cursor theme.\n", stderr);
+		destroy_cursor(cursor);
+		return NULL;
+	}
+
+	struct wl_cursor *wl_cursor = wl_cursor_theme_get_cursor(cursor->theme,
+			data->cursor_name);
+	if ( wl_cursor == NULL )
+	{
+		fprintf(stderr, "WARNING: Could not get cursor \"%s\".\n"
+				"         This cursor is likely missing from your cursor theme.\n",
+				data->cursor_name);
+		destroy_cursor(cursor);
+		return NULL;
+	}
+
+	cursor->image = wl_cursor->images[0];
+	assert(cursor->image);
+
+	if ( NULL == (cursor->surface = wl_compositor_create_surface(data->compositor)) )
+	{
+		fputs("ERROR: Could not create cursor surface.\n", stderr);
+		destroy_cursor(cursor);
+		return NULL;
+	}
+
+	return cursor;
+}
+
+void destroy_cursor (struct Lava_cursor *cursor)
+{
+	if ( cursor == NULL )
+		return;
+
+	if (cursor->data->verbose)
+		fputs("Destroying cursor.\n", stderr);
+
+	/* cursor.image just points back to cursor.theme. */
+	if ( cursor->theme != NULL )
+		wl_cursor_theme_destroy(cursor->theme);
+	if ( cursor->surface != NULL )
+		wl_surface_destroy(cursor->surface);
+	free(cursor);
+}
+
+void attach_cursor (struct Lava_cursor *cursor, struct wl_pointer *wl_pointer,
 		uint32_t serial)
 {
-	if ( data->cursor.surface == NULL )
+	if ( cursor == NULL )
 		return;
+
+	struct Lava_data *data = cursor->data;
 
 	if (data->verbose)
 		fputs("Attaching cursor surface.\n", stderr);
 
 	// TODO: Find out whether the surface damaging / commiting could be done
 	//       once globally instead of on each indivual enter event.
-	wl_surface_attach(data->cursor.surface,
-			wl_cursor_image_get_buffer(data->cursor.image), 0, 0);
-	wl_surface_damage(data->cursor.surface, 1, 0,
-			data->cursor.image->width,
-			data->cursor.image->height);
-	wl_surface_commit(data->cursor.surface);
-	wl_pointer_set_cursor(wl_pointer, serial, data->cursor.surface,
-			data->cursor.image->hotspot_x,
-			data->cursor.image->hotspot_y);
-}
-
-bool init_cursor (struct Lava_data *data)
-{
-	if (data->verbose)
-		fputs("Loading cursor theme.\n", stderr);
-	if ( NULL == (data->cursor.theme = wl_cursor_theme_load(NULL, 16, data->shm)) )
-	{
-		fputs("ERROR: Could not load cursor theme.\n", stderr);
-		return false;
-	}
-
-	if (data->verbose)
-		fputs("Getting cursor.\n", stderr);
-	struct wl_cursor *cursor = wl_cursor_theme_get_cursor(data->cursor.theme,
-			data->cursor.name);
-	if ( cursor == NULL )
-	{
-		fprintf(stderr, "WARNING: Could not get cursor \"%s\".\n"
-				"         This cursor is likely missing from your cursor theme.\n"
-				"         Changing the cursor is disabled.\n",
-				data->cursor.name);
-		finish_cursor(data);
-		data->cursor.theme   = NULL;
-		data->cursor.image   = NULL;
-		data->cursor.surface = NULL;
-		return true;
-	}
-
-	if (data->verbose)
-		fputs("Getting cursor image.\n", stderr);
-	data->cursor.image = cursor->images[0];
-	assert(data->cursor.image);
-
-	if (data->verbose)
-		fputs("Creating cursor surface.\n", stderr);
-	if ( NULL == (data->cursor.surface = wl_compositor_create_surface(data->compositor)) )
-	{
-		fputs("ERROR: Could not create cursor surface.\n", stderr);
-		return false;
-	}
-
-	return true;
-}
-
-void finish_cursor (struct Lava_data *data)
-{
-	if (data->verbose)
-		fputs("Finish cursor.\n", stderr);
-
-	/* cursor.image just points back to cursor.theme. */
-	if ( data->cursor.theme != NULL )
-		wl_cursor_theme_destroy(data->cursor.theme);
-	if ( data->cursor.surface != NULL )
-		wl_surface_destroy(data->cursor.surface);
+	wl_surface_attach(cursor->surface,
+			wl_cursor_image_get_buffer(cursor->image), 0, 0);
+	wl_surface_damage(cursor->surface, 1, 0,
+			cursor->image->width, cursor->image->height);
+	wl_surface_commit(cursor->surface);
+	wl_pointer_set_cursor(wl_pointer, serial, cursor->surface,
+			cursor->image->hotspot_x,
+			cursor->image->hotspot_y);
 }

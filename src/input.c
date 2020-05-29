@@ -62,7 +62,7 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 {
 	struct Lava_seat *seat = data;
 
-	attach_cursor_surface(seat->data, wl_pointer, serial);
+	attach_cursor(seat->data->cursor, wl_pointer, serial);
 
 	seat->pointer.bar = bar_from_surface(seat->data, surface);
 

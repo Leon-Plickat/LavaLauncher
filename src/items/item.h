@@ -33,20 +33,32 @@ struct Lava_item
 {
 	struct wl_list   link;
 	enum Item_type   type;
-	cairo_surface_t *img;
+
 	char            *cmd;
+	cairo_surface_t *img;
 	unsigned int     index, ordinate, length;
 	float            background_colour[4];
 	char            *background_colour_hex;
+
+	char            *widget_command;
+	unsigned int     widget_border_t, widget_border_r, widget_border_b, widget_border_l;
+	unsigned int     widget_margin;
+	float            widget_background_colour[4];
+	char            *widget_background_colour_hex;
+	float            widget_border_colour[4];
+	char            *widget_border_colour_hex;
 };
 
 bool create_item (struct Lava_data *data, enum Item_type type);
 bool item_set_variable (struct Lava_data *data, enum Item_type type,
 		const char *variable, const char *value, int line);
+void item_interaction (struct Lava_data *data, struct Lava_output *output,
+		struct Lava_item *item);
+void item_nullify (struct Lava_item *item);
 struct Lava_item *item_from_coords (struct Lava_data *data,
 		struct Lava_output *output, int32_t x, int32_t y);
 unsigned int get_item_length_sum (struct Lava_data *data);
 bool init_items (struct Lava_data *data);
-void destroy_items (struct Lava_data *data);
+void destroy_all_items (struct Lava_data *data);
 
 #endif

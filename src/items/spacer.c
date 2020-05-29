@@ -27,7 +27,7 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
-#include"item.h"
+#include"items/item.h"
 
 bool create_spacer (struct Lava_data *data)
 {
@@ -38,10 +38,8 @@ bool create_spacer (struct Lava_data *data)
 		return false;
 	}
 
-	new_spacer->length = 0;
-	new_spacer->type   = TYPE_SPACER;
-	new_spacer->cmd    = NULL;
-	new_spacer->img    = NULL;
+	item_nullify(new_spacer);
+	new_spacer->type = TYPE_SPACER;
 
 	data->last_item = new_spacer;
 	wl_list_insert(&data->items, &new_spacer->link);

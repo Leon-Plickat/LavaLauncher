@@ -38,7 +38,7 @@
 #include"lavalauncher.h"
 #include"config.h"
 #include"registry.h"
-#include"item.h"
+#include"items/item.h"
 #include"parser.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
@@ -206,6 +206,6 @@ int main (int argc, char *argv[])
 	finish_wayland(&data);
 early_exit:
 	config_free_settings(&data);
-	destroy_items(&data);
+	destroy_all_items(&data);
 	return data.ret;
 }

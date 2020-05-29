@@ -55,19 +55,19 @@ void config_sensible_defaults (struct Lava_data *data)
 
 	data->cursor.name       = strdup("pointing_hand");
 
-	data->bar_colour_hex    = "#000000FF";
+	data->bar_colour_hex    = strdup("#000000FF");
 	data->bar_colour[0]     = 0.0f;
 	data->bar_colour[1]     = 0.0f;
 	data->bar_colour[2]     = 0.0f;
 	data->bar_colour[3]     = 1.0f;
 
-	data->border_colour_hex = "#FFFFFFFF";
+	data->border_colour_hex = strdup("#FFFFFFFF");
 	data->border_colour[0]  = 1.0f;
 	data->border_colour[1]  = 1.0f;
 	data->border_colour[2]  = 1.0f;
 	data->border_colour[3]  = 1.0f;
 
-	data->effect_colour_hex = "#FFFFFFFF";
+	data->effect_colour_hex = strdup("#FFFFFFFF");
 	data->effect_colour[0]  = 1.0f;
 	data->effect_colour[1]  = 1.0f;
 	data->effect_colour[2]  = 1.0f;
@@ -75,6 +75,24 @@ void config_sensible_defaults (struct Lava_data *data)
 
 	data->effect            = EFFECT_NONE;
 	data->effect_padding    = 5;
+
+	data->widget_background_colour_hex = strdup("#000000FF");
+	data->widget_background_colour[0]  = 1.0f;
+	data->widget_background_colour[1]  = 1.0f;
+	data->widget_background_colour[2]  = 1.0f;
+	data->widget_background_colour[3]  = 1.0f;
+
+	data->widget_border_colour_hex = strdup("#000000FF");
+	data->widget_border_colour[0]  = 1.0f;
+	data->widget_border_colour[1]  = 1.0f;
+	data->widget_border_colour[2]  = 1.0f;
+	data->widget_border_colour[3]  = 1.0f;
+
+	data->widget_margin = 20;
+	data->widget_border_t = 2;
+	data->widget_border_r = 2;
+	data->widget_border_b = 2;
+	data->widget_border_l = 2;
 }
 
 /* Free all heap object created by config. */
@@ -86,6 +104,16 @@ void config_free_settings (struct Lava_data *data)
 		free(data->only_output);
 	if ( data->cursor.name != NULL )
 		free(data->cursor.name);
+	if ( data->bar_colour_hex != NULL )
+		free(data->bar_colour_hex);
+	if ( data->border_colour_hex != NULL )
+		free(data->border_colour_hex);
+	if ( data->effect_colour_hex != NULL )
+		free(data->effect_colour_hex);
+	if ( data->widget_background_colour_hex != NULL )
+		free(data->widget_background_colour_hex);
+	if ( data->widget_border_colour_hex != NULL )
+		free(data->widget_border_colour_hex);
 }
 
 /* Convert a hex colour string with or without alpha channel into RGBA floats. */
@@ -243,6 +271,12 @@ static bool config_set_border_size (struct Lava_data *data, const char *arg,
 		case 'r': data->border_right  = size; break;
 		case 'b': data->border_bottom = size; break;
 		case 'l': data->border_left   = size; break;
+		case 'a':
+			data->border_top    = size;
+			data->border_right  = size;
+			data->border_bottom = size;
+			data->border_left   = size;
+			break;
 	}
 	if (data->verbose)
 		fprintf(stderr, "Config: setting=%s value=%s direction=%c\n",
@@ -328,7 +362,9 @@ static bool config_set_bar_colour (struct Lava_data *data, const char *arg,
 	if (! hex_to_rgba(arg, &(data->bar_colour[0]), &(data->bar_colour[1]),
 				&(data->bar_colour[2]), &(data->bar_colour[3])))
 		return false;
-	data->bar_colour_hex = (char *)arg;
+	if ( data->bar_colour_hex != NULL )
+		free(data->bar_colour_hex);
+	data->bar_colour_hex = strdup(arg);
 	if (data->verbose)
 		fprintf(stderr, "Config: setting=%s value=%s\n",
 				"background-colour", arg);
@@ -341,7 +377,9 @@ static bool config_set_border_colour (struct Lava_data *data, const char *arg,
 	if (!  hex_to_rgba(arg, &(data->border_colour[0]), &(data->border_colour[1]),
 				&(data->border_colour[2]), &(data->border_colour[3])))
 		return false;
-	data->border_colour_hex = (char *)arg;
+	if ( data->border_colour_hex != NULL )
+		free(data->border_colour_hex);
+	data->border_colour_hex = strdup(arg);
 	if (data->verbose)
 		fprintf(stderr, "Config: setting=%s value=%s\n",
 				"border-colour", arg);
@@ -354,7 +392,9 @@ static bool config_set_effect_colour (struct Lava_data *data, const char *arg,
 	if (!  hex_to_rgba(arg, &(data->effect_colour[0]), &(data->effect_colour[1]),
 				&(data->effect_colour[2]), &(data->effect_colour[3])))
 		return false;
-	data->effect_colour_hex = (char *)arg;
+	if ( data->effect_colour_hex != NULL )
+		free(data->effect_colour_hex);
+	data->effect_colour_hex = strdup(arg);
 	if (data->verbose)
 		fprintf(stderr, "Config: setting=%s value=%s\n",
 				"effect-colour", arg);
@@ -395,32 +435,121 @@ static bool config_set_effect_padding (struct Lava_data *data, const char *arg,
 	return true;
 }
 
+static bool config_set_widget_background_colour (struct Lava_data *data,
+		const char *arg, const char direction)
+{
+	if (! hex_to_rgba(arg, &(data->widget_background_colour[0]),
+				&(data->widget_background_colour[1]),
+				&(data->widget_background_colour[2]),
+				&(data->widget_background_colour[3])))
+		return false;
+	if ( data->widget_border_colour_hex != NULL )
+		free(data->widget_background_colour_hex);
+	data->widget_background_colour_hex = strdup(arg);
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"widget-background-colour", arg);
+	return true;
+}
+
+static bool config_set_widget_border_colour (struct Lava_data *data,
+		const char *arg, const char direction)
+{
+	if (! hex_to_rgba(arg, &(data->widget_border_colour[0]),
+				&(data->widget_border_colour[1]),
+				&(data->widget_border_colour[2]),
+				&(data->widget_border_colour[3])))
+		return false;
+	if ( data->widget_border_colour_hex != NULL )
+		free(data->widget_border_colour_hex);
+	data->widget_border_colour_hex = strdup(arg);
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"widget-background-colour", arg);
+	return true;
+}
+
+static bool config_set_widget_margin_size (struct Lava_data *data,
+		const char *arg, const char direction)
+{
+	int size = atoi(arg);
+	if ( size < 0 )
+	{
+		fputs("ERROR: Widget margin size must be equal to or greater than zero.\n",
+				stderr);
+		return false;
+	}
+	data->widget_margin = size;
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s\n",
+				"widget-background-colour", arg);
+	return true;
+}
+
+static bool config_set_widget_border_size (struct Lava_data *data,
+		const char *arg, const char direction)
+{
+	int size = atoi(arg);
+	if ( size < 0 )
+	{
+		fputs("ERROR: Widget border size must be equal to or greater than zero.\n",
+				stderr);
+		return false;
+	}
+	switch (direction)
+	{
+		case 't': data->widget_border_t = size; break;
+		case 'r': data->widget_border_r = size; break;
+		case 'b': data->widget_border_b = size; break;
+		case 'l': data->widget_border_l = size; break;
+		case 'a':
+			data->widget_border_t = size;
+			data->widget_border_r = size;
+			data->widget_border_b = size;
+			data->widget_border_l = size;
+			break;
+	}
+	if (data->verbose)
+		fprintf(stderr, "Config: setting=%s value=%s direction=%c\n",
+				"widget-background-colour", arg, direction);
+	return true;
+}
+
 struct Configs
 {
 	const char *variable, direction;
 	bool (*set)(struct Lava_data*, const char*, const char);
 } configs[] = {
-	{ .variable = "position",          .set = config_set_position,       .direction = '0'},
-	{ .variable = "alignment",         .set = config_set_alignment,      .direction = '0'},
-	{ .variable = "mode",              .set = config_set_mode,           .direction = '0'},
-	{ .variable = "layer",             .set = config_set_layer,          .direction = '0'},
-	{ .variable = "icon-size",         .set = config_set_icon_size,      .direction = '0'},
-	{ .variable = "border-top",        .set = config_set_border_size,    .direction = 't'},
-	{ .variable = "border-right",      .set = config_set_border_size,    .direction = 'r'},
-	{ .variable = "border-bottom",     .set = config_set_border_size,    .direction = 'b'},
-	{ .variable = "border-left",       .set = config_set_border_size,    .direction = 'l'},
-	{ .variable = "margin-top",        .set = config_set_margin_size,    .direction = 't'},
-	{ .variable = "margin-right",      .set = config_set_margin_size,    .direction = 'r'},
-	{ .variable = "margin-bottom",     .set = config_set_margin_size,    .direction = 'b'},
-	{ .variable = "margin-left",       .set = config_set_margin_size,    .direction = 'l'},
-	{ .variable = "output",            .set = config_set_only_output,    .direction = '0'},
-	{ .variable = "exclusive-zone",    .set = config_set_exclusive_zone, .direction = '0'},
-	{ .variable = "cursor-name",       .set = config_set_cursor_name,    .direction = '0'},
-	{ .variable = "background-colour", .set = config_set_bar_colour,     .direction = '0'},
-	{ .variable = "border-colour",     .set = config_set_border_colour,  .direction = '0'},
-	{ .variable = "effect-colour",     .set = config_set_effect_colour,  .direction = '0'},
-	{ .variable = "effect",            .set = config_set_effect,         .direction = '0'},
-	{ .variable = "effect-padding",    .set = config_set_effect_padding, .direction = '0'}
+	{ .variable = "position",                 .set = config_set_position,                 .direction = '0'},
+	{ .variable = "alignment",                .set = config_set_alignment,                .direction = '0'},
+	{ .variable = "mode",                     .set = config_set_mode,                     .direction = '0'},
+	{ .variable = "layer",                    .set = config_set_layer,                    .direction = '0'},
+	{ .variable = "icon-size",                .set = config_set_icon_size,                .direction = '0'},
+	{ .variable = "border",                   .set = config_set_border_size,              .direction = 'a'},
+	{ .variable = "border-top",               .set = config_set_border_size,              .direction = 't'},
+	{ .variable = "border-right",             .set = config_set_border_size,              .direction = 'r'},
+	{ .variable = "border-bottom",            .set = config_set_border_size,              .direction = 'b'},
+	{ .variable = "border-left",              .set = config_set_border_size,              .direction = 'l'},
+	{ .variable = "margin-top",               .set = config_set_margin_size,              .direction = 't'},
+	{ .variable = "margin-right",             .set = config_set_margin_size,              .direction = 'r'},
+	{ .variable = "margin-bottom",            .set = config_set_margin_size,              .direction = 'b'},
+	{ .variable = "margin-left",              .set = config_set_margin_size,              .direction = 'l'},
+	{ .variable = "output",                   .set = config_set_only_output,              .direction = '0'},
+	{ .variable = "exclusive-zone",           .set = config_set_exclusive_zone,           .direction = '0'},
+	{ .variable = "cursor-name",              .set = config_set_cursor_name,              .direction = '0'},
+	{ .variable = "background-colour",        .set = config_set_bar_colour,               .direction = '0'},
+	{ .variable = "border-colour",            .set = config_set_border_colour,            .direction = '0'},
+	{ .variable = "effect-colour",            .set = config_set_effect_colour,            .direction = '0'},
+	{ .variable = "effect",                   .set = config_set_effect,                   .direction = '0'},
+	{ .variable = "effect-padding",           .set = config_set_effect_padding,           .direction = '0'},
+	{ .variable = "widget-background-colour", .set = config_set_widget_background_colour, .direction = '0'},
+	{ .variable = "widget-border-colour",     .set = config_set_widget_border_colour,     .direction = '0'},
+	{ .variable = "widget-margin",            .set = config_set_widget_margin_size,       .direction = '0'},
+	{ .variable = "widget-border",            .set = config_set_widget_border_size,       .direction = 'a'},
+	{ .variable = "widget-border-top",        .set = config_set_widget_border_size,       .direction = 't'},
+	{ .variable = "widget-border-right",      .set = config_set_widget_border_size,       .direction = 'r'},
+	{ .variable = "widget-border-bottom",     .set = config_set_widget_border_size,       .direction = 'b'},
+	{ .variable = "widget-border-left",       .set = config_set_widget_border_size,       .direction = 'l'}
 };
 
 bool config_set_variable (struct Lava_data *data, const char *variable,

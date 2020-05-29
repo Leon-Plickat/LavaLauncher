@@ -28,7 +28,7 @@
 #include"output.h"
 #include"seat.h"
 #include"draw.h"
-#include"item.h"
+#include"items/item.h"
 
 static void item_replace_background (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t size, float colour[4])

@@ -30,7 +30,7 @@
 #include"lavalauncher.h"
 #include"output.h"
 #include"command.h"
-#include"item.h"
+#include"items/item.h"
 
 /* This function will search for a string (*srch) inside a given string (**str)
  * and replace it either with another string (*repl_s) or with a string-ified

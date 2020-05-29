@@ -27,12 +27,14 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
-#include"item.h"
+#include"items/item.h"
+#include"widget/widget.h"
 #include"output.h"
 #include"config.h"
+#include"command.h"
 
-#include"button.h"
-#include"spacer.h"
+#include"items/button.h"
+#include"items/spacer.h"
 
 bool create_item (struct Lava_data *data, enum Item_type type)
 {
@@ -53,6 +55,53 @@ bool item_set_variable (struct Lava_data *data, enum Item_type type,
 		case TYPE_SPACER: return spacer_set_variable(data, variable, value, line);
 		default:          return false;
 	}
+}
+
+void item_interaction (struct Lava_data *data, struct Lava_output *output,
+		struct Lava_item *item)
+{
+	switch (item->type)
+	{
+		case TYPE_BUTTON:
+			item_command(data, item, output);
+			spawn_widget(item->widget_command);
+			break;
+
+		case TYPE_SPACER:
+		default:
+			break;
+	}
+}
+
+void item_nullify (struct Lava_item *item)
+{
+	item->type                         = 0;
+	item->img                          = NULL;
+	item->index                        = 0;
+	item->ordinate                     = 0;
+	item->length                       = 0;
+	item->cmd                          = 0;
+	item->background_colour_hex        = NULL;
+	item->background_colour[0]         = 0.0;
+	item->background_colour[1]         = 0.0;
+	item->background_colour[2]         = 0.0;
+	item->background_colour[3]         = 1.0;
+	item->widget_command               = NULL;
+	item->widget_border_t              = 0;
+	item->widget_border_r              = 0;
+	item->widget_border_b              = 0;
+	item->widget_border_l              = 0;
+	item->widget_margin                = 0;
+	item->widget_background_colour_hex = NULL;
+	item->widget_background_colour[0]  = 0.0;
+	item->widget_background_colour[1]  = 0.0;
+	item->widget_background_colour[2]  = 0.0;
+	item->widget_background_colour[3]  = 1.0;
+	item->widget_border_colour_hex     = NULL;
+	item->widget_border_colour[0]      = 0.0;
+	item->widget_border_colour[1]      = 0.0;
+	item->widget_border_colour[2]      = 0.0;
+	item->widget_border_colour[3]      = 1.0;
 }
 
 /* Return pointer to Lava_item struct from item list which includes the
@@ -112,18 +161,27 @@ bool init_items (struct Lava_data *data)
 	return true;
 }
 
-void destroy_items (struct Lava_data *data)
+static void destroy_item (struct Lava_item *item)
+{
+	wl_list_remove(&item->link);
+	if ( item->img != NULL )
+		cairo_surface_destroy(item->img);
+	if ( item->cmd != NULL )
+		free(item->cmd);
+	if ( item->widget_background_colour_hex != NULL )
+		free(item->widget_background_colour_hex);
+	if ( item->background_colour != NULL )
+		free(item->background_colour);
+	if ( item->widget_border_colour_hex != NULL )
+		free(item->widget_border_colour_hex);
+	free(item);
+}
+
+void destroy_all_items (struct Lava_data *data)
 {
 	if (data->verbose)
 		fputs("Destroying items.\n", stderr);
 	struct Lava_item *bt_1, *bt_2;
 	wl_list_for_each_safe(bt_1, bt_2, &data->items, link)
-	{
-		wl_list_remove(&bt_1->link);
-		if ( bt_1->img != NULL )
-			cairo_surface_destroy(bt_1->img);
-		if ( bt_1->cmd != NULL )
-			free(bt_1->cmd);
-		free(bt_1);
-	}
+		destroy_item(bt_1);
 }

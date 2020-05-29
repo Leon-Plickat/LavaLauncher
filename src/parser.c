@@ -29,7 +29,7 @@
 #include"lavalauncher.h"
 #include"config.h"
 #include"parser.h"
-#include"item.h"
+#include"items/item.h"
 
 /* Get the next char from file stream. */
 static bool parser_get_char (struct Lava_parser *parser, char *ch)

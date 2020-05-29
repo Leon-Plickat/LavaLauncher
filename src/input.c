@@ -36,9 +36,8 @@
 #include"lavalauncher.h"
 #include"output.h"
 #include"seat.h"
-#include"command.h"
 #include"cursor.h"
-#include"item.h"
+#include"items/item.h"
 
 /* No-Op function. */
 static void noop () {}
@@ -95,7 +94,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 {
 	struct Lava_seat *seat = raw_data;
 
-	/* Only execute the command if the pointer button was pressed and
+	/* Only interact with the item if the pointer button was pressed and
 	 * released over the same item on the bar.
 	 */
 	if ( button_state == WL_POINTER_BUTTON_STATE_PRESSED )
@@ -116,27 +115,27 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		if ( seat->pointer.item == NULL )
 			return;
 
-		struct Lava_item *bar_item = item_from_coords(seat->data,
+		struct Lava_item *item = item_from_coords(seat->data,
 				seat->pointer.output,
 				seat->pointer.x, seat->pointer.y);
 
-		if ( bar_item != seat->pointer.item )
+		if ( item != seat->pointer.item )
 			return;
 
 		seat->pointer.item = NULL;
 
-		item_command(seat->data, bar_item, seat->pointer.output);
+		item_interaction(seat->data, seat->pointer.output, item);
 	}
 }
 
 /* These are the listeners for pointer events. Only if a mouse button has been
- * pressed and released over the same bar item do we want that items command
- * to be executed. To achieve this, pointer_handle_enter() and
- * pointer_handle_motion() will update the cursor coordinates stored in the seat.
+ * pressed and released over the same bar item do we want that to interact with
+ * the item. To achieve this, pointer_handle_enter() and pointer_handle_motion()
+ * will update the cursor coordinates stored in the seat.
  * pointer_handle_button() will on press store the bar item under the pointer
  * in the seat. On release it will check whether the item under the pointer is
- * the one stored in the seat and execute the items commands if this is the
- * case. pointer_handle_leave() will simply abort the pointer operation.
+ * the one stored in the seat and interact with the item if this is the case.
+ * pointer_handle_leave() will simply abort the pointer operation.
  */
 const struct wl_pointer_listener pointer_listener = {
 	.enter  = pointer_handle_enter,
@@ -167,9 +166,9 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 
 	/* At this point, we know for sure that we have received a touch-down
 	 * and the following touch-up event over the same item, so we can
-	 * execute its command.
+	 * interact with it.
 	 */
-	item_command(seat->data, seat->touch.item, seat->touch.output);
+	item_interaction(seat->data, seat->touch.output, seat->touch.item);
 }
 
 static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
@@ -217,13 +216,13 @@ static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
 	seat->touch.output = NULL;
 }
 
-/* These are the handlers for touch events. We only want to execute a items
- * command, if both touch-down and touch-up were over the same item. To
+/* These are the handlers for touch events. We only want to interact with an
+ * item, if both touch-down and touch-up were over the same item. To
  * achieve this, touch_handle_down() will store the touch id and the item in
  * the seat. touch_handle_up() checks whether a item is stored in the seat and
  * whether its id is the same as the one stored in the seat and if both are true
- * executes the items command. touch_handle_motion() will simply remove the
- * item from the seat, effectively aborting the touch operation.
+ * interacts with the item. touch_handle_motion() will simply remove the item
+ * from the seat, effectively aborting the touch operation.
  *
  * Behold: Since I lack the necessary hardware, touch support is untested.
  */

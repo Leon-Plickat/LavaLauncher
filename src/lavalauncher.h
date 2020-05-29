@@ -116,6 +116,14 @@ struct Lava_data
 	enum Draw_effect effect;
 	int effect_padding;
 
+	/* Widget configuration. */
+	unsigned int  widget_border_t, widget_border_r, widget_border_b, widget_border_l;
+	unsigned int  widget_margin;
+	float         widget_background_colour[4];
+	char         *widget_background_colour_hex;
+	float         widget_border_colour[4];
+	char         *widget_border_colour_hex;
+
 	/* If *only_output is NULL, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.
 	 * Examples of valid names are "eDP-1" or "HDMI-A-1" (likely compositor

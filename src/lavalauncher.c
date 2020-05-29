@@ -47,54 +47,6 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
 			    "  -v        Enable verbose output.\n\n"
 			    "The configuration syntax is documented in the man page.\n";
 
-static void main_loop (struct Lava_data *data)
-{
-	if (data->verbose)
-		fputs("Starting main loop.\n", stderr);
-
-	struct pollfd fds = (struct pollfd) {
-		.fd     = wl_display_get_fd(data->display),
-		.events = POLLIN
-	};
-
-	while (data->loop)
-	{
-		errno = 0;
-
-		/* Flush Wayland events. */
-		do
-		{
-			if ( wl_display_flush(data->display) == -1  && errno != EAGAIN )
-			{
-				fprintf(stderr, "ERROR: wl_display_flush: %s\n",
-						strerror(errno));
-				break;
-			}
-		} while ( errno == EAGAIN );
-
-		/* Poll, aka wait for event. */
-		if ( poll(&fds, 1, -1) < 0 )
-		{
-			fprintf(stderr, "poll: %s\n", strerror(errno));
-			break;
-		}
-
-		/* Handle event. */
-		if ( fds.revents & POLLIN && wl_display_dispatch(data->display) == -1 )
-		{
-			fprintf(stderr, "ERROR: wl_display_dispatch: %s\n",
-					strerror(errno));
-			break;
-		}
-		if ( fds.revents & POLLOUT && wl_display_flush(data->display) == -1 )
-		{
-			fprintf(stderr, "ERROR: wl_display_flush: %s\n",
-					strerror(errno));
-			break;
-		}
-	}
-}
-
 int main (int argc, char *argv[])
 {
 	struct Lava_data data = {
@@ -147,7 +99,7 @@ int main (int argc, char *argv[])
 	if (init_wayland(&data))
 	{
 		data.ret = EXIT_SUCCESS;
-		main_loop(&data);
+		while ( data.loop && wl_display_dispatch(data.display)  != -1 );
 	}
 
 	finish_wayland(&data);

@@ -17,13 +17,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_DRAW_H
-#define LAVALAUNCHER_DRAW_H
-
+#ifndef LAVALAUNCHER_BAR_LAYERSURFACE_H
+#define LAVALAUNCHER_BAR_LAYERSURFACE_H
 
 struct Lava_data;
-struct Lava_output;
+struct Lava_bar;
 
-void render_bar_frame (struct Lava_data *data, struct Lava_output *output);
+extern const struct zwlr_layer_surface_v1_listener layer_surface_listener;
+
+void configure_layer_surface (struct Lava_bar *bar);
 
 #endif
+

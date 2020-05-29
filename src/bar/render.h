@@ -17,39 +17,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_SEAT_H
-#define LAVALAUNCHER_SEAT_H
+#ifndef LAVALAUNCHER_BAR_RENDER_H
+#define LAVALAUNCHER_BAR_RENDER_H
 
-struct Lava_data;
 struct Lava_bar;
 
-struct Lava_seat
-{
-	struct wl_list    link;
-	struct Lava_data *data;
-
-	struct wl_seat *wl_seat;
-
-	struct
-	{
-		struct wl_pointer *wl_pointer;
-		int32_t            x;
-		int32_t            y;
-		struct Lava_bar   *bar;
-		struct Lava_item  *item;
-	} pointer;
-
-	struct
-	{
-		struct wl_touch  *wl_touch;
-		int32_t           id;
-		struct Lava_bar  *bar;
-		struct Lava_item *item;
-	} touch;
-};
-
-bool create_seat (struct Lava_data *data, struct wl_registry *registry,
-		uint32_t name, const char *interface, uint32_t version);
-void destroy_all_seats (struct Lava_data *data);
+void render_bar_frame (struct Lava_bar *bar);
 
 #endif
+

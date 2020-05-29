@@ -38,6 +38,7 @@
 #include"seat.h"
 #include"cursor.h"
 #include"items/item.h"
+#include"bar/bar.h"
 
 /* No-Op function. */
 static void noop () {}
@@ -48,7 +49,7 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 	struct Lava_seat *seat = data;
 	seat->pointer.x        = -1;
 	seat->pointer.y        = -1;
-	seat->pointer.output   = NULL;
+	seat->pointer.bar      = NULL;
 	seat->pointer.item     = NULL;
 
 	if (seat->data->verbose)
@@ -63,14 +64,7 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 
 	attach_cursor_surface(seat->data, wl_pointer, serial);
 
-	seat->pointer.output = NULL;
-	struct Lava_output *op1, *op2;
-	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
-		if ( op1->wl_surface == surface )
-		{
-			seat->pointer.output = op1;
-			break;
-		}
+	seat->pointer.bar = bar_from_surface(seat->data, surface);
 
 	seat->pointer.x = wl_fixed_to_int(x);
 	seat->pointer.y = wl_fixed_to_int(y);
@@ -93,6 +87,12 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		uint32_t serial, uint32_t time, uint32_t button, uint32_t button_state)
 {
 	struct Lava_seat *seat = raw_data;
+	if ( seat->pointer.bar == NULL )
+	{
+		fputs("ERROR: Button press could not be handled: "
+				"Bar could not be found.\n", stderr);
+		return;
+	}
 
 	/* Only interact with the item if the pointer button was pressed and
 	 * released over the same item on the bar.
@@ -103,7 +103,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 			fprintf(stderr, "Button pressed: x=%d y=%d\n",
 					seat->pointer.x, seat->pointer.y);
 		seat->pointer.item = item_from_coords(seat->data,
-				seat->pointer.output,
+				seat->pointer.bar,
 				seat->pointer.x, seat->pointer.y);
 	}
 	else
@@ -116,7 +116,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 			return;
 
 		struct Lava_item *item = item_from_coords(seat->data,
-				seat->pointer.output,
+				seat->pointer.bar,
 				seat->pointer.x, seat->pointer.y);
 
 		if ( item != seat->pointer.item )
@@ -124,7 +124,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 
 		seat->pointer.item = NULL;
 
-		item_interaction(seat->data, seat->pointer.output, item);
+		item_interaction(seat->data, seat->pointer.bar, item);
 	}
 }
 
@@ -149,6 +149,12 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 		uint32_t serial, uint32_t time, int32_t id)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
+	if ( seat->pointer.bar == NULL )
+	{
+		fputs("ERROR: Touch-Up event could not be handled: "
+				"Bar could not be found.\n", stderr);
+		return;
+	}
 
 	if (seat->data->verbose)
 		fputs("Touch up.\n", stderr);
@@ -159,8 +165,8 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 	 */
 	if ( ! seat->touch.item || id != seat->touch.id )
 	{
-		seat->touch.item   = NULL;
-		seat->touch.output = NULL;
+		seat->touch.item = NULL;
+		seat->touch.bar  = NULL;
 		return;
 	}
 
@@ -168,7 +174,7 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 	 * and the following touch-up event over the same item, so we can
 	 * interact with it.
 	 */
-	item_interaction(seat->data, seat->touch.output, seat->touch.item);
+	item_interaction(seat->data, seat->touch.bar, seat->touch.item);
 }
 
 static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
@@ -183,18 +189,10 @@ static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
 	if (seat->data->verbose)
 		fprintf(stderr, "Touch down: x=%d y=%d\n", x, y);
 
-	/* Find the output of the touch event. */
-	seat->touch.output = NULL;
-	struct Lava_output *op1, *op2;
-	wl_list_for_each_safe(op1, op2, &seat->data->outputs, link)
-		if ( op1->wl_surface == surface )
-		{
-			seat->touch.output = op1;
-			break;
-		}
+	seat->touch.bar = bar_from_surface(seat->data, surface);
 
 	seat->touch.id   = id;
-	seat->touch.item = item_from_coords(seat->data, seat->touch.output,
+	seat->touch.item = item_from_coords(seat->data, seat->touch.bar,
 			x, y);
 }
 
@@ -212,8 +210,8 @@ static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
 	/* The touch point has been moved, meaning it likely is no longer over
 	 * the item, so we simply abort the touch operation.
 	 */
-	seat->touch.item   = NULL;
-	seat->touch.output = NULL;
+	seat->touch.item = NULL;
+	seat->touch.bar  = NULL;
 }
 
 /* These are the handlers for touch events. We only want to interact with an

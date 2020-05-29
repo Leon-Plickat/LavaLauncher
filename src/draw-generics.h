@@ -17,13 +17,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_LAYERSURFACE_H
-#define LAVALAUNCHER_LAYERSURFACE_H
+#ifndef LAVALAUNCHER_DRAW_GENERICS_H
+#define LAVALAUNCHER_DRAW_GENERICS_H
+
 
 struct Lava_data;
-struct Lava_output;
+struct Lava_bar;
 
-bool create_bar (struct Lava_data *data, struct Lava_output *output);
-void configure_surface (struct Lava_data *data, struct Lava_output *output);
+void lldg_draw_square_image (cairo_t *cairo, int32_t x, int32_t y,
+		int32_t icon_size, cairo_surface_t *img);
+void lldg_draw_bordered_rectangle (cairo_t *cairo, int32_t x, int32_t y,
+		int32_t w, int32_t h, int32_t border_top, int32_t border_right,
+		int32_t border_bottom, int32_t border_left,
+		float scale, float center_colour[4], float border_colour[4]);
+void lldg_clear_buffer (cairo_t *cairo);
 
 #endif

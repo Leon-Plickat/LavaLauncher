@@ -28,6 +28,7 @@
 
 #include"lavalauncher.h"
 #include"items/item.h"
+#include"bar/bar.h"
 #include"widget/widget.h"
 #include"output.h"
 #include"config.h"
@@ -57,13 +58,13 @@ bool item_set_variable (struct Lava_data *data, enum Item_type type,
 	}
 }
 
-void item_interaction (struct Lava_data *data, struct Lava_output *output,
+void item_interaction (struct Lava_data *data, struct Lava_bar *bar,
 		struct Lava_item *item)
 {
 	switch (item->type)
 	{
 		case TYPE_BUTTON:
-			item_command(data, item, output);
+			item_command(data, item, bar->output);
 			spawn_widget(item->widget_command);
 			break;
 
@@ -108,13 +109,13 @@ void item_nullify (struct Lava_item *item)
  * given surface-local coordinates on the surface of the given output.
  */
 struct Lava_item *item_from_coords (struct Lava_data *data,
-		struct Lava_output *output, int32_t x, int32_t y)
+		struct Lava_bar *bar, int32_t x, int32_t y)
 {
 	unsigned int ordinate;
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		ordinate = x - (output->bar_x_offset + data->border_left);
+		ordinate = x - (bar->x_offset + data->border_left);
 	else
-		ordinate = y - (output->bar_y_offset + data->border_top);
+		ordinate = y - (bar->y_offset + data->border_top);
 
 	struct Lava_item *bt_1, *bt_2;
 	wl_list_for_each_reverse_safe(bt_1, bt_2, &data->items, link)

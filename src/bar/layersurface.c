@@ -36,9 +36,9 @@
 #include"lavalauncher.h"
 #include"output.h"
 #include"seat.h"
-#include"draw.h"
+#include"bar/bar.h"
 
-static uint32_t get_anchor (struct Lava_data *data)
+uint32_t get_anchor (struct Lava_data *data)
 {
 	struct {
 		uint32_t singular_anchor;
@@ -79,39 +79,41 @@ static uint32_t get_anchor (struct Lava_data *data)
 		return edges[data->position].anchor_triplet;
 }
 
-/* Helper function to configure the bar surface. Careful: This function does not
- * commit!
- */
-void configure_surface (struct Lava_data *data, struct Lava_output *output)
+void configure_layer_surface (struct Lava_bar *bar)
 {
+	if ( bar == NULL )
+		return;
+
+	struct Lava_data   *data   = bar->data;
+	struct Lava_output *output = bar->output;
+
 	/* It is possible that this function is called by output events before
-	 * the surface has been created. This function will return and abort
-	 * unless it is called either when a surface configure event has been
-	 * received at least once, it is called by a surface configure event or
+	 * the bar has been created. This function will return and abort unless
+	 * it is called either when a surface configure event has been received
+	 * at least once, it is called by a surface configure event or
 	 * it is called during the creation of the surface.
 	 */
 	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED
 			&& output->status != OUTPUT_STATUS_CONFIGURED )
 		return;
-
 	if (data->verbose)
 		fputs("Configuring bar.\n", stderr);
 
 	uint32_t width, height;
-	if ( data->mode == MODE_SIMPLE )
+	if ( bar->data->mode == MODE_SIMPLE )
 		width = data->w, height = data->h;
 	else if ( data->orientation == ORIENTATION_HORIZONTAL )
-		width = output->w * output->scale, height = data->h;
+		width = bar->output->w * output->scale, height = data->h;
 	else
 		width = data->w, height = output->h * output->scale;
 
 	if (data->verbose)
 		fprintf(stderr, "Surface size: w=%d h=%d\n", width, height);
 
-	zwlr_layer_surface_v1_set_size(output->layer_surface, width, height);
+	zwlr_layer_surface_v1_set_size(bar->layer_surface, width, height);
 
 	/* Anchor the surface to the correct edge. */
-	zwlr_layer_surface_v1_set_anchor(output->layer_surface, get_anchor(data));
+	zwlr_layer_surface_v1_set_anchor(bar->layer_surface, get_anchor(data));
 
 	/* Set margin.
 	* Since we create a surface spanning the entire length of an outputs
@@ -120,22 +122,22 @@ void configure_surface (struct Lava_data *data, struct Lava_output *output)
 	* To work around this, we simply cheat a bit: Margins parallel to the
 	* bar will be simulated in the draw code by adjusting the bar offsets.
 	*
-	* See: update_bar_offset()
+	* See: bar_update_offset()
 	*
 	* Here we set the margins not parallel to the edges length, which are
 	* real layer shell margins.
 	*/
 	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		zwlr_layer_surface_v1_set_margin(output->layer_surface,
+		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
 				data->margin_top, 0,
 				data->margin_bottom, 0);
 	else
-		zwlr_layer_surface_v1_set_margin(output->layer_surface,
+		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
 				0, data->margin_right,
 				0, data->margin_left);
 
 	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
-	zwlr_layer_surface_v1_set_exclusive_zone(output->layer_surface,
+	zwlr_layer_surface_v1_set_exclusive_zone(bar->layer_surface,
 			data->exclusive_zone);
 
 	/* Create a region of the visible part of the surface.
@@ -144,78 +146,53 @@ void configure_surface (struct Lava_data *data, struct Lava_output *output)
 	 */
 	struct wl_region *region = wl_compositor_create_region(data->compositor);
 	if ( data->mode == MODE_DEFAULT )
-		wl_region_add(region, output->bar_x_offset, output->bar_y_offset,
+		wl_region_add(region, bar->x_offset, bar->y_offset,
 				data->w, data->h);
 	else
-		wl_region_add(region, 0, 0, output->w, output->h);
+		wl_region_add(region, 0, 0, bar->output->w, bar->output->h);
 
 	/* Set input region. This is necessary to prevent the unused parts of
 	 * the surface to catch pointer and touch events.
 	 */
-	wl_surface_set_input_region(output->wl_surface, region);
+	wl_surface_set_input_region(bar->wl_surface, region);
 
 	/* If both border and background are opaque, set opaque region. This
 	 * will inform the compositor that it does not have to render anything
 	 * below the surface.
 	 */
 	if ( data->bar_colour[3] == 1 && data->border_colour[3] == 1 )
-		wl_surface_set_opaque_region(output->wl_surface, region);
+		wl_surface_set_opaque_region(bar->wl_surface, region);
 
 	wl_region_destroy(region);
 }
+
 
 static void layer_surface_handle_configure (void *raw_data,
 		struct zwlr_layer_surface_v1 *surface, uint32_t serial,
 		uint32_t w, uint32_t h)
 {
-	struct Lava_output *output = (struct Lava_output *)raw_data;
-	struct Lava_data   *data   = output->data;
-	output->status             = OUTPUT_STATUS_SURFACE_CONFIGURED;
+	struct Lava_bar  *bar  = (struct Lava_bar *)raw_data;
+	struct Lava_data *data = bar->data;
+	bar->output->status    = OUTPUT_STATUS_SURFACE_CONFIGURED;
 
 	if (data->verbose)
 		fprintf(stderr, "Layer surface configure request:"
 				" w=%d h=%d serial=%d\n", w, h, serial);
 
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
-	configure_surface(data, output);
-	render_bar_frame(data, output);
+	update_bar(bar);
 }
 
-static void layer_surface_handle_closed (void *raw_data,
+static void layer_surface_handle_closed (void *data,
 		struct zwlr_layer_surface_v1 *surface)
 {
-	struct Lava_data *data = (struct Lava_data *)raw_data;
+	struct Lava_bar *bar = (struct Lava_bar *)data;
 	fputs("Layer surface has been closed.\n", stderr);
-	data->loop = false;
+	bar->data->loop = false;
 }
 
-static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
+const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 	.configure = layer_surface_handle_configure,
 	.closed    = layer_surface_handle_closed
 };
 
-bool create_bar (struct Lava_data *data, struct Lava_output *output)
-{
-	if (data->verbose)
-		fputs("Creating bar.\n", stderr);
-
-	if ( NULL == (output->wl_surface = wl_compositor_create_surface(data->compositor)) )
-	{
-		fputs("ERROR: Compositor did not create wl_surface.\n", stderr);
-		return false;
-	}
-
-	if ( NULL == (output->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-					data->layer_shell, output->wl_surface,
-					output->wl_output, data->layer, "LavaLauncher")) )
-	{
-		fputs("ERROR: Compositor did not create layer_surface.\n", stderr);
-		return false;
-	}
-
-	configure_surface(data, output);
-	zwlr_layer_surface_v1_add_listener(output->layer_surface,
-			&layer_surface_listener, output);
-	wl_surface_commit(output->wl_surface);
-	return true;
-}

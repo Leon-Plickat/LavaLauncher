@@ -17,17 +17,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#define _POSIX_C_SOURCE 200809L
+
 #include<stdio.h>
-#include<stdbool.h>
 #include<stdlib.h>
+#include<stdbool.h>
 #include<unistd.h>
+#include<string.h>
 #include<cairo/cairo.h>
 #include<wayland-server.h>
+#include<wayland-client.h>
+#include<wayland-client-protocol.h>
 
 #include"lavalauncher.h"
 #include"output.h"
-#include"seat.h"
-#include"draw.h"
+#include"draw-generics.h"
+#include"bar/bar.h"
+#include"bar/render.h"
 #include"items/item.h"
 
 static void item_replace_background (cairo_t *cairo, int32_t x, int32_t y,
@@ -84,21 +90,17 @@ static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
 	cairo_restore(cairo);
 }
 
-static void draw_icon (cairo_t *cairo, int32_t x, int32_t y,
-		int32_t icon_size, cairo_surface_t *img)
+static void calculate_bar_buffer_size (struct Lava_data *data, struct Lava_output *output,
+		int *w, int *h)
 {
-	if ( img == NULL )
-		return;
+	if ( data->mode == MODE_SIMPLE )
+		*w = data->w, *h = data->h;
+	else if ( data->orientation == ORIENTATION_HORIZONTAL )
+		*w = output->w, *h = data->h;
+	else
+		*w = data->w, *h = output->h;
 
-	float w = cairo_image_surface_get_width(img);
-	float h = cairo_image_surface_get_height(img);
-
-	cairo_save(cairo);
-	cairo_translate(cairo, x, y);
-	cairo_scale(cairo, icon_size / w, icon_size / h);
-	cairo_set_source_surface(cairo, img, 0, 0);
-	cairo_paint(cairo);
-	cairo_restore(cairo);
+	*w *= output->scale, *h *= output->scale;
 }
 
 static void draw_items (cairo_t *cairo, struct Lava_data *data,
@@ -122,80 +124,30 @@ static void draw_items (cairo_t *cairo, struct Lava_data *data,
 						it_1->background_colour);
 			draw_effect(cairo, x, y, size, data->effect_padding,
 					data->effect_colour, data->effect);
-			draw_icon(cairo, x, y, size, it_1->img);
+			lldg_draw_square_image(cairo, x, y, size, it_1->img);
 		}
 }
 
-/* Draw the bar background plus border. */
-static void draw_bar (cairo_t *cairo, int32_t x, int32_t y, int32_t w, int32_t h,
-		int32_t border_top, int32_t border_right,
-		int32_t border_bottom, int32_t border_left,
-		float scale, float center_colour[4], float border_colour[4])
+void render_bar_frame (struct Lava_bar *bar)
 {
-	/* Scale. */
-	x *= scale, y *= scale, w *= scale, h *= scale;
-	border_top *= scale, border_bottom *= scale;
-	border_left *= scale, border_right *= scale;
+	if ( bar == NULL )
+		return;
 
-	/* Calculate dimensions of center. */
-	int32_t cx = x + border_left,
-		cy = y + border_top,
-		cw = w - border_left - border_right,
-		ch = h - border_top  - border_bottom;
+	struct Lava_data   *data   = bar->data;
+	struct Lava_output *output = bar->output;
 
-	/* Draw center. */
-	cairo_rectangle(cairo, cx, cy, cw, ch);
-	cairo_set_source_rgba(cairo, center_colour[0], center_colour[1],
-			center_colour[2], center_colour[3]);
-	cairo_fill(cairo);
-
-	/* Draw borders. Top - Right - Bottom - Left */
-	cairo_rectangle(cairo, x, y, w, border_top);
-	cairo_rectangle(cairo, x + w - border_right, y + border_top,
-			border_right, h - border_top - border_bottom);
-	cairo_rectangle(cairo, x, y + h - border_bottom, w, border_bottom);
-	cairo_rectangle(cairo, x, y + border_top, border_left,
-			h - border_top - border_bottom);
-	cairo_set_source_rgba(cairo, border_colour[0], border_colour[1],
-			border_colour[2], border_colour[3]);
-	cairo_fill(cairo);
-}
-
-static void clear_cairo_buffer (cairo_t *cairo)
-{
-	cairo_save(cairo);
-	cairo_set_operator(cairo, CAIRO_OPERATOR_CLEAR);
-	cairo_paint(cairo);
-	cairo_restore(cairo);
-}
-
-static void calculate_buffer_size (struct Lava_data *data, struct Lava_output *output,
-		int *w, int *h)
-{
-	if ( data->mode == MODE_SIMPLE )
-		*w = data->w, *h = data->h;
-	else if ( data->orientation == ORIENTATION_HORIZONTAL )
-		*w = output->w, *h = data->h;
-	else
-		*w = data->w, *h = output->h;
-
-	*w *= output->scale, *h *= output->scale;
-}
-
-void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
-{
 	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED )
 		return;
 
 	/* Get new/next buffer. */
 	int buffer_w, buffer_h;
-	calculate_buffer_size(data, output, &buffer_w, &buffer_h);
-	if (! next_buffer(&output->current_buffer, data->shm, output->buffers,
+	calculate_bar_buffer_size(data, output, &buffer_w, &buffer_h);
+	if (! next_buffer(&bar->current_buffer, data->shm, bar->buffers,
 				buffer_w, buffer_h))
 		return;
 
-	cairo_t *cairo = output->current_buffer->cairo;
-	clear_cairo_buffer(cairo);
+	cairo_t *cairo = bar->current_buffer->cairo;
+	lldg_clear_buffer(cairo);
 
 	/* Draw bar. */
 	if (data->verbose)
@@ -208,32 +160,30 @@ void render_bar_frame (struct Lava_data *data, struct Lava_output *output)
 		else
 			bar_w = data->w, bar_h = output->h;
 
-		draw_bar(cairo, 0, 0, bar_w, bar_h,
+		lldg_draw_bordered_rectangle(cairo, 0, 0, bar_w, bar_h,
 				data->border_top, data->border_right,
 				data->border_bottom, data->border_left,
-				output->scale,
+				bar->output->scale,
 				data->bar_colour, data->border_colour);
 	}
 	else
-		draw_bar(cairo, output->bar_x_offset, output->bar_y_offset,
-				data->w, data->h,
+		lldg_draw_bordered_rectangle(cairo,
+				bar->x_offset, bar->y_offset, data->w, data->h,
 				data->border_top, data->border_right,
 				data->border_bottom, data->border_left,
-				output->scale,
-				data->bar_colour, data->border_colour);
+				output->scale, data->bar_colour, data->border_colour);
 
 	/* Draw icons. */
 	if (data->verbose)
 		fputs("Drawing icons.\n", stderr);
-	draw_items(cairo, data, output->bar_x_offset + data->border_left,
-			output->bar_y_offset + data->border_top,
-			output->scale);
+	draw_items(cairo, data, bar->x_offset + data->border_left,
+			bar->y_offset + data->border_top, output->scale);
 
 	/* Commit surface. */
 	if (data->verbose)
 		fputs("Committing surface.\n", stderr);
-	wl_surface_set_buffer_scale(output->wl_surface, output->scale);
-	wl_surface_attach(output->wl_surface, output->current_buffer->buffer, 0, 0);
-	wl_surface_damage_buffer(output->wl_surface, 0, 0, INT32_MAX, INT32_MAX);
-	wl_surface_commit(output->wl_surface);
+	wl_surface_set_buffer_scale(bar->wl_surface, output->scale);
+	wl_surface_attach(bar->wl_surface, bar->current_buffer->buffer, 0, 0);
+	wl_surface_damage_buffer(bar->wl_surface, 0, 0, INT32_MAX, INT32_MAX);
+	wl_surface_commit(bar->wl_surface);
 }

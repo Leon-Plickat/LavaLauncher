@@ -30,98 +30,28 @@
 #include<wayland-client.h>
 #include<wayland-client-protocol.h>
 
-#include"wlr-layer-shell-unstable-v1-protocol.h"
 #include"xdg-output-unstable-v1-protocol.h"
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
 #include"output.h"
-#include"layersurface.h"
-#include"draw.h"
+#include"bar/bar.h"
 
 /* No-Op function. */
 static void noop () {}
-
-static void update_bar_offset (struct Lava_data *data, struct Lava_output *output)
-{
-	if ( output->w == 0 || output->h == 0 )
-		return;
-
-	if ( data->mode == MODE_SIMPLE )
-	{
-		output->bar_x_offset = output->bar_y_offset = 0;
-		return;
-	}
-
-	switch (data->alignment)
-	{
-		case ALIGNMENT_START:
-			output->bar_x_offset = 0;
-			output->bar_y_offset = 0;
-			break;
-
-		case ALIGNMENT_CENTER:
-			if ( data->orientation == ORIENTATION_HORIZONTAL )
-			{
-				output->bar_x_offset = (output->w / 2) - (data->w / 2);
-				output->bar_y_offset = 0;
-			}
-			else
-			{
-				output->bar_x_offset = 0;
-				output->bar_y_offset = (output->h / 2) - (data->h / 2);
-			}
-			break;
-
-		case ALIGNMENT_END:
-			if ( data->orientation == ORIENTATION_HORIZONTAL )
-			{
-				output->bar_x_offset = output->w  - data->w;
-				output->bar_y_offset = 0;
-			}
-			else
-			{
-				output->bar_x_offset = 0;
-				output->bar_y_offset = output->h - data->h;
-			}
-			break;
-	}
-
-	/* Set margin.
-	 * Since we create a surface spanning the entire length of an outputs
-	 * edge, margins parallel to it would move it outside the boundaries of
-	 * the output, which may or may not cause issues in some compositors.
-	 * To work around this, we simply cheat a bit: Margins parallel to the
-	 * bar will be simulated in the draw code by adjusting the bar offsets.
-	 *
-	 * See: configure_surface()
-	 *
-	 * Here we set the margins parallel to the edges length, which are
-	 * "fake", by adjusting the offset of the bar.
-	 */
-	if ( data->orientation == ORIENTATION_HORIZONTAL )
-		output->bar_x_offset += data->margin_left - data->margin_right;
-	else
-		output->bar_y_offset += data->margin_top - data->margin_bottom;
-
-	if (data->verbose)
-		fprintf(stderr, "Aligning bar: global_name=%d x-offset=%d y-offset=%d\n",
-				output->global_name, output->bar_x_offset, output->bar_y_offset);
-}
 
 static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		int32_t factor)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_bar    *bar    = output->bar;
 	output->scale              = factor;
 
 	if (output->data->verbose)
 		fprintf(stderr, "Output update scale: global_name=%d scale=%d\n",
 				output->global_name, output->scale);
 
-	configure_surface(output->data, output);
-	update_bar_offset(output->data, output);
-	render_bar_frame(output->data, output);
+	update_bar(bar);
 }
 
 static const struct wl_output_listener output_listener = {
@@ -146,15 +76,16 @@ static void xdg_output_handle_logical_size (void *raw_data,
 		struct zxdg_output_v1 *xdg_output, int32_t w, int32_t h)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_data   *data   = output->data;
+	struct Lava_bar    *bar    = output->bar;
 	output->w                  = w;
 	output->h                  = h;
 
-	if (output->data->verbose)
+	if (data->verbose)
 		fprintf(stderr, "XDG-Output update logical size: global_name=%d "
 				"w=%d h=%d\n", output->global_name, w, h);
 
-	update_bar_offset(output->data, output);
-	render_bar_frame(output->data, output);
+	update_bar(bar);
 }
 
 static const struct zxdg_output_v1_listener xdg_output_listener = {
@@ -202,13 +133,14 @@ bool configure_output (struct Lava_data *data, struct Lava_output *output)
 
 
 	/* If either the name of output equals only_output or if no only_output
-	 * has been given, create a surface for this new output.
+	 * has been given, create a bar for this new output.
 	 */
 	if ( data->only_output == NULL || ! strcmp(output->name, data->only_output) )
 	{
 		output->status = OUTPUT_STATUS_CONFIGURED;
-		if (! create_bar(data, output))
+		if ( NULL == (output->bar = create_bar(data, output)) )
 		{
+			fputs("ERROR: Could not create bar.\n", stderr);
 			data->loop = false;
 			data->ret  = EXIT_FAILURE;
 			return false;
@@ -281,12 +213,9 @@ void destroy_output (struct Lava_output *output)
 	if ( output == NULL )
 		return;
 
+	destroy_bar(output->bar);
 	wl_list_remove(&output->link);
 	wl_output_destroy(output->wl_output);
-	if ( output->layer_surface != NULL )
-		zwlr_layer_surface_v1_destroy(output->layer_surface);
-	if ( output->wl_surface != NULL )
-		wl_surface_destroy(output->wl_surface);
 	free(output->name);
 	free(output);
 }

@@ -20,9 +20,10 @@
 #ifndef LAVALAUNCHER_ITEM_BUTTON_H
 #define LAVALAUNCHER_ITEM_BUTTON_H
 
-struct Lava_data;
+#include<stdbool.h>
 
-bool create_button (struct Lava_data *data);
+struct Lava_item;
+
 bool button_set_variable (struct Lava_item *button, const char *variable,
 		const char *value, int line);
 

@@ -20,9 +20,10 @@
 #ifndef LAVALAUNCHER_ITEM_SPACER_H
 #define LAVALAUNCHER_ITEM_SPACER_H
 
-struct Lava_data;
+#include<stdbool.h>
 
-bool create_spacer (struct Lava_data *data);
+struct Lava_item;
+
 bool spacer_set_variable (struct Lava_item *spacer, const char *variable,
 		const char *value, int line);
 

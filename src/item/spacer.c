@@ -29,23 +29,6 @@
 #include"lavalauncher.h"
 #include"item/item.h"
 
-bool create_spacer (struct Lava_data *data)
-{
-	struct Lava_item *new_spacer = calloc(1, sizeof(struct Lava_item));
-	if ( new_spacer == NULL )
-	{
-		fprintf(stderr, "ERROR: Could not allocate.\n");
-		return false;
-	}
-
-	item_nullify(new_spacer);
-	new_spacer->type = TYPE_SPACER;
-
-	data->last_item = new_spacer;
-	wl_list_insert(&data->items, &new_spacer->link);
-	return true;
-}
-
 static bool spacer_set_length (struct Lava_item *spacer, const char *length)
 {
 	int len = atoi(length);

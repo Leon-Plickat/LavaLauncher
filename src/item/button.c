@@ -32,24 +32,6 @@
 #include"config/config.h"
 #include"config/colour.h"
 
-bool create_button (struct Lava_data *data)
-{
-	struct Lava_item *new_button = calloc(1, sizeof(struct Lava_item));
-	if ( new_button == NULL )
-	{
-		fprintf(stderr, "ERROR: Could not allocate.\n");
-		return false;
-	}
-
-	item_nullify(new_button);
-	new_button->type = TYPE_BUTTON;
-
-
-	data->last_item = new_button;
-	wl_list_insert(&data->items, &new_button->link);
-	return true;
-}
-
 static bool button_set_command (struct Lava_item *button, const char *command)
 {
 	if ( button->cmd != NULL )

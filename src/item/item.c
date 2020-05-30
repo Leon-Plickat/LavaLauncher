@@ -35,14 +35,35 @@
 #include"item/button.h"
 #include"item/spacer.h"
 
+static void item_nullify (struct Lava_item *item)
+{
+	item->type                  = 0;
+	item->img                   = NULL;
+	item->index                 = 0;
+	item->ordinate              = 0;
+	item->length                = 0;
+	item->cmd                   = 0;
+	item->background_colour_hex = NULL;
+	item->background_colour[0]  = 0.0;
+	item->background_colour[1]  = 0.0;
+	item->background_colour[2]  = 0.0;
+	item->background_colour[3]  = 1.0;
+}
+
 bool create_item (struct Lava_data *data, enum Item_type type)
 {
-	switch (type)
+	struct Lava_item *new_item = calloc(1, sizeof(struct Lava_item));
+	if ( new_item == NULL )
 	{
-		case TYPE_BUTTON: return create_button(data);
-		case TYPE_SPACER: return create_spacer(data);
-		default:          return false;
+		fprintf(stderr, "ERROR: Could not allocate.\n");
+		return false;
 	}
+
+	item_nullify(new_item);
+	new_item->type  = type;
+	data->last_item = new_item;
+	wl_list_insert(&data->items, &new_item->link);
+	return true;
 }
 
 bool item_set_variable (struct Lava_item *item, const char *variable,
@@ -68,21 +89,6 @@ void item_interaction (struct Lava_bar *bar, struct Lava_item *item)
 		default:
 			break;
 	}
-}
-
-void item_nullify (struct Lava_item *item)
-{
-	item->type                         = 0;
-	item->img                          = NULL;
-	item->index                        = 0;
-	item->ordinate                     = 0;
-	item->length                       = 0;
-	item->cmd                          = 0;
-	item->background_colour_hex        = NULL;
-	item->background_colour[0]         = 0.0;
-	item->background_colour[1]         = 0.0;
-	item->background_colour[2]         = 0.0;
-	item->background_colour[3]         = 1.0;
 }
 
 /* Return pointer to Lava_item struct from item list which includes the

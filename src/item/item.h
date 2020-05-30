@@ -49,7 +49,6 @@ bool create_item (struct Lava_data *data, enum Item_type type);
 bool item_set_variable (struct Lava_item *item, const char *variable,
 		const char *value, int line);
 void item_interaction (struct Lava_bar *bar, struct Lava_item *item);
-void item_nullify (struct Lava_item *item);
 struct Lava_item *item_from_coords (struct Lava_data *data,
 		struct Lava_bar *bar, int32_t x, int32_t y);
 unsigned int get_item_length_sum (struct Lava_data *data);

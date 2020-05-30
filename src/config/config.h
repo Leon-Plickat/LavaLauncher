@@ -112,7 +112,7 @@ struct Lava_config
 	int effect_padding;
 };
 
-bool init_config (struct Lava_data *data, const char *path);
+bool init_config (struct Lava_data *data);
 void finish_config (struct Lava_data *data);
 
 #endif

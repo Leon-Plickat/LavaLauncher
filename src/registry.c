@@ -129,10 +129,6 @@ bool init_wayland (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Init Wayland.\n", stderr);
 
-	/* Init lists. */
-	wl_list_init(&data->outputs);
-	wl_list_init(&data->seats);
-
 	/* Connect to Wayland server. */
 	if (data->verbose)
 		fputs("Connecting to server.\n", stderr);

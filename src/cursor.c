@@ -39,6 +39,10 @@ bool init_cursor (struct Lava_data *data)
 		fputs("Init cursor.\n", stderr);
 
 	struct Lava_cursor *cursor = &data->cursor;
+	cursor->name    = NULL;
+	cursor->theme   = NULL;
+	cursor->image   = NULL;
+	cursor->surface = NULL;
 
 	if ( NULL == (cursor->theme = wl_cursor_theme_load(NULL, 16, data->shm)) )
 	{

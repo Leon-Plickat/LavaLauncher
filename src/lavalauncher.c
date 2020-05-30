@@ -47,53 +47,59 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
 			    "  -v        Enable verbose output.\n\n"
 			    "The configuration syntax is documented in the man page.\n";
 
-int main (int argc, char *argv[])
+static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[])
 {
-	struct Lava_data data = {
-		.ret     = EXIT_FAILURE,
-		.loop    = true,
-		.verbose = false
-	};
-	char *config_path = NULL;
-
 	extern int optind;
 	extern char *optarg;
 	for (int c; (c = getopt(argc, argv, "c:hv")) != -1 ;)
 		switch (c)
 		{
 			case 'c':
-				config_path = optarg;
+				data->config_path = optarg;
 				break;
 
 			case 'h':
 				fputs(usage, stderr);
-				return EXIT_SUCCESS;
+				data->ret = EXIT_SUCCESS;
+				return false;
 
 			case 'v':
-				data.verbose = true;
+				data->verbose = true;
 				break;
 
 			default:
-				return EXIT_FAILURE;
+				return false;
 		}
 
-	if ( config_path == NULL)
+	if ( data->config_path == NULL)
 	{
 		fputs("You need to provide the path to a config file.\n", stderr);
-		return EXIT_FAILURE;
+		return false;
 	}
 
-	wl_list_init(&(data.items));
+	return true;
+}
 
-	if (! init_config(&data, config_path))
+static void init_data (struct Lava_data *data)
+{
+	data->ret         = EXIT_FAILURE;
+	data->loop        = true;
+	data->verbose     = false;
+	data->config_path = NULL;
+	wl_list_init(&data->items);
+	wl_list_init(&data->outputs);
+	wl_list_init(&data->seats);
+}
+
+int main (int argc, char *argv[])
+{
+	struct Lava_data data;
+	init_data(&data);
+
+	if (! handle_command_flags(&data, argc, argv))
+		return data.ret;
+	if (! init_config(&data))
 		goto early_exit;
-
-	if (data.verbose)
-		fprintf(stderr, "LavaLauncher Version "VERSION"\n"
-				"Bar: w=%d h=%d items=%d\n",
-				data.config.w, data.config.h, data.item_amount);
-
-
 	if (! init_wayland(&data))
 		goto exit;
 	if (! init_cursor(&data))

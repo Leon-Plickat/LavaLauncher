@@ -39,8 +39,9 @@ struct Lava_data
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 
-	struct Lava_cursor cursor;
-	struct Lava_config config;
+	struct Lava_cursor  cursor;
+	struct Lava_config  config;
+	char               *config_path;
 
 	struct wl_list outputs;
 	struct wl_list seats;

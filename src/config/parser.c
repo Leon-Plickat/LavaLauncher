@@ -357,7 +357,7 @@ error:
 	return false;
 }
 
-bool parse_config_file (struct Lava_data *data, const char *config_path)
+bool parse_config_file (struct Lava_data *data)
 {
 	errno = 0;
 	struct Lava_parser parser = {
@@ -369,7 +369,7 @@ bool parse_config_file (struct Lava_data *data, const char *config_path)
 		.context = CONTEXT_NONE,
 		.action  = ACTION_NONE
 	};
-	if ( NULL == (parser.file = fopen(config_path, "r")) )
+	if ( NULL == (parser.file = fopen(data->config_path, "r")) )
 	{
 		fprintf(stderr, "ERROR: Can not open config file.\n"
 				"ERROR: fopen: %s\n", strerror(errno));

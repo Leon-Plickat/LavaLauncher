@@ -105,7 +105,7 @@ static void calculate_dimensions (struct Lava_data *data)
 	}
 }
 
-bool init_config (struct Lava_data *data, const char *path)
+bool init_config (struct Lava_data *data)
 {
 	struct Lava_config *config = &data->config;
 
@@ -113,7 +113,7 @@ bool init_config (struct Lava_data *data, const char *path)
 		fputs("Init config.\n", stderr);
 
 	sensible_defaults(config);
-	if (! parse_config_file(data, path))
+	if (! parse_config_file(data))
 		goto error;
 	if (! finalize_items(data, config->icon_size))
 		goto error;

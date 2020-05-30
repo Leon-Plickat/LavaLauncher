@@ -74,6 +74,6 @@ struct Lava_parser
 	struct Lava_item *item;
 };
 
-bool parse_config_file (struct Lava_data *data, const char *config_path);
+bool parse_config_file (struct Lava_data *data);
 
 #endif

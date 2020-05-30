@@ -17,17 +17,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define _POSIX_C_SOURCE 200809L
+#ifndef LAVALAUNCHER_ITEM_COMMAND_H
+#define LAVALAUNCHER_ITEM_COMMAND_H
 
-#include<stdio.h>
-#include<stdlib.h>
-#include<stdbool.h>
-#include<unistd.h>
-#include<string.h>
+struct Lava_data;
+struct Lava_output;
+struct Lava_item;
 
-void spawn_widget (const char *cmd)
-{
-	if ( cmd == NULL )
-		return;
-	fputs("WARNING: Widgets have not yet been implemented.\n", stderr);
-}
+bool item_command (struct Lava_data *data, struct Lava_item *item,
+		struct Lava_output *output);
+
+#endif

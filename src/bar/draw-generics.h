@@ -17,8 +17,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_DRAW_GENERICS_H
-#define LAVALAUNCHER_DRAW_GENERICS_H
+#ifndef LAVALAUNCHER_BAR_DRAW_GENERICS_H
+#define LAVALAUNCHER_BAR_DRAW_GENERICS_H
 
 
 struct Lava_data;

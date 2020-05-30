@@ -37,7 +37,7 @@
 #include"output.h"
 #include"seat.h"
 #include"cursor.h"
-#include"items/item.h"
+#include"item/item.h"
 #include"bar/bar.h"
 
 /* No-Op function. */
@@ -124,7 +124,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 
 		seat->pointer.item = NULL;
 
-		item_interaction(seat->data, seat->pointer.bar, item);
+		item_interaction(seat->pointer.bar, item);
 	}
 }
 
@@ -174,7 +174,7 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 	 * and the following touch-up event over the same item, so we can
 	 * interact with it.
 	 */
-	item_interaction(seat->data, seat->touch.bar, seat->touch.item);
+	item_interaction(seat->touch.bar, seat->touch.item);
 }
 
 static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,

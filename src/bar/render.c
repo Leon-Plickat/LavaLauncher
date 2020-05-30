@@ -31,10 +31,11 @@
 
 #include"lavalauncher.h"
 #include"output.h"
-#include"draw-generics.h"
 #include"bar/bar.h"
 #include"bar/render.h"
-#include"items/item.h"
+#include"bar/draw-generics.h"
+#include"bar/buffer.h"
+#include"item/item.h"
 #include"config/config.h"
 
 static void item_replace_background (cairo_t *cairo, int32_t x, int32_t y,

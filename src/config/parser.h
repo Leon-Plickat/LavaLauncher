@@ -17,8 +17,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_PARSER_H
-#define LAVALAUNCHER_PARSER_H
+#ifndef LAVALAUNCHER_CONFIG_PARSER_H
+#define LAVALAUNCHER_CONFIG_PARSER_H
 
 struct Lava_data;
 struct Lava_config;

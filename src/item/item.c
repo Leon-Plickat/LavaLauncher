@@ -27,15 +27,13 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
-#include"items/item.h"
-#include"items/command.h"
 #include"bar/bar.h"
-#include"widget/widget.h"
 #include"output.h"
 #include"config/config.h"
-
-#include"items/button.h"
-#include"items/spacer.h"
+#include"item/item.h"
+#include"item/command.h"
+#include"item/button.h"
+#include"item/spacer.h"
 
 bool create_item (struct Lava_data *data, enum Item_type type)
 {
@@ -58,14 +56,12 @@ bool item_set_variable (struct Lava_item *item, const char *variable,
 	}
 }
 
-void item_interaction (struct Lava_data *data, struct Lava_bar *bar,
-		struct Lava_item *item)
+void item_interaction (struct Lava_bar *bar, struct Lava_item *item)
 {
 	switch (item->type)
 	{
 		case TYPE_BUTTON:
-			item_command(data, item, bar->output);
-			spawn_widget(item->widget_command);
+			item_command(bar->data, item, bar->output);
 			break;
 
 		case TYPE_SPACER:
@@ -87,22 +83,6 @@ void item_nullify (struct Lava_item *item)
 	item->background_colour[1]         = 0.0;
 	item->background_colour[2]         = 0.0;
 	item->background_colour[3]         = 1.0;
-	item->widget_command               = NULL;
-	item->widget_border_t              = 0;
-	item->widget_border_r              = 0;
-	item->widget_border_b              = 0;
-	item->widget_border_l              = 0;
-	item->widget_margin                = 0;
-	item->widget_background_colour_hex = NULL;
-	item->widget_background_colour[0]  = 0.0;
-	item->widget_background_colour[1]  = 0.0;
-	item->widget_background_colour[2]  = 0.0;
-	item->widget_background_colour[3]  = 1.0;
-	item->widget_border_colour_hex     = NULL;
-	item->widget_border_colour[0]      = 0.0;
-	item->widget_border_colour[1]      = 0.0;
-	item->widget_border_colour[2]      = 0.0;
-	item->widget_border_colour[3]      = 1.0;
 }
 
 /* Return pointer to Lava_item struct from item list which includes the
@@ -173,12 +153,8 @@ static void destroy_item (struct Lava_item *item)
 		cairo_surface_destroy(item->img);
 	if ( item->cmd != NULL )
 		free(item->cmd);
-	if ( item->widget_background_colour_hex != NULL )
-		free(item->widget_background_colour_hex);
 	if ( item->background_colour_hex != NULL )
 		free(item->background_colour_hex);
-	if ( item->widget_border_colour_hex != NULL )
-		free(item->widget_border_colour_hex);
 	free(item);
 }
 

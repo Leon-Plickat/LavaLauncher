@@ -30,7 +30,7 @@
 #include"lavalauncher.h"
 #include"output.h"
 #include"command.h"
-#include"items/item.h"
+#include"item/item.h"
 #include"config/config.h"
 
 /* This function will search for a string (*srch) inside a given string (**str)

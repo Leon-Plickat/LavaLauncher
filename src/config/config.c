@@ -29,7 +29,7 @@
 #include"lavalauncher.h"
 #include"config/config.h"
 #include"config/parser.h"
-#include"items/item.h"
+#include"item/item.h"
 
 static void sensible_defaults (struct Lava_config *config)
 {
@@ -73,24 +73,6 @@ static void sensible_defaults (struct Lava_config *config)
 
 	config->effect            = EFFECT_NONE;
 	config->effect_padding    = 5;
-
-	config->widget_background_colour_hex = strdup("#000000FF");
-	config->widget_background_colour[0]  = 1.0f;
-	config->widget_background_colour[1]  = 1.0f;
-	config->widget_background_colour[2]  = 1.0f;
-	config->widget_background_colour[3]  = 1.0f;
-
-	config->widget_border_colour_hex = strdup("#000000FF");
-	config->widget_border_colour[0]  = 1.0f;
-	config->widget_border_colour[1]  = 1.0f;
-	config->widget_border_colour[2]  = 1.0f;
-	config->widget_border_colour[3]  = 1.0f;
-
-	config->widget_margin        = 20;
-	config->widget_border_top    = 2;
-	config->widget_border_right  = 2;
-	config->widget_border_bottom = 2;
-	config->widget_border_left   = 2;
 }
 
 /* Calculate the dimensions of the visible part of the bar. */
@@ -165,9 +147,5 @@ void destroy_config (struct Lava_config *config)
 		free(config->border_colour_hex);
 	if ( config->effect_colour_hex != NULL )
 		free(config->effect_colour_hex);
-	if ( config->widget_background_colour_hex != NULL )
-		free(config->widget_background_colour_hex);
-	if ( config->widget_border_colour_hex != NULL )
-		free(config->widget_border_colour_hex);
 	free(config);
 }

@@ -20,10 +20,9 @@
 #ifndef LAVALAUNCHER_BAR_H
 #define LAVALAUNCHER_BAR_H
 
-#include"buffer.h"
+#include"bar/buffer.h"
 
 struct Lava_data;
-struct Lava_buffer;
 struct Lava_output;
 
 struct Lava_bar

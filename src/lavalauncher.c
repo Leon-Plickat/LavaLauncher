@@ -38,7 +38,7 @@
 #include"lavalauncher.h"
 #include"config/config.h"
 #include"registry.h"
-#include"items/item.h"
+#include"item/item.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"

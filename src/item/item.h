@@ -43,21 +43,12 @@ struct Lava_item
 	unsigned int     index, ordinate, length;
 	float            background_colour[4];
 	char            *background_colour_hex;
-
-	char            *widget_command;
-	unsigned int     widget_border_t, widget_border_r, widget_border_b, widget_border_l;
-	unsigned int     widget_margin;
-	float            widget_background_colour[4];
-	char            *widget_background_colour_hex;
-	float            widget_border_colour[4];
-	char            *widget_border_colour_hex;
 };
 
 bool create_item (struct Lava_data *data, enum Item_type type);
 bool item_set_variable (struct Lava_item *item, const char *variable,
 		const char *value, int line);
-void item_interaction (struct Lava_data *data, struct Lava_bar *bar,
-		struct Lava_item *item);
+void item_interaction (struct Lava_bar *bar, struct Lava_item *item);
 void item_nullify (struct Lava_item *item);
 struct Lava_item *item_from_coords (struct Lava_data *data,
 		struct Lava_bar *bar, int32_t x, int32_t y);

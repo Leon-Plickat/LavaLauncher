@@ -147,21 +147,6 @@ which can be made in this context are as follows.
 	Position of the bar. Can be "top", "right", "bottom", "left". The bar
 	will dock to that edge of the output(s). The default position is "bottom".
 
-*widget-background-colour*
-	Background colour of widgets. The default it "#000000"
-
-*widget-border-colour*
-	Border colour of widgets. The default it "#FFFFFF"
-
-*widget-margin*
-	Margin between bar and widgets. The default is 20.
-
-*widget-border*
-	Border size of widgets. The default is 2.
-
-*widget-border-{top, right, bottom, left}*
-	The individual border sized of widgets.
-
 ## ITEMS
 The "items" context is used to configure the contents of the bar. It has no
 assignments, only nested contexts. The items on the bar will be shown in the
@@ -189,26 +174,6 @@ this context are as follows.
 	The background colour of the individual button. This overrides the
 	global background colour.
 
-*widget-background-colour*
-	Background colour of widgets spawned by this button. This overrides the
-	global widget-background-colour.
-
-*widget-border-colour*
-	Border colour of widgets spawned by this button. This overrides the
-	global widget-border-colour.
-
-*widget-margin*
-	Margin between bar and widgets spawned by this button. This overrides
-	the global widget-margin.
-
-*widget-border*
-	Border size of the widgets spawned by this button. This overrides
-	the global widget-border.
-
-*widget-border-{top, right, bottom, left}*
-	The individual border sized of widgets spawned by this button. This
-	overrides the global widget-border-{top, right, bottom, left}.
-
 ## SPACER
 Every "spacer" context will add a spacer to the bar. This context is nested
 inside the "items" context. The assignments possible in this context are as
@@ -221,10 +186,6 @@ follows.
 LavaLauncher excepts colours in the formats "#RRGGBBAA" or "#RRGGBB". Therefore,
 colour codes must be quoted. Alternatively, "transparent", "white" and "black"
 are accepted as well.
-
-
-# WIDGETS
-TODO: write a fancy widget section for the man page.
 
 
 # BUGS

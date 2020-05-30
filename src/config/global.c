@@ -283,109 +283,33 @@ static bool config_set_effect_padding (struct Lava_config *config, const char *a
 	return true;
 }
 
-static bool config_set_widget_background_colour (struct Lava_config *config,
-		const char *arg, const char direction)
-{
-	if (! hex_to_rgba(arg, &(config->widget_background_colour[0]),
-				&(config->widget_background_colour[1]),
-				&(config->widget_background_colour[2]),
-				&(config->widget_background_colour[3])))
-		return false;
-	if ( config->widget_border_colour_hex != NULL )
-		free(config->widget_background_colour_hex);
-	config->widget_background_colour_hex = strdup(arg);
-	return true;
-}
-
-static bool config_set_widget_border_colour (struct Lava_config *config,
-		const char *arg, const char direction)
-{
-	if (! hex_to_rgba(arg, &(config->widget_border_colour[0]),
-				&(config->widget_border_colour[1]),
-				&(config->widget_border_colour[2]),
-				&(config->widget_border_colour[3])))
-		return false;
-	if ( config->widget_border_colour_hex != NULL )
-		free(config->widget_border_colour_hex);
-	config->widget_border_colour_hex = strdup(arg);
-	return true;
-}
-
-static bool config_set_widget_margin_size (struct Lava_config *config,
-		const char *arg, const char direction)
-{
-	int size = atoi(arg);
-	if ( size < 0 )
-	{
-		fputs("ERROR: Widget margin size must be equal to or greater than zero.\n",
-				stderr);
-		return false;
-	}
-	config->widget_margin = size;
-	return true;
-}
-
-static bool config_set_widget_border_size (struct Lava_config *config,
-		const char *arg, const char direction)
-{
-	int size = atoi(arg);
-	if ( size < 0 )
-	{
-		fputs("ERROR: Widget border size must be equal to or greater than zero.\n",
-				stderr);
-		return false;
-	}
-	switch (direction)
-	{
-		case 't': config->widget_border_top    = size; break;
-		case 'r': config->widget_border_right  = size; break;
-		case 'b': config->widget_border_bottom = size; break;
-		case 'l': config->widget_border_left   = size; break;
-		case 'a':
-			config->widget_border_top    = size;
-			config->widget_border_right  = size;
-			config->widget_border_bottom = size;
-			config->widget_border_left   = size;
-			break;
-	}
-	return true;
-}
-
 struct Configs
 {
 	const char *variable, direction;
 	bool (*set)(struct Lava_config*, const char*, const char);
 } configs[] = {
-	{ .variable = "position",                 .set = config_set_position,                 .direction = '0'},
-	{ .variable = "alignment",                .set = config_set_alignment,                .direction = '0'},
-	{ .variable = "mode",                     .set = config_set_mode,                     .direction = '0'},
-	{ .variable = "layer",                    .set = config_set_layer,                    .direction = '0'},
-	{ .variable = "icon-size",                .set = config_set_icon_size,                .direction = '0'},
-	{ .variable = "border",                   .set = config_set_border_size,              .direction = 'a'},
-	{ .variable = "border-top",               .set = config_set_border_size,              .direction = 't'},
-	{ .variable = "border-right",             .set = config_set_border_size,              .direction = 'r'},
-	{ .variable = "border-bottom",            .set = config_set_border_size,              .direction = 'b'},
-	{ .variable = "border-left",              .set = config_set_border_size,              .direction = 'l'},
-	{ .variable = "margin-top",               .set = config_set_margin_size,              .direction = 't'},
-	{ .variable = "margin-right",             .set = config_set_margin_size,              .direction = 'r'},
-	{ .variable = "margin-bottom",            .set = config_set_margin_size,              .direction = 'b'},
-	{ .variable = "margin-left",              .set = config_set_margin_size,              .direction = 'l'},
-	{ .variable = "output",                   .set = config_set_only_output,              .direction = '0'},
-	{ .variable = "exclusive-zone",           .set = config_set_exclusive_zone,           .direction = '0'},
-	{ .variable = "cursor-name",              .set = config_set_cursor_name,              .direction = '0'},
-	{ .variable = "background-colour",        .set = config_set_bar_colour,               .direction = '0'},
-	{ .variable = "border-colour",            .set = config_set_border_colour,            .direction = '0'},
-	{ .variable = "effect-colour",            .set = config_set_effect_colour,            .direction = '0'},
-	{ .variable = "effect",                   .set = config_set_effect,                   .direction = '0'},
-	{ .variable = "effect-padding",           .set = config_set_effect_padding,           .direction = '0'},
-	{ .variable = "widget-background-colour", .set = config_set_widget_background_colour, .direction = '0'},
-	{ .variable = "widget-border-colour",     .set = config_set_widget_border_colour,     .direction = '0'},
-	{ .variable = "widget-margin",            .set = config_set_widget_margin_size,       .direction = '0'},
-	{ .variable = "widget-border",            .set = config_set_widget_border_size,       .direction = 'a'},
-	{ .variable = "widget-border-top",        .set = config_set_widget_border_size,       .direction = 't'},
-	{ .variable = "widget-border-right",      .set = config_set_widget_border_size,       .direction = 'r'},
-	{ .variable = "widget-border-bottom",     .set = config_set_widget_border_size,       .direction = 'b'},
-	{ .variable = "widget-border-left",       .set = config_set_widget_border_size,       .direction = 'l'}
+	{ .variable = "position",          .set = config_set_position,       .direction = '0'},
+	{ .variable = "alignment",         .set = config_set_alignment,      .direction = '0'},
+	{ .variable = "mode",              .set = config_set_mode,           .direction = '0'},
+	{ .variable = "layer",             .set = config_set_layer,          .direction = '0'},
+	{ .variable = "icon-size",         .set = config_set_icon_size,      .direction = '0'},
+	{ .variable = "border",            .set = config_set_border_size,    .direction = 'a'},
+	{ .variable = "border-top",        .set = config_set_border_size,    .direction = 't'},
+	{ .variable = "border-right",      .set = config_set_border_size,    .direction = 'r'},
+	{ .variable = "border-bottom",     .set = config_set_border_size,    .direction = 'b'},
+	{ .variable = "border-left",       .set = config_set_border_size,    .direction = 'l'},
+	{ .variable = "margin-top",        .set = config_set_margin_size,    .direction = 't'},
+	{ .variable = "margin-right",      .set = config_set_margin_size,    .direction = 'r'},
+	{ .variable = "margin-bottom",     .set = config_set_margin_size,    .direction = 'b'},
+	{ .variable = "margin-left",       .set = config_set_margin_size,    .direction = 'l'},
+	{ .variable = "output",            .set = config_set_only_output,    .direction = '0'},
+	{ .variable = "exclusive-zone",    .set = config_set_exclusive_zone, .direction = '0'},
+	{ .variable = "cursor-name",       .set = config_set_cursor_name,    .direction = '0'},
+	{ .variable = "background-colour", .set = config_set_bar_colour,     .direction = '0'},
+	{ .variable = "border-colour",     .set = config_set_border_colour,  .direction = '0'},
+	{ .variable = "effect-colour",     .set = config_set_effect_colour,  .direction = '0'},
+	{ .variable = "effect",            .set = config_set_effect,         .direction = '0'},
+	{ .variable = "effect-padding",    .set = config_set_effect_padding, .direction = '0'}
 };
 
 bool config_set_variable (struct Lava_config *config, const char *variable,

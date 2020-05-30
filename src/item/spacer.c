@@ -27,7 +27,7 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
-#include"items/item.h"
+#include"item/item.h"
 
 bool create_spacer (struct Lava_data *data)
 {

@@ -22,6 +22,8 @@
 
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 
+struct Lava_data;
+
 enum Bar_position
 {
 	POSITION_TOP,
@@ -59,8 +61,6 @@ enum Draw_effect
 
 struct Lava_config
 {
-	struct Lava_data *data;
-
 	/* Expected and enforced width and height of the bar. */
 	uint32_t w, h;
 
@@ -112,7 +112,7 @@ struct Lava_config
 	int effect_padding;
 };
 
-struct Lava_config *create_config (struct Lava_data *data, const char *path);
-void destroy_config (struct Lava_config *config);
+bool init_config (struct Lava_data *data, const char *path);
+void finish_config (struct Lava_data *data);
 
 #endif

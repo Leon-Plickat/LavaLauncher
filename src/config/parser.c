@@ -357,12 +357,12 @@ error:
 	return false;
 }
 
-bool parse_config_file (struct Lava_config *config, const char *config_path)
+bool parse_config_file (struct Lava_data *data, const char *config_path)
 {
 	errno = 0;
 	struct Lava_parser parser = {
-		.data    = config->data,
-		.config  = config,
+		.data    = data,
+		.config  = &data->config,
 		.file    = NULL,
 		.line    = 1,
 		.column  = 0,

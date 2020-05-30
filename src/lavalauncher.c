@@ -85,13 +85,13 @@ int main (int argc, char *argv[])
 
 	wl_list_init(&(data.items));
 
-	if ( NULL == (data.config = create_config(&data, config_path)) )
+	if (! init_config(&data, config_path))
 		goto early_exit;
 
 	if (data.verbose)
 		fprintf(stderr, "LavaLauncher Version "VERSION"\n"
 				"Bar: w=%d h=%d items=%d\n",
-				data.config->w, data.config->h, data.item_amount);
+				data.config.w, data.config.h, data.item_amount);
 
 	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);
@@ -104,7 +104,7 @@ int main (int argc, char *argv[])
 
 	finish_wayland(&data);
 early_exit:
-	destroy_config(data.config);
+	finish_config(&data);
 	destroy_all_items(&data);
 	return data.ret;
 }

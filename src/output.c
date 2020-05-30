@@ -136,8 +136,8 @@ bool configure_output (struct Lava_data *data, struct Lava_output *output)
 	/* If either the name of output equals only_output or if no only_output
 	 * has been given, create a bar for this new output.
 	 */
-	if ( data->config->only_output == NULL
-			|| ! strcmp(output->name, data->config->only_output) )
+	if ( data->config.only_output == NULL
+			|| ! strcmp(output->name, data->config.only_output) )
 	{
 		output->status = OUTPUT_STATUS_CONFIGURED;
 		if ( NULL == (output->bar = create_bar(data, output)) )

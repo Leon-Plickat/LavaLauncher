@@ -86,7 +86,7 @@ void configure_layer_surface (struct Lava_bar *bar)
 		return;
 
 	struct Lava_data   *data   = bar->data;
-	struct Lava_config *config = data->config;
+	struct Lava_config *config = &data->config;
 	struct Lava_output *output = bar->output;
 
 	/* It is possible that this function is called by output events before

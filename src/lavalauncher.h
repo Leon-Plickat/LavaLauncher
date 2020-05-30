@@ -24,9 +24,10 @@
 #include<stdint.h>
 #include<wayland-server.h>
 
+#include"config/config.h"
+
 struct Lava_item;
 struct Lava_cursor;
-struct Lava_config;
 
 struct Lava_data
 {
@@ -39,7 +40,7 @@ struct Lava_data
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 
 	struct Lava_cursor *cursor;
-	struct Lava_config *config;
+	struct Lava_config config;
 
 	struct wl_list outputs;
 	struct wl_list seats;

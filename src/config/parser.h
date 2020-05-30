@@ -20,6 +20,8 @@
 #ifndef LAVALAUNCHER_CONFIG_PARSER_H
 #define LAVALAUNCHER_CONFIG_PARSER_H
 
+#include<stdbool.h>
+
 struct Lava_data;
 struct Lava_config;
 struct Lava_item;
@@ -72,6 +74,6 @@ struct Lava_parser
 	struct Lava_item *item;
 };
 
-bool parse_config_file (struct Lava_config *config, const char *config_path);
+bool parse_config_file (struct Lava_data *data, const char *config_path);
 
 #endif

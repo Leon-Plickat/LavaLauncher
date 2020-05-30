@@ -97,7 +97,7 @@ void item_interaction (struct Lava_bar *bar, struct Lava_item *item)
 struct Lava_item *item_from_coords (struct Lava_data *data,
 		struct Lava_bar *bar, int32_t x, int32_t y)
 {
-	struct Lava_config *config = data->config;
+	struct Lava_config *config = &data->config;
 	unsigned int ordinate;
 	if ( config->orientation == ORIENTATION_HORIZONTAL )
 		ordinate = x - (bar->x_offset + config->border_left);

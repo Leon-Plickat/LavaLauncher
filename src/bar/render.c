@@ -94,7 +94,7 @@ static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
 
 static void calculate_bar_buffer_size (struct Lava_output *output, int *w, int *h)
 {
-	struct Lava_config *config = output->data->config;
+	struct Lava_config *config = &output->data->config;
 
 	if ( config->mode == MODE_SIMPLE )
 		*w = config->w, *h = config->h;
@@ -109,7 +109,7 @@ static void calculate_bar_buffer_size (struct Lava_output *output, int *w, int *
 static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 {
 	struct Lava_data   *data     = bar->data;
-	struct Lava_config *config   = data->config;
+	struct Lava_config *config   = &data->config;
 
 	int scale    = bar->output->scale,
 	    x_offset = (bar->x_offset + config->border_top)  * scale,
@@ -142,7 +142,7 @@ void render_bar_frame (struct Lava_bar *bar)
 		return;
 
 	struct Lava_data   *data   = bar->data;
-	struct Lava_config *config = data->config;
+	struct Lava_config *config = &data->config;
 	struct Lava_output *output = bar->output;
 
 	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED )

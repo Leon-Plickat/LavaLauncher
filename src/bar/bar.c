@@ -62,7 +62,7 @@ struct Lava_bar *create_bar (struct Lava_data *data, struct Lava_output *output)
 
 	if ( NULL == (bar->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
 					data->layer_shell, bar->wl_surface,
-					output->wl_output, data->config->layer, "LavaLauncher")) )
+					output->wl_output, data->config.layer, "LavaLauncher")) )
 	{
 		fputs("ERROR: Compositor did not create layer_surface.\n", stderr);
 		goto error;
@@ -100,7 +100,7 @@ static void update_offset (struct Lava_bar *bar)
 		return;
 
 	struct Lava_data   *data   = bar->data;
-	struct Lava_config *config = data->config;
+	struct Lava_config *config = &data->config;
 	struct Lava_output *output = bar->output;
 
 	if ( output->w == 0 || output->h == 0 )

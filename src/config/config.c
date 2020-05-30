@@ -76,8 +76,9 @@ static void sensible_defaults (struct Lava_config *config)
 }
 
 /* Calculate the dimensions of the visible part of the bar. */
-static void calculate_dimensions (struct Lava_config *config)
+static void calculate_dimensions (struct Lava_data *data)
 {
+	struct Lava_config *config = &data->config;
 	switch (config->position)
 	{
 		case POSITION_LEFT:
@@ -85,7 +86,7 @@ static void calculate_dimensions (struct Lava_config *config)
 			config->orientation = ORIENTATION_VERTICAL;
 			config->w = (uint32_t)(config->icon_size + config->border_right
 					+ config->border_left);
-			config->h = (uint32_t)(get_item_length_sum(config->data)
+			config->h = (uint32_t)(get_item_length_sum(data)
 					+ config->border_top + config->border_bottom);
 			if ( config->exclusive_zone == 1 )
 				config->exclusive_zone = config->w;
@@ -94,7 +95,7 @@ static void calculate_dimensions (struct Lava_config *config)
 		case POSITION_TOP:
 		case POSITION_BOTTOM:
 			config->orientation = ORIENTATION_HORIZONTAL;
-			config->w = (uint32_t)(get_item_length_sum(config->data)
+			config->w = (uint32_t)(get_item_length_sum(data)
 					+ config->border_left + config->border_right);
 			config->h = (uint32_t)(config->icon_size + config->border_top
 					+ config->border_bottom);
@@ -104,39 +105,32 @@ static void calculate_dimensions (struct Lava_config *config)
 	}
 }
 
-struct Lava_config *create_config (struct Lava_data *data, const char *path)
+bool init_config (struct Lava_data *data, const char *path)
 {
+	struct Lava_config *config = &data->config;
+
 	if (data->verbose)
-		fputs("Creating config.\n", stderr);
+		fputs("Init config.\n", stderr);
 
-	struct Lava_config *config = calloc(1, sizeof(struct Lava_config));
-	if ( config == NULL )
-	{
-		fputs("ERROR: Could not allocate.\n", stderr);
-		return NULL;
-	}
-
-	config->data = data;
 	sensible_defaults(config);
-	if (! parse_config_file(config, path))
+	if (! parse_config_file(data, path))
 		goto error;
-	if (! finalize_items(config->data, config->icon_size))
+	if (! finalize_items(data, config->icon_size))
 		goto error;
-	calculate_dimensions(config);
+	calculate_dimensions(data);
 
-	return config;
+	return true;
 
 error:
-	destroy_config(config);
-	return NULL;
+	finish_config(data);
+	return false;
 }
 
-void destroy_config (struct Lava_config *config)
+void finish_config (struct Lava_data *data)
 {
-	if ( config == NULL )
-		return;
-	if (config->data->verbose)
-		fputs("Freeing configuration.\n", stderr);
+	struct Lava_config *config = &data->config;
+	if (data->verbose)
+		fputs("Finish config.\n", stderr);
 	if ( config->only_output != NULL )
 		free(config->only_output);
 	if ( config->cursor_name != NULL )
@@ -147,5 +141,4 @@ void destroy_config (struct Lava_config *config)
 		free(config->border_colour_hex);
 	if ( config->effect_colour_hex != NULL )
 		free(config->effect_colour_hex);
-	free(config);
 }

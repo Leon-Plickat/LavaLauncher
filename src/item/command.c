@@ -64,7 +64,7 @@ static void replace_token (char **str, const char *srch, const char *repl_s,
 static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
 		struct Lava_item *item, char *buffer)
 {
-	struct Lava_config *config = data->config;
+	struct Lava_config *config = &data->config;
 	struct
 	{
 		const char *token;

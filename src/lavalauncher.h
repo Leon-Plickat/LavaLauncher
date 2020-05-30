@@ -25,9 +25,9 @@
 #include<wayland-server.h>
 
 #include"config/config.h"
+#include"cursor.h"
 
 struct Lava_item;
-struct Lava_cursor;
 
 struct Lava_data
 {
@@ -39,7 +39,7 @@ struct Lava_data
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 
-	struct Lava_cursor *cursor;
+	struct Lava_cursor cursor;
 	struct Lava_config config;
 
 	struct wl_list outputs;

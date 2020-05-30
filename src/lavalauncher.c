@@ -93,15 +93,20 @@ int main (int argc, char *argv[])
 				"Bar: w=%d h=%d items=%d\n",
 				data.config.w, data.config.h, data.item_amount);
 
+
+	if (! init_wayland(&data))
+		goto exit;
+	if (! init_cursor(&data))
+		fputs("WARNING: Changing the cursor is disabled due to an error.\n", stderr);
+
 	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);
 
-	if (init_wayland(&data))
-	{
-		data.ret = EXIT_SUCCESS;
-		while ( data.loop && wl_display_dispatch(data.display)  != -1 );
-	}
+	data.ret = EXIT_SUCCESS;
+	while ( data.loop && wl_display_dispatch(data.display)  != -1 );
 
+exit:
+	finish_cursor(&data);
 	finish_wayland(&data);
 early_exit:
 	finish_config(&data);

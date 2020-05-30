@@ -38,7 +38,6 @@
 #include"lavalauncher.h"
 #include"seat.h"
 #include"output.h"
-#include"cursor.h"
 
 static void registry_handle_global (void *raw_data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version)
@@ -174,10 +173,6 @@ bool init_wayland (struct Lava_data *data)
 	if (! capability_test(data->xdg_output_manager, "xdg_output_manager"))
 		return false;
 
-	if ( NULL == (data->cursor = create_cursor(data)) )
-		fputs("WARNING: Changing the cursor is disabled due to an error.\n",
-				stderr);
-
 	/* Configure all outputs that were created before xdg_output_manager or
 	 * the layer_shell were available.
 	 */
@@ -198,7 +193,6 @@ void finish_wayland (struct Lava_data *data)
 	if (data->verbose)
 		fputs("Finish Wayland.\n", stderr);
 
-	destroy_cursor(data->cursor);
 	destroy_all_outputs(data);
 	destroy_all_seats(data);
 

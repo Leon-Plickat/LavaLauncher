@@ -33,25 +33,17 @@
 #include"config/config.h"
 #include"cursor.h"
 
-struct Lava_cursor *create_cursor (struct Lava_data *data)
+bool init_cursor (struct Lava_data *data)
 {
 	if (data->verbose)
-		fputs("Creating cursor.\n", stderr);
+		fputs("Init cursor.\n", stderr);
 
-	struct Lava_cursor *cursor = calloc(1, sizeof(struct Lava_cursor));
-	if ( cursor == NULL )
-	{
-		fputs("ERROR: Could not allocate.\n", stderr);
-		return NULL;
-	}
-
-	cursor->data = data;
+	struct Lava_cursor *cursor = &data->cursor;
 
 	if ( NULL == (cursor->theme = wl_cursor_theme_load(NULL, 16, data->shm)) )
 	{
 		fputs("ERROR: Could not load cursor theme.\n", stderr);
-		destroy_cursor(cursor);
-		return NULL;
+		goto error;
 	}
 
 	struct wl_cursor *wl_cursor = wl_cursor_theme_get_cursor(cursor->theme,
@@ -61,8 +53,7 @@ struct Lava_cursor *create_cursor (struct Lava_data *data)
 		fprintf(stderr, "WARNING: Could not get cursor \"%s\".\n"
 				"         This cursor is likely missing from your cursor theme.\n",
 				data->config.cursor_name);
-		destroy_cursor(cursor);
-		return NULL;
+		goto error;
 	}
 
 	cursor->image = wl_cursor->images[0];
@@ -71,36 +62,43 @@ struct Lava_cursor *create_cursor (struct Lava_data *data)
 	if ( NULL == (cursor->surface = wl_compositor_create_surface(data->compositor)) )
 	{
 		fputs("ERROR: Could not create cursor surface.\n", stderr);
-		destroy_cursor(cursor);
-		return NULL;
+		goto error;
 	}
 
-	return cursor;
+	return true;
+
+error:
+	finish_cursor(data);
+	return false;
 }
 
-void destroy_cursor (struct Lava_cursor *cursor)
+void finish_cursor (struct Lava_data *data)
 {
-	if ( cursor == NULL )
-		return;
+	if (data->verbose)
+		fputs("Finish cursor.\n", stderr);
 
-	if (cursor->data->verbose)
-		fputs("Destroying cursor.\n", stderr);
+	struct Lava_cursor *cursor = &data->cursor;
 
 	/* cursor.image just points back to cursor.theme. */
 	if ( cursor->theme != NULL )
+	{
 		wl_cursor_theme_destroy(cursor->theme);
+		cursor->theme = NULL;
+	}
 	if ( cursor->surface != NULL )
+	{
 		wl_surface_destroy(cursor->surface);
-	free(cursor);
+		cursor->surface = NULL;
+	}
 }
 
-void attach_cursor (struct Lava_cursor *cursor, struct wl_pointer *wl_pointer,
+void attach_cursor (struct Lava_data *data, struct wl_pointer *wl_pointer,
 		uint32_t serial)
 {
-	if ( cursor == NULL )
-		return;
+	struct Lava_cursor *cursor = &data->cursor;
 
-	struct Lava_data *data = cursor->data;
+	if ( cursor->surface == NULL )
+		return;
 
 	if (data->verbose)
 		fputs("Attaching cursor surface.\n", stderr);
@@ -116,3 +114,4 @@ void attach_cursor (struct Lava_cursor *cursor, struct wl_pointer *wl_pointer,
 			cursor->image->hotspot_x,
 			cursor->image->hotspot_y);
 }
+

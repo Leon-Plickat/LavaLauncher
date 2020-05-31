@@ -378,11 +378,13 @@ static bool bar_pattern_set_effect (struct Lava_bar_pattern *pattern,
 		pattern->effect = EFFECT_BOX;
 	else if (! strcmp(arg, "phone"))
 		pattern->effect = EFFECT_PHONE;
+	else if (! strcmp(arg, "circle"))
+		pattern->effect = EFFECT_CIRCLE;
 	else
 	{
 		fprintf(stderr, "ERROR: Unrecognized effect \"%s\".\n"
 				"INFO: Possible options are 'none', "
-				"'box' and 'phone'.\n", arg);
+				"'box', 'phone' and 'circle'.\n", arg);
 		return false;
 	}
 	return true;

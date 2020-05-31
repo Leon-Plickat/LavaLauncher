@@ -58,7 +58,8 @@ enum Draw_effect
 {
 	EFFECT_NONE,
 	EFFECT_BOX,
-	EFFECT_PHONE
+	EFFECT_PHONE,
+	EFFECT_CIRCLE,
 };
 
 struct Lava_bar_pattern

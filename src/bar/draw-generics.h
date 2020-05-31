@@ -26,6 +26,7 @@
 struct Lava_data;
 struct Lava_bar;
 
+void lldg_circle (cairo_t *cairo, int32_t x, int32_t y, int32_t size);
 void lldg_rounded_square (cairo_t *cairo, int32_t x, int32_t y, int32_t size);
 void lldg_draw_square_image (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t icon_size, cairo_surface_t *img);

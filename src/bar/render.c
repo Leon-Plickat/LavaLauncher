@@ -68,6 +68,10 @@ static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
 			lldg_rounded_square(cairo, x, y, size);
 			break;
 
+		case EFFECT_CIRCLE:
+			lldg_circle(cairo, x, y, size);
+			break;
+
 		default:
 			break;
 	}

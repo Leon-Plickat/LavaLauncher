@@ -77,11 +77,12 @@ as follows.
 	The individual border sizes.
 
 *effect*
-	Drawing effect applied to the buttons. Can be "none", "box" or "phone".
-	If "box", LavaLauncher will draw a rectangle underneath the button icons.
-	If "phone", LavaLauncher will draw a rounded rectangle underneath the
-	button icons, similar to how application icons look on phones. The
-	default is "none".
+	Drawing effect applied to the buttons. Can be "none", "box", "phone"
+	or "circle". If "box", LavaLauncher will draw a rectangle underneath the
+	button icons. If "phone", LavaLauncher will draw a rounded rectangle
+	underneath the button icons, similar to how application icons look on
+	phones. If "circle", LavaLauncher will draw a circle underneath the
+	button icons. The default is "none".
 
 *effect-colour*
 	Colour of the drawing effect. The default is "#FFFFFF".

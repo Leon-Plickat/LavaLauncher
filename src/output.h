@@ -20,8 +20,9 @@
 #ifndef LAVALAUNCHER_OUTPUT_H
 #define LAVALAUNCHER_OUTPUT_H
 
+#include<wayland-server.h>
+
 struct Lava_data;
-struct Lava_bar;
 
 enum Lava_output_status
 {
@@ -45,7 +46,7 @@ struct Lava_output
 	struct wl_list    link;
 	struct Lava_data *data;
 
-	struct Lava_bar *bar;
+	struct wl_list bars;
 
 	struct wl_output      *wl_output;
 	struct zxdg_output_v1 *xdg_output;

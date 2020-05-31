@@ -30,7 +30,6 @@
 #include<wayland-cursor.h>
 
 #include"lavalauncher.h"
-#include"config/config.h"
 #include"cursor.h"
 
 bool init_cursor (struct Lava_data *data)
@@ -39,7 +38,6 @@ bool init_cursor (struct Lava_data *data)
 		fputs("Init cursor.\n", stderr);
 
 	struct Lava_cursor *cursor = &data->cursor;
-	cursor->name    = NULL;
 	cursor->theme   = NULL;
 	cursor->image   = NULL;
 	cursor->surface = NULL;
@@ -51,12 +49,12 @@ bool init_cursor (struct Lava_data *data)
 	}
 
 	struct wl_cursor *wl_cursor = wl_cursor_theme_get_cursor(cursor->theme,
-			data->config.cursor_name);
+			cursor->name);
 	if ( wl_cursor == NULL )
 	{
 		fprintf(stderr, "WARNING: Could not get cursor \"%s\".\n"
 				"         This cursor is likely missing from your cursor theme.\n",
-				data->config.cursor_name);
+				cursor->name);
 		goto error;
 	}
 

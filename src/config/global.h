@@ -22,9 +22,9 @@
 
 #include<stdbool.h>
 
-struct Lava_config;
+struct Lava_data;
 
-bool config_set_variable (struct Lava_config *config, const char *variable,
+bool global_set_variable (struct Lava_data *data, const char *variable,
 		const char *value, int line);
 
 #endif

@@ -5,9 +5,10 @@ LavaLauncher - A simple launcher panel for Wayland desktops
 
 
 # DESCRIPTION
-LavaLauncher serves a single purpose: Letting the user execute shell commands
+LavaLauncher serves a simple purpose: Letting the user execute shell commands
 by clicking on icons on a dynamically sized bar, placed at one of the screen
-edges.
+edges. A single LavaLauncher instance can provide multiple such bars, across
+multiple outputs.
 
 The Wayland compositor must implement the Layer-Shell for LavaLauncher to work.
 If LavaLauncher is displayed but wont respond to clicks, chances are that the
@@ -25,47 +26,42 @@ events to them.
 *-v*
 	Enable verbose output.
 
+
 # CONFIGURATION
 LavaLauncher is configured with a configuration file. There is no default
 location, meaning manually providing the path to a file is mandatory.
 
+You can find an example configuration at the end of this section.
+
+
 ## STRUCTURE
-A LavaLauncher configuration file has a simple structure. It consists of
-*contexts* and *assignments*.
+The configuration file has a simple structure. It consists of *contexts* and
+*assignments*.
 
-In the configuration syntax, entering a context is defined by a string (the
-context name) followed by an opening bracket. To leave a context, use a closing
-bracket. Assignments are defined by a string (the variable to be changed)
-followed by another string (the new value for the variable) and finally a
-semicolon (';'). Comments start with an octothorpe ('#').
+Assignments are defined by a string (the variable to be changed) followed by
+another string (the new value for the variable) and finally a semicolon (';').
+Assignments are always inside contexts.
 
-Contexts can be nested, but unless specifically pointed out as otherwise, every
-context mentioned in this document is a top-level context. Assignments are
-always inside contexts.
+A context is defined by a string (the context name) followed by an opening
+bracket. To leave a context, use a closing bracket. Contexts can be nested, but
+unless specifically pointed out as otherwise, every context mentioned in this
+document is a top-level context.
 
-Any string can be quoted.
+Comments start with an octothorpe ('#'). Any string can be quoted.
 
-```
-context_1
-{
-	variable1 value1;
-	variable2 value2;
-}
+## GLOBAL  SETTINGS
+Global settings can be configured int the "global-settings" context. The
+assignments which can be made in this context are as follows.
 
-# I am a comment
-context_2
-{
-	nested_context
-	{
-		"variable3" value3;
-		variable4   "value4";
-	}
-}
-```
+*cursor-name*
+	Name of the cursor displayed when hovering the pointer over a bar. The
+	default cursor is "pointer". Behold: What cursors are available depends
+	on the cursor theme. If the cursor of the given name can not be loaded,
+	LavaLauncher will display a warning and disable changing the cursor.
 
-## GENERAL SETTINGS
-General settings can be configured int the "settings" context. The assignments
-which can be made in this context are as follows.
+## BAR
+Every "bar" context will add a bar. The assignments possible in this context are
+as follows.
 
 *alignment*
 	Alignment of the buttons / bar. Can be "start", "center" or "end". The
@@ -79,13 +75,6 @@ which can be made in this context are as follows.
 
 *border-{top, right, bottom, left}*
 	The individual border sizes.
-
-*cursor-name*
-	Name of the cursor displayed when hovering the pointer over the bar. The
-	default cursor is "pointing_hand". Behold: What cursors are available
-	depends on the cursor theme. If the cursor of the given name can not be
-	loaded, LavaLauncher will display a warning and disable changing the
-	cursor.
 
 *effect*
 	Drawing effect applied to the buttons. Can be "none", "box" or "phone".
@@ -141,21 +130,16 @@ which can be made in this context are as follows.
 *output*
 	Name of the output on which the bar should be displayed. Output names
 	are compositor dependant. If set to "all" or "\*", LavaLauncher will
-	display a bar on all outputs, which is the default behaviour.
+	display the bar on all outputs, which is the default behaviour.
 
 *position*
 	Position of the bar. Can be "top", "right", "bottom", "left". The bar
 	will dock to that edge of the output(s). The default position is "bottom".
 
-## ITEMS
-The "items" context is used to configure the contents of the bar. It has no
-assignments, only nested contexts. The items on the bar will be shown in the
-order in which they are defined in the configuration file.
-
 ## BUTTON
-Every "button" context will add a button to the bar. This context is nested
-inside the "items" context. The assignments possible in
-this context are as follows.
+Every "button" context will add a button to a bar. As such, this context is
+a nested inside the "bar" context. The assignments possible in this context are
+as follows.
 
 *command*
 	The shell command executed when the user clicks on the button. The
@@ -172,26 +156,77 @@ this context are as follows.
 
 *background-colour*
 	The background colour of the individual button. This overrides the
-	global background colour.
+	background colour of the bar.
 
 ## SPACER
-Every "spacer" context will add a spacer to the bar. This context is nested
-inside the "items" context. The assignments possible in this context are as
-follows.
+Every "spacer" context will add a spacer to a bar. As such, this context is
+a nested inside the "bar" context. The assignments possible in this context are
+as follows.
 
 *length*
 	Length of the spacer.
 
 ## COLOURS
 LavaLauncher excepts colours in the formats "#RRGGBBAA" or "#RRGGBB". Therefore,
-colour codes must be quoted. Alternatively, "transparent", "white" and "black"
-are accepted as well.
+colour codes must be quoted to not be interpreted as comments. Alternatively,
+"transparent", "white" and "black" are accepted as well.
+
+## EXAMPLE CONFIGURATION
+Below you will find an example configuration, which demonstrates all available
+contexts and some of the assignments by defining two bars and changing global
+settings.
+
+```
+global-settings
+{
+	cursor-name pointer;
+}
+
+bar # this is the first bar
+{
+	output eDP-1;
+	position bottom;
+	background-colour "#202020";
+
+	button
+	{
+		image-path "/path/to/image.png";
+		command    "useful-script.sh";
+	}
+
+	spacer
+	{
+		length 20;
+	}
+
+	button
+	{
+		image-path "/path/to/another/image.png";
+		command    "another-useful-script.sh";
+	}
+}
+
+bar # this is a second bar
+{
+	output    all;
+	position  top;
+	icon-size 50;
+	border    0;
+	alignment start;
+
+	button
+	{
+		image-path "/path/to/a/third/image.png";
+		command    "do-something"
+	}
+}
+```
 
 
 # BUGS
 Probably.
 
-Please report all bugs you find with a small explanation how to reproduce them.
+Please report all bugs you find with an explanation how to reproduce them.
 
 
 # MAILINGLIST
@@ -199,11 +234,13 @@ You can send bug reports, patches and feedback to the mailinglist.
 
 *<~leon_plickat/lavalauncher@lists.sr.ht>*
 
+
 # GIT
 This project is developed using git. You can find the repository by visiting the
 following URL.
 
 *<https://git.sr.ht/~leon_plickat/lavalauncher>*
+
 
 # AUTHORS
 Leon Plickat <leonhenrik.plickat@stud.uni-goettingen.de>

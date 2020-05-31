@@ -17,12 +17,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_CONFIG_H
-#define LAVALAUNCHER_CONFIG_H
+#ifndef LAVALAUNCHER_BAR_PATTERN_H
+#define LAVALAUNCHER_BAR_PATTERN_H
 
+#include<wayland-server.h>
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 
 struct Lava_data;
+struct Lava_item;
 
 enum Bar_position
 {
@@ -59,8 +61,15 @@ enum Draw_effect
 	EFFECT_PHONE
 };
 
-struct Lava_config
+struct Lava_bar_pattern
 {
+	struct Lava_data *data;
+	struct wl_list    link;
+
+	struct wl_list    items;
+	struct Lava_item *last_item;
+	int               item_amount;
+
 	/* Expected and enforced width and height of the bar. */
 	uint32_t w, h;
 
@@ -105,14 +114,17 @@ struct Lava_config
 	/* Directional margins of the surface. */
 	int margin_top, margin_right, margin_bottom, margin_left;
 
-	char *cursor_name;
 
 	/* Draw effect applied to item. */
 	enum Draw_effect effect;
 	int effect_padding;
 };
 
-bool init_config (struct Lava_data *data);
-void finish_config (struct Lava_data *data);
+bool create_bar_pattern (struct Lava_data *data);
+bool finalize_bar_pattern (struct Lava_bar_pattern *pattern);
+void destroy_all_bar_patterns (struct Lava_data *data);
+bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,
+		const char *variable, const char *value, int line);
 
 #endif
+

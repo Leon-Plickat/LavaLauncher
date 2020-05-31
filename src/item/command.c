@@ -31,7 +31,8 @@
 #include"output.h"
 #include"command.h"
 #include"item/item.h"
-#include"config/config.h"
+#include"bar/bar-pattern.h"
+#include"bar/bar.h"
 
 /* This function will search for a string (*srch) inside a given string (**str)
  * and replace it either with another string (*repl_s) or with a string-ified
@@ -61,31 +62,31 @@ static void replace_token (char **str, const char *srch, const char *repl_s,
 	}
 }
 
-static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
-		struct Lava_item *item, char *buffer)
+static void handle_tokens (struct Lava_bar *bar, struct Lava_item *item, char *buffer)
 {
-	struct Lava_config *config = &data->config;
+	struct Lava_output      *output  = bar->output;
+	struct Lava_bar_pattern *pattern = bar->pattern;
 	struct
 	{
 		const char *token;
 		const char *replacement_string;
 		const int   replacement_int;
 	} tokens[] = {
-		{ .token = "%index%",         .replacement_string = NULL,                      .replacement_int = item->index,         },
-		{ .token = "%items%",         .replacement_string = NULL,                      .replacement_int = data->item_amount,   },
-		{ .token = "%icon-size%",     .replacement_string = NULL,                      .replacement_int = config->icon_size,     },
-		{ .token = "%border-top%",    .replacement_string = NULL,                      .replacement_int = config->border_top,    },
-		{ .token = "%border-left%",   .replacement_string = NULL,                      .replacement_int = config->border_left,   },
-		{ .token = "%border-bottom%", .replacement_string = NULL,                      .replacement_int = config->border_bottom, },
-		{ .token = "%border-right%",  .replacement_string = NULL,                      .replacement_int = config->border_right,  },
-		{ .token = "%margin-top%",    .replacement_string = NULL,                      .replacement_int = config->margin_top,    },
-		{ .token = "%margin-right%",  .replacement_string = NULL,                      .replacement_int = config->margin_right,  },
-		{ .token = "%margin-bottom%", .replacement_string = NULL,                      .replacement_int = config->margin_bottom, },
-		{ .token = "%margin-left%",   .replacement_string = NULL,                      .replacement_int = config->margin_left,   },
-		{ .token = "%colour%",        .replacement_string = config->bar_colour_hex,    .replacement_int = 0,                   },
-		{ .token = "%border-colour%", .replacement_string = config->border_colour_hex, .replacement_int = 0,                   },
-		{ .token = "%output%",        .replacement_string = output->name,              .replacement_int = 0,                   },
-		{ .token = "%scale%",         .replacement_string = NULL,                      .replacement_int = output->scale,       }
+		{ .token = "%index%",         .replacement_string = NULL,                       .replacement_int = item->index,            },
+		{ .token = "%items%",         .replacement_string = NULL,                       .replacement_int = pattern->item_amount,   },
+		{ .token = "%icon-size%",     .replacement_string = NULL,                       .replacement_int = pattern->icon_size,     },
+		{ .token = "%border-top%",    .replacement_string = NULL,                       .replacement_int = pattern->border_top,    },
+		{ .token = "%border-left%",   .replacement_string = NULL,                       .replacement_int = pattern->border_left,   },
+		{ .token = "%border-bottom%", .replacement_string = NULL,                       .replacement_int = pattern->border_bottom, },
+		{ .token = "%border-right%",  .replacement_string = NULL,                       .replacement_int = pattern->border_right,  },
+		{ .token = "%margin-top%",    .replacement_string = NULL,                       .replacement_int = pattern->margin_top,    },
+		{ .token = "%margin-right%",  .replacement_string = NULL,                       .replacement_int = pattern->margin_right,  },
+		{ .token = "%margin-bottom%", .replacement_string = NULL,                       .replacement_int = pattern->margin_bottom, },
+		{ .token = "%margin-left%",   .replacement_string = NULL,                       .replacement_int = pattern->margin_left,   },
+		{ .token = "%colour%",        .replacement_string = pattern->bar_colour_hex,    .replacement_int = 0,                      },
+		{ .token = "%border-colour%", .replacement_string = pattern->border_colour_hex, .replacement_int = 0,                      },
+		{ .token = "%output%",        .replacement_string = output->name,               .replacement_int = 0,                      },
+		{ .token = "%scale%",         .replacement_string = NULL,                       .replacement_int = output->scale,          }
 	};
 	for (size_t i = 0; i < (sizeof(tokens) / sizeof(tokens[0])); i++)
 		replace_token(&buffer, tokens[i].token,
@@ -93,8 +94,7 @@ static void handle_tokens (struct Lava_data *data, struct Lava_output *output,
 				tokens[i].replacement_int, STRING_BUFFER_SIZE);
 }
 
-static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
-		struct Lava_item *item)
+static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item)
 {
 	errno   = 0;
 	int ret = fork();
@@ -109,9 +109,9 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 
 		char buffer[STRING_BUFFER_SIZE+1];
 		strncpy(buffer, item->cmd, STRING_BUFFER_SIZE);
-		handle_tokens(data, output, item, buffer);
+		handle_tokens(bar, item, buffer);
 
-		if (data->verbose)
+		if (bar->data->verbose)
 			fprintf(stderr, "Executing: cmd='%s' raw='%s'\n",
 					buffer, item->cmd);
 
@@ -128,16 +128,15 @@ static void exec_cmd (struct Lava_data *data, struct Lava_output *output,
 /* Helper function that catches any special cases before executing the item
  * command.
  */
-bool item_command (struct Lava_data *data, struct Lava_item *item,
-		struct Lava_output *output)
+bool item_command (struct Lava_bar *bar, struct Lava_item *item)
 {
 	if ( item->cmd == NULL )
 		return false;
 
 	if (! strcmp(item->cmd, "exit"))
-		data->loop = false;
+		bar->data->loop = false;
 	else
-		exec_cmd(data, output, item);
+		exec_cmd(bar, item);
 
 	return true;
 }

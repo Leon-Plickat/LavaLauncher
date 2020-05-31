@@ -34,9 +34,9 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
-#include"config/config.h"
 #include"output.h"
 #include"bar/bar.h"
+#include"bar/bar-pattern.h"
 
 /* No-Op function. */
 static void noop () {}
@@ -45,14 +45,13 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		int32_t factor)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
-	struct Lava_bar    *bar    = output->bar;
 	output->scale              = factor;
 
 	if (output->data->verbose)
 		fprintf(stderr, "Output update scale: global_name=%d scale=%d\n",
 				output->global_name, output->scale);
 
-	update_bar(bar);
+	update_all_bars(output);
 }
 
 static const struct wl_output_listener output_listener = {
@@ -78,7 +77,6 @@ static void xdg_output_handle_logical_size (void *raw_data,
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	struct Lava_data   *data   = output->data;
-	struct Lava_bar    *bar    = output->bar;
 	output->w                  = w;
 	output->h                  = h;
 
@@ -86,7 +84,7 @@ static void xdg_output_handle_logical_size (void *raw_data,
 		fprintf(stderr, "XDG-Output update logical size: global_name=%d "
 				"w=%d h=%d\n", output->global_name, w, h);
 
-	update_bar(bar);
+	update_all_bars(output);
 }
 
 static const struct zxdg_output_v1_listener xdg_output_listener = {
@@ -133,22 +131,26 @@ bool configure_output (struct Lava_data *data, struct Lava_output *output)
 	}
 
 
-	/* If either the name of output equals only_output or if no only_output
-	 * has been given, create a bar for this new output.
+	/* Create a new bar for each pattern which only_output matches the name
+	 * of this output.
 	 */
-	if ( data->config.only_output == NULL
-			|| ! strcmp(output->name, data->config.only_output) )
+	struct Lava_bar_pattern *pt1, *pt2;
+	wl_list_for_each_safe(pt1, pt2, &data->patterns, link)
 	{
-		output->status = OUTPUT_STATUS_CONFIGURED;
-		if ( NULL == (output->bar = create_bar(data, output)) )
+		if ( pt1->only_output == NULL || ! strcmp(output->name, pt1->only_output) )
 		{
-			fputs("ERROR: Could not create bar.\n", stderr);
-			data->loop = false;
-			data->ret  = EXIT_FAILURE;
-			return false;
+			output->status = OUTPUT_STATUS_CONFIGURED;
+			if (! create_bar(pt1, output))
+			{
+				fputs("ERROR: Could not create bar.\n", stderr);
+				data->loop = false;
+				data->ret  = EXIT_FAILURE;
+				return false;
+			}
 		}
-		return true;
 	}
+	if (! wl_list_empty(&output->bars))
+		return true;
 
 unused:
 	if (data->verbose)
@@ -181,6 +183,8 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	output->wl_output   = wl_output;
 	output->status      = OUTPUT_STATUS_UNCONFIGURED;
 
+	wl_list_init(&output->bars);
+
 	wl_list_insert(&data->outputs, &output->link);
 	wl_output_set_user_data(wl_output, output);
 	wl_output_add_listener(wl_output, &output_listener, output);
@@ -191,7 +195,7 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	 */
 	if ( data->xdg_output_manager != NULL && data->layer_shell != NULL )
 	{
-		if (! configure_output (data, output))
+		if (! configure_output(data, output))
 			return false;
 	}
 	else if (data->verbose)
@@ -215,7 +219,7 @@ void destroy_output (struct Lava_output *output)
 	if ( output == NULL )
 		return;
 
-	destroy_bar(output->bar);
+	destroy_all_bars(output);
 	wl_list_remove(&output->link);
 	wl_output_destroy(output->wl_output);
 	free(output->name);

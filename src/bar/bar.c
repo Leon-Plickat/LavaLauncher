@@ -35,15 +35,16 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
-#include"config/config.h"
 #include"output.h"
 #include"draw-generics.h"
+#include"bar/bar-pattern.h"
 #include"bar/bar.h"
 #include"bar/layersurface.h"
 #include"bar/render.h"
 
-struct Lava_bar *create_bar (struct Lava_data *data, struct Lava_output *output)
+bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 {
+	struct Lava_data *data = pattern->data;
 	if (data->verbose)
 		fputs("Creating bar.\n", stderr);
 
@@ -51,38 +52,39 @@ struct Lava_bar *create_bar (struct Lava_data *data, struct Lava_output *output)
 	if ( bar == NULL )
 	{
 		fputs("ERROR: Could not allocate.\n", stderr);
-		return NULL;
+		return false;
 	}
+	wl_list_insert(&output->bars, &bar->link);
+	bar->data          = data;
+	bar->pattern       = pattern;
+	bar->output        = output;
+	bar->wl_surface    = NULL;
+	bar->layer_surface = NULL;
 
 	if ( NULL == (bar->wl_surface = wl_compositor_create_surface(data->compositor)) )
 	{
 		fputs("ERROR: Compositor did not create wl_surface.\n", stderr);
-		goto error;
+		return false;
 	}
 
 	if ( NULL == (bar->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
 					data->layer_shell, bar->wl_surface,
-					output->wl_output, data->config.layer, "LavaLauncher")) )
+					output->wl_output, pattern->layer,
+					"LavaLauncher")) )
 	{
 		fputs("ERROR: Compositor did not create layer_surface.\n", stderr);
-		goto error;
+		return false;
 	}
-
-	bar->output = output;
-	bar->data   = data;
 
 	configure_layer_surface(bar);
 	zwlr_layer_surface_v1_add_listener(bar->layer_surface,
 			&layer_surface_listener, bar);
 	wl_surface_commit(bar->wl_surface);
-	return bar;
 
-error:
-	destroy_bar(bar);
-	return NULL;
+	return true;
 }
 
-void destroy_bar (struct Lava_bar *bar)
+static void destroy_bar (struct Lava_bar *bar)
 {
 	if ( bar == NULL )
 		return;
@@ -91,7 +93,17 @@ void destroy_bar (struct Lava_bar *bar)
 		zwlr_layer_surface_v1_destroy(bar->layer_surface);
 	if ( bar->wl_surface != NULL )
 		wl_surface_destroy(bar->wl_surface);
+	wl_list_remove(&bar->link);
 	free(bar);
+}
+
+void destroy_all_bars (struct Lava_output *output)
+{
+	if (output->data->verbose)
+		fputs("Destroying bars.\n", stderr);
+	struct Lava_bar *b1, *b2;
+	wl_list_for_each_safe(b1, b2, &output->bars, link)
+		destroy_bar(b1);
 }
 
 static void update_offset (struct Lava_bar *bar)
@@ -99,20 +111,20 @@ static void update_offset (struct Lava_bar *bar)
 	if ( bar == NULL )
 		return;
 
-	struct Lava_data   *data   = bar->data;
-	struct Lava_config *config = &data->config;
-	struct Lava_output *output = bar->output;
+	struct Lava_data        *data    = bar->data;
+	struct Lava_bar_pattern *pattern = bar->pattern;
+	struct Lava_output      *output  = bar->output;
 
 	if ( output->w == 0 || output->h == 0 )
 		return;
 
-	if ( config->mode == MODE_SIMPLE )
+	if ( pattern->mode == MODE_SIMPLE )
 	{
 		bar->x_offset = bar->y_offset = 0;
 		return;
 	}
 
-	switch (config->alignment)
+	switch (pattern->alignment)
 	{
 		case ALIGNMENT_START:
 			bar->x_offset = 0;
@@ -120,28 +132,28 @@ static void update_offset (struct Lava_bar *bar)
 			break;
 
 		case ALIGNMENT_CENTER:
-			if ( config->orientation == ORIENTATION_HORIZONTAL )
+			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 			{
-				bar->x_offset = (output->w / 2) - (config->w / 2);
+				bar->x_offset = (output->w / 2) - (pattern->w / 2);
 				bar->y_offset = 0;
 			}
 			else
 			{
 				bar->x_offset = 0;
-				bar->y_offset = (output->h / 2) - (config->h / 2);
+				bar->y_offset = (output->h / 2) - (pattern->h / 2);
 			}
 			break;
 
 		case ALIGNMENT_END:
-			if ( config->orientation == ORIENTATION_HORIZONTAL )
+			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 			{
-				bar->x_offset = output->w  - config->w;
+				bar->x_offset = output->w  - pattern->w;
 				bar->y_offset = 0;
 			}
 			else
 			{
 				bar->x_offset = 0;
-				bar->y_offset = output->h - config->h;
+				bar->y_offset = output->h - pattern->h;
 			}
 			break;
 	}
@@ -158,10 +170,10 @@ static void update_offset (struct Lava_bar *bar)
 	 * Here we set the margins parallel to the edges length, which are
 	 * "fake", by adjusting the offset of the bar.
 	 */
-	if ( config->orientation == ORIENTATION_HORIZONTAL )
-		bar->x_offset += config->margin_left - config->margin_right;
+	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+		bar->x_offset += pattern->margin_left - pattern->margin_right;
 	else
-		bar->y_offset += config->margin_top - config->margin_bottom;
+		bar->y_offset += pattern->margin_top - pattern->margin_bottom;
 
 	if (data->verbose)
 		fprintf(stderr, "Aligning bar: global_name=%d x-offset=%d y-offset=%d\n",
@@ -175,15 +187,32 @@ void update_bar (struct Lava_bar *bar)
 	render_bar_frame(bar);
 }
 
+void update_all_bars (struct Lava_output *output)
+{
+	if (wl_list_empty(&output->bars))
+		return;
+	if (output->data->verbose)
+		fprintf(stderr, "Updating all bars on output: name=%d\n",
+				output->global_name);
+	struct Lava_bar *b1, *b2;
+	wl_list_for_each_safe(b1, b2, &output->bars, link)
+		update_bar(b1);
+}
 
 struct Lava_bar *bar_from_surface (struct Lava_data *data, struct wl_surface *surface)
 {
 	if ( data == NULL || surface == NULL )
 		return NULL;
 	struct Lava_output *op1, *op2;
+	struct Lava_bar *b1, *b2;
 	wl_list_for_each_safe(op1, op2, &data->outputs, link)
-		if ( op1->bar->wl_surface == surface )
-			return op1->bar;
+	{
+		wl_list_for_each_safe(b1, b2, &op1->bars, link)
+		{
+			if ( b1->wl_surface == surface )
+				return b1;
+		}
+	}
 	return NULL;
 }
 

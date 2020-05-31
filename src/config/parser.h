@@ -20,6 +20,8 @@
 #ifndef LAVALAUNCHER_CONFIG_PARSER_H
 #define LAVALAUNCHER_CONFIG_PARSER_H
 
+#include<stdio.h>
+#include<stdlib.h>
 #include<stdbool.h>
 
 struct Lava_data;
@@ -32,10 +34,10 @@ enum Parser_context
 	 * and is waiting for '{'.
 	 */
 	CONTEXT_NONE,
-	CONTEXT_SETTINGS_PRE,
-	CONTEXT_SETTINGS,
-	CONTEXT_ITEMS_PRE,
-	CONTEXT_ITEMS,
+	CONTEXT_GLOBAL_SETTINGS_PRE,
+	CONTEXT_GLOBAL_SETTINGS,
+	CONTEXT_BAR_PRE,
+	CONTEXT_BAR,
 	CONTEXT_BUTTON_PRE,
 	CONTEXT_BUTTON,
 	CONTEXT_SPACER_PRE,
@@ -56,8 +58,7 @@ enum Parser_action
 
 struct Lava_parser
 {
-	struct Lava_config *config;
-	struct Lava_data   *data;
+	struct Lava_data *data;
 	FILE *file;
 	int line, column;
 	char last_char;

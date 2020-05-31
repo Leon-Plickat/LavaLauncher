@@ -34,12 +34,12 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
-#include"config/config.h"
 #include"output.h"
 #include"seat.h"
+#include"bar/bar-pattern.h"
 #include"bar/bar.h"
 
-uint32_t get_anchor (struct Lava_config *config)
+uint32_t get_anchor (struct Lava_bar_pattern *pattern)
 {
 	struct {
 		uint32_t singular_anchor;
@@ -74,10 +74,10 @@ uint32_t get_anchor (struct Lava_config *config)
 	/* MODE_SIMPLE is only anchored to a single edge; All other modes are
 	 * anchored to three edges.
 	 */
-	if ( config->mode == MODE_SIMPLE )
-		return edges[config->position].singular_anchor;
+	if ( pattern->mode == MODE_SIMPLE )
+		return edges[pattern->position].singular_anchor;
 	else
-		return edges[config->position].anchor_triplet;
+		return edges[pattern->position].anchor_triplet;
 }
 
 void configure_layer_surface (struct Lava_bar *bar)
@@ -85,9 +85,9 @@ void configure_layer_surface (struct Lava_bar *bar)
 	if ( bar == NULL )
 		return;
 
-	struct Lava_data   *data   = bar->data;
-	struct Lava_config *config = &data->config;
-	struct Lava_output *output = bar->output;
+	struct Lava_data        *data    = bar->data;
+	struct Lava_bar_pattern *pattern = bar->pattern;
+	struct Lava_output      *output  = bar->output;
 
 	/* It is possible that this function is called by output events before
 	 * the bar has been created. This function will return and abort unless
@@ -102,12 +102,12 @@ void configure_layer_surface (struct Lava_bar *bar)
 		fputs("Configuring bar.\n", stderr);
 
 	uint32_t width, height;
-	if ( config->mode == MODE_SIMPLE )
-		width = config->w, height = config->h;
-	else if ( config->orientation == ORIENTATION_HORIZONTAL )
-		width = bar->output->w * output->scale, height = config->h;
+	if ( pattern->mode == MODE_SIMPLE )
+		width = pattern->w, height = pattern->h;
+	else if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+		width = bar->output->w * output->scale, height = pattern->h;
 	else
-		width = config->w, height = output->h * output->scale;
+		width = pattern->w, height = output->h * output->scale;
 
 	if (data->verbose)
 		fprintf(stderr, "Surface size: w=%d h=%d\n", width, height);
@@ -115,7 +115,7 @@ void configure_layer_surface (struct Lava_bar *bar)
 	zwlr_layer_surface_v1_set_size(bar->layer_surface, width, height);
 
 	/* Anchor the surface to the correct edge. */
-	zwlr_layer_surface_v1_set_anchor(bar->layer_surface, get_anchor(config));
+	zwlr_layer_surface_v1_set_anchor(bar->layer_surface, get_anchor(pattern));
 
 	/* Set margin.
 	* Since we create a surface spanning the entire length of an outputs
@@ -129,27 +129,27 @@ void configure_layer_surface (struct Lava_bar *bar)
 	* Here we set the margins not parallel to the edges length, which are
 	* real layer shell margins.
 	*/
-	if ( config->orientation == ORIENTATION_HORIZONTAL )
+	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
-				config->margin_top, 0,
-				config->margin_bottom, 0);
+				pattern->margin_top, 0,
+				pattern->margin_bottom, 0);
 	else
 		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
-				0, config->margin_right,
-				0, config->margin_left);
+				0, pattern->margin_right,
+				0, pattern->margin_left);
 
 	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
 	zwlr_layer_surface_v1_set_exclusive_zone(bar->layer_surface,
-			config->exclusive_zone);
+			pattern->exclusive_zone);
 
 	/* Create a region of the visible part of the surface.
 	 * Behold: In MODE_DEFAULT, the actual surface is larger than the visible
 	 * bar.
 	 */
 	struct wl_region *region = wl_compositor_create_region(data->compositor);
-	if ( config->mode == MODE_DEFAULT )
+	if ( pattern->mode == MODE_DEFAULT )
 		wl_region_add(region, bar->x_offset, bar->y_offset,
-				config->w, config->h);
+				pattern->w, pattern->h);
 	else
 		wl_region_add(region, 0, 0, bar->output->w, bar->output->h);
 
@@ -162,7 +162,7 @@ void configure_layer_surface (struct Lava_bar *bar)
 	 * will inform the compositor that it does not have to render anything
 	 * below the surface.
 	 */
-	if ( config->bar_colour[3] == 1 && config->border_colour[3] == 1 )
+	if ( pattern->bar_colour[3] == 1 && pattern->border_colour[3] == 1 )
 		wl_surface_set_opaque_region(bar->wl_surface, region);
 
 	wl_region_destroy(region);

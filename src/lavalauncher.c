@@ -36,9 +36,10 @@
 #include<wayland-client-protocol.h>
 
 #include"lavalauncher.h"
-#include"config/config.h"
 #include"registry.h"
-#include"item/item.h"
+#include"config/parser.h"
+#include"bar/bar-pattern.h"
+#include"cursor.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
@@ -82,11 +83,23 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 
 static void init_data (struct Lava_data *data)
 {
-	data->ret         = EXIT_FAILURE;
-	data->loop        = true;
-	data->verbose     = false;
-	data->config_path = NULL;
-	wl_list_init(&data->items);
+	data->ret          = EXIT_FAILURE;
+	data->loop         = true;
+	data->verbose      = false;
+	data->config_path  = NULL;
+	data->last_pattern = NULL;
+
+	data->display            = NULL;
+	data->registry           = NULL;
+	data->compositor         = NULL;
+	data->subcompositor      = NULL;
+	data->shm                = NULL;
+	data->layer_shell        = NULL;
+	data->xdg_output_manager = NULL;
+
+	data->cursor.name = strdup("pointer");
+
+	wl_list_init(&data->patterns);
 	wl_list_init(&data->outputs);
 	wl_list_init(&data->seats);
 }
@@ -98,12 +111,13 @@ int main (int argc, char *argv[])
 
 	if (! handle_command_flags(&data, argc, argv))
 		return data.ret;
-	if (! init_config(&data))
+	if (! parse_config_file(&data))
 		goto early_exit;
 	if (! init_wayland(&data))
 		goto exit;
 	if (! init_cursor(&data))
-		fputs("WARNING: Changing the cursor is disabled due to an error.\n", stderr);
+		fputs("WARNING: Changing the cursor is disabled due to an error.\n",
+				stderr);
 
 	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);
@@ -115,7 +129,6 @@ exit:
 	finish_cursor(&data);
 	finish_wayland(&data);
 early_exit:
-	finish_config(&data);
-	destroy_all_items(&data);
+	destroy_all_bar_patterns(&data);
 	return data.ret;
 }

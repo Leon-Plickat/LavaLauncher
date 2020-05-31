@@ -64,7 +64,8 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 
 	attach_cursor(seat->data, wl_pointer, serial);
 
-	seat->pointer.bar = bar_from_surface(seat->data, surface);
+	if ( NULL == (seat->pointer.bar = bar_from_surface(seat->data, surface)) )
+		return;
 
 	seat->pointer.x = wl_fixed_to_int(x);
 	seat->pointer.y = wl_fixed_to_int(y);
@@ -102,8 +103,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		if (seat->data->verbose)
 			fprintf(stderr, "Button pressed: x=%d y=%d\n",
 					seat->pointer.x, seat->pointer.y);
-		seat->pointer.item = item_from_coords(seat->data,
-				seat->pointer.bar,
+		seat->pointer.item = item_from_coords(seat->pointer.bar,
 				seat->pointer.x, seat->pointer.y);
 	}
 	else
@@ -115,8 +115,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		if ( seat->pointer.item == NULL )
 			return;
 
-		struct Lava_item *item = item_from_coords(seat->data,
-				seat->pointer.bar,
+		struct Lava_item *item = item_from_coords( seat->pointer.bar,
 				seat->pointer.x, seat->pointer.y);
 
 		if ( item != seat->pointer.item )
@@ -192,8 +191,7 @@ static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
 	seat->touch.bar = bar_from_surface(seat->data, surface);
 
 	seat->touch.id   = id;
-	seat->touch.item = item_from_coords(seat->data, seat->touch.bar,
-			x, y);
+	seat->touch.item = item_from_coords(seat->touch.bar, x, y);
 }
 
 static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,

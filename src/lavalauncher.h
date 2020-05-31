@@ -23,11 +23,10 @@
 #include<stdbool.h>
 #include<stdint.h>
 #include<wayland-server.h>
-
-#include"config/config.h"
 #include"cursor.h"
 
 struct Lava_item;
+struct Lava_bar_pattern;
 
 struct Lava_data
 {
@@ -39,16 +38,16 @@ struct Lava_data
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 
-	struct Lava_cursor  cursor;
-	struct Lava_config  config;
-	char               *config_path;
+	char *config_path;
 
+	struct wl_list patterns;
 	struct wl_list outputs;
 	struct wl_list seats;
 
-	struct wl_list    items;
-	struct Lava_item *last_item;
-	int               item_amount;
+	struct Lava_bar_pattern *last_pattern;
+
+	struct Lava_cursor cursor;
+	char *cursor_name;
 
 	bool loop;
 	bool verbose;

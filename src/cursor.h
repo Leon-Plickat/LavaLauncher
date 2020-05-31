@@ -21,6 +21,8 @@
 #define LAVALAUNCHER_CURSOR_H
 
 #include<stdbool.h>
+#include<stdint.h>
+#include<wayland-client.h>
 
 struct Lava_data;
 

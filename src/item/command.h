@@ -20,11 +20,11 @@
 #ifndef LAVALAUNCHER_ITEM_COMMAND_H
 #define LAVALAUNCHER_ITEM_COMMAND_H
 
-struct Lava_data;
-struct Lava_output;
+#include<stdbool.h>
+
+struct Lava_bar;
 struct Lava_item;
 
-bool item_command (struct Lava_data *data, struct Lava_item *item,
-		struct Lava_output *output);
+bool item_command (struct Lava_bar *bar, struct Lava_item *item);
 
 #endif

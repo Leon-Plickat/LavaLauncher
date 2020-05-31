@@ -27,10 +27,10 @@
 #include<ctype.h>
 
 #include"lavalauncher.h"
-#include"config/config.h"
+#include"config/parser.h"
 #include"config/global.h"
-#include"parser.h"
 #include"item/item.h"
+#include"bar/bar-pattern.h"
 
 /* Get the next char from file stream. */
 static bool parser_get_char (struct Lava_parser *parser, char *ch)
@@ -90,65 +90,56 @@ static bool parser_handle_eof (struct Lava_parser *parser)
 	}
 }
 
-/* Enter a global *_PRE context. */
-static bool parser_enter_global_pre_context (struct Lava_parser *parser)
-{
-	if (! strcmp(parser->buffer, "settings"))
-		parser->context = CONTEXT_SETTINGS_PRE;
-	else if (! strcmp(parser->buffer, "items"))
-		parser->context = CONTEXT_ITEMS_PRE;
-	else
-		return false;
-	return true;
-}
-
-/* Enter an item *_PRE context. */
-static bool parser_enter_item_pre_context (struct Lava_parser *parser)
-{
-	if (! strcmp(parser->buffer, "button"))
-		parser->context = CONTEXT_BUTTON_PRE;
-	else if (! strcmp(parser->buffer, "spacer"))
-		parser->context = CONTEXT_SPACER_PRE;
-	else
-		return false;
-	return true;
-}
-
 /* Fully enter a context. */
 static bool parser_enter_context (struct Lava_parser *parser)
 {
 	bool ret = true;
 	switch (parser->context)
 	{
-		case CONTEXT_SETTINGS_PRE: parser->context = CONTEXT_SETTINGS; break;
-		case CONTEXT_ITEMS_PRE:    parser->context = CONTEXT_ITEMS;    break;
+		case CONTEXT_GLOBAL_SETTINGS_PRE:
+			parser->context = CONTEXT_GLOBAL_SETTINGS;
+			break;
+
+		case CONTEXT_BAR_PRE:
+			ret = create_bar_pattern(parser->data);
+			parser->context = CONTEXT_BAR;
+			break;
 
 		case CONTEXT_BUTTON_PRE:
-			ret = create_item(parser->data, TYPE_BUTTON);
+			ret = create_item(parser->data->last_pattern, TYPE_BUTTON);
 			parser->context = CONTEXT_BUTTON;
 			break;
 
 		case CONTEXT_SPACER_PRE:
-			ret = create_item(parser->data, TYPE_SPACER);
+			ret = create_item(parser->data->last_pattern, TYPE_SPACER);
 			parser->context = CONTEXT_SPACER;
 			break;
 
-		default: parser->context = CONTEXT_NONE;     break;
+		default:
+			parser->context = CONTEXT_NONE;
+			break;
 	}
 	return ret;
 }
 
 /* Leave a context and go back to the parent context. */
-static void parser_leave_context (struct Lava_parser *parser)
+static bool parser_leave_context (struct Lava_parser *parser)
 {
 	switch (parser->context)
 	{
-		case CONTEXT_SETTINGS: parser->context = CONTEXT_NONE;  break;
-		case CONTEXT_ITEMS:    parser->context = CONTEXT_NONE;  break;
-		case CONTEXT_BUTTON:   parser->context = CONTEXT_ITEMS; break;
-		case CONTEXT_SPACER:   parser->context = CONTEXT_ITEMS; break;
-		default:               parser->context = CONTEXT_NONE;  break;
+		case CONTEXT_GLOBAL_SETTINGS: parser->context = CONTEXT_NONE; break;
+
+		case CONTEXT_BAR:
+			parser->context = CONTEXT_NONE;
+			if (! finalize_bar_pattern(parser->data->last_pattern))
+				return false;
+			break;
+
+		case CONTEXT_BUTTON: parser->context = CONTEXT_BAR;  break;
+		case CONTEXT_SPACER: parser->context = CONTEXT_BAR;  break;
+		default:             parser->context = CONTEXT_NONE; break;
 	}
+	return true;
 }
 
 /* Check if the parser is currently waiting for a bracket. { } */
@@ -161,8 +152,8 @@ static bool parser_is_waiting_for_bracket (struct Lava_parser *parser,
 	if ( bracket == '{' )
 		switch (parser->context)
 		{
-			case CONTEXT_SETTINGS_PRE:
-			case CONTEXT_ITEMS_PRE:
+			case CONTEXT_GLOBAL_SETTINGS_PRE:
+			case CONTEXT_BAR_PRE:
 			case CONTEXT_BUTTON_PRE:
 			case CONTEXT_SPACER_PRE:
 				return true;
@@ -173,8 +164,8 @@ static bool parser_is_waiting_for_bracket (struct Lava_parser *parser,
 	else if ( bracket == '}' )
 		switch (parser->context)
 		{
-			case CONTEXT_SETTINGS:
-			case CONTEXT_ITEMS:
+			case CONTEXT_GLOBAL_SETTINGS:
+			case CONTEXT_BAR:
 			case CONTEXT_BUTTON:
 			case CONTEXT_SPACER:
 				return true;
@@ -198,9 +189,7 @@ static bool parser_handle_bracket (struct Lava_parser *parser, const char ch)
 	if ( ch == '{' )
 		return parser_enter_context(parser);
 	else
-		parser_leave_context(parser);
-
-	return true;
+		return parser_leave_context(parser);
 }
 
 static bool parser_handle_semicolon (struct Lava_parser *parser, const char ch)
@@ -304,14 +293,19 @@ static bool parser_handle_settings (struct Lava_parser *parser)
 		parser->action = ACTION_ASSIGNED;
 		switch (parser->context)
 		{
-			case CONTEXT_SETTINGS:
-				return config_set_variable(parser->config,
+			case CONTEXT_GLOBAL_SETTINGS:
+				return global_set_variable(parser->data,
+						parser->buffer_2, parser->buffer,
+						parser->line);
+
+			case CONTEXT_BAR:
+				return bar_pattern_set_variable(parser->data->last_pattern,
 						parser->buffer_2, parser->buffer,
 						parser->line);
 
 			case CONTEXT_BUTTON:
 			case CONTEXT_SPACER:
-				return item_set_variable(parser->data->last_item,
+				return item_set_variable(parser->data->last_pattern->last_item,
 						parser->buffer_2, parser->buffer,
 						parser->line);
 
@@ -330,21 +324,39 @@ static bool parser_handle_string (struct Lava_parser *parser)
 	switch (parser->context)
 	{
 		case CONTEXT_NONE:
-			if (! parser_enter_global_pre_context(parser))
+			if (! strcmp(parser->buffer, "bar"))
+			{
+				parser->context = CONTEXT_BAR_PRE;
+				return true;
+			}
+			if (! strcmp(parser->buffer, "global-settings"))
+			{
+				parser->context = CONTEXT_GLOBAL_SETTINGS_PRE;
+				return true;
+			}
+			else
 				goto error;
-			return true;
-		case CONTEXT_ITEMS:
-			if (! parser_enter_item_pre_context(parser))
-				goto error;
-			return true;
 
-		case CONTEXT_SETTINGS:
+		case CONTEXT_BAR:
+			if (! strcmp(parser->buffer, "button"))
+			{
+				parser->context = CONTEXT_BUTTON_PRE;
+				return true;
+			}
+			else if (! strcmp(parser->buffer, "spacer"))
+			{
+				parser->context = CONTEXT_SPACER_PRE;
+				return true;
+			}
+			else
+				return parser_handle_settings(parser);
+
+		case CONTEXT_GLOBAL_SETTINGS:
 		case CONTEXT_BUTTON:
 		case CONTEXT_SPACER:
 			return parser_handle_settings(parser);
 
-		case CONTEXT_SETTINGS_PRE:
-		case CONTEXT_ITEMS_PRE:
+		case CONTEXT_BAR_PRE:
 		case CONTEXT_BUTTON_PRE:
 		case CONTEXT_SPACER_PRE:
 		default:
@@ -362,7 +374,6 @@ bool parse_config_file (struct Lava_data *data)
 	errno = 0;
 	struct Lava_parser parser = {
 		.data    = data,
-		.config  = &data->config,
 		.file    = NULL,
 		.line    = 1,
 		.column  = 0,

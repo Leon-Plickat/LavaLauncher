@@ -31,12 +31,12 @@
 
 #include"lavalauncher.h"
 #include"output.h"
+#include"bar/bar-pattern.h"
 #include"bar/bar.h"
 #include"bar/render.h"
 #include"bar/draw-generics.h"
 #include"bar/buffer.h"
 #include"item/item.h"
-#include"config/config.h"
 
 static void item_replace_background (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t size, float colour[4])
@@ -92,47 +92,47 @@ static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
 	cairo_restore(cairo);
 }
 
-static void calculate_bar_buffer_size (struct Lava_output *output, int *w, int *h)
+static void calculate_bar_buffer_size (struct Lava_bar *bar, int *w, int *h)
 {
-	struct Lava_config *config = &output->data->config;
+	struct Lava_bar_pattern *pattern = bar->pattern;
+	struct Lava_output *output       = bar->output;
 
-	if ( config->mode == MODE_SIMPLE )
-		*w = config->w, *h = config->h;
-	else if ( config->orientation == ORIENTATION_HORIZONTAL )
-		*w = output->w, *h = config->h;
+	if ( pattern->mode == MODE_SIMPLE )
+		*w = pattern->w, *h = pattern->h;
+	else if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+		*w = output->w, *h = pattern->h;
 	else
-		*w = config->w, *h = output->h;
+		*w = pattern->w, *h = output->h;
 
 	*w *= output->scale, *h *= output->scale;
 }
 
 static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 {
-	struct Lava_data   *data     = bar->data;
-	struct Lava_config *config   = &data->config;
+	struct Lava_bar_pattern *pattern = bar->pattern;
 
 	int scale    = bar->output->scale,
-	    x_offset = (bar->x_offset + config->border_top)  * scale,
-	    y_offset = (bar->y_offset + config->border_left) * scale;
+	    x_offset = (bar->x_offset + pattern->border_top)  * scale,
+	    y_offset = (bar->y_offset + pattern->border_left) * scale;
 
-	int32_t size = config->icon_size * scale;
+	int32_t size = pattern->icon_size * scale;
 	int32_t x = x_offset, y = y_offset, *increment, *increment_offset;
-	if ( config->orientation == ORIENTATION_HORIZONTAL )
+	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 		increment = &x, increment_offset = &x_offset;
 	else
 		increment = &y, increment_offset = &y_offset;
 
-	struct Lava_item *it_1, *it_2;
-	wl_list_for_each_reverse_safe(it_1, it_2, &data->items, link)
-		if ( it_1->type == TYPE_BUTTON )
+	struct Lava_item *it1, *it2;
+	wl_list_for_each_reverse_safe(it1, it2, &pattern->items, link)
+		if ( it1->type == TYPE_BUTTON )
 		{
-			*increment = (it_1->ordinate * scale) + *increment_offset;
-			if ( it_1->background_colour_hex != NULL )
-				item_replace_background(cairo, x, y, it_1->length,
-						it_1->background_colour);
-			draw_effect(cairo, x, y, size, config->effect_padding,
-					config->effect_colour, config->effect);
-			lldg_draw_square_image(cairo, x, y, size, it_1->img);
+			*increment = (it1->ordinate * scale) + *increment_offset;
+			if ( it1->background_colour_hex != NULL )
+				item_replace_background(cairo, x, y, it1->length,
+						it1->background_colour);
+			draw_effect(cairo, x, y, size, pattern->effect_padding,
+					pattern->effect_colour, pattern->effect);
+			lldg_draw_square_image(cairo, x, y, size, it1->img);
 		}
 }
 
@@ -141,16 +141,16 @@ void render_bar_frame (struct Lava_bar *bar)
 	if ( bar == NULL )
 		return;
 
-	struct Lava_data   *data   = bar->data;
-	struct Lava_config *config = &data->config;
-	struct Lava_output *output = bar->output;
+	struct Lava_data        *data    = bar->data;
+	struct Lava_bar_pattern *pattern = bar->pattern;
+	struct Lava_output      *output  = bar->output;
 
 	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED )
 		return;
 
 	/* Get new/next buffer. */
 	int buffer_w, buffer_h;
-	calculate_bar_buffer_size(output, &buffer_w, &buffer_h);
+	calculate_bar_buffer_size(bar, &buffer_w, &buffer_h);
 	if (! next_buffer(&bar->current_buffer, data->shm, bar->buffers,
 				buffer_w, buffer_h))
 		return;
@@ -161,26 +161,26 @@ void render_bar_frame (struct Lava_bar *bar)
 	/* Draw bar. */
 	if (data->verbose)
 		fputs("Drawing bar.\n", stderr);
-	if ( config->mode == MODE_FULL )
+	if ( pattern->mode == MODE_FULL )
 	{
 		int bar_w, bar_h;
-		if ( config->orientation == ORIENTATION_HORIZONTAL )
-			bar_w = output->w, bar_h = config->h;
+		if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+			bar_w = output->w, bar_h = pattern->h;
 		else
-			bar_w = config->w, bar_h = config->h;
+			bar_w = pattern->w, bar_h = output->h;
 
 		lldg_draw_bordered_rectangle(cairo, 0, 0, bar_w, bar_h,
-				config->border_top, config->border_right,
-				config->border_bottom, config->border_left,
+				pattern->border_top, pattern->border_right,
+				pattern->border_bottom, pattern->border_left,
 				bar->output->scale,
-				config->bar_colour, config->border_colour);
+				pattern->bar_colour, pattern->border_colour);
 	}
 	else
 		lldg_draw_bordered_rectangle(cairo,
-				bar->x_offset, bar->y_offset, config->w, config->h,
-				config->border_top, config->border_right,
-				config->border_bottom, config->border_left,
-				output->scale, config->bar_colour, config->border_colour);
+				bar->x_offset, bar->y_offset, pattern->w, pattern->h,
+				pattern->border_top, pattern->border_right,
+				pattern->border_bottom, pattern->border_left,
+				output->scale, pattern->bar_colour, pattern->border_colour);
 
 	/* Draw icons. */
 	if (data->verbose)

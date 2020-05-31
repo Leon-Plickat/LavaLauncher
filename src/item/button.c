@@ -29,7 +29,6 @@
 
 #include"lavalauncher.h"
 #include"item/item.h"
-#include"config/config.h"
 #include"config/colour.h"
 
 static bool button_set_command (struct Lava_item *button, const char *command)

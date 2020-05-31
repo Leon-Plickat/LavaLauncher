@@ -20,14 +20,18 @@
 #ifndef LAVALAUNCHER_BAR_H
 #define LAVALAUNCHER_BAR_H
 
+#include<wayland-server.h>
 #include"bar/buffer.h"
 
 struct Lava_data;
 struct Lava_output;
+struct Lava_bar_pattern;
 
 struct Lava_bar
 {
 	struct Lava_data             *data;
+	struct wl_list                link;
+	struct Lava_bar_pattern      *pattern;
 	struct Lava_output           *output;
 	int32_t                       x_offset, y_offset;
 	struct wl_surface            *wl_surface;
@@ -37,9 +41,11 @@ struct Lava_bar
 	struct Lava_buffer *current_buffer;
 };
 
-struct Lava_bar *create_bar (struct Lava_data *data, struct Lava_output *output);
-void destroy_bar (struct Lava_bar *bar);
+bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output);
+void destroy_all_bars (struct Lava_output *output);
 void update_bar (struct Lava_bar *bar);
+void update_all_bars (struct Lava_output *output);
 struct Lava_bar *bar_from_surface (struct Lava_data *data, struct wl_surface *surface);
 
 #endif
+

@@ -114,16 +114,12 @@ bool init_config (struct Lava_data *data)
 
 	sensible_defaults(config);
 	if (! parse_config_file(data))
-		goto error;
+		return false;
 	if (! finalize_items(data, config->icon_size))
-		goto error;
+		return false;
 	calculate_dimensions(data);
 
 	return true;
-
-error:
-	finish_config(data);
-	return false;
 }
 
 void finish_config (struct Lava_data *data)

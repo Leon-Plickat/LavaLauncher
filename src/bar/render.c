@@ -58,7 +58,6 @@ static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
 	cairo_save(cairo);
 
 	x += padding, y += padding, size -= 2 * padding;
-	double radius, degrees;
 	switch (effect)
 	{
 		case EFFECT_BOX:
@@ -66,19 +65,7 @@ static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
 			break;
 
 		case EFFECT_PHONE:
-			radius = size / 10.0;
-			degrees = 3.1415927 / 180.0;
-
-			cairo_new_sub_path(cairo);
-			cairo_arc(cairo, x + size - radius, y + radius, radius,
-					-90 * degrees, 0 * degrees);
-			cairo_arc(cairo, x + size - radius, y + size - radius,
-					radius, 0 * degrees, 90 * degrees);
-			cairo_arc(cairo, x + radius, y + size - radius, radius,
-					90 * degrees, 180 * degrees);
-			cairo_arc(cairo, x + radius, y + radius, radius,
-					180 * degrees, 270 * degrees);
-			cairo_close_path(cairo);
+			lldg_rounded_square(cairo, x, y, size);
 			break;
 
 		default:

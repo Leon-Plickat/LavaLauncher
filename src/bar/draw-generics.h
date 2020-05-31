@@ -20,10 +20,13 @@
 #ifndef LAVALAUNCHER_BAR_DRAW_GENERICS_H
 #define LAVALAUNCHER_BAR_DRAW_GENERICS_H
 
+#include<stdint.h>
+#include<cairo/cairo.h>
 
 struct Lava_data;
 struct Lava_bar;
 
+void lldg_rounded_square (cairo_t *cairo, int32_t x, int32_t y, int32_t size);
 void lldg_draw_square_image (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t icon_size, cairo_surface_t *img);
 void lldg_draw_bordered_rectangle (cairo_t *cairo, int32_t x, int32_t y,

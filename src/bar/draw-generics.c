@@ -29,6 +29,22 @@
 #include"seat.h"
 #include"draw-generics.h"
 
+void lldg_rounded_square (cairo_t *cairo, int32_t x, int32_t y, int32_t size)
+{
+	double radius = size / 10.0, degrees = 3.1415927 / 180.0;
+
+	cairo_new_sub_path(cairo);
+	cairo_arc(cairo, x + size - radius, y + radius, radius,
+			-90 * degrees, 0 * degrees);
+	cairo_arc(cairo, x + size - radius, y + size - radius,
+			radius, 0 * degrees, 90 * degrees);
+	cairo_arc(cairo, x + radius, y + size - radius, radius,
+			90 * degrees, 180 * degrees);
+	cairo_arc(cairo, x + radius, y + radius, radius,
+			180 * degrees, 270 * degrees);
+	cairo_close_path(cairo);
+}
+
 void lldg_draw_square_image (cairo_t *cairo, int32_t x, int32_t y,
 		int32_t icon_size, cairo_surface_t *img)
 {

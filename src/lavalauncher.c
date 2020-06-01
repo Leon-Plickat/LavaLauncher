@@ -97,7 +97,9 @@ static void init_data (struct Lava_data *data)
 	data->layer_shell        = NULL;
 	data->xdg_output_manager = NULL;
 
-	data->cursor.name = strdup("pointer");
+	data->cursor.name    = strdup("pointer");
+	data->cursor.theme   = NULL;
+	data->cursor.surface = NULL;
 
 	wl_list_init(&data->patterns);
 	wl_list_init(&data->outputs);

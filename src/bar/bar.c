@@ -182,8 +182,8 @@ static void update_offset (struct Lava_bar *bar)
 
 void update_bar (struct Lava_bar *bar)
 {
-	configure_layer_surface(bar);
 	update_offset(bar);
+	configure_layer_surface(bar);
 	render_bar_frame(bar);
 }
 

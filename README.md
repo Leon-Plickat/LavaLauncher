@@ -28,7 +28,10 @@ and [wayfire](https://github.com/WayfireWM/wayfire).
 
 ### Packages
 
-Fedora has an official LavaLauncher package in its repository.
+The following distributions have an official LavaLauncher package:
+
+* Fedora
+* Gentoo
 
 ### Building
 

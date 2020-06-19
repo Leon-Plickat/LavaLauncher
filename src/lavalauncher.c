@@ -51,6 +51,7 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
 static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[])
 {
 	extern int optind;
+	optind = 0;
 	extern char *optarg;
 	for (int c; (c = getopt(argc, argv, "c:hv")) != -1 ;)
 		switch (c)
@@ -85,6 +86,7 @@ static void init_data (struct Lava_data *data)
 {
 	data->ret          = EXIT_FAILURE;
 	data->loop         = true;
+	data->reload       = false;
 	data->verbose      = false;
 	data->config_path  = NULL;
 	data->last_pattern = NULL;
@@ -109,6 +111,7 @@ static void init_data (struct Lava_data *data)
 int main (int argc, char *argv[])
 {
 	struct Lava_data data;
+reload:
 	init_data(&data);
 
 	if (! handle_command_flags(&data, argc, argv))
@@ -132,5 +135,7 @@ exit:
 	finish_wayland(&data);
 early_exit:
 	destroy_all_bar_patterns(&data);
+	if (data.reload)
+		goto reload;
 	return data.ret;
 }

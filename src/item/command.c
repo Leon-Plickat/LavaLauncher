@@ -134,7 +134,18 @@ bool item_command (struct Lava_bar *bar, struct Lava_item *item)
 		return false;
 
 	if (! strcmp(item->cmd, "exit"))
+	{
+		if (bar->pattern->data->verbose)
+			fputs("Exiting due to button command \"exit\".\n", stderr);
 		bar->data->loop = false;
+	}
+	else if (! strcmp(item->cmd, "reload"))
+	{
+		if (bar->pattern->data->verbose)
+			fputs("Reloding due to button command \"reload\".\n", stderr);
+		bar->data->loop = false;
+		bar->data->reload = true;
+	}
 	else
 		exec_cmd(bar, item);
 

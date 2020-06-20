@@ -103,8 +103,8 @@ static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 	struct Lava_bar_pattern *pattern = bar->pattern;
 
 	int scale    = bar->output->scale,
-	    x_offset = (bar->x_offset + pattern->border_top)  * scale,
-	    y_offset = (bar->y_offset + pattern->border_left) * scale;
+	    x_offset = (bar->x_offset + pattern->border_left)  * scale,
+	    y_offset = (bar->y_offset + pattern->border_top) * scale;
 
 	int32_t size = pattern->icon_size * scale;
 	int32_t x = x_offset, y = y_offset, *increment, *increment_offset;

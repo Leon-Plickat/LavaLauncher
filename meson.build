@@ -47,6 +47,7 @@ executable(
     'src/item/spacer.c',
     'src/item/command.c',
     'src/config/parser.c',
+    'src/config/parse-boolean.c',
     'src/config/colour.c',
     'src/config/global.c',
   ),

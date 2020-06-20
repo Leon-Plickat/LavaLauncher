@@ -26,6 +26,7 @@
 
 #include"lavalauncher.h"
 #include"cursor.h"
+#include"config/parse-boolean.h"
 
 static bool global_set_cursor_name (struct Lava_data *data, const char *arg)
 {
@@ -37,9 +38,9 @@ static bool global_set_cursor_name (struct Lava_data *data, const char *arg)
 
 static bool global_set_watch (struct Lava_data *data, const char *arg)
 {
-	if ( ! strcmp(arg, "true") || ! strcmp(arg, "yes") || ! strcmp(arg, "on") )
+	if (is_boolean_true(arg))
 		data->watch = true;
-	else if ( ! strcmp(arg, "false") || ! strcmp(arg, "no") || ! strcmp(arg, "off") )
+	else if (is_boolean_false(arg))
 		data->watch = false;
 	else
 	{

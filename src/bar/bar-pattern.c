@@ -34,6 +34,7 @@
 #include"bar/bar-pattern.h"
 #include"item/item.h"
 #include"config/colour.h"
+#include"config/parse-boolean.h"
 
 static void sensible_defaults (struct Lava_bar_pattern *pattern)
 {
@@ -317,9 +318,9 @@ static bool bar_pattern_set_only_output (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_exclusive_zone (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	if (! strcmp(arg, "true"))
+	if (is_boolean_true(arg))
 		pattern->exclusive_zone = 1;
-	else if (! strcmp(arg, "false"))
+	else if (is_boolean_false(arg))
 		pattern->exclusive_zone = 0;
 	else if (! strcmp(arg, "stationary"))
 		pattern->exclusive_zone = -1;

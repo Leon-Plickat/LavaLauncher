@@ -62,6 +62,11 @@ assignments which can be made in this context are as follows.
 	on the cursor theme. If the cursor of the given name can not be loaded,
 	LavaLauncher will display a warning and disable changing the cursor.
 
+*watch-config-file*
+	Automatically reload when a change in the configuration file is detected.
+	Can be "true" or "false". The default is "false". Behold: If the
+	configuration file contains an error upon reload, LavaLauncher will exit.
+
 ## BAR
 Every "bar" context will add a bar. The assignments possible in this context are
 as follows.

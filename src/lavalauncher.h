@@ -50,6 +50,7 @@ struct Lava_data
 	char *cursor_name;
 
 	bool loop;
+	bool watch;
 	bool reload;
 	bool verbose;
 	int  ret;

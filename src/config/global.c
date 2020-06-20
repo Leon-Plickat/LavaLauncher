@@ -35,12 +35,27 @@ static bool global_set_cursor_name (struct Lava_data *data, const char *arg)
 	return true;
 }
 
+static bool global_set_watch (struct Lava_data *data, const char *arg)
+{
+	if ( ! strcmp(arg, "true") || ! strcmp(arg, "yes") || ! strcmp(arg, "on") )
+		data->watch = true;
+	else if ( ! strcmp(arg, "false") || ! strcmp(arg, "no") || ! strcmp(arg, "off") )
+		data->watch = false;
+	else
+	{
+		fputs("ERROR: 'watch-config-file' expects a boolean value.\n", stderr);
+		return false;
+	}
+	return true;
+}
+
 struct
 {
 	const char *variable;
 	bool (*set)(struct Lava_data*, const char*);
 } global_configs[] = {
-	{ .variable = "cursor-name", .set = global_set_cursor_name }
+	{ .variable = "cursor-name",       .set = global_set_cursor_name },
+	{ .variable = "watch-config-file", .set = global_set_watch       }
 };
 
 bool global_set_variable (struct Lava_data *data, const char *variable,

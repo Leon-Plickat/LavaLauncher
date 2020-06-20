@@ -53,6 +53,8 @@ static void main_loop (struct Lava_data *data)
 {
 	if (data->verbose)
 		fputs("Starting main loop.\n", stderr);
+	if (! data->watch)
+		goto simple_loop;
 
 	struct pollfd fds[2];
 
@@ -119,7 +121,8 @@ static void main_loop (struct Lava_data *data)
 		/* Inotify events. */
 		if ( fds[1].revents & POLLIN )
 		{
-			fputs("Config file modified; Triggering reload.\n", stderr);
+			if (data->verbose)
+				fputs("Config file modified; Triggering reload.\n", stderr);
 			data->loop = false;
 			data->reload = true;
 			goto exit;
@@ -133,6 +136,13 @@ exit:
 		close(fds[0].fd);
 	if ( fds[1].fd != -1 )
 		close(fds[1].fd);
+	return;
+	
+	/* Simple, Wayland-only loop, used when the configuration file is not
+	 * watched. LavaLauncher will not reload on changes.
+	 */
+simple_loop:
+	while ( data->loop && wl_display_dispatch(data->display) != -1 );
 }
 
 static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[])
@@ -173,6 +183,7 @@ static void init_data (struct Lava_data *data)
 {
 	data->ret          = EXIT_FAILURE;
 	data->loop         = true;
+	data->watch        = false;
 	data->reload       = false;
 	data->verbose      = false;
 	data->config_path  = NULL;

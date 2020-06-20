@@ -18,7 +18,8 @@ all audio, toggling your lamps, etc. You can turn practically anything you could
 do in your shell into a button.
 
 LavaLauncher is opinionated, yet remains configurable. The configuration syntax
-is documented in the man page.
+is documented in the man page. Modifying the configuration file will cause
+LavaLauncher to automatically reload.
 
 LavaLauncher has been successfully tested with [sway](https://github.com/swaywm/sway)
 and [wayfire](https://github.com/WayfireWM/wayfire).

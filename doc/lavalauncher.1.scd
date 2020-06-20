@@ -31,6 +31,9 @@ events to them.
 LavaLauncher is configured with a configuration file. There is no default
 location, meaning manually providing the path to a file is mandatory.
 
+LavaLauncher monitors the configuration file and will automatically reload, if
+it was modifed.
+
 You can find an example configuration at the end of this section.
 
 

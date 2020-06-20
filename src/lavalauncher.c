@@ -30,6 +30,7 @@
 #include<assert.h>
 #include<poll.h>
 #include<errno.h>
+#include<sys/inotify.h>
 
 #include<wayland-server.h>
 #include<wayland-client.h>
@@ -47,6 +48,92 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
 			    "  -h        Print this help text.\n"
 			    "  -v        Enable verbose output.\n\n"
 			    "The configuration syntax is documented in the man page.\n";
+
+static void main_loop (struct Lava_data *data)
+{
+	if (data->verbose)
+		fputs("Starting main loop.\n", stderr);
+
+	struct pollfd fds[2];
+
+	/* Wayland fd. */
+	fds[0].events = POLLIN;
+	if ( -1 ==  (fds[0].fd = wl_display_get_fd(data->display)) )
+	{
+		fputs("ERROR: Unable to open Wayland display fd.\n", stderr);
+		goto error;
+	}
+
+	/* Inotify fd to watch config file for modifications. */
+	fds[1].events = POLLIN;
+	if ( -1 ==  (fds[1].fd = inotify_init1(IN_NONBLOCK)) )
+	{
+		fputs("ERROR: Unable to open inotify fd.\n", stderr);
+		perror("inotify_init1");
+		goto error;
+	}
+
+	/* Add config file to inotify watch list. */
+	if ( -1 == inotify_add_watch(fds[1].fd, data->config_path, IN_MODIFY) )
+	{
+		fputs("ERROR: Unable to add config path to inotify watchlist.\n", stderr);
+		goto error;
+	}
+
+	while (data->loop)
+	{
+		errno = 0;
+
+		/* Flush Wayland events. */
+		do {
+			if ( wl_display_flush(data->display) == 1 && errno != EAGAIN )
+			{
+				fprintf(stderr, "ERROR: wl_display_flush: %s\n",
+						strerror(errno));
+				break;
+			}
+		} while ( errno == EAGAIN );
+
+		if ( poll(fds, 2, -1) < 0 )
+		{
+			if ( errno == EINTR )
+				continue;
+			fprintf(stderr, "poll: %s\n", strerror(errno));
+			goto error;
+		}
+
+		/* Wayland events. */
+		if ( fds[0].revents & POLLIN && wl_display_dispatch(data->display) == -1 )
+		{
+			fprintf(stderr, "ERROR: wl_display_flush: %s\n",
+					strerror(errno));
+			goto error;
+		}
+		if ( fds[0].revents & POLLOUT && wl_display_flush(data->display) == -1 )
+		{
+			fprintf(stderr, "ERROR: wl_display_flush: %s\n",
+					strerror(errno));
+			goto error;
+		}
+
+		/* Inotify events. */
+		if ( fds[1].revents & POLLIN )
+		{
+			fputs("Config file modified; Triggering reload.\n", stderr);
+			data->loop = false;
+			data->reload = true;
+			goto exit;
+		}
+	}
+
+error:
+	data->ret = EXIT_FAILURE;
+exit:
+	if ( fds[0].fd != -1 )
+		close(fds[0].fd);
+	if ( fds[1].fd != -1 )
+		close(fds[1].fd);
+}
 
 static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[])
 {
@@ -128,7 +215,7 @@ reload:
 	signal(SIGCHLD, SIG_IGN);
 
 	data.ret = EXIT_SUCCESS;
-	while ( data.loop && wl_display_dispatch(data.display)  != -1 );
+	main_loop(&data);
 
 exit:
 	finish_cursor(&data);

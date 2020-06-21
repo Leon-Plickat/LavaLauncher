@@ -21,10 +21,12 @@
 #define LAVALAUNCHER_ITEM_COMMAND_H
 
 #include<stdbool.h>
+#include"item/item.h"
 
 struct Lava_bar;
 struct Lava_item;
 
-bool item_command (struct Lava_bar *bar, struct Lava_item *item);
+bool item_command (struct Lava_bar *bar, struct Lava_item *item,
+		enum Interaction_type type);
 
 #endif

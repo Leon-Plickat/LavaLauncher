@@ -28,6 +28,7 @@
 #include<wayland-server.h>
 #include<wayland-client.h>
 #include<wayland-client-protocol.h>
+#include<linux/input-event-codes.h>
 
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 #include"xdg-output-unstable-v1-protocol.h"
@@ -115,7 +116,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		if ( seat->pointer.item == NULL )
 			return;
 
-		struct Lava_item *item = item_from_coords( seat->pointer.bar,
+		struct Lava_item *item = item_from_coords(seat->pointer.bar,
 				seat->pointer.x, seat->pointer.y);
 
 		if ( item != seat->pointer.item )
@@ -123,8 +124,39 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 
 		seat->pointer.item = NULL;
 
-		item_interaction(seat->pointer.bar, item);
+		enum Interaction_type type;
+		switch (button)
+		{
+			case BTN_RIGHT:  type = TYPE_RIGHT_CLICK;  break;
+			case BTN_MIDDLE: type = TYPE_MIDDLE_CLICK; break;
+			default:
+			case BTN_LEFT:   type = TYPE_LEFT_CLICK;   break;
+		}
+		item_interaction(seat->pointer.bar, item, type);
 	}
+}
+
+static void pointer_handle_axis (void *raw_data, struct wl_pointer *wl_pointer,
+		uint32_t time, uint32_t axis, wl_fixed_t value)
+{
+	struct Lava_seat *seat = raw_data;
+	if ( seat->pointer.bar == NULL )
+	{
+		fputs("ERROR: Scrolling could not be handled: "
+				"Bar could not be found.\n", stderr);
+		return;
+	}
+
+	/* We only handle up and down scrolling. */
+	if ( axis > 0 )
+		return;
+
+	// TODO: better handle touch pads (and other hi-res scroll devices),
+	//       which send considerably more scroll events than scroll wheels.
+
+	item_interaction(seat->pointer.bar, item_from_coords(seat->pointer.bar,
+				seat->pointer.x, seat->pointer.y),
+			wl_fixed_to_int(value) > 0 ? TYPE_SCROLL_DOWN : TYPE_SCROLL_UP);
 }
 
 /* These are the listeners for pointer events. Only if a mouse button has been
@@ -137,11 +169,15 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
  * pointer_handle_leave() will simply abort the pointer operation.
  */
 const struct wl_pointer_listener pointer_listener = {
-	.enter  = pointer_handle_enter,
-	.leave  = pointer_handle_leave,
-	.motion = pointer_handle_motion,
-	.button = pointer_handle_button,
-	.axis   = noop
+	.axis          = pointer_handle_axis,
+	.axis_stop     = noop,
+	.axis_source   = noop,
+	.axis_discrete = noop,
+	.frame         = noop,
+	.enter         = pointer_handle_enter,
+	.leave         = pointer_handle_leave,
+	.motion        = pointer_handle_motion,
+	.button        = pointer_handle_button,
 };
 
 static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
@@ -173,7 +209,7 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 	 * and the following touch-up event over the same item, so we can
 	 * interact with it.
 	 */
-	item_interaction(seat->touch.bar, seat->touch.item);
+	item_interaction(seat->touch.bar, seat->touch.item, TYPE_TOUCH);
 }
 
 static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,

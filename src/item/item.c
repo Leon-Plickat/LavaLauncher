@@ -42,7 +42,12 @@ static void item_nullify (struct Lava_item *item)
 	item->index                 = 0;
 	item->ordinate              = 0;
 	item->length                = 0;
-	item->cmd                   = 0;
+	item->left_click_command    = NULL;
+	item->middle_click_command  = NULL;
+	item->right_click_command   = NULL;
+	item->scroll_up_command     = NULL;
+	item->scroll_down_command   = NULL;
+	item->touch_command         = NULL;
 	item->background_colour_hex = NULL;
 	item->background_colour[0]  = 0.0;
 	item->background_colour[1]  = 0.0;
@@ -89,12 +94,13 @@ bool item_set_variable (struct Lava_item *item, const char *variable,
 	}
 }
 
-void item_interaction (struct Lava_bar *bar, struct Lava_item *item)
+void item_interaction (struct Lava_bar *bar, struct Lava_item *item,
+		enum Interaction_type type)
 {
 	switch (item->type)
 	{
 		case TYPE_BUTTON:
-			item_command(bar, item);
+			item_command(bar, item, type);
 			break;
 
 		case TYPE_SPACER:
@@ -168,8 +174,18 @@ static void destroy_item (struct Lava_item *item)
 	wl_list_remove(&item->link);
 	if ( item->img != NULL )
 		cairo_surface_destroy(item->img);
-	if ( item->cmd != NULL )
-		free(item->cmd);
+	if ( item->left_click_command != NULL )
+		free(item->left_click_command);
+	if ( item->middle_click_command != NULL )
+		free(item->middle_click_command);
+	if ( item->right_click_command != NULL )
+		free(item->right_click_command);
+	if ( item->scroll_up_command != NULL )
+		free(item->scroll_up_command);
+	if ( item->scroll_down_command != NULL )
+		free(item->scroll_down_command);
+	if ( item->touch_command != NULL )
+		free(item->touch_command);
 	if ( item->background_colour_hex != NULL )
 		free(item->background_colour_hex);
 	free(item);

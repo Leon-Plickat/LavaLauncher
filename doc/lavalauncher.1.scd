@@ -150,22 +150,35 @@ Every "button" context will add a button to a bar. As such, this context is
 a nested inside the "bar" context. The assignments possible in this context are
 as follows.
 
+*background-colour*
+	The background colour of the individual button. This overrides the
+	background colour of the bar.
+
 *command*
-	The shell command executed when the user clicks on the button. The
-	command is executed using sh(1). If the given command is "exit",
-	LavaLauncher will exit. LavaLauncher replaces certain tokens in the
-	command string with values when the command is executed. These tokens
-	are "%index%", "%buttons%", "%icon-size%",
-	"%border-{top,right,bottom,left}%", "%margin-{top,right,bottom,left}%",
-	"%colour%", "%border-colour%", "%output%" and "%scale%".
+	Sets the shell command for left-, right-, middle-click and touch
+	interactions.
 
 *image-path*
 	The path to a PNG image file, which will be used as the icon of the
 	button. It is recommended to use square images.
 
-*background-colour*
-	The background colour of the individual button. This overrides the
-	background colour of the bar.
+*left-click-command*
+	The shell command executed when the user left-clicks on the button.
+
+*right-click-command*
+	The shell command executed when the user right-clicks on the button.
+
+*middle-click-command*
+	The shell command executed when the user middle-clicks on the button.
+
+*scroll-down-command*
+	The shell command executed when the user scrolls down on the button.
+
+*scroll-up-command*
+	The shell command executed when the user scrolls up on the button.
+
+*touch-command*
+	The shell command executed when the user touches the button.
 
 ## SPACER
 Every "spacer" context will add a spacer to a bar. As such, this context is
@@ -174,6 +187,15 @@ as follows.
 
 *length*
 	Length of the spacer.
+
+## COMMANDS
+Commands are executed using sh(1). If the command is "exit", LavaLauncher will
+exit, if it is "reload", LavaLauncher will reload. LavaLauncher replaces certain
+tokens in the command string with values when the command is executed. These
+tokens are "%index%", "%buttons%", "%icon-size%",
+"%border-{top,right,bottom,left}%", "%margin-{top,right,bottom,left}%",
+"%colour%", "%border-colour%", "%output%" and "%scale%".
+
 
 ## COLOURS
 LavaLauncher excepts colours in the formats "#RRGGBBAA" or "#RRGGBB". Therefore,

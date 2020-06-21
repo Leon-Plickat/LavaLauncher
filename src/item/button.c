@@ -31,15 +31,38 @@
 #include"item/item.h"
 #include"config/colour.h"
 
-static bool button_set_command (struct Lava_item *button, const char *command)
+static bool button_set_command (struct Lava_item *button,
+		const char *command, enum Interaction_type type)
 {
-	if ( button->cmd != NULL )
-		free(button->cmd);
-	button->cmd = strdup(command);
+	char **ptr;
+	switch (type)
+	{
+		case TYPE_LEFT_CLICK:   ptr = &button->left_click_command;   break;
+		case TYPE_MIDDLE_CLICK: ptr = &button->middle_click_command; break;
+		case TYPE_RIGHT_CLICK:  ptr = &button->right_click_command;  break;
+		case TYPE_SCROLL_UP:    ptr = &button->scroll_up_command;    break;
+		case TYPE_SCROLL_DOWN:  ptr = &button->scroll_down_command;  break;
+		case TYPE_TOUCH:        ptr = &button->touch_command;        break;
+	}
+
+	if ( *ptr != NULL )
+		free(*ptr);
+	*ptr = strdup(command);
 	return true;
 }
 
-static bool button_set_image_path (struct Lava_item *button, const char *path)
+static bool button_set_all_commands (struct Lava_item *button,
+		const char *command, enum Interaction_type type)
+{
+	button_set_command(button, command, TYPE_LEFT_CLICK);
+	button_set_command(button, command, TYPE_MIDDLE_CLICK);
+	button_set_command(button, command, TYPE_RIGHT_CLICK);
+	button_set_command(button, command, TYPE_TOUCH);
+	return true;
+}
+
+static bool button_set_image_path (struct Lava_item *button, const char *path,
+		enum Interaction_type type)
 {
 	if ( button->img != NULL )
 		cairo_surface_destroy(button->img);
@@ -55,7 +78,8 @@ static bool button_set_image_path (struct Lava_item *button, const char *path)
 	return true;
 }
 
-static bool button_set_background_colour (struct Lava_item *button, const char *arg)
+static bool button_set_background_colour (struct Lava_item *button, const char *arg,
+		enum Interaction_type type)
 {
 	if (! hex_to_rgba(arg, &(button->background_colour[0]),
 				&(button->background_colour[1]),
@@ -71,11 +95,18 @@ static bool button_set_background_colour (struct Lava_item *button, const char *
 struct
 {
 	const char *variable;
-	bool (*set)(struct Lava_item*, const char*);
+	bool (*set)(struct Lava_item*, const char*, enum Interaction_type);
+	enum Interaction_type type;
 } button_configs[] = {
-	{ .variable = "command",           .set = button_set_command           },
-	{ .variable = "image-path",        .set = button_set_image_path        },
-	{ .variable = "background-colour", .set = button_set_background_colour }
+	{ .variable = "command",              .set = button_set_all_commands,      .type = 0                 },
+	{ .variable = "left-click-command",   .set = button_set_command,           .type = TYPE_LEFT_CLICK   },
+	{ .variable = "middle-click-command", .set = button_set_command,           .type = TYPE_MIDDLE_CLICK },
+	{ .variable = "right-click-command",  .set = button_set_command,           .type = TYPE_RIGHT_CLICK  },
+	{ .variable = "scroll-up-command",    .set = button_set_command,           .type = TYPE_SCROLL_UP    },
+	{ .variable = "scroll-down-command",  .set = button_set_command,           .type = TYPE_SCROLL_DOWN  },
+	{ .variable = "touch-command",        .set = button_set_command,           .type = TYPE_TOUCH        },
+	{ .variable = "image-path",           .set = button_set_image_path,        .type = 0                 },
+	{ .variable = "background-colour",    .set = button_set_background_colour, .type = 0                 }
 };
 
 bool button_set_variable (struct Lava_item *button, const char *variable,
@@ -83,7 +114,7 @@ bool button_set_variable (struct Lava_item *button, const char *variable,
 {
 	for (size_t i = 0; i < (sizeof(button_configs) / sizeof(button_configs[0])); i++)
 		if (! strcmp(button_configs[i].variable, variable))
-			return button_configs[i].set(button, value);
+			return button_configs[i].set(button, value, button_configs[i].type);
 	fprintf(stderr, "ERROR: Unrecognized button setting \"%s\": "
 			"line=%d\n", variable, line);
 	return false;

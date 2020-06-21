@@ -34,22 +34,39 @@ enum Item_type
 	TYPE_SPACER
 };
 
+enum Interaction_type
+{
+	TYPE_RIGHT_CLICK,
+	TYPE_MIDDLE_CLICK,
+	TYPE_LEFT_CLICK,
+	TYPE_SCROLL_UP,
+	TYPE_SCROLL_DOWN,
+	TYPE_TOUCH
+};
+
 struct Lava_item
 {
 	struct wl_list   link;
 	enum Item_type   type;
 
-	char            *cmd;
 	cairo_surface_t *img;
 	unsigned int     index, ordinate, length;
 	float            background_colour[4];
 	char            *background_colour_hex;
+
+	char *left_click_command;
+	char *middle_click_command;
+	char *right_click_command;
+	char *scroll_up_command;
+	char *scroll_down_command;
+	char *touch_command;
 };
 
 bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type);
 bool item_set_variable (struct Lava_item *item, const char *variable,
 		const char *value, int line);
-void item_interaction (struct Lava_bar *bar, struct Lava_item *item);
+void item_interaction (struct Lava_bar *bar, struct Lava_item *item,
+		enum Interaction_type type);
 struct Lava_item *item_from_coords (struct Lava_bar *bar, int32_t x, int32_t y);
 unsigned int get_item_length_sum (struct Lava_bar_pattern *pattern);
 bool finalize_items (struct Lava_bar_pattern *pattern);

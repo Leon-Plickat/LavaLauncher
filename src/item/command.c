@@ -94,7 +94,7 @@ static void handle_tokens (struct Lava_bar *bar, struct Lava_item *item, char *b
 				tokens[i].replacement_int, STRING_BUFFER_SIZE);
 }
 
-static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item)
+static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item, const char *cmd)
 {
 	errno   = 0;
 	int ret = fork();
@@ -108,12 +108,12 @@ static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item)
 		}
 
 		char buffer[STRING_BUFFER_SIZE+1];
-		strncpy(buffer, item->cmd, STRING_BUFFER_SIZE);
+		strncpy(buffer, cmd, STRING_BUFFER_SIZE);
 		handle_tokens(bar, item, buffer);
 
 		if (bar->data->verbose)
 			fprintf(stderr, "Executing: cmd='%s' raw='%s'\n",
-					buffer, item->cmd);
+					buffer, cmd);
 
 		/* execl() only returns on error. */
 		errno = 0;
@@ -125,21 +125,40 @@ static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item)
 		fprintf(stderr, "ERROR: fork: %s\n", strerror(errno));
 }
 
+static char **command_pointer_by_type(struct Lava_item *item,
+		enum Interaction_type type)
+{
+	switch (type)
+	{
+		case TYPE_LEFT_CLICK:   return &item->left_click_command;
+		case TYPE_MIDDLE_CLICK: return &item->middle_click_command;
+		case TYPE_RIGHT_CLICK:  return &item->right_click_command;
+		case TYPE_SCROLL_UP:    return &item->scroll_up_command;
+		case TYPE_SCROLL_DOWN:  return &item->scroll_down_command;
+		case TYPE_TOUCH:        return &item->touch_command;
+	}
+
+	return NULL;
+}
+
 /* Helper function that catches any special cases before executing the item
  * command.
  */
-bool item_command (struct Lava_bar *bar, struct Lava_item *item)
+bool item_command (struct Lava_bar *bar, struct Lava_item *item,
+		enum Interaction_type type)
 {
-	if ( item->cmd == NULL )
+	char **cmd = command_pointer_by_type(item, type);
+
+	if ( cmd == NULL || *cmd == NULL )
 		return false;
 
-	if (! strcmp(item->cmd, "exit"))
+	if (! strcmp(*cmd, "exit"))
 	{
 		if (bar->pattern->data->verbose)
 			fputs("Exiting due to button command \"exit\".\n", stderr);
 		bar->data->loop = false;
 	}
-	else if (! strcmp(item->cmd, "reload"))
+	else if (! strcmp(*cmd, "reload"))
 	{
 		if (bar->pattern->data->verbose)
 			fputs("Reloding due to button command \"reload\".\n", stderr);
@@ -147,7 +166,7 @@ bool item_command (struct Lava_bar *bar, struct Lava_item *item)
 		bar->data->reload = true;
 	}
 	else
-		exec_cmd(bar, item);
+		exec_cmd(bar, item, *cmd);
 
 	return true;
 }

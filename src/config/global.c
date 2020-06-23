@@ -25,14 +25,13 @@
 #include<string.h>
 
 #include"lavalauncher.h"
-#include"cursor.h"
 #include"config/parse-boolean.h"
 
 static bool global_set_cursor_name (struct Lava_data *data, const char *arg)
 {
-	if ( data->cursor.name != NULL )
-		free(data->cursor.name);
-	data->cursor.name = strdup(arg);
+	if ( data->cursor_name != NULL )
+		free(data->cursor_name);
+	data->cursor_name = strdup(arg);
 	return true;
 }
 

@@ -37,6 +37,12 @@ struct Lava_seat
 		int32_t            y;
 		struct Lava_bar   *bar;
 		struct Lava_item  *item;
+
+		/* Stuff needed to change the cursor image. */
+		struct wl_surface      *cursor_surface;
+		struct wl_cursor_theme *cursor_theme;
+		struct wl_cursor_image *cursor_image;
+		struct wl_cursor       *cursor;
 	} pointer;
 
 	struct

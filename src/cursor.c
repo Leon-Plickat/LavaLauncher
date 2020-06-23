@@ -30,90 +30,69 @@
 #include<wayland-cursor.h>
 
 #include"lavalauncher.h"
+#include"output.h"
 #include"cursor.h"
+#include"seat.h"
+#include"bar/bar.h"
 
-bool init_cursor (struct Lava_data *data)
+void cleanup_cursor (struct Lava_seat *seat)
 {
-	if (data->verbose)
-		fputs("Init cursor.\n", stderr);
+	 /* image just points back to theme. */
+	if ( seat->pointer.cursor_theme != NULL )
+		wl_cursor_theme_destroy(seat->pointer.cursor_theme );
+	if ( seat->pointer.cursor_surface != NULL )
+		wl_surface_destroy(seat->pointer.cursor_surface );
+}
 
-	struct Lava_cursor *cursor = &data->cursor;
-	cursor->theme   = NULL;
-	cursor->image   = NULL;
-	cursor->surface = NULL;
+void attach_cursor (struct Lava_seat *seat, uint32_t serial)
+{
+	struct Lava_data       *data           = seat->data;
+	struct wl_pointer      *pointer        = seat->pointer.wl_pointer;
+	struct wl_surface      *cursor_surface = seat->pointer.cursor_surface;
+	struct wl_cursor_theme *theme          = seat->pointer.cursor_theme;
+	struct wl_cursor_image *image          = seat->pointer.cursor_image;
+	struct wl_cursor       *cursor         = seat->pointer.cursor;
 
-	if ( NULL == (cursor->theme = wl_cursor_theme_load(NULL, 16, data->shm)) )
+	unsigned int scale       = seat->pointer.bar->output->scale;
+	unsigned int cursor_size = 24; // TODO ?
+
+	/* Cleanup any leftover cursor stuff. */
+	cleanup_cursor(seat);
+
+	if ( NULL == (theme = wl_cursor_theme_load(NULL, cursor_size * scale, data->shm)) )
 	{
 		fputs("ERROR: Could not load cursor theme.\n", stderr);
-		goto error;
+		return;
 	}
 
-	struct wl_cursor *wl_cursor = wl_cursor_theme_get_cursor(cursor->theme,
-			cursor->name);
-	if ( wl_cursor == NULL )
+	if ( NULL == (cursor = wl_cursor_theme_get_cursor(theme, data->cursor_name)) )
 	{
 		fprintf(stderr, "WARNING: Could not get cursor \"%s\".\n"
 				"         This cursor is likely missing from your cursor theme.\n",
-				cursor->name);
-		goto error;
+				data->cursor_name);
+		return;
 	}
 
-	cursor->image = wl_cursor->images[0];
-	assert(cursor->image);
+	image = cursor->images[0];
+	assert(image);
 
-	if ( NULL == (cursor->surface = wl_compositor_create_surface(data->compositor)) )
+	if ( NULL == (cursor_surface = wl_compositor_create_surface(data->compositor)) )
 	{
 		fputs("ERROR: Could not create cursor surface.\n", stderr);
-		goto error;
-	}
-
-	return true;
-
-error:
-	finish_cursor(data);
-	return false;
-}
-
-void finish_cursor (struct Lava_data *data)
-{
-	if (data->verbose)
-		fputs("Finish cursor.\n", stderr);
-
-	struct Lava_cursor *cursor = &data->cursor;
-
-	/* cursor.image just points back to cursor.theme. */
-	if ( cursor->theme != NULL )
-	{
-		wl_cursor_theme_destroy(cursor->theme);
-		cursor->theme = NULL;
-	}
-	if ( cursor->surface != NULL )
-	{
-		wl_surface_destroy(cursor->surface);
-		cursor->surface = NULL;
-	}
-}
-
-void attach_cursor (struct Lava_data *data, struct wl_pointer *wl_pointer,
-		uint32_t serial)
-{
-	struct Lava_cursor *cursor = &data->cursor;
-
-	if ( cursor->surface == NULL )
 		return;
+	}
 
-	if (data->verbose)
-		fputs("Attaching cursor surface.\n", stderr);
+	/* The entire dance of getting cursor image and surface and damaging the
+	 * latter is indeed necessary everytime a seats pointer enters the
+	 * surface and we want to change its cursor image, because we need to
+	 * apply the scale of the current output to the cursor.
+	 */
 
-	// TODO: Find out whether the surface damaging / commiting could be done
-	//       once globally instead of on each indivual enter event.
-	wl_surface_attach(cursor->surface,
-			wl_cursor_image_get_buffer(cursor->image), 0, 0);
-	wl_surface_damage(cursor->surface, 1, 0,
-			cursor->image->width, cursor->image->height);
-	wl_surface_commit(cursor->surface);
-	wl_pointer_set_cursor(wl_pointer, serial, cursor->surface,
-			cursor->image->hotspot_x,
-			cursor->image->hotspot_y);
+	wl_surface_set_buffer_scale(cursor_surface, scale);
+	wl_surface_attach(cursor_surface, wl_cursor_image_get_buffer(image), 0, 0);
+	wl_surface_damage_buffer(cursor_surface, 0, 0, INT32_MAX, INT32_MAX);
+	wl_surface_commit(cursor_surface);
+
+	wl_pointer_set_cursor(pointer, serial, cursor_surface,
+			image->hotspot_x / scale, image->hotspot_y / scale);
 }
-

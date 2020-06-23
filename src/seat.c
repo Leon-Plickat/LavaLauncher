@@ -35,6 +35,7 @@
 
 #include"lavalauncher.h"
 #include"seat.h"
+#include"cursor.h"
 #include"input.h"
 
 /* No-Op function. */
@@ -108,6 +109,7 @@ static void destroy_seat (struct Lava_seat *seat)
 	wl_seat_release(seat->wl_seat);
 	if (seat->pointer.wl_pointer)
 		wl_pointer_release(seat->pointer.wl_pointer);
+	cleanup_cursor(seat);
 	free(seat);
 }
 

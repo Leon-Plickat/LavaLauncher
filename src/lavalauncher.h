@@ -23,7 +23,6 @@
 #include<stdbool.h>
 #include<stdint.h>
 #include<wayland-server.h>
-#include"cursor.h"
 
 struct Lava_item;
 struct Lava_bar_pattern;
@@ -46,7 +45,6 @@ struct Lava_data
 
 	struct Lava_bar_pattern *last_pattern;
 
-	struct Lava_cursor cursor;
 	char *cursor_name;
 
 	bool loop;

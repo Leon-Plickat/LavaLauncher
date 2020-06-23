@@ -20,24 +20,12 @@
 #ifndef LAVALAUNCHER_CURSOR_H
 #define LAVALAUNCHER_CURSOR_H
 
-#include<stdbool.h>
 #include<stdint.h>
-#include<wayland-client.h>
 
-struct Lava_data;
+struct Lava_seat;
 
-struct Lava_cursor
-{
-	char                   *name;
-	struct wl_cursor_theme *theme;
-	struct wl_cursor_image *image;
-	struct wl_surface      *surface;
-};
-
-bool init_cursor (struct Lava_data *data);
-void finish_cursor (struct Lava_data *data);
-void attach_cursor (struct Lava_data *data, struct wl_pointer *wl_pointer,
-		uint32_t serial);
+void cleanup_cursor (struct Lava_seat *seat);
+void attach_cursor (struct Lava_seat *seat, uint32_t serial);
 
 #endif
 

@@ -197,9 +197,7 @@ static void init_data (struct Lava_data *data)
 	data->layer_shell        = NULL;
 	data->xdg_output_manager = NULL;
 
-	data->cursor.name    = strdup("pointer");
-	data->cursor.theme   = NULL;
-	data->cursor.surface = NULL;
+	data->cursor_name    = strdup("pointer");
 
 	wl_list_init(&data->patterns);
 	wl_list_init(&data->outputs);
@@ -218,9 +216,6 @@ reload:
 		goto early_exit;
 	if (! init_wayland(&data))
 		goto exit;
-	if (! init_cursor(&data))
-		fputs("WARNING: Changing the cursor is disabled due to an error.\n",
-				stderr);
 
 	/* Prevent zombies. */
 	signal(SIGCHLD, SIG_IGN);
@@ -229,7 +224,6 @@ reload:
 	main_loop(&data);
 
 exit:
-	finish_cursor(&data);
 	finish_wayland(&data);
 early_exit:
 	destroy_all_bar_patterns(&data);

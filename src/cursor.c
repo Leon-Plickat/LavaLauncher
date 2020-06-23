@@ -34,6 +34,7 @@
 #include"cursor.h"
 #include"seat.h"
 #include"bar/bar.h"
+#include"bar/bar-pattern.h"
 
 void cleanup_cursor (struct Lava_seat *seat)
 {
@@ -52,6 +53,7 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 	struct wl_cursor_theme *theme          = seat->pointer.cursor_theme;
 	struct wl_cursor_image *image          = seat->pointer.cursor_image;
 	struct wl_cursor       *cursor         = seat->pointer.cursor;
+	char                   *cursor_name    = seat->pointer.bar->pattern->cursor_name;
 
 	unsigned int scale       = seat->pointer.bar->output->scale;
 	unsigned int cursor_size = 24; // TODO ?
@@ -65,11 +67,11 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 		return;
 	}
 
-	if ( NULL == (cursor = wl_cursor_theme_get_cursor(theme, data->cursor_name)) )
+	if ( NULL == (cursor = wl_cursor_theme_get_cursor(theme, cursor_name)) )
 	{
 		fprintf(stderr, "WARNING: Could not get cursor \"%s\".\n"
 				"         This cursor is likely missing from your cursor theme.\n",
-				data->cursor_name);
+				cursor_name);
 		return;
 	}
 

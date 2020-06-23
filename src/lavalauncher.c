@@ -40,7 +40,6 @@
 #include"registry.h"
 #include"config/parser.h"
 #include"bar/bar-pattern.h"
-#include"cursor.h"
 
 static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
                             "Usage: lavalauncher [options...]\n"
@@ -196,8 +195,6 @@ static void init_data (struct Lava_data *data)
 	data->shm                = NULL;
 	data->layer_shell        = NULL;
 	data->xdg_output_manager = NULL;
-
-	data->cursor_name    = strdup("pointer");
 
 	wl_list_init(&data->patterns);
 	wl_list_init(&data->outputs);

@@ -45,8 +45,6 @@ struct Lava_data
 
 	struct Lava_bar_pattern *last_pattern;
 
-	char *cursor_name;
-
 	bool loop;
 	bool watch;
 	bool reload;

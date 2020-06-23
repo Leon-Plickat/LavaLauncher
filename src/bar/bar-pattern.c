@@ -76,6 +76,8 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 
 	pattern->effect            = EFFECT_NONE;
 	pattern->effect_padding    = 5;
+
+	pattern->cursor_name       = strdup("pointer");
 }
 
 /* Calculate the dimensions of the visible part of the bar. */
@@ -150,6 +152,8 @@ static void destroy_bar_pattern (struct Lava_bar_pattern *pattern)
 		free(pattern->border_colour_hex);
 	if ( pattern->effect_colour_hex != NULL )
 		free(pattern->effect_colour_hex);
+	if ( pattern->cursor_name != NULL )
+		free(pattern->cursor_name);
 	free(pattern);
 }
 
@@ -404,6 +408,15 @@ static bool bar_pattern_set_effect_padding (struct Lava_bar_pattern *pattern,
 	return true;
 }
 
+static bool bar_pattern_set_cursor_name (struct Lava_bar_pattern *pattern,
+		const char *arg, const char direction)
+{
+	if ( pattern->cursor_name != NULL )
+		free(pattern->cursor_name);
+	pattern->cursor_name = strdup(arg);
+	return true;
+}
+
 struct
 {
 	const char *variable, direction;
@@ -429,7 +442,8 @@ struct
 	{ .variable = "border-colour",     .set = bar_pattern_set_border_colour,  .direction = '0'},
 	{ .variable = "effect-colour",     .set = bar_pattern_set_effect_colour,  .direction = '0'},
 	{ .variable = "effect",            .set = bar_pattern_set_effect,         .direction = '0'},
-	{ .variable = "effect-padding",    .set = bar_pattern_set_effect_padding, .direction = '0'}
+	{ .variable = "effect-padding",    .set = bar_pattern_set_effect_padding, .direction = '0'},
+	{ .variable = "cursor-name",       .set = bar_pattern_set_cursor_name,    .direction = '0'}
 };
 
 bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,

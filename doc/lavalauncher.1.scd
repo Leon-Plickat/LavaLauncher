@@ -56,12 +56,6 @@ Comments start with an octothorpe ('#'). Any string can be quoted.
 Global settings can be configured int the "global-settings" context. The
 assignments which can be made in this context are as follows.
 
-*cursor-name*
-	Name of the cursor displayed when hovering the pointer over a bar. The
-	default cursor is "pointer". Behold: What cursors are available depends
-	on the cursor theme. If the cursor of the given name can not be loaded,
-	LavaLauncher will display a warning and disable changing the cursor.
-
 *watch-config-file*
 	Automatically reload when a change in the configuration file is detected.
 	Can be "true" or "false". The default is "false". Behold: If the
@@ -83,6 +77,11 @@ as follows.
 
 *border-{top, right, bottom, left}*
 	The individual border sizes.
+
+*cursor-name*
+	Name of the cursor displayed when hovering the pointer over the bar. The
+	default cursor is "pointer". Behold: What cursors are available depends
+	on your cursor theme.
 
 *effect*
 	Drawing effect applied to the buttons. Can be "none", "box", "phone"
@@ -210,7 +209,7 @@ settings.
 ```
 global-settings
 {
-	cursor-name pointer;
+	watch-config-file true;
 }
 
 bar # this is the first bar

@@ -119,6 +119,9 @@ struct Lava_bar_pattern
 	/* Draw effect applied to item. */
 	enum Draw_effect effect;
 	int effect_padding;
+
+	/* Name of cursor which should be attached to pointer on hover. */
+	char *cursor_name;
 };
 
 bool create_bar_pattern (struct Lava_data *data);

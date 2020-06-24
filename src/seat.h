@@ -20,6 +20,9 @@
 #ifndef LAVALAUNCHER_SEAT_H
 #define LAVALAUNCHER_SEAT_H
 
+#include<stdbool.h>
+#include<stdint.h>
+
 struct Lava_data;
 struct Lava_bar;
 
@@ -33,10 +36,15 @@ struct Lava_seat
 	struct
 	{
 		struct wl_pointer *wl_pointer;
-		int32_t            x;
-		int32_t            y;
-		struct Lava_bar   *bar;
-		struct Lava_item  *item;
+
+		/* Current position. */
+		int32_t           x, y;
+		struct Lava_bar  *bar;
+		struct Lava_item *item;
+
+		/* Stuff needed to gracefully handle scroll events. */
+		uint32_t   discrete_steps, last_update_time;
+		wl_fixed_t value;
 
 		/* Stuff needed to change the cursor image. */
 		struct wl_surface      *cursor_surface;

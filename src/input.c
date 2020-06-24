@@ -41,6 +41,9 @@
 #include"item/item.h"
 #include"bar/bar.h"
 
+const int      continuous_scroll_threshhold = 10000;
+const uint32_t continuous_scroll_timeout    = 1000;
+
 /* No-Op function. */
 static void noop () {}
 
@@ -139,6 +142,10 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 static void pointer_handle_axis (void *raw_data, struct wl_pointer *wl_pointer,
 		uint32_t time, uint32_t axis, wl_fixed_t value)
 {
+	/* We only handle up and down scrolling. */
+	if ( axis != WL_POINTER_AXIS_VERTICAL_SCROLL )
+		return;
+
 	struct Lava_seat *seat = raw_data;
 	if ( seat->pointer.bar == NULL )
 	{
@@ -147,19 +154,66 @@ static void pointer_handle_axis (void *raw_data, struct wl_pointer *wl_pointer,
 		return;
 	}
 
-	/* We only handle up and down scrolling. */
-	if ( axis > 0 )
-		return;
+	if ( seat->pointer.discrete_steps == 0
+			&& time - seat->pointer.last_update_time > continuous_scroll_timeout )
+		seat->pointer.value = 0;
 
-	// TODO: better handle touch pads (and other hi-res scroll devices),
-	//       which send considerably more scroll events than scroll wheels.
-
-	item_interaction(seat->pointer.bar, item_from_coords(seat->pointer.bar,
-				seat->pointer.x, seat->pointer.y),
-			wl_fixed_to_int(value) > 0 ? TYPE_SCROLL_DOWN : TYPE_SCROLL_UP);
+	seat->pointer.value            += value;
+	seat->pointer.last_update_time  = time;
 }
 
-/* These are the listeners for pointer events. Only if a mouse button has been
+static void pointer_handle_axis_discrete (void *raw_data,
+		struct wl_pointer *wl_pointer, uint32_t axis, int32_t steps)
+{
+	/* We only handle up and down scrolling. */
+	if ( axis != WL_POINTER_AXIS_VERTICAL_SCROLL )
+		return;
+
+	struct Lava_seat *seat = raw_data;
+	if ( seat->pointer.bar == NULL )
+	{
+		fputs("ERROR: Discrete scrolling could not be handled: "
+				"Bar could not be found.\n", stderr);
+		return;
+	}
+
+	seat->pointer.discrete_steps += abs(steps);
+}
+
+static void pointer_handle_frame (void *raw_data, struct wl_pointer *wl_pointer)
+{
+	struct Lava_seat *seat = raw_data;
+	if ( seat->pointer.bar == NULL )
+		return;
+
+
+	int value_change;
+	enum Interaction_type type;
+	if ( wl_fixed_to_int(seat->pointer.value) > 0 )
+		type = TYPE_SCROLL_DOWN, value_change = -continuous_scroll_threshhold;
+	else
+		type = TYPE_SCROLL_UP, value_change = continuous_scroll_threshhold;
+
+	struct Lava_item *item = item_from_coords(seat->pointer.bar,
+			seat->pointer.x, seat->pointer.y);
+
+	if (seat->pointer.discrete_steps)
+	{
+		for (uint32_t i = 0; i < seat->pointer.discrete_steps; i++)
+			item_interaction(seat->pointer.bar, item, type);
+
+		seat->pointer.discrete_steps = 0;
+		seat->pointer.value          = 0;
+	}
+	else while ( abs(seat->pointer.value) > continuous_scroll_threshhold )
+	{
+		item_interaction(seat->pointer.bar, item, type);
+		seat->pointer.value += value_change;
+	}
+}
+
+/*
+ * These are the listeners for pointer events. Only if a mouse button has been
  * pressed and released over the same bar item do we want that to interact with
  * the item. To achieve this, pointer_handle_enter() and pointer_handle_motion()
  * will update the cursor coordinates stored in the seat.
@@ -167,17 +221,28 @@ static void pointer_handle_axis (void *raw_data, struct wl_pointer *wl_pointer,
  * in the seat. On release it will check whether the item under the pointer is
  * the one stored in the seat and interact with the item if this is the case.
  * pointer_handle_leave() will simply abort the pointer operation.
+ *
+ * All axis events (meaning scrolling actions) are handled in the frame event.
+ * This is done, because pointing device like mice send a "click" (discrete axis
+ * event) as well as a scroll value, while other devices like touchpads only
+ * send a scroll value. For the second type of device, the value must be
+ * converted into virtual "clicks". Because these devices scroll very fast, the
+ * virtual "clicks" have a higher associated scroll value then physical
+ * "clicks". Physical "clicks" must also be handled here to reset the scroll
+ * value to avoid handling scrolling twice (Remember: Wayland makes no
+ * guarantees regarding the order in which axis and axis_discrete events are
+ * received).
  */
 const struct wl_pointer_listener pointer_listener = {
-	.axis          = pointer_handle_axis,
-	.axis_stop     = noop,
-	.axis_source   = noop,
-	.axis_discrete = noop,
-	.frame         = noop,
 	.enter         = pointer_handle_enter,
 	.leave         = pointer_handle_leave,
 	.motion        = pointer_handle_motion,
 	.button        = pointer_handle_button,
+	.axis          = pointer_handle_axis,
+	.frame         = pointer_handle_frame,
+	.axis_source   = noop,
+	.axis_stop     = noop,
+	.axis_discrete = pointer_handle_axis_discrete
 };
 
 static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,

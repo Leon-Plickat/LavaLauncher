@@ -87,7 +87,7 @@ bool create_seat (struct Lava_data *data, struct wl_registry *registry,
 		fputs("Adding seat.\n", stderr);
 
 	struct wl_seat *wl_seat = wl_registry_bind(registry, name,
-			&wl_seat_interface, 3);
+			&wl_seat_interface, 5);
 	struct Lava_seat *seat = calloc(1, sizeof(struct Lava_seat));
 	if ( seat == NULL )
 	{

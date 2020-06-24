@@ -209,6 +209,8 @@ reload:
 
 	if (! handle_command_flags(&data, argc, argv))
 		return data.ret;
+	if (data.verbose)
+		fputs("LavaLauncher " VERSION"\n", stderr);
 	if (! parse_config_file(&data))
 		goto early_exit;
 	if (! init_wayland(&data))

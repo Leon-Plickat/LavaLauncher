@@ -159,21 +159,31 @@ static void update_offset (struct Lava_bar *bar)
 	}
 
 	/* Set margin.
+	 *
+	 * For MODE_DEFAULT and MODE_FULL:
 	 * Since we create a surface spanning the entire length of an outputs
 	 * edge, margins parallel to it would move it outside the boundaries of
 	 * the output, which may or may not cause issues in some compositors.
 	 * To work around this, we simply cheat a bit: Margins parallel to the
 	 * bar will be simulated in the draw code by adjusting the bar offsets.
 	 *
-	 * See: configure_layer_surface()
-	 *
 	 * Here we set the margins parallel to the edges length, which are
-	 * "fake", by adjusting the offset of the bar.
+	 * "fake", by adjusting the offset of the bar. See
+	 * configure_layer_surface() in bar/layersurface.c for the orthogonal
+	 * margins.
+	 *
+	 * For MODE_SIMPLE:
+	 * In this mode the surface is just large enough to display the bar.
+	 * This means it can just use normal layer surface margins for all four
+	 * sides, so we do not have to do anything here.
 	 */
-	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-		bar->x_offset += pattern->margin_left - pattern->margin_right;
-	else
-		bar->y_offset += pattern->margin_top - pattern->margin_bottom;
+	if ( pattern->mode != MODE_SIMPLE )
+	{
+		if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+			bar->x_offset += pattern->margin_left - pattern->margin_right;
+		else
+			bar->y_offset += pattern->margin_top - pattern->margin_bottom;
+	}
 
 	if (data->verbose)
 		fprintf(stderr, "Aligning bar: global_name=%d x-offset=%d y-offset=%d\n",

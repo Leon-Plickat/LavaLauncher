@@ -42,42 +42,60 @@
 uint32_t get_anchor (struct Lava_bar_pattern *pattern)
 {
 	struct {
-		uint32_t singular_anchor;
 		uint32_t anchor_triplet;
+		uint32_t mode_simple_center_align;
+		uint32_t mode_simple_start_align;
+		uint32_t mode_simple_end_align;
 	} edges[4] = {
 		[POSITION_TOP] = {
-			.singular_anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
 			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
+			.mode_simple_center_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+			.mode_simple_start_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
+			.mode_simple_end_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
 				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 		},
 		[POSITION_RIGHT] = {
-			.singular_anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
 			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+			.mode_simple_center_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
+			.mode_simple_start_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+			.mode_simple_end_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 		},
 		[POSITION_BOTTOM] = {
-			.singular_anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
 			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
+			.mode_simple_center_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+			.mode_simple_start_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
+			.mode_simple_end_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 		},
 		[POSITION_LEFT] = {
-			.singular_anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
 			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+			.mode_simple_center_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
+			.mode_simple_start_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+			.mode_simple_end_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
 				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 		},
 	};
 
-	/* MODE_SIMPLE is only anchored to a single edge; All other modes are
-	 * anchored to three edges.
-	 */
-	if ( pattern->mode == MODE_SIMPLE )
-		return edges[pattern->position].singular_anchor;
-	else
-		return edges[pattern->position].anchor_triplet;
+	if ( pattern->mode == MODE_SIMPLE ) switch (pattern->alignment)
+	{
+		case ALIGNMENT_CENTER: return edges[pattern->position].mode_simple_center_align;
+		case ALIGNMENT_START:  return edges[pattern->position].mode_simple_start_align;
+		case ALIGNMENT_END:    return edges[pattern->position].mode_simple_end_align;
+	}
+	return edges[pattern->position].anchor_triplet;
 }
 
 void configure_layer_surface (struct Lava_bar *bar)
@@ -118,18 +136,28 @@ void configure_layer_surface (struct Lava_bar *bar)
 	zwlr_layer_surface_v1_set_anchor(bar->layer_surface, get_anchor(pattern));
 
 	/* Set margin.
-	* Since we create a surface spanning the entire length of an outputs
-	* edge, margins parallel to it would move it outside the boundaries of
-	* the output, which may or may not cause issues in some compositors.
-	* To work around this, we simply cheat a bit: Margins parallel to the
-	* bar will be simulated in the draw code by adjusting the bar offsets.
-	*
-	* See: bar_update_offset()
-	*
-	* Here we set the margins not parallel to the edges length, which are
-	* real layer shell margins.
-	*/
-	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+	 *
+	 * For MODE_DEFAULT and MODE_FULL:
+	 * Since we create a surface spanning the entire length of an outputs
+	 * edge, margins parallel to it would move it outside the boundaries of
+	 * the output, which may or may not cause issues in some compositors.
+	 * To work around this, we simply cheat a bit: Margins parallel to the
+	 * bar will be simulated in the draw code by adjusting the bar offsets.
+	 *
+	 * Here we set the margins orthogonal to the edges length, which are
+	 * real layer shell margins. See update_offset() in bar/bar.c for the
+	 * "fake" parallel margins
+	 *
+	 * For MODE_SIMPLE:
+	 * In this mode the surface is just large enough to display the bar.
+	 * This means it can just use normal layer surface margins for all four
+	 * sides.
+	 */
+	if ( pattern->mode == MODE_SIMPLE )
+		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
+				pattern->margin_top, pattern->margin_right,
+				pattern->margin_bottom, pattern->margin_left);
+	else if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
 				pattern->margin_top, 0,
 				pattern->margin_bottom, 0);

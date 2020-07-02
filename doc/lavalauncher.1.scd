@@ -67,7 +67,7 @@ as follows.
 
 *alignment*
 	Alignment of the buttons / bar. Can be "start", "center" or "end". The
-	default is "center". This option has no effect in "simple" mode.
+	default is "center".
 
 *background-colour*
 	The background colour of the bar. The default is "#000000".
@@ -127,13 +127,15 @@ as follows.
 	"default" mode, the bar is sized just large enough to house all the
 	buttons. Logically, the default mode is "default". In "full" mode, the
 	bar spans the entire length of the edge it is docked to. "simple" mode
-	is visually identical to "normal" mode, however the surface of the bar
-	is sized and anchored less aggressively, which may (or may not;
+	is usually visually identical to "normal" mode, however the surface of the
+	bar is sized and anchored less aggressively, which may (or may not,
 	depending on the implementation of the compositor) improve how well
-	LavaLauncher geometrically integrates and fits onto the desktop (and
-	also will use less memory). It gives the compositor a lot more leeway
-	regarding the exact placement of the bar, at the cost of not respecting
-	the user defined alignment and margins parallel to the bar.
+	LavaLauncher geometrically integrates and fits onto the desktop (and also
+	will use less memory). It gives the compositor a lot more leeway regarding
+	the exact placement of the bar. Behold: In "simple" mode, some compositors
+	may not respect margins parallel to the bar or the exclusive zone, possibly
+	even depending on the alignment. This is not a bug in LavaLauncher but a
+	limitation of your compositor.
 
 *output*
 	Name of the output on which the bar should be displayed. Output names

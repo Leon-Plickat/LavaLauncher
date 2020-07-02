@@ -10,10 +10,10 @@ by clicking on icons on a dynamically sized bar, placed at one of the screen
 edges. A single LavaLauncher instance can provide multiple such bars, across
 multiple outputs.
 
-The Wayland compositor must implement the Layer-Shell for LavaLauncher to work.
-If LavaLauncher is displayed but wont respond to clicks, chances are that the
-compositor you are using only displays Layer-Shell surfaces but does not forward
-events to them.
+The Wayland compositor must implement the Layer-Shell and XDG-Output for
+LavaLauncher to work. If LavaLauncher is displayed but wont respond to clicks,
+chances are that the compositor you are using only displays Layer-Shell surfaces
+but does not forward events to them.
 
 
 # OPTIONS
@@ -30,9 +30,6 @@ events to them.
 # CONFIGURATION
 LavaLauncher is configured with a configuration file. There is no default
 location, meaning manually providing the path to a file is mandatory.
-
-LavaLauncher monitors the configuration file and will automatically reload, if
-it was modifed.
 
 You can find an example configuration at the end of this section.
 
@@ -275,4 +272,4 @@ following URL.
 
 
 # AUTHORS
-Leon Plickat <leonhenrik.plickat@stud.uni-goettingen.de>
+Leon Henrik Plickat <leonhenrik.plickat@stud.uni-goettingen.de>

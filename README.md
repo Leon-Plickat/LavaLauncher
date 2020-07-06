@@ -56,17 +56,8 @@ The mailinglist is for bug reports, contributions, feedback and getting help.
 
 ## Contributing
 
-**Contributions are welcome!** You can send your patches via email to the
-mailing list. See [this](https://git-send-email.io/) helpful link to learn how
-to send emails with git.
-
-For larger contributions, especially for radical changes, I highly recommend you
-to ask me whether I will include your commit *before* you start investing time
-into it. Also please respect the coding style, even if you do not like it.
-
-You are strongly invited to add your name to the copyright header of the files
-you changed and to the authors sections in the man page and README if you made
-an important contribution. A Free Software project is proud of every contributor.
+**Contributions are welcome!** Read `CONTRIBUTING.md` to find out how you can
+contribute.
 
 
 ## Licensing
@@ -80,3 +71,4 @@ header of the files for more information.
 ## Authors
 
 Leon Plickat <leonhenrik.plickat@stud.uni-goettingen.de>
+

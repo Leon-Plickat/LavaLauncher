@@ -111,7 +111,6 @@ static void update_offset (struct Lava_bar *bar)
 	if ( bar == NULL )
 		return;
 
-	struct Lava_data        *data    = bar->data;
 	struct Lava_bar_pattern *pattern = bar->pattern;
 	struct Lava_output      *output  = bar->output;
 
@@ -122,40 +121,6 @@ static void update_offset (struct Lava_bar *bar)
 	{
 		bar->x_offset = bar->y_offset = 0;
 		return;
-	}
-
-	switch (pattern->alignment)
-	{
-		case ALIGNMENT_START:
-			bar->x_offset = 0;
-			bar->y_offset = 0;
-			break;
-
-		case ALIGNMENT_CENTER:
-			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-			{
-				bar->x_offset = (output->w / 2) - (pattern->w / 2);
-				bar->y_offset = 0;
-			}
-			else
-			{
-				bar->x_offset = 0;
-				bar->y_offset = (output->h / 2) - (pattern->h / 2);
-			}
-			break;
-
-		case ALIGNMENT_END:
-			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-			{
-				bar->x_offset = output->w  - pattern->w;
-				bar->y_offset = 0;
-			}
-			else
-			{
-				bar->x_offset = 0;
-				bar->y_offset = output->h - pattern->h;
-			}
-			break;
 	}
 
 	/* Set margin.
@@ -177,17 +142,49 @@ static void update_offset (struct Lava_bar *bar)
 	 * This means it can just use normal layer surface margins for all four
 	 * sides, so we do not have to do anything here.
 	 */
-	if ( pattern->mode != MODE_SIMPLE )
-	{
-		if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-			bar->x_offset += pattern->margin_left - pattern->margin_right;
-		else
-			bar->y_offset += pattern->margin_top - pattern->margin_bottom;
-	}
 
-	if (data->verbose)
-		fprintf(stderr, "Aligning bar: global_name=%d x-offset=%d y-offset=%d\n",
-				bar->output->global_name, bar->x_offset, bar->y_offset);
+	switch (pattern->alignment)
+	{
+		case ALIGNMENT_START:
+			bar->x_offset = 0;
+			bar->y_offset = 0;
+
+			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+				bar->x_offset += pattern->margin_left;
+			else
+				bar->y_offset += pattern->margin_top;
+			break;
+
+		case ALIGNMENT_CENTER:
+			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+			{
+				bar->y_offset = 0;
+				bar->x_offset = (output->w / 2) - (pattern->w / 2);
+				bar->x_offset += pattern->margin_left - pattern->margin_right;
+			}
+			else
+			{
+				bar->x_offset = 0;
+				bar->y_offset = (output->h / 2) - (pattern->h / 2);
+				bar->y_offset += pattern->margin_top - pattern->margin_bottom;
+			}
+			break;
+
+		case ALIGNMENT_END:
+			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+			{
+				bar->x_offset = output->w  - pattern->w;
+				bar->y_offset = 0;
+				bar->x_offset -= pattern->margin_right;
+			}
+			else
+			{
+				bar->x_offset = 0;
+				bar->y_offset = output->h - pattern->h;
+				bar->y_offset -= pattern->margin_bottom;
+			}
+			break;
+	}
 }
 
 void update_bar (struct Lava_bar *bar)

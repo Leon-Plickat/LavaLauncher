@@ -178,8 +178,19 @@ void configure_layer_surface (struct Lava_bar *bar)
 	if ( pattern->mode == MODE_DEFAULT )
 		wl_region_add(region, bar->x_offset, bar->y_offset,
 				pattern->w, pattern->h);
+	else if ( pattern->mode == MODE_FULL )
+	{
+		if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+			wl_region_add(region, pattern->margin_left, 0,
+				bar->output->w - pattern->margin_left - pattern->margin_right,
+				pattern->h);
+		else
+			wl_region_add(region, 0, pattern->margin_top,
+				pattern->w,
+				bar->output->h - pattern->margin_top - pattern->margin_bottom);
+	}
 	else
-		wl_region_add(region, 0, 0, bar->output->w, bar->output->h);
+		wl_region_add(region, 0, 0, pattern->w, pattern->h);
 
 	/* Set input region. This is necessary to prevent the unused parts of
 	 * the surface to catch pointer and touch events.

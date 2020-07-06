@@ -160,11 +160,22 @@ void render_bar_frame (struct Lava_bar *bar)
 		else
 			bar_w = pattern->w, bar_h = output->h;
 
-		lldg_draw_bordered_rectangle(cairo, 0, 0, bar_w, bar_h,
-				pattern->border_top, pattern->border_right,
-				pattern->border_bottom, pattern->border_left,
-				bar->output->scale,
-				pattern->bar_colour, pattern->border_colour);
+		if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+			lldg_draw_bordered_rectangle(cairo,
+					pattern->margin_left, 0,
+					bar_w - pattern->margin_right  - pattern->margin_left, bar_h,
+					pattern->border_top, pattern->border_right,
+					pattern->border_bottom, pattern->border_left,
+					bar->output->scale,
+					pattern->bar_colour, pattern->border_colour);
+		else
+			lldg_draw_bordered_rectangle(cairo,
+					0, pattern->margin_top,
+					bar_w, bar_h - pattern->margin_bottom - pattern->margin_top,
+					pattern->border_top, pattern->border_right,
+					pattern->border_bottom, pattern->border_left,
+					bar->output->scale,
+					pattern->bar_colour, pattern->border_colour);
 	}
 	else
 		lldg_draw_bordered_rectangle(cairo,

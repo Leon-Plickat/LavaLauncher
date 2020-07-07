@@ -71,9 +71,6 @@ struct Lava_bar_pattern
 	struct Lava_item *last_item;
 	int               item_amount;
 
-	/* Expected and enforced width and height of the bar. */
-	uint32_t w, h;
-
 	/* Mode and positioning of the bar. These are responsible for the shape
 	 * of the visual bar and the actual surface.
 	 */

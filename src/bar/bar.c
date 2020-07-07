@@ -41,6 +41,207 @@
 #include"bar/bar.h"
 #include"bar/layersurface.h"
 #include"bar/render.h"
+#include"item/item.h"
+
+/* Positions and dimensions for MODE_DEFAULT. */
+static void mode_default_dimensions (struct Lava_bar *bar)
+{
+	struct Lava_bar_pattern *pattern = bar->pattern;
+	struct Lava_output      *output  = bar->output;
+
+	/* Position of item area. */
+	if ( pattern->orientation == ORIENTATION_HORIZONTAL ) switch (pattern->alignment)
+	{
+		case ALIGNMENT_START:
+			bar->item_area_x = pattern->border_left + pattern->margin_left;
+			bar->item_area_y = pattern->border_top;
+			break;
+
+		case ALIGNMENT_CENTER:
+			bar->item_area_x = (output->w / 2) - (bar->item_area_width / 2)
+				+ (pattern->margin_left - pattern->margin_right);
+			bar->item_area_y = pattern->border_top;
+			break;
+
+		case ALIGNMENT_END:
+			bar->item_area_x = output->w - bar->item_area_width
+				- pattern->border_right - pattern->margin_right;
+			bar->item_area_y = pattern->border_top;
+			break;
+	}
+	else switch (pattern->alignment)
+	{
+		case ALIGNMENT_START:
+			bar->item_area_x = pattern->border_left;
+			bar->item_area_y = pattern->border_top + pattern->margin_top;
+			break;
+
+		case ALIGNMENT_CENTER:
+			bar->item_area_x = pattern->border_left;
+			bar->item_area_y = (output->h / 2) - (bar->item_area_height / 2)
+				+ (pattern->margin_top - pattern->margin_bottom);
+			break;
+
+		case ALIGNMENT_END:
+			bar->item_area_x = pattern->border_left;
+			bar->item_area_y = output->h - bar->item_area_height
+				- pattern->border_bottom - pattern->margin_bottom;
+			break;
+	}
+
+	/* Position of bar. */
+	bar->bar_x = bar->item_area_x - pattern->border_left;
+	bar->bar_y = bar->item_area_y - pattern->border_top;
+
+	/* Size of bar. */
+	bar->bar_width  = bar->item_area_width  + pattern->border_left + pattern->border_right;
+	bar->bar_height = bar->item_area_height + pattern->border_top  + pattern->border_bottom;
+
+	/* Size of buffer / surface. */
+	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+	{
+		bar->buffer_width  = bar->output->w;
+		bar->buffer_height = pattern->icon_size
+			+ pattern->border_top
+			+ pattern->border_bottom;
+	}
+	else
+	{
+		bar->buffer_width  = pattern->icon_size
+			+ pattern->border_left
+			+ pattern->border_right;
+		bar->buffer_height = bar->output->h;
+	}
+}
+
+/* Positions and dimensions for MODE_FULL. */
+static void mode_full_dimensions (struct Lava_bar *bar)
+{
+	struct Lava_bar_pattern *pattern = bar->pattern;
+	struct Lava_output      *output  = bar->output;
+
+	/* Position of item area. */
+	if ( pattern->orientation == ORIENTATION_HORIZONTAL ) switch (pattern->alignment)
+	{
+		case ALIGNMENT_START:
+			bar->item_area_x = pattern->border_left + pattern->margin_left;
+			bar->item_area_y = pattern->border_top;
+			break;
+
+		case ALIGNMENT_CENTER:
+			bar->item_area_x = (output->w / 2) - (bar->item_area_width / 2)
+				+ (pattern->margin_left - pattern->margin_right);
+			bar->item_area_y = pattern->border_top;
+			break;
+
+		case ALIGNMENT_END:
+			bar->item_area_x = output->w - bar->item_area_width
+				- pattern->border_right - pattern->margin_right;
+			bar->item_area_y = pattern->border_top;
+			break;
+	}
+	else switch (pattern->alignment)
+	{
+		case ALIGNMENT_START:
+			bar->item_area_x = pattern->border_left;
+			bar->item_area_y = pattern->border_top + pattern->margin_top;
+			break;
+
+		case ALIGNMENT_CENTER:
+			bar->item_area_x = pattern->border_left;
+			bar->item_area_y = (output->h / 2) - (bar->item_area_height / 2)
+				+ (pattern->margin_top - pattern->margin_bottom);
+			break;
+
+		case ALIGNMENT_END:
+			bar->item_area_x = pattern->border_left;
+			bar->item_area_y = output->h - bar->item_area_height
+				- pattern->border_bottom - pattern->margin_bottom;
+			break;
+	}
+
+	/* Position and size of bar and size of buffer / surface. */
+	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+	{
+		bar->bar_x = pattern->margin_left;
+		bar->bar_y = 0;
+
+		bar->bar_width  = output->w - pattern->margin_left - pattern->margin_right;
+		bar->bar_height = bar->item_area_height + pattern->border_top + pattern->border_bottom;
+
+		bar->buffer_width  = bar->output->w;
+		bar->buffer_height = pattern->icon_size
+			+ pattern->border_top
+			+ pattern->border_bottom;
+	}
+	else
+	{
+		bar->bar_x = 0;
+		bar->bar_y = pattern->margin_top;
+
+		bar->bar_width  = bar->item_area_width + pattern->border_left + pattern->border_right;
+		bar->bar_height = output->h - pattern->margin_top - pattern->margin_bottom;
+
+		bar->buffer_width  = pattern->icon_size
+			+ pattern->border_left
+			+ pattern->border_right;
+		bar->buffer_height = bar->output->h;
+	}
+}
+
+/* Position and size for MODE_SIMPLE. */
+static void mode_simple_dimensions (struct Lava_bar *bar)
+{
+	struct Lava_bar_pattern *pattern = bar->pattern;
+
+	/* Position of item area. */
+	bar->item_area_x = pattern->border_left;
+	bar->item_area_y = pattern->border_top;
+
+	/* Position of bar. */
+	bar->bar_x = 0;
+	bar->bar_y = 0;
+
+	/* Size of bar. */
+	bar->bar_width  = bar->item_area_width  + pattern->border_left + pattern->border_right;
+	bar->bar_height = bar->item_area_height + pattern->border_top  + pattern->border_bottom;
+
+	/* Size of buffer / surface. */
+	bar->buffer_width  = bar->bar_width;
+	bar->buffer_height = bar->bar_height;
+}
+
+static void update_dimensions (struct Lava_bar *bar)
+{
+	if ( bar == NULL )
+		return;
+
+	struct Lava_bar_pattern *pattern = bar->pattern;
+	struct Lava_output      *output  = bar->output;
+
+	if ( output->w == 0 || output->h == 0 )
+		return;
+
+	/* Size of item area. */
+	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+	{
+		bar->item_area_width  = get_item_length_sum(pattern);
+		bar->item_area_height = pattern->icon_size;
+	}
+	else
+	{
+		bar->item_area_width  = pattern->icon_size;
+		bar->item_area_height = get_item_length_sum(pattern);
+	}
+
+	/* Other dimensions. */
+	switch (bar->pattern->mode)
+	{
+		case MODE_DEFAULT: mode_default_dimensions(bar); break;
+		case MODE_FULL:    mode_full_dimensions(bar);    break;
+		case MODE_SIMPLE:  mode_simple_dimensions(bar);  break;
+	}
+}
 
 bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 {
@@ -76,6 +277,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 		return false;
 	}
 
+	update_dimensions(bar);
 	configure_layer_surface(bar);
 	zwlr_layer_surface_v1_add_listener(bar->layer_surface,
 			&layer_surface_listener, bar);
@@ -106,90 +308,9 @@ void destroy_all_bars (struct Lava_output *output)
 		destroy_bar(b1);
 }
 
-static void update_offset (struct Lava_bar *bar)
-{
-	if ( bar == NULL )
-		return;
-
-	struct Lava_bar_pattern *pattern = bar->pattern;
-	struct Lava_output      *output  = bar->output;
-
-	if ( output->w == 0 || output->h == 0 )
-		return;
-
-	if ( pattern->mode == MODE_SIMPLE )
-	{
-		bar->x_offset = bar->y_offset = 0;
-		return;
-	}
-
-	/* Set margin.
-	 *
-	 * For MODE_DEFAULT and MODE_FULL:
-	 * Since we create a surface spanning the entire length of an outputs
-	 * edge, margins parallel to it would move it outside the boundaries of
-	 * the output, which may or may not cause issues in some compositors.
-	 * To work around this, we simply cheat a bit: Margins parallel to the
-	 * bar will be simulated in the draw code by adjusting the bar offsets.
-	 *
-	 * Here we set the margins parallel to the edges length, which are
-	 * "fake", by adjusting the offset of the bar. See
-	 * configure_layer_surface() in bar/layersurface.c for the orthogonal
-	 * margins.
-	 *
-	 * For MODE_SIMPLE:
-	 * In this mode the surface is just large enough to display the bar.
-	 * This means it can just use normal layer surface margins for all four
-	 * sides, so we do not have to do anything here.
-	 */
-
-	switch (pattern->alignment)
-	{
-		case ALIGNMENT_START:
-			bar->x_offset = 0;
-			bar->y_offset = 0;
-
-			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-				bar->x_offset += pattern->margin_left;
-			else
-				bar->y_offset += pattern->margin_top;
-			break;
-
-		case ALIGNMENT_CENTER:
-			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-			{
-				bar->y_offset = 0;
-				bar->x_offset = (output->w / 2) - (pattern->w / 2);
-				bar->x_offset += pattern->margin_left - pattern->margin_right;
-			}
-			else
-			{
-				bar->x_offset = 0;
-				bar->y_offset = (output->h / 2) - (pattern->h / 2);
-				bar->y_offset += pattern->margin_top - pattern->margin_bottom;
-			}
-			break;
-
-		case ALIGNMENT_END:
-			if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-			{
-				bar->x_offset = output->w  - pattern->w;
-				bar->y_offset = 0;
-				bar->x_offset -= pattern->margin_right;
-			}
-			else
-			{
-				bar->x_offset = 0;
-				bar->y_offset = output->h - pattern->h;
-				bar->y_offset -= pattern->margin_bottom;
-			}
-			break;
-	}
-}
-
 void update_bar (struct Lava_bar *bar)
 {
-	update_offset(bar);
+	update_dimensions(bar);
 	configure_layer_surface(bar);
 	render_bar_frame(bar);
 }

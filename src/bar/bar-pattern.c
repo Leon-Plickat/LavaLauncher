@@ -80,35 +80,6 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->cursor_name       = strdup("pointer");
 }
 
-/* Calculate the dimensions of the visible part of the bar. */
-static void calculate_dimensions (struct Lava_bar_pattern *pattern)
-{
-	switch (pattern->position)
-	{
-		case POSITION_LEFT:
-		case POSITION_RIGHT:
-			pattern->orientation = ORIENTATION_VERTICAL;
-			pattern->w = (uint32_t)(pattern->icon_size + pattern->border_right
-					+ pattern->border_left);
-			pattern->h = (uint32_t)(get_item_length_sum(pattern)
-					+ pattern->border_top + pattern->border_bottom);
-			if ( pattern->exclusive_zone == 1 )
-				pattern->exclusive_zone = pattern->w;
-			break;
-
-		case POSITION_TOP:
-		case POSITION_BOTTOM:
-			pattern->orientation = ORIENTATION_HORIZONTAL;
-			pattern->w = (uint32_t)(get_item_length_sum(pattern)
-					+ pattern->border_left + pattern->border_right);
-			pattern->h = (uint32_t)(pattern->icon_size + pattern->border_top
-					+ pattern->border_bottom);
-			if ( pattern->exclusive_zone == 1 )
-				pattern->exclusive_zone = pattern->h;
-			break;
-	}
-}
-
 bool create_bar_pattern (struct Lava_data *data)
 {
 	if (data->verbose)
@@ -136,7 +107,18 @@ bool finalize_bar_pattern (struct Lava_bar_pattern *pattern)
 		fputs("Finalize bar pattern.\n", stderr);
 	if (! finalize_items(pattern))
 		return false;
-	calculate_dimensions(pattern);
+	switch (pattern->position)
+	{
+		case POSITION_TOP:
+		case POSITION_BOTTOM:
+			pattern->orientation = ORIENTATION_HORIZONTAL;
+			break;
+
+		case POSITION_LEFT:
+		case POSITION_RIGHT:
+			pattern->orientation = ORIENTATION_VERTICAL;
+			break;
+	}
 	return true;
 }
 

@@ -117,16 +117,16 @@ struct Lava_item *item_from_coords (struct Lava_bar *bar, int32_t x, int32_t y)
 	struct Lava_bar_pattern *pattern = bar->pattern;
 	unsigned int ordinate;
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-		ordinate = x - (bar->x_offset + pattern->border_left);
+		ordinate = x - bar->item_area_x;
 	else
-		ordinate = y - (bar->y_offset + pattern->border_top);
+		ordinate = y - bar->item_area_y;
 
-	struct Lava_item *bt_1, *bt_2;
-	wl_list_for_each_reverse_safe(bt_1, bt_2, &pattern->items, link)
+	struct Lava_item *item, *temp;
+	wl_list_for_each_reverse_safe(item, temp, &pattern->items, link)
 	{
-		if ( ordinate >= bt_1->ordinate
-				&& ordinate < bt_1->ordinate + bt_1->length )
-			return bt_1;
+		if ( ordinate >= item->ordinate
+				&& ordinate < item->ordinate + item->length )
+			return item;
 	}
 	return NULL;
 }

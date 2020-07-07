@@ -119,40 +119,12 @@ void configure_layer_surface (struct Lava_bar *bar)
 	if (data->verbose)
 		fputs("Configuring bar.\n", stderr);
 
-	uint32_t width, height;
-	if ( pattern->mode == MODE_SIMPLE )
-		width = pattern->w, height = pattern->h;
-	else if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-		width = bar->output->w * output->scale, height = pattern->h;
-	else
-		width = pattern->w, height = output->h * output->scale;
-
-	if (data->verbose)
-		fprintf(stderr, "Surface size: w=%d h=%d\n", width, height);
-
-	zwlr_layer_surface_v1_set_size(bar->layer_surface, width, height);
+	zwlr_layer_surface_v1_set_size(bar->layer_surface,
+			bar->buffer_width, bar->buffer_height);
 
 	/* Anchor the surface to the correct edge. */
 	zwlr_layer_surface_v1_set_anchor(bar->layer_surface, get_anchor(pattern));
 
-	/* Set margin.
-	 *
-	 * For MODE_DEFAULT and MODE_FULL:
-	 * Since we create a surface spanning the entire length of an outputs
-	 * edge, margins parallel to it would move it outside the boundaries of
-	 * the output, which may or may not cause issues in some compositors.
-	 * To work around this, we simply cheat a bit: Margins parallel to the
-	 * bar will be simulated in the draw code by adjusting the bar offsets.
-	 *
-	 * Here we set the margins orthogonal to the edges length, which are
-	 * real layer shell margins. See update_offset() in bar/bar.c for the
-	 * "fake" parallel margins
-	 *
-	 * For MODE_SIMPLE:
-	 * In this mode the surface is just large enough to display the bar.
-	 * This means it can just use normal layer surface margins for all four
-	 * sides.
-	 */
 	if ( pattern->mode == MODE_SIMPLE )
 		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
 				pattern->margin_top, pattern->margin_right,
@@ -167,30 +139,25 @@ void configure_layer_surface (struct Lava_bar *bar)
 				0, pattern->margin_left);
 
 	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
+	int exclusive_zone;
+	if ( pattern->exclusive_zone == 1 )
+	{
+		if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+			exclusive_zone = bar->buffer_height;
+		else
+			exclusive_zone = bar->buffer_width;
+	}
+	else
+		exclusive_zone = pattern->exclusive_zone;
 	zwlr_layer_surface_v1_set_exclusive_zone(bar->layer_surface,
-			pattern->exclusive_zone);
+			exclusive_zone);
 
 	/* Create a region of the visible part of the surface.
 	 * Behold: In MODE_DEFAULT, the actual surface is larger than the visible
 	 * bar.
 	 */
 	struct wl_region *region = wl_compositor_create_region(data->compositor);
-	if ( pattern->mode == MODE_DEFAULT )
-		wl_region_add(region, bar->x_offset, bar->y_offset,
-				pattern->w, pattern->h);
-	else if ( pattern->mode == MODE_FULL )
-	{
-		if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-			wl_region_add(region, pattern->margin_left, 0,
-				bar->output->w - pattern->margin_left - pattern->margin_right,
-				pattern->h);
-		else
-			wl_region_add(region, 0, pattern->margin_top,
-				pattern->w,
-				bar->output->h - pattern->margin_top - pattern->margin_bottom);
-	}
-	else
-		wl_region_add(region, 0, 0, pattern->w, pattern->h);
+	wl_region_add(region, bar->bar_x, bar->bar_y, bar->bar_width, bar->bar_height);
 
 	/* Set input region. This is necessary to prevent the unused parts of
 	 * the surface to catch pointer and touch events.

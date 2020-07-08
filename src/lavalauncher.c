@@ -153,7 +153,7 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 		switch (c)
 		{
 			case 'c':
-				data->config_path = optarg;
+				strncpy(data->config_path, optarg, sizeof(data->config_path) - 1);
 				break;
 
 			case 'h':
@@ -169,12 +169,37 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 				return false;
 		}
 
-	if ( data->config_path == NULL)
+	return true;
+}
+
+static bool get_default_config_path (struct Lava_data *data)
+{
+	char *dir;
+
+	if ( NULL != (dir = getenv("XDG_CONFIG_HOME")) )
 	{
-		fputs("You need to provide the path to a config file.\n", stderr);
-		return false;
+		snprintf(data->config_path, sizeof(data->config_path) - 1,
+				"%s/lavalauncher/lavalauncher.conf", dir);
+		goto success;
 	}
 
+	/* $XDG_CONFIG_HOME is not set, so let's try to just find .config in $HOME. */
+	if ( NULL != (dir = getenv("HOME")) )
+	{
+		snprintf(data->config_path, sizeof(data->config_path) - 1,
+				"%s/.config/lavalauncher/lavalauncher.conf", dir);
+		goto success;
+	}
+
+	fputs("ERROR: Neither $XDG_CONFIG_HOME nor $HOME are set.\n"
+			"ERROR: Impossible to get default configuration file path.\n"
+			"INFO: There probably is something wrong with your session.\n"
+			"INFO: You can provide a path manually with '-c'.\n", stderr);
+	return false;
+
+success:
+	if (data->verbose)
+		fprintf(stderr, "Using default configuration file path: %s\n", data->config_path);
 	return true;
 }
 
@@ -185,8 +210,9 @@ static void init_data (struct Lava_data *data)
 	data->watch        = false;
 	data->reload       = false;
 	data->verbose      = false;
-	data->config_path  = NULL;
 	data->last_pattern = NULL;
+
+	memset(data->config_path, '\0', sizeof(data->config_path));
 
 	data->display            = NULL;
 	data->registry           = NULL;
@@ -209,10 +235,23 @@ reload:
 
 	if (! handle_command_flags(&data, argc, argv))
 		return data.ret;
+
 	if (data.verbose)
 		fputs("LavaLauncher " VERSION"\n", stderr);
+
+	/* If the user did not provide the path to a configuration file, try
+	 * the default location.
+	 */
+	if ( data.config_path[0] == '\0' )
+		if (! get_default_config_path(&data))
+			return EXIT_FAILURE;
+
+	/* Try to parse the configuration file. If this fails, there might
+	 * already be heap objects, so some cleanup is needed.
+	 */
 	if (! parse_config_file(&data))
 		goto early_exit;
+
 	if (! init_wayland(&data))
 		goto exit;
 

@@ -382,8 +382,9 @@ bool parse_config_file (struct Lava_data *data)
 	};
 	if ( NULL == (parser.file = fopen(data->config_path, "r")) )
 	{
-		fprintf(stderr, "ERROR: Can not open config file.\n"
-				"ERROR: fopen: %s\n", strerror(errno));
+		fprintf(stderr, "ERROR: Can not open config file \"%s\".\n"
+				"ERROR: fopen: %s\n",
+				data->config_path, strerror(errno));
 		return false;
 	}
 

@@ -28,8 +28,11 @@ but does not forward events to them.
 
 
 # CONFIGURATION
-LavaLauncher is configured with a configuration file. There is no default
-location, meaning manually providing the path to a file is mandatory.
+LavaLauncher is configured with a configuration file.
+
+The default location of this file is "$XDG_CONFIG_HOME/lavalauncher/lavalauncher.conf".
+If that environmental variable is not set, "$HOME/.config/lavalauncher/lavalauncher.conf"
+is used instead. Alternatively, you can provide a path manually.
 
 You can find an example configuration at the end of this section.
 

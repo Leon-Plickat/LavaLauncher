@@ -30,7 +30,10 @@
 #include<assert.h>
 #include<poll.h>
 #include<errno.h>
+
+#ifdef WATCH_CONFIG
 #include<sys/inotify.h>
+#endif
 
 #include<wayland-server.h>
 #include<wayland-client.h>
@@ -52,6 +55,8 @@ static void main_loop (struct Lava_data *data)
 {
 	if (data->verbose)
 		fputs("Starting main loop.\n", stderr);
+
+#ifdef WATCH_CONFIG
 	if (! data->watch)
 		goto simple_loop;
 
@@ -141,6 +146,7 @@ exit:
 	 * watched. LavaLauncher will not reload on changes.
 	 */
 simple_loop:
+#endif
 	while ( data->loop && wl_display_dispatch(data->display) != -1 );
 }
 
@@ -207,10 +213,13 @@ static void init_data (struct Lava_data *data)
 {
 	data->ret          = EXIT_FAILURE;
 	data->loop         = true;
-	data->watch        = false;
 	data->reload       = false;
 	data->verbose      = false;
 	data->last_pattern = NULL;
+
+#ifdef WATCH_CONFIG
+	data->watch = false;
+#endif
 
 	memset(data->config_path, '\0', sizeof(data->config_path));
 

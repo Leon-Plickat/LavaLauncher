@@ -46,10 +46,13 @@ struct Lava_data
 	struct Lava_bar_pattern *last_pattern;
 
 	bool loop;
-	bool watch;
 	bool reload;
 	bool verbose;
 	int  ret;
+
+#ifdef WATCH_CONFIG
+	bool watch;
+#endif
 };
 
 #endif

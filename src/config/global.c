@@ -29,6 +29,7 @@
 
 static bool global_set_watch (struct Lava_data *data, const char *arg)
 {
+#ifdef WATCH_CONFIG
 	if (is_boolean_true(arg))
 		data->watch = true;
 	else if (is_boolean_false(arg))
@@ -39,6 +40,10 @@ static bool global_set_watch (struct Lava_data *data, const char *arg)
 		return false;
 	}
 	return true;
+#else
+	fputs("WARNING: LavaLauncher has been compiled without the ability to watch the configuration file.\n", stderr);
+	return true;
+#endif
 }
 
 struct

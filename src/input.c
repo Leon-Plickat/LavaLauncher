@@ -249,7 +249,7 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 		uint32_t serial, uint32_t time, int32_t id)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-	if ( seat->pointer.bar == NULL )
+	if ( seat->touch.bar == NULL )
 	{
 		fputs("ERROR: Touch-Up event could not be handled: "
 				"Bar could not be found.\n", stderr);

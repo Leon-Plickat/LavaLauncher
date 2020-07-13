@@ -53,7 +53,6 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->margin_bottom     = 0;
 	pattern->margin_left       = 0;
 
-	pattern->only_output       = NULL;
 	pattern->exclusive_zone    = 1;
 
 	pattern->bar_colour[0]     = 0.0f;
@@ -74,7 +73,10 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->effect            = EFFECT_NONE;
 	pattern->effect_padding    = 5;
 
-	pattern->cursor_name       = strdup("pointer");
+	memset(pattern->cursor_name, '\0', sizeof(pattern->cursor_name));
+	strncpy(pattern->cursor_name, "pointer", sizeof(pattern->cursor_name) - 1);
+
+	memset(pattern->only_output, '\0', sizeof(pattern->only_output));
 }
 
 bool create_bar_pattern (struct Lava_data *data)
@@ -123,10 +125,6 @@ static void destroy_bar_pattern (struct Lava_bar_pattern *pattern)
 {
 	wl_list_remove(&pattern->link);
 	destroy_all_items(pattern);
-	if ( pattern->only_output != NULL )
-		free(pattern->only_output);
-	if ( pattern->cursor_name != NULL )
-		free(pattern->cursor_name);
 	free(pattern);
 }
 
@@ -283,12 +281,10 @@ static bool bar_pattern_set_margin_size (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_only_output (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	if ( pattern->only_output != NULL )
-		free(pattern->only_output);
 	if ( ! strcmp(arg, "all") || *arg == '*' )
-		pattern->only_output = NULL;
+		pattern->only_output[0] = '\0';
 	else
-		pattern->only_output = strdup(arg);
+		strncpy(pattern->only_output, arg, sizeof(pattern->only_output) - 1);
 	return true;
 }
 
@@ -369,9 +365,7 @@ static bool bar_pattern_set_effect_padding (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_cursor_name (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	if ( pattern->cursor_name != NULL )
-		free(pattern->cursor_name);
-	pattern->cursor_name = strdup(arg);
+	strncpy(pattern->cursor_name, arg, sizeof(pattern->cursor_name) - 1);
 	return true;
 }
 

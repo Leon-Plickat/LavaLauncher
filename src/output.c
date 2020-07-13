@@ -65,7 +65,7 @@ static void xdg_output_handle_name (void *raw_data,
 		struct zxdg_output_v1 *xdg_output, const char *name)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
-	output->name               = strdup(name);
+	strncpy(output->name, name, sizeof(output->name) - 1);
 
 	if (output->data->verbose)
 		fprintf(stderr, "XDG-Output update name: global_name=%d name=%s\n",
@@ -134,13 +134,13 @@ bool configure_output (struct Lava_data *data, struct Lava_output *output)
 	/* Create a new bar for each pattern which only_output matches the name
 	 * of this output.
 	 */
-	struct Lava_bar_pattern *pt1, *pt2;
-	wl_list_for_each_safe(pt1, pt2, &data->patterns, link)
+	struct Lava_bar_pattern *pattern, *temp;
+	wl_list_for_each_safe(pattern, temp, &data->patterns, link)
 	{
-		if ( pt1->only_output == NULL || ! strcmp(output->name, pt1->only_output) )
+		if ( pattern->only_output[0] == '\0' || ! strcmp(output->name, pattern->only_output) )
 		{
 			output->status = OUTPUT_STATUS_CONFIGURED;
-			if (! create_bar(pt1, output))
+			if (! create_bar(pattern, output))
 			{
 				fputs("ERROR: Could not create bar.\n", stderr);
 				data->loop = false;
@@ -183,6 +183,8 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	output->wl_output   = wl_output;
 	output->status      = OUTPUT_STATUS_UNCONFIGURED;
 
+	memset(output->name, '\0', sizeof(output->name));
+
 	wl_list_init(&output->bars);
 
 	wl_list_insert(&data->outputs, &output->link);
@@ -207,10 +209,10 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 struct Lava_output *get_output_from_global_name (struct Lava_data *data,
 		uint32_t name)
 {
-	struct Lava_output *op_1, *op_2;
-	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
-		if ( op_1->global_name == name )
-			return op_1;
+	struct Lava_output *op, *temp;
+	wl_list_for_each_safe(op, temp, &data->outputs, link)
+		if ( op->global_name == name )
+			return op;
 	return NULL;
 }
 
@@ -222,7 +224,6 @@ void destroy_output (struct Lava_output *output)
 	destroy_all_bars(output);
 	wl_list_remove(&output->link);
 	wl_output_destroy(output->wl_output);
-	free(output->name);
 	free(output);
 }
 

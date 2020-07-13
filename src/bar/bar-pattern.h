@@ -90,12 +90,12 @@ struct Lava_bar_pattern
 	float border_colour[4];
 	float effect_colour[4];
 
-	/* If *only_output is NULL, a surface will be created for all outputs.
+	/* If only_output[0] is \0, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.
 	 * Examples of valid names are "eDP-1" or "HDMI-A-1" (likely compositor
 	 * dependant).
 	 */
-	char *only_output;
+	char only_output[64];
 
 	/* If exclusive_zone is 1, it will be set to the width/height of the bar
 	 * at startup, otherwise its exact value is used, which should be either
@@ -112,7 +112,7 @@ struct Lava_bar_pattern
 	int effect_padding;
 
 	/* Name of cursor which should be attached to pointer on hover. */
-	char *cursor_name;
+	char cursor_name[64];
 };
 
 bool create_bar_pattern (struct Lava_data *data);

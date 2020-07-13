@@ -50,10 +50,11 @@ struct Lava_output
 
 	struct wl_output      *wl_output;
 	struct zxdg_output_v1 *xdg_output;
-	char                  *name;
-	uint32_t               global_name;
-	int32_t                scale;
-	int32_t                w, h;
+
+	char     name[64];
+	uint32_t global_name;
+	int32_t  scale;
+	int32_t  w, h;
 
 	enum Lava_output_status status;
 };

@@ -48,11 +48,11 @@ static void item_nullify (struct Lava_item *item)
 	item->scroll_up_command     = NULL;
 	item->scroll_down_command   = NULL;
 	item->touch_command         = NULL;
-	item->background_colour_hex = NULL;
 	item->background_colour[0]  = 0.0;
 	item->background_colour[1]  = 0.0;
 	item->background_colour[2]  = 0.0;
 	item->background_colour[3]  = 1.0;
+	item->replace_background    = false;
 }
 
 static const char *item_type_to_string (enum Item_type type)
@@ -186,8 +186,6 @@ static void destroy_item (struct Lava_item *item)
 		free(item->scroll_down_command);
 	if ( item->touch_command != NULL )
 		free(item->touch_command);
-	if ( item->background_colour_hex != NULL )
-		free(item->background_colour_hex);
 	free(item);
 }
 

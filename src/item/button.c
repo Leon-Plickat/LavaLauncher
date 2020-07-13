@@ -82,15 +82,11 @@ static bool button_set_image_path (struct Lava_item *button, const char *path,
 static bool button_set_background_colour (struct Lava_item *button, const char *arg,
 		enum Interaction_type type)
 {
-	if (! hex_to_rgba(arg, &(button->background_colour[0]),
+	button->replace_background = true;
+	return hex_to_rgba(arg, &(button->background_colour[0]),
 				&(button->background_colour[1]),
 				&(button->background_colour[2]),
-				&(button->background_colour[3])))
-		return false;
-	if ( button->background_colour_hex != NULL )
-		free(button->background_colour_hex);
-	button->background_colour_hex = strdup(arg);
-	return true;
+				&(button->background_colour[3]));
 }
 
 struct

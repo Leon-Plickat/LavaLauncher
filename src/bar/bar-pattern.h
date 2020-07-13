@@ -86,15 +86,9 @@ struct Lava_bar_pattern
 	int icon_size;
 	int border_top, border_right, border_bottom, border_left;
 
-	/* Colours of the bar and its border; In float for actual usage and as
-	 * hex string for insertion into commands.
-	 */
-	float  bar_colour[4];
-	char  *bar_colour_hex;
-	float  border_colour[4];
-	char  *border_colour_hex;
-	float  effect_colour[4];
-	char  *effect_colour_hex;
+	float bar_colour[4];
+	float border_colour[4];
+	float effect_colour[4];
 
 	/* If *only_output is NULL, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.

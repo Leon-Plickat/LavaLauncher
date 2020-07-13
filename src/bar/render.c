@@ -101,7 +101,7 @@ static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 		if ( item->type == TYPE_BUTTON )
 		{
 			*increment = (item->ordinate * scale) + increment_offset;
-			if ( item->background_colour_hex != NULL )
+			if (item->replace_background)
 				item_replace_background(cairo, x, y, item->length,
 						item->background_colour);
 			draw_effect(cairo, x, y, size, pattern->effect_padding,

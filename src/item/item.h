@@ -52,7 +52,7 @@ struct Lava_item
 	cairo_surface_t *img;
 	unsigned int     index, ordinate, length;
 	float            background_colour[4];
-	char            *background_colour_hex;
+	bool             replace_background;
 
 	char *left_click_command;
 	char *middle_click_command;

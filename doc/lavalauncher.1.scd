@@ -195,7 +195,7 @@ exit, if it is "reload", LavaLauncher will reload. LavaLauncher replaces certain
 tokens in the command string with values when the command is executed. These
 tokens are "%index%", "%buttons%", "%icon-size%",
 "%border-{top,right,bottom,left}%", "%margin-{top,right,bottom,left}%",
-"%colour%", "%border-colour%", "%output%" and "%scale%".
+"%output%" and "%scale%".
 
 
 ## COLOURS

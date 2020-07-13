@@ -56,19 +56,16 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->only_output       = NULL;
 	pattern->exclusive_zone    = 1;
 
-	pattern->bar_colour_hex    = strdup("#000000FF");
 	pattern->bar_colour[0]     = 0.0f;
 	pattern->bar_colour[1]     = 0.0f;
 	pattern->bar_colour[2]     = 0.0f;
 	pattern->bar_colour[3]     = 1.0f;
 
-	pattern->border_colour_hex = strdup("#FFFFFFFF");
 	pattern->border_colour[0]  = 1.0f;
 	pattern->border_colour[1]  = 1.0f;
 	pattern->border_colour[2]  = 1.0f;
 	pattern->border_colour[3]  = 1.0f;
 
-	pattern->effect_colour_hex = strdup("#FFFFFFFF");
 	pattern->effect_colour[0]  = 1.0f;
 	pattern->effect_colour[1]  = 1.0f;
 	pattern->effect_colour[2]  = 1.0f;
@@ -128,12 +125,6 @@ static void destroy_bar_pattern (struct Lava_bar_pattern *pattern)
 	destroy_all_items(pattern);
 	if ( pattern->only_output != NULL )
 		free(pattern->only_output);
-	if ( pattern->bar_colour_hex != NULL )
-		free(pattern->bar_colour_hex);
-	if ( pattern->border_colour_hex != NULL )
-		free(pattern->border_colour_hex);
-	if ( pattern->effect_colour_hex != NULL )
-		free(pattern->effect_colour_hex);
 	if ( pattern->cursor_name != NULL )
 		free(pattern->cursor_name);
 	free(pattern);
@@ -323,37 +314,22 @@ static bool bar_pattern_set_exclusive_zone (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_bar_colour (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	if (! hex_to_rgba(arg, &(pattern->bar_colour[0]), &(pattern->bar_colour[1]),
-				&(pattern->bar_colour[2]), &(pattern->bar_colour[3])))
-		return false;
-	if ( pattern->bar_colour_hex != NULL )
-		free(pattern->bar_colour_hex);
-	pattern->bar_colour_hex = strdup(arg);
-	return true;
+	return hex_to_rgba(arg, &(pattern->bar_colour[0]), &(pattern->bar_colour[1]),
+				&(pattern->bar_colour[2]), &(pattern->bar_colour[3]));
 }
 
 static bool bar_pattern_set_border_colour (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	if (!  hex_to_rgba(arg, &(pattern->border_colour[0]), &(pattern->border_colour[1]),
-				&(pattern->border_colour[2]), &(pattern->border_colour[3])))
-		return false;
-	if ( pattern->border_colour_hex != NULL )
-		free(pattern->border_colour_hex);
-	pattern->border_colour_hex = strdup(arg);
-	return true;
+	return hex_to_rgba(arg, &(pattern->border_colour[0]), &(pattern->border_colour[1]),
+				&(pattern->border_colour[2]), &(pattern->border_colour[3]));
 }
 
 static bool bar_pattern_set_effect_colour (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	if (!  hex_to_rgba(arg, &(pattern->effect_colour[0]), &(pattern->effect_colour[1]),
-				&(pattern->effect_colour[2]), &(pattern->effect_colour[3])))
-		return false;
-	if ( pattern->effect_colour_hex != NULL )
-		free(pattern->effect_colour_hex);
-	pattern->effect_colour_hex = strdup(arg);
-	return true;
+	return hex_to_rgba(arg, &(pattern->effect_colour[0]), &(pattern->effect_colour[1]),
+				&(pattern->effect_colour[2]), &(pattern->effect_colour[3]));
 }
 
 static bool bar_pattern_set_effect (struct Lava_bar_pattern *pattern,

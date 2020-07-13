@@ -72,21 +72,19 @@ static void handle_tokens (struct Lava_bar *bar, struct Lava_item *item, char *b
 		const char *replacement_string;
 		const int   replacement_int;
 	} tokens[] = {
-		{ .token = "%index%",         .replacement_string = NULL,                       .replacement_int = item->index,            },
-		{ .token = "%items%",         .replacement_string = NULL,                       .replacement_int = pattern->item_amount,   },
-		{ .token = "%icon-size%",     .replacement_string = NULL,                       .replacement_int = pattern->icon_size,     },
-		{ .token = "%border-top%",    .replacement_string = NULL,                       .replacement_int = pattern->border_top,    },
-		{ .token = "%border-left%",   .replacement_string = NULL,                       .replacement_int = pattern->border_left,   },
-		{ .token = "%border-bottom%", .replacement_string = NULL,                       .replacement_int = pattern->border_bottom, },
-		{ .token = "%border-right%",  .replacement_string = NULL,                       .replacement_int = pattern->border_right,  },
-		{ .token = "%margin-top%",    .replacement_string = NULL,                       .replacement_int = pattern->margin_top,    },
-		{ .token = "%margin-right%",  .replacement_string = NULL,                       .replacement_int = pattern->margin_right,  },
-		{ .token = "%margin-bottom%", .replacement_string = NULL,                       .replacement_int = pattern->margin_bottom, },
-		{ .token = "%margin-left%",   .replacement_string = NULL,                       .replacement_int = pattern->margin_left,   },
-		{ .token = "%colour%",        .replacement_string = pattern->bar_colour_hex,    .replacement_int = 0,                      },
-		{ .token = "%border-colour%", .replacement_string = pattern->border_colour_hex, .replacement_int = 0,                      },
-		{ .token = "%output%",        .replacement_string = output->name,               .replacement_int = 0,                      },
-		{ .token = "%scale%",         .replacement_string = NULL,                       .replacement_int = output->scale,          }
+		{ .token = "%index%",         .replacement_string = NULL,         .replacement_int = item->index,            },
+		{ .token = "%items%",         .replacement_string = NULL,         .replacement_int = pattern->item_amount,   },
+		{ .token = "%icon-size%",     .replacement_string = NULL,         .replacement_int = pattern->icon_size,     },
+		{ .token = "%border-top%",    .replacement_string = NULL,         .replacement_int = pattern->border_top,    },
+		{ .token = "%border-left%",   .replacement_string = NULL,         .replacement_int = pattern->border_left,   },
+		{ .token = "%border-bottom%", .replacement_string = NULL,         .replacement_int = pattern->border_bottom, },
+		{ .token = "%border-right%",  .replacement_string = NULL,         .replacement_int = pattern->border_right,  },
+		{ .token = "%margin-top%",    .replacement_string = NULL,         .replacement_int = pattern->margin_top,    },
+		{ .token = "%margin-right%",  .replacement_string = NULL,         .replacement_int = pattern->margin_right,  },
+		{ .token = "%margin-bottom%", .replacement_string = NULL,         .replacement_int = pattern->margin_bottom, },
+		{ .token = "%margin-left%",   .replacement_string = NULL,         .replacement_int = pattern->margin_left,   },
+		{ .token = "%output%",        .replacement_string = output->name, .replacement_int = 0,                      },
+		{ .token = "%scale%",         .replacement_string = NULL,         .replacement_int = output->scale,          }
 	};
 	for (size_t i = 0; i < (sizeof(tokens) / sizeof(tokens[0])); i++)
 		replace_token(&buffer, tokens[i].token,

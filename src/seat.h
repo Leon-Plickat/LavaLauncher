@@ -2,6 +2,7 @@
  * LavaLauncher - A simple launcher panel for Wayland
  *
  * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 Nicolai Dagestad
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,10 +56,8 @@ struct Lava_seat
 
 	struct
 	{
-		struct wl_touch  *wl_touch;
-		int32_t           id;
-		struct Lava_bar  *bar;
-		struct Lava_item *item;
+		struct wl_touch *wl_touch;
+		struct wl_list   touchpoints;
 	} touch;
 };
 
@@ -66,4 +65,16 @@ bool create_seat (struct Lava_data *data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version);
 void destroy_all_seats (struct Lava_data *data);
 
+struct Lava_touchpoint
+{
+	struct wl_list    link;
+	int32_t           id;
+	struct Lava_bar  *bar;
+	struct Lava_item *item;
+};
+
+bool create_touchpoint (struct Lava_seat *seat, int32_t id,
+		struct Lava_bar *bar, struct Lava_item *item);
+void destroy_touchpoint (struct Lava_touchpoint *touchpoint);
+void destroy_all_touchpoints (struct Lava_seat *seat);
 #endif

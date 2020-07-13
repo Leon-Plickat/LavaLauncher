@@ -2,6 +2,7 @@
  * LavaLauncher - A simple launcher panel for Wayland
  *
  * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 Nicolai Dagestad
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -97,6 +98,7 @@ bool create_seat (struct Lava_data *data, struct wl_registry *registry,
 
 	seat->data    = data;
 	seat->wl_seat = wl_seat;
+	wl_list_init(&seat->touch.touchpoints);
 	wl_list_insert(&data->seats, &seat->link);
 	wl_seat_add_listener(wl_seat, &seat_listener, seat);
 
@@ -109,7 +111,10 @@ static void destroy_seat (struct Lava_seat *seat)
 	wl_seat_release(seat->wl_seat);
 	if (seat->pointer.wl_pointer)
 		wl_pointer_release(seat->pointer.wl_pointer);
+	if (seat->touch.wl_touch)
+		wl_touch_release(seat->touch.wl_touch);
 	cleanup_cursor(seat);
+	destroy_all_touchpoints(seat);
 	free(seat);
 }
 
@@ -120,4 +125,41 @@ void destroy_all_seats (struct Lava_data *data)
 	struct Lava_seat *st_1, *st_2;
 	wl_list_for_each_safe(st_1, st_2, &data->seats, link)
 		destroy_seat(st_1);
+}
+
+bool create_touchpoint (struct Lava_seat *seat, int32_t id,
+          struct Lava_bar *bar, struct Lava_item *item){
+	if (seat->data->verbose)
+		fputs("Creating touchpoint.\n", stderr);
+
+	struct Lava_touchpoint *touchpoint = calloc(1, sizeof(struct Lava_touchpoint));
+	if ( touchpoint == NULL )
+	{
+		fputs("ERROR: Could not allocate.\n", stderr);
+		return false;
+	}
+
+	touchpoint->id   = id;
+	touchpoint->bar  = bar;
+	touchpoint->item = item;
+
+	wl_list_insert(&seat->touch.touchpoints, &touchpoint->link);
+
+	return true;
+}
+
+void destroy_touchpoint (struct Lava_touchpoint *touchpoint)
+{
+	wl_list_remove(&touchpoint->link);
+	free(touchpoint);
+}
+
+void destroy_all_touchpoints (struct Lava_seat *seat)
+{
+	if (seat->data->verbose)
+		fputs("Destroying touchpoints.\n", stderr);
+	
+	struct Lava_touchpoint *tp, *temp;
+	wl_list_for_each_safe(tp, temp, &seat->touch.touchpoints, link)
+		destroy_touchpoint(tp);
 }

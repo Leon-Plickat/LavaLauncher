@@ -2,6 +2,7 @@
  * LavaLauncher - A simple launcher panel for Wayland
  *
  * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 Nicolai Dagestad
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -249,32 +250,18 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 		uint32_t serial, uint32_t time, int32_t id)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-	if ( seat->touch.bar == NULL )
-	{
-		fputs("ERROR: Touch-Up event could not be handled: "
-				"Bar could not be found.\n", stderr);
-		return;
-	}
+	struct Lava_touchpoint *current;
+	wl_list_for_each(current, &seat->touch.touchpoints, link)
+		if ( current->id == id )
+			goto touchpoint_found;
+	return;
 
+touchpoint_found:
 	if (seat->data->verbose)
 		fputs("Touch up.\n", stderr);
 
-	/* If this touch event does not have the same id as the touch-down event
-	 * which initiated the touch operation, abort. Also abort if no touch
-	 * operation has been initiated.
-	 */
-	if ( ! seat->touch.item || id != seat->touch.id )
-	{
-		seat->touch.item = NULL;
-		seat->touch.bar  = NULL;
-		return;
-	}
-
-	/* At this point, we know for sure that we have received a touch-down
-	 * and the following touch-up event over the same item, so we can
-	 * interact with it.
-	 */
-	item_interaction(seat->touch.bar, seat->touch.item, TYPE_TOUCH);
+	item_interaction(current->bar, current->item, TYPE_TOUCH);
+	destroy_touchpoint(current);
 }
 
 static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
@@ -283,45 +270,43 @@ static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
 		wl_fixed_t fx, wl_fixed_t fy)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-
 	uint32_t x = wl_fixed_to_int(fx), y = wl_fixed_to_int(fy);
 
 	if (seat->data->verbose)
 		fprintf(stderr, "Touch down: x=%d y=%d\n", x, y);
 
-	seat->touch.bar = bar_from_surface(seat->data, surface);
-
-	seat->touch.id   = id;
-	seat->touch.item = item_from_coords(seat->touch.bar, x, y);
+	struct Lava_bar  *bar  = bar_from_surface(seat->data, surface);
+	struct Lava_item *item = item_from_coords(bar, x, y);
+	if (! create_touchpoint(seat, id, bar, item))
+		fputs("ERROR: could not create touchpoint\n", stderr);
 }
 
 static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
-		uint32_t time, int32_t id, wl_fixed_t x, wl_fixed_t y)
+		uint32_t time, int32_t id, wl_fixed_t fx, wl_fixed_t fy)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
+	struct Lava_touchpoint *current=NULL;
+	wl_list_for_each(current, &seat->touch.touchpoints, link)
+		if ( current->id == id )
+			goto touchpoint_found;
+	return;
 
+touchpoint_found:
 	if (seat->data->verbose)
-		fputs("Touch move.\n", stderr);
+		fputs("Touch move\n", stdout);
 
-	if ( id != seat->touch.id )
-		return;
-
-	/* The touch point has been moved, meaning it likely is no longer over
-	 * the item, so we simply abort the touch operation.
+	/* If the item under the touch point is not the same we first touched,
+	 * we simply abort the touch operation.
 	 */
-	seat->touch.item = NULL;
-	seat->touch.bar  = NULL;
+	uint32_t x = wl_fixed_to_int(fx), y = wl_fixed_to_int(fy);
+	if ( item_from_coords(current->bar, x, y) != current->item )
+		destroy_touchpoint(current);
 }
 
 /* These are the handlers for touch events. We only want to interact with an
  * item, if both touch-down and touch-up were over the same item. To
- * achieve this, touch_handle_down() will store the touch id and the item in
- * the seat. touch_handle_up() checks whether a item is stored in the seat and
- * whether its id is the same as the one stored in the seat and if both are true
- * interacts with the item. touch_handle_motion() will simply remove the item
- * from the seat, effectively aborting the touch operation.
- *
- * Behold: Since I lack the necessary hardware, touch support is untested.
+ * achieve this, each touch event is stored in the wl_list, inside seat->touch.
+ * This ways we can follow each of them without needing any extra logic.
  */
 const struct wl_touch_listener touch_listener = {
 	.down        = touch_handle_down,

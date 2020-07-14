@@ -146,10 +146,16 @@ as follows.
 	Position of the bar. Can be "top", "right", "bottom", "left". The bar
 	will dock to that edge of the output(s). The default position is "bottom".
 
+## BAR COPY
+Every "bar-copy" context will add a bar. This new bar has the same configuration
+and items as the previous bar. You can change the configuration and define
+additional items as usual. The assignments possible in this context are the same
+as for the "bar" context.
+
 ## BUTTON
 Every "button" context will add a button to a bar. As such, this context is
-a nested inside the "bar" context. The assignments possible in this context are
-as follows.
+a nested inside the "bar" or "bar-copy" context. The assignments possible in
+this context are as follows.
 
 *background-colour*
 	The background colour of the individual button. This overrides the
@@ -183,8 +189,8 @@ as follows.
 
 ## SPACER
 Every "spacer" context will add a spacer to a bar. As such, this context is
-a nested inside the "bar" context. The assignments possible in this context are
-as follows.
+a nested inside the "bar" or "bar-copy" context. The assignments possible in
+this context are as follows.
 
 *length*
 	Length of the spacer.
@@ -205,7 +211,7 @@ colour codes must be quoted to not be interpreted as comments. Alternatively,
 
 ## EXAMPLE CONFIGURATION
 Below you will find an example configuration, which demonstrates all available
-contexts and some of the assignments by defining two bars and changing global
+contexts and some of the assignments by defining three bars and changing global
 settings.
 
 ```
@@ -251,6 +257,11 @@ bar # this is a second bar
 		image-path "/path/to/a/third/image.png";
 		command    "do-something"
 	}
+}
+
+bar-copy # this copies the previous bar
+{
+	position left;
 }
 ```
 

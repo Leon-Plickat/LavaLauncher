@@ -73,10 +73,7 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->effect            = EFFECT_NONE;
 	pattern->effect_padding    = 5;
 
-	memset(pattern->cursor_name, '\0', sizeof(pattern->cursor_name));
 	strncpy(pattern->cursor_name, "pointer", sizeof(pattern->cursor_name) - 1);
-
-	memset(pattern->only_output, '\0', sizeof(pattern->only_output));
 }
 
 bool create_bar_pattern (struct Lava_data *data)
@@ -91,11 +88,77 @@ bool create_bar_pattern (struct Lava_data *data)
 		return false;
 	}
 
+	memset(pattern->cursor_name, '\0', sizeof(pattern->cursor_name));
+	memset(pattern->only_output, '\0', sizeof(pattern->only_output));
+
 	sensible_defaults(pattern);
 	pattern->data = data;
 	data->last_pattern = pattern;
 	wl_list_init(&pattern->items);
 	wl_list_insert(&data->patterns, &pattern->link);
+
+	return true;
+}
+
+bool copy_last_bar_pattern (struct Lava_data *data)
+{
+	if (data->verbose)
+		fputs("Copying last bar pattern.\n", stderr);
+
+	if ( data->last_pattern == NULL )
+	{
+		fputs("ERROR: Can not copy bar. There is no previous bar to copy.\n", stderr);
+		return false;
+	}
+
+	struct Lava_bar_pattern *last_pattern = data->last_pattern;
+	if (! create_bar_pattern(data))
+		return false;
+	struct Lava_bar_pattern *pattern = data->last_pattern;
+
+	/* Copy all settings. */
+	pattern->position         = last_pattern->position;
+	pattern->alignment        = last_pattern->alignment;
+	pattern->mode             = last_pattern->mode;
+	pattern->layer            = last_pattern->layer;
+	pattern->icon_size        = last_pattern->icon_size;
+	pattern->border_top       = last_pattern->border_top;
+	pattern->border_right     = last_pattern->border_right;
+	pattern->border_bottom    = last_pattern->border_bottom;
+	pattern->border_left      = last_pattern->border_left;
+	pattern->margin_top       = last_pattern->margin_top;
+	pattern->margin_right     = last_pattern->margin_right;
+	pattern->margin_bottom    = last_pattern->margin_bottom;
+	pattern->margin_left      = last_pattern->margin_left;
+	pattern->exclusive_zone   = last_pattern->exclusive_zone;
+	pattern->bar_colour[0]    = last_pattern->bar_colour[0];
+	pattern->bar_colour[1]    = last_pattern->bar_colour[1];
+	pattern->bar_colour[2]    = last_pattern->bar_colour[2];
+	pattern->bar_colour[3]    = last_pattern->bar_colour[3];
+	pattern->border_colour[0] = last_pattern->border_colour[0];
+	pattern->border_colour[1] = last_pattern->border_colour[1];
+	pattern->border_colour[2] = last_pattern->border_colour[2];
+	pattern->border_colour[3] = last_pattern->border_colour[3];
+	pattern->effect_colour[0] = last_pattern->effect_colour[0];
+	pattern->effect_colour[1] = last_pattern->effect_colour[1];
+	pattern->effect_colour[2] = last_pattern->effect_colour[2];
+	pattern->effect_colour[3] = last_pattern->effect_colour[3];
+	pattern->effect           = last_pattern->effect;
+	pattern->effect_padding   = last_pattern->effect_padding;
+
+	/* These strings are guaranteed to be terminated in last_pattern,
+	 * so we copy them entirely to avoid false compiler warnings when
+	 * -Wstringop-truncation is used.
+	 */
+	strncpy(pattern->cursor_name, last_pattern->cursor_name,
+			sizeof(pattern->cursor_name));
+	strncpy(pattern->only_output, last_pattern->only_output,
+			sizeof(pattern->only_output));
+
+	struct Lava_item *item, *temp;
+	wl_list_for_each_reverse_safe(item, temp, &last_pattern->items, link)
+		if (! copy_item(pattern, item))
+				return false;
 
 	return true;
 }

@@ -83,6 +83,44 @@ bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type)
 	return true;
 }
 
+bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
+{
+	if (! create_item(pattern, item->type))
+		return false;
+	struct Lava_item *new_item = pattern->last_item;
+
+	/* Copy item settings. */
+	new_item->type                 = item->type;
+	new_item->index                = item->index;
+	new_item->ordinate             = item->ordinate;
+	new_item->length               = item->length;
+	new_item->background_colour[0] = item->background_colour[0];
+	new_item->background_colour[1] = item->background_colour[1];
+	new_item->background_colour[2] = item->background_colour[2];
+	new_item->background_colour[3] = item->background_colour[3];
+	new_item->replace_background   = item->replace_background;
+
+	/* Create a new reference to the last items cairo image surface instead
+	 * of copying it.
+	 */
+	new_item->img = cairo_surface_reference(item->img);
+
+	if ( item->left_click_command != NULL )
+		new_item->left_click_command = strdup(item->left_click_command);
+	if ( item->middle_click_command != NULL )
+		new_item->middle_click_command = strdup(item->middle_click_command);
+	if ( item->right_click_command != NULL )
+		new_item->right_click_command = strdup(item->right_click_command);
+	if ( item->scroll_up_command != NULL )
+		new_item->scroll_up_command = strdup(item->scroll_up_command);
+	if ( item->scroll_down_command != NULL )
+		new_item->scroll_down_command = strdup(item->scroll_down_command);
+	if ( item->touch_command != NULL )
+		new_item->touch_command = strdup(item->touch_command);
+
+	return true;
+}
+
 bool item_set_variable (struct Lava_item *item, const char *variable,
 		const char *value, int line)
 {
@@ -172,8 +210,6 @@ bool finalize_items (struct Lava_bar_pattern *pattern)
 static void destroy_item (struct Lava_item *item)
 {
 	wl_list_remove(&item->link);
-	if ( item->img != NULL )
-		cairo_surface_destroy(item->img);
 	if ( item->left_click_command != NULL )
 		free(item->left_click_command);
 	if ( item->middle_click_command != NULL )
@@ -186,6 +222,14 @@ static void destroy_item (struct Lava_item *item)
 		free(item->scroll_down_command);
 	if ( item->touch_command != NULL )
 		free(item->touch_command);
+
+	/* This only destroys a cairo image surface only if the reference count
+	 * is 1. Otherwise this just reduces the reference count by one. As such,
+	 * no special code is needed to handle the image surface of copied items.
+	 */
+	if ( item->img != NULL )
+		cairo_surface_destroy(item->img);
+
 	free(item);
 }
 

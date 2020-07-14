@@ -105,6 +105,11 @@ static bool parser_enter_context (struct Lava_parser *parser)
 			parser->context = CONTEXT_BAR;
 			break;
 
+		case CONTEXT_BAR_COPY_PRE:
+			ret = copy_last_bar_pattern(parser->data);
+			parser->context = CONTEXT_BAR;
+			break;
+
 		case CONTEXT_BUTTON_PRE:
 			ret = create_item(parser->data->last_pattern, TYPE_BUTTON);
 			parser->context = CONTEXT_BUTTON;
@@ -154,6 +159,7 @@ static bool parser_is_waiting_for_bracket (struct Lava_parser *parser,
 		{
 			case CONTEXT_GLOBAL_SETTINGS_PRE:
 			case CONTEXT_BAR_PRE:
+			case CONTEXT_BAR_COPY_PRE:
 			case CONTEXT_BUTTON_PRE:
 			case CONTEXT_SPACER_PRE:
 				return true;
@@ -329,6 +335,11 @@ static bool parser_handle_string (struct Lava_parser *parser)
 				parser->context = CONTEXT_BAR_PRE;
 				return true;
 			}
+			if (! strcmp(parser->buffer, "bar-copy"))
+			{
+				parser->context = CONTEXT_BAR_COPY_PRE;
+				return true;
+			}
 			if (! strcmp(parser->buffer, "global-settings"))
 			{
 				parser->context = CONTEXT_GLOBAL_SETTINGS_PRE;
@@ -357,6 +368,7 @@ static bool parser_handle_string (struct Lava_parser *parser)
 			return parser_handle_settings(parser);
 
 		case CONTEXT_BAR_PRE:
+		case CONTEXT_BAR_COPY_PRE:
 		case CONTEXT_BUTTON_PRE:
 		case CONTEXT_SPACER_PRE:
 		default:

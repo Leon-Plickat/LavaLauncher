@@ -33,13 +33,23 @@ enum Parser_context
 	/* *_PRE contexts are entered when the parser has read the context name
 	 * and is waiting for '{'.
 	 */
+
 	CONTEXT_NONE,
+
 	CONTEXT_GLOBAL_SETTINGS_PRE,
 	CONTEXT_GLOBAL_SETTINGS,
+
 	CONTEXT_BAR_PRE,
 	CONTEXT_BAR,
+
+	/* Used for copying the last bar pattern. It has no own full context and
+	 * uses CONTEXT_BAR instead.
+	 */
+	CONTEXT_BAR_COPY_PRE,
+
 	CONTEXT_BUTTON_PRE,
 	CONTEXT_BUTTON,
+
 	CONTEXT_SPACER_PRE,
 	CONTEXT_SPACER
 };

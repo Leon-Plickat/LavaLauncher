@@ -116,6 +116,7 @@ struct Lava_bar_pattern
 };
 
 bool create_bar_pattern (struct Lava_data *data);
+bool copy_last_bar_pattern (struct Lava_data *data);
 bool finalize_bar_pattern (struct Lava_bar_pattern *pattern);
 void destroy_all_bar_patterns (struct Lava_data *data);
 bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,

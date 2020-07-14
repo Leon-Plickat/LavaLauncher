@@ -37,8 +37,11 @@ enum Lava_output_status
 	/* Outputs layershell surface has received a configure event at least once. */
 	OUTPUT_STATUS_SURFACE_CONFIGURED,
 
-	/* Output has xdg_output, but no layershell surface and is not in use. */
-	OUTPUT_STATUS_UNUSED
+	/* Output has xdg_output, but no layershell surface and is currently not in use. */
+	OUTPUT_STATUS_UNUSED,
+
+	/* Output can not be used. */
+	OUTPUS_STATUS_BAD
 };
 
 struct Lava_output
@@ -61,7 +64,7 @@ struct Lava_output
 
 bool create_output (struct Lava_data *data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version);
-bool configure_output (struct Lava_data *data, struct Lava_output *output);
+bool configure_output (struct Lava_output *output);
 struct Lava_output *get_output_from_global_name (struct Lava_data *data,
 		uint32_t name);
 void destroy_output (struct Lava_output *output);

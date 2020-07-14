@@ -41,6 +41,58 @@
 /* No-Op function. */
 static void noop () {}
 
+static struct Lava_bar *bar_from_pattern (struct Lava_bar_pattern *pattern,
+		struct Lava_output *output)
+{
+	struct Lava_bar *bar, *temp;
+	wl_list_for_each_safe(bar, temp, &output->bars, link)
+		if ( bar->pattern == pattern )
+			return bar;
+	return NULL;
+}
+
+static bool update_bars (struct Lava_output *output)
+{
+	struct Lava_data *data = output->data;
+
+	struct Lava_bar_pattern *pattern, *temp;
+	wl_list_for_each_safe(pattern, temp, &data->patterns, link)
+	{
+		/* The name of an output can expected to remain the same. */
+		if ( pattern->only_output[0] != '\0' && strcmp(output->name, pattern->only_output) )
+			continue;
+
+		// TODO bool conditions;
+		// -> are conditions of pattern matched by output?
+
+		struct Lava_bar *bar;
+		if ( NULL != (bar = bar_from_pattern(pattern, output)) )
+		{
+			// TODO if (conditions)
+			update_bar(bar);
+			// TODO else
+			// TODO destroy_bar(bar);
+		}
+		else // TODO if (condition)
+		{
+			if (! create_bar(pattern, output))
+			{
+				fputs("ERROR: Could not create bar.\n", stderr);
+				data->loop = false;
+				data->ret  = EXIT_FAILURE;
+				return false;
+			}
+		}
+	}
+
+	if (wl_list_empty(&output->bars))
+		output->status = OUTPUT_STATUS_UNUSED;
+	else
+		output->status = OUTPUT_STATUS_CONFIGURED;
+
+	return true;
+}
+
 static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		int32_t factor)
 {
@@ -51,7 +103,9 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		fprintf(stderr, "Output update scale: global_name=%d scale=%d\n",
 				output->global_name, output->scale);
 
-	update_all_bars(output);
+	if ( output->status == OUTPUT_STATUS_SURFACE_CONFIGURED
+			|| output->status == OUTPUT_STATUS_UNUSED )
+		update_bars(output);
 }
 
 static const struct wl_output_listener output_listener = {
@@ -84,7 +138,9 @@ static void xdg_output_handle_logical_size (void *raw_data,
 		fprintf(stderr, "XDG-Output update logical size: global_name=%d "
 				"w=%d h=%d\n", output->global_name, w, h);
 
-	update_all_bars(output);
+	if ( output->status == OUTPUT_STATUS_SURFACE_CONFIGURED
+			|| output->status == OUTPUT_STATUS_UNUSED )
+		update_bars(output);
 }
 
 static const struct zxdg_output_v1_listener xdg_output_listener = {
@@ -95,8 +151,10 @@ static const struct zxdg_output_v1_listener xdg_output_listener = {
 	.done             = noop
 };
 
-bool configure_output (struct Lava_data *data, struct Lava_output *output)
+bool configure_output (struct Lava_output *output)
 {
+	struct Lava_data *data = output->data;
+
 	if (data->verbose)
 		fprintf(stderr, "Configuring output: global_name=%d\n",
 				output->global_name);
@@ -127,37 +185,11 @@ bool configure_output (struct Lava_data *data, struct Lava_output *output)
 				"         This is very likely a bug in your compositor.\n"
 				"         LavaLauncher will ignore this output.\n",
 				output->global_name);
-		goto unused;
-	}
-
-
-	/* Create a new bar for each pattern which only_output matches the name
-	 * of this output.
-	 */
-	struct Lava_bar_pattern *pattern, *temp;
-	wl_list_for_each_safe(pattern, temp, &data->patterns, link)
-	{
-		if ( pattern->only_output[0] == '\0' || ! strcmp(output->name, pattern->only_output) )
-		{
-			output->status = OUTPUT_STATUS_CONFIGURED;
-			if (! create_bar(pattern, output))
-			{
-				fputs("ERROR: Could not create bar.\n", stderr);
-				data->loop = false;
-				data->ret  = EXIT_FAILURE;
-				return false;
-			}
-		}
-	}
-	if (! wl_list_empty(&output->bars))
+		output->status = OUTPUS_STATUS_BAD;
 		return true;
+	}
 
-unused:
-	if (data->verbose)
-		fprintf(stderr, "Output will not be used: global_name=%d\n",
-				output->global_name);
-	output->status = OUTPUT_STATUS_UNUSED;
-	return true;
+	return update_bars(output);
 }
 
 bool create_output (struct Lava_data *data, struct wl_registry *registry,
@@ -197,7 +229,7 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	 */
 	if ( data->xdg_output_manager != NULL && data->layer_shell != NULL )
 	{
-		if (! configure_output(data, output))
+		if (! configure_output(output))
 			return false;
 	}
 	else if (data->verbose)

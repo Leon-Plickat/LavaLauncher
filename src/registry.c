@@ -172,10 +172,10 @@ bool init_wayland (struct Lava_data *data)
 	 */
 	if (data->verbose)
 		fputs("Catching up on output configuration.\n", stderr);
-	struct Lava_output *op_1, *op_2;
-	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
-		if ( op_1->status == OUTPUT_STATUS_UNCONFIGURED )
-			if (! configure_output(data, op_1))
+	struct Lava_output *op, *temp;
+	wl_list_for_each_safe(op, temp, &data->outputs, link)
+		if ( op->status == OUTPUT_STATUS_UNCONFIGURED )
+			if (! configure_output(op))
 				return false;
 
 	return true;

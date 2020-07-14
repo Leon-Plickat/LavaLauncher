@@ -315,18 +315,6 @@ void update_bar (struct Lava_bar *bar)
 	render_bar_frame(bar);
 }
 
-void update_all_bars (struct Lava_output *output)
-{
-	if (wl_list_empty(&output->bars))
-		return;
-	if (output->data->verbose)
-		fprintf(stderr, "Updating all bars on output: name=%d\n",
-				output->global_name);
-	struct Lava_bar *b1, *b2;
-	wl_list_for_each_safe(b1, b2, &output->bars, link)
-		update_bar(b1);
-}
-
 struct Lava_bar *bar_from_surface (struct Lava_data *data, struct wl_surface *surface)
 {
 	if ( data == NULL || surface == NULL )

@@ -26,18 +26,13 @@ struct Lava_data;
 
 enum Lava_output_status
 {
-	/* Output has been created, but does not yet have an xdg_output or a
-	 * layershell surface.
-	 */
+	/* Output has been created, but does not yet have an xdg_output or any bars. */
 	OUTPUT_STATUS_UNCONFIGURED,
 
-	/* Output has xdg_output and layershell surface. */
-	OUTPUT_STATUS_CONFIGURED,
+	/* Output has xdg_output, and bars. */
+	OUTPUT_STATUS_USED,
 
-	/* Outputs layershell surface has received a configure event at least once. */
-	OUTPUT_STATUS_SURFACE_CONFIGURED,
-
-	/* Output has xdg_output, but no layershell surface and is currently not in use. */
+	/* Output has xdg_output, but currently no bars. */
 	OUTPUT_STATUS_UNUSED,
 
 	/* Output can not be used. */

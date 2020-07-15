@@ -120,7 +120,7 @@ void render_bar_frame (struct Lava_bar *bar)
 	struct Lava_output      *output  = bar->output;
 	int32_t                  scale   = output->scale;
 
-	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED )
+	if (! bar->configured)
 		return;
 
 	/* Get new/next buffer. */

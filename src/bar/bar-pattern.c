@@ -74,6 +74,8 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->effect_padding    = 5;
 
 	strncpy(pattern->cursor_name, "pointer", sizeof(pattern->cursor_name) - 1);
+
+	pattern->condition_scale = 0;
 }
 
 bool create_bar_pattern (struct Lava_data *data)
@@ -432,33 +434,53 @@ static bool bar_pattern_set_cursor_name (struct Lava_bar_pattern *pattern,
 	return true;
 }
 
+static bool bar_pattern_set_condition_scale (struct Lava_bar_pattern *pattern,
+		const char *arg, const char direction)
+{
+	if (! strcmp(arg, "all"))
+	{
+		pattern->condition_scale = 0;
+		return true;
+	}
+
+	pattern->condition_scale = atoi(arg);
+	if ( pattern->effect_padding <= 0 )
+	{
+		fputs("ERROR: Scale condition must be an integer greater than"
+				"zero or 'all'.\n", stderr);
+		return false;
+	}
+	return true;
+}
+
 struct
 {
 	const char *variable, direction;
 	bool (*set)(struct Lava_bar_pattern*, const char*, const char);
 } pattern_configs[] = {
-	{ .variable = "position",          .set = bar_pattern_set_position,       .direction = '0'},
-	{ .variable = "alignment",         .set = bar_pattern_set_alignment,      .direction = '0'},
-	{ .variable = "mode",              .set = bar_pattern_set_mode,           .direction = '0'},
-	{ .variable = "layer",             .set = bar_pattern_set_layer,          .direction = '0'},
-	{ .variable = "icon-size",         .set = bar_pattern_set_icon_size,      .direction = '0'},
-	{ .variable = "border",            .set = bar_pattern_set_border_size,    .direction = 'a'},
-	{ .variable = "border-top",        .set = bar_pattern_set_border_size,    .direction = 't'},
-	{ .variable = "border-right",      .set = bar_pattern_set_border_size,    .direction = 'r'},
-	{ .variable = "border-bottom",     .set = bar_pattern_set_border_size,    .direction = 'b'},
-	{ .variable = "border-left",       .set = bar_pattern_set_border_size,    .direction = 'l'},
-	{ .variable = "margin-top",        .set = bar_pattern_set_margin_size,    .direction = 't'},
-	{ .variable = "margin-right",      .set = bar_pattern_set_margin_size,    .direction = 'r'},
-	{ .variable = "margin-bottom",     .set = bar_pattern_set_margin_size,    .direction = 'b'},
-	{ .variable = "margin-left",       .set = bar_pattern_set_margin_size,    .direction = 'l'},
-	{ .variable = "output",            .set = bar_pattern_set_only_output,    .direction = '0'},
-	{ .variable = "exclusive-zone",    .set = bar_pattern_set_exclusive_zone, .direction = '0'},
-	{ .variable = "background-colour", .set = bar_pattern_set_bar_colour,     .direction = '0'},
-	{ .variable = "border-colour",     .set = bar_pattern_set_border_colour,  .direction = '0'},
-	{ .variable = "effect-colour",     .set = bar_pattern_set_effect_colour,  .direction = '0'},
-	{ .variable = "effect",            .set = bar_pattern_set_effect,         .direction = '0'},
-	{ .variable = "effect-padding",    .set = bar_pattern_set_effect_padding, .direction = '0'},
-	{ .variable = "cursor-name",       .set = bar_pattern_set_cursor_name,    .direction = '0'}
+	{ .variable = "position",          .set = bar_pattern_set_position,        .direction = '0'},
+	{ .variable = "alignment",         .set = bar_pattern_set_alignment,       .direction = '0'},
+	{ .variable = "mode",              .set = bar_pattern_set_mode,            .direction = '0'},
+	{ .variable = "layer",             .set = bar_pattern_set_layer,           .direction = '0'},
+	{ .variable = "icon-size",         .set = bar_pattern_set_icon_size,       .direction = '0'},
+	{ .variable = "border",            .set = bar_pattern_set_border_size,     .direction = 'a'},
+	{ .variable = "border-top",        .set = bar_pattern_set_border_size,     .direction = 't'},
+	{ .variable = "border-right",      .set = bar_pattern_set_border_size,     .direction = 'r'},
+	{ .variable = "border-bottom",     .set = bar_pattern_set_border_size,     .direction = 'b'},
+	{ .variable = "border-left",       .set = bar_pattern_set_border_size,     .direction = 'l'},
+	{ .variable = "margin-top",        .set = bar_pattern_set_margin_size,     .direction = 't'},
+	{ .variable = "margin-right",      .set = bar_pattern_set_margin_size,     .direction = 'r'},
+	{ .variable = "margin-bottom",     .set = bar_pattern_set_margin_size,     .direction = 'b'},
+	{ .variable = "margin-left",       .set = bar_pattern_set_margin_size,     .direction = 'l'},
+	{ .variable = "output",            .set = bar_pattern_set_only_output,     .direction = '0'},
+	{ .variable = "exclusive-zone",    .set = bar_pattern_set_exclusive_zone,  .direction = '0'},
+	{ .variable = "background-colour", .set = bar_pattern_set_bar_colour,      .direction = '0'},
+	{ .variable = "border-colour",     .set = bar_pattern_set_border_colour,   .direction = '0'},
+	{ .variable = "effect-colour",     .set = bar_pattern_set_effect_colour,   .direction = '0'},
+	{ .variable = "effect",            .set = bar_pattern_set_effect,          .direction = '0'},
+	{ .variable = "effect-padding",    .set = bar_pattern_set_effect_padding,  .direction = '0'},
+	{ .variable = "cursor-name",       .set = bar_pattern_set_cursor_name,     .direction = '0'},
+	{ .variable = "condition-scale",   .set = bar_pattern_set_condition_scale, .direction = '0'}
 };
 
 bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,

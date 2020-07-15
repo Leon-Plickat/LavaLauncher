@@ -42,9 +42,12 @@ struct Lava_bar
 
 	struct Lava_buffer  buffers[2];
 	struct Lava_buffer *current_buffer;
+
+	bool configured;
 };
 
 bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output);
+void destroy_bar (struct Lava_bar *bar);
 void destroy_all_bars (struct Lava_output *output);
 void update_bar (struct Lava_bar *bar);
 struct Lava_bar *bar_from_surface (struct Lava_data *data, struct wl_surface *surface);

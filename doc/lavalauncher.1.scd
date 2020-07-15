@@ -78,6 +78,10 @@ as follows.
 *border-{top, right, bottom, left}*
 	The individual border sizes.
 
+*condition-scale*
+	The scale an output must have for the bar to be displayed on it. Can be
+	either an integer greater than zero or "all". The default is "all".
+
 *cursor-name*
 	Name of the cursor displayed when hovering the pointer over the bar. The
 	default cursor is "pointer". Behold: What cursors are available depends
@@ -203,11 +207,17 @@ tokens are "%index%", "%buttons%", "%icon-size%",
 "%border-{top,right,bottom,left}%", "%margin-{top,right,bottom,left}%",
 "%output%" and "%scale%".
 
-
 ## COLOURS
 LavaLauncher excepts colours in the formats "#RRGGBBAA" or "#RRGGBB". Therefore,
 colour codes must be quoted to not be interpreted as comments. Alternatively,
 "transparent", "white" and "black" are accepted as well.
+
+## CONDITIONS
+Conditions are (re-)evaluated and bars created and destroyed accordingly
+whenever an outputs parameters are updated.
+
+You can use conditions in combinations with the "bar-copy" feature to create
+multiple versions of a bar for different conditions.
 
 ## EXAMPLE CONFIGURATION
 Below you will find an example configuration, which demonstrates all available

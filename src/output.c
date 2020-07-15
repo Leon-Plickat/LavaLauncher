@@ -51,9 +51,23 @@ static struct Lava_bar *bar_from_pattern (struct Lava_bar_pattern *pattern,
 	return NULL;
 }
 
+static bool pattern_conditions_match_output (struct Lava_bar_pattern *pattern,
+		struct Lava_output *output)
+{
+	if ( pattern->condition_scale != 0
+			&& pattern->condition_scale != output->scale )
+		return false;
+
+	return true;
+}
+
 static bool update_bars (struct Lava_output *output)
 {
 	struct Lava_data *data = output->data;
+
+	if (data->verbose)
+		fprintf(stderr, "Updating bars for output: global_name=%d\n",
+				output->global_name);
 
 	struct Lava_bar_pattern *pattern, *temp;
 	wl_list_for_each_safe(pattern, temp, &data->patterns, link)
@@ -62,18 +76,17 @@ static bool update_bars (struct Lava_output *output)
 		if ( pattern->only_output[0] != '\0' && strcmp(output->name, pattern->only_output) )
 			continue;
 
-		// TODO bool conditions;
-		// -> are conditions of pattern matched by output?
+		bool conditions = pattern_conditions_match_output(pattern, output);
 
 		struct Lava_bar *bar;
 		if ( NULL != (bar = bar_from_pattern(pattern, output)) )
 		{
-			// TODO if (conditions)
-			update_bar(bar);
-			// TODO else
-			// TODO destroy_bar(bar);
+			if (conditions)
+				update_bar(bar);
+			else
+				destroy_bar(bar);
 		}
-		else // TODO if (condition)
+		else if (conditions)
 		{
 			if (! create_bar(pattern, output))
 			{
@@ -88,7 +101,7 @@ static bool update_bars (struct Lava_output *output)
 	if (wl_list_empty(&output->bars))
 		output->status = OUTPUT_STATUS_UNUSED;
 	else
-		output->status = OUTPUT_STATUS_CONFIGURED;
+		output->status = OUTPUT_STATUS_USED;
 
 	return true;
 }
@@ -103,8 +116,7 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		fprintf(stderr, "Output update scale: global_name=%d scale=%d\n",
 				output->global_name, output->scale);
 
-	if ( output->status == OUTPUT_STATUS_SURFACE_CONFIGURED
-			|| output->status == OUTPUT_STATUS_UNUSED )
+	if ( output->status == OUTPUT_STATUS_USED || output->status == OUTPUT_STATUS_UNUSED )
 		update_bars(output);
 }
 
@@ -138,8 +150,7 @@ static void xdg_output_handle_logical_size (void *raw_data,
 		fprintf(stderr, "XDG-Output update logical size: global_name=%d "
 				"w=%d h=%d\n", output->global_name, w, h);
 
-	if ( output->status == OUTPUT_STATUS_SURFACE_CONFIGURED
-			|| output->status == OUTPUT_STATUS_UNUSED )
+	if ( output->status == OUTPUT_STATUS_USED || output->status == OUTPUT_STATUS_UNUSED )
 		update_bars(output);
 }
 

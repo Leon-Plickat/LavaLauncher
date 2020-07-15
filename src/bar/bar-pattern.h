@@ -113,6 +113,9 @@ struct Lava_bar_pattern
 
 	/* Name of cursor which should be attached to pointer on hover. */
 	char cursor_name[64];
+
+	/* Conditions an output must match for the pattern to generate a bar on it. */
+	int32_t condition_scale;
 };
 
 bool create_bar_pattern (struct Lava_data *data);

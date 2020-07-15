@@ -113,9 +113,9 @@ void configure_layer_surface (struct Lava_bar *bar)
 	 * at least once, it is called by a surface configure event or
 	 * it is called during the creation of the surface.
 	 */
-	if ( output->status != OUTPUT_STATUS_SURFACE_CONFIGURED
-			&& output->status != OUTPUT_STATUS_CONFIGURED )
+	if ( ! bar->configured && output->status != OUTPUT_STATUS_USED )
 		return;
+
 	if (data->verbose)
 		fputs("Configuring bar.\n", stderr);
 
@@ -181,7 +181,8 @@ static void layer_surface_handle_configure (void *raw_data,
 {
 	struct Lava_bar  *bar  = (struct Lava_bar *)raw_data;
 	struct Lava_data *data = bar->data;
-	bar->output->status    = OUTPUT_STATUS_SURFACE_CONFIGURED;
+
+	bar->configured = true;
 
 	if (data->verbose)
 		fprintf(stderr, "Layer surface configure request:"

@@ -261,6 +261,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 	bar->output        = output;
 	bar->wl_surface    = NULL;
 	bar->layer_surface = NULL;
+	bar->configured    = false;
 
 	if ( NULL == (bar->wl_surface = wl_compositor_create_surface(data->compositor)) )
 	{
@@ -286,7 +287,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 	return true;
 }
 
-static void destroy_bar (struct Lava_bar *bar)
+void destroy_bar (struct Lava_bar *bar)
 {
 	if ( bar == NULL )
 		return;

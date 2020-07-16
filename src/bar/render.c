@@ -112,16 +112,10 @@ static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 
 void render_bar_frame (struct Lava_bar *bar)
 {
-	if ( bar == NULL )
-		return;
-
 	struct Lava_data        *data    = bar->data;
 	struct Lava_bar_pattern *pattern = bar->pattern;
 	struct Lava_output      *output  = bar->output;
 	int32_t                  scale   = output->scale;
-
-	if (! bar->configured)
-		return;
 
 	/* Get new/next buffer. */
 	if (! next_buffer(&bar->current_buffer, data->shm, bar->buffers,

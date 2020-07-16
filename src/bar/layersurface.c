@@ -100,21 +100,8 @@ uint32_t get_anchor (struct Lava_bar_pattern *pattern)
 
 void configure_layer_surface (struct Lava_bar *bar)
 {
-	if ( bar == NULL )
-		return;
-
 	struct Lava_data        *data    = bar->data;
 	struct Lava_bar_pattern *pattern = bar->pattern;
-	struct Lava_output      *output  = bar->output;
-
-	/* It is possible that this function is called by output events before
-	 * the bar has been created. This function will return and abort unless
-	 * it is called either when a surface configure event has been received
-	 * at least once, it is called by a surface configure event or
-	 * it is called during the creation of the surface.
-	 */
-	if ( ! bar->configured && output->status != OUTPUT_STATUS_USED )
-		return;
 
 	if (data->verbose)
 		fputs("Configuring bar.\n", stderr);
@@ -182,12 +169,11 @@ static void layer_surface_handle_configure (void *raw_data,
 	struct Lava_bar  *bar  = (struct Lava_bar *)raw_data;
 	struct Lava_data *data = bar->data;
 
-	bar->configured = true;
-
 	if (data->verbose)
 		fprintf(stderr, "Layer surface configure request:"
 				" w=%d h=%d serial=%d\n", w, h, serial);
 
+	bar->configured = true;
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 	update_bar(bar);
 }

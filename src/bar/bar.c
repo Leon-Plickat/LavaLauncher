@@ -213,9 +213,6 @@ static void mode_simple_dimensions (struct Lava_bar *bar)
 
 static void update_dimensions (struct Lava_bar *bar)
 {
-	if ( bar == NULL )
-		return;
-
 	struct Lava_bar_pattern *pattern = bar->pattern;
 	struct Lava_output      *output  = bar->output;
 
@@ -311,6 +308,17 @@ void destroy_all_bars (struct Lava_output *output)
 
 void update_bar (struct Lava_bar *bar)
 {
+	/* It is possible that this function is called by output events before
+	 * the bar has been created. This function will return and abort unless
+	 * it is called either when a surface configure event has been received
+	 * at least once, it is called by a surface configure event or
+	 * it is called during the creation of the surface.
+	 */
+	if ( bar == NULL )
+		return;
+	if ( ! bar->configured && bar->output->status != OUTPUT_STATUS_USED )
+		return;
+
 	update_dimensions(bar);
 	configure_layer_surface(bar);
 	render_bar_frame(bar);

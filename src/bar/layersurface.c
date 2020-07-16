@@ -182,8 +182,10 @@ static void layer_surface_handle_closed (void *data,
 		struct zwlr_layer_surface_v1 *surface)
 {
 	struct Lava_bar *bar = (struct Lava_bar *)data;
-	fputs("Layer surface has been closed.\n", stderr);
-	bar->data->loop = false;
+	if (bar->data->verbose)
+		fprintf(stderr, "Layer surface has been closed: global_name=%d\n",
+				bar->output->global_name);
+	destroy_bar(bar);
 }
 
 const struct zwlr_layer_surface_v1_listener layer_surface_listener = {

@@ -11,6 +11,11 @@ You can ask questions and start discussions on the [mailing list](mailto:~leon_p
 or if you find me on IRC (my nick is "leon-p" and you can often find me on
 `#sway@freenode.net`).
 
+If you found this project on GitHub or any other platform having some sort of
+"issue" system, be aware that 1) I massively prefer the mailing list and 2) that
+platform is only used as a mirror. Try your luck, but know that I do not
+guarantee that I will notice your message.
+
 
 ## Sending Patches
 You can send your patches via email to the mailing list. See
@@ -21,6 +26,12 @@ a mail, but beware that this is more work for both you and me.
 All code review will happen on the mailing list as well.
 
 Write good commit messages!
+
+If you found this project on GitHub or any other platform having some sort of
+"pull request" or "merge request" system, be aware that 1) I massively prefer
+the email based git workflow and 2) that platform is only used as a mirror.
+Try your luck, but know that I do not guarantee that I will notice your
+contribution.
 
 
 ## Licensing and Copyright

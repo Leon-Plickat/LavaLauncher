@@ -53,6 +53,12 @@ The mailinglist is for bug reports, contributions, feedback and getting help.
 
 [~leon_plickat/lavalauncher@lists.sr.ht](mailto:~leon_plickat/lavalauncher@lists.sr.ht)
 
+If you found this project on GitHub or any other platform having some sort of
+special system for contributions, bug reports, questions, feedback or whatever,
+be aware that 1) I massively prefer the mailing list based workflow and 2) that
+platform is only used as a mirror. Try your luck, but know that I do not
+guarantee that I will notice your message.
+
 
 ## Contributing
 

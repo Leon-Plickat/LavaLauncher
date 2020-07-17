@@ -314,9 +314,7 @@ void update_bar (struct Lava_bar *bar)
 	 * at least once, it is called by a surface configure event or
 	 * it is called during the creation of the surface.
 	 */
-	if ( bar == NULL )
-		return;
-	if ( ! bar->configured && bar->output->status != OUTPUT_STATUS_USED )
+	if ( bar == NULL || ! bar->configured )
 		return;
 
 	update_dimensions(bar);

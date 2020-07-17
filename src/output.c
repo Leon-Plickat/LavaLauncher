@@ -68,13 +68,23 @@ static bool pattern_conditions_match_output (struct Lava_bar_pattern *pattern,
 	return true;
 }
 
-static bool update_bars (struct Lava_output *output)
+static bool update_bars_on_output (struct Lava_output *output)
 {
-	struct Lava_data *data = output->data;
+	/* No xdg_output events have been received yet, so there is nothing todo. */
+	if ( output->status == OUTPUT_STATUS_UNCONFIGURED || output->name[0] == '\0' )
+		return true;
 
+	struct Lava_data *data = output->data;
 	if (data->verbose)
 		fprintf(stderr, "Updating bars for output: global_name=%d\n",
 				output->global_name);
+
+	if ( output->w == 0 || output->h == 0 )
+	{
+		destroy_all_bars(output);
+		output->status = OUTPUT_STATUS_UNUSED;
+		return true;
+	}
 
 	struct Lava_bar_pattern *pattern, *temp;
 	wl_list_for_each_safe(pattern, temp, &data->patterns, link)
@@ -122,16 +132,27 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 	if (output->data->verbose)
 		fprintf(stderr, "Output update scale: global_name=%d scale=%d\n",
 				output->global_name, output->scale);
+}
 
-	if ( output->status == OUTPUT_STATUS_USED || output->status == OUTPUT_STATUS_UNUSED )
-		update_bars(output);
+static void output_handle_done (void *raw_data, struct wl_output *wl_output)
+{
+	/* This event is sent after all output property changes (by wl_output
+	 * and by xdg_output) have been advertised by preceding events.
+	 */
+	struct Lava_output *output = (struct Lava_output *)raw_data;
+
+	if (output->data->verbose)
+		fprintf(stderr, "Output atomic update complete: global_name=%d\n",
+				output->global_name);
+
+	update_bars_on_output(output);
 }
 
 static const struct wl_output_listener output_listener = {
 	.scale    = output_handle_scale,
 	.geometry = noop,
 	.mode     = noop,
-	.done     = noop
+	.done     = output_handle_done
 };
 
 static void xdg_output_handle_name (void *raw_data,
@@ -156,9 +177,6 @@ static void xdg_output_handle_logical_size (void *raw_data,
 	if (data->verbose)
 		fprintf(stderr, "XDG-Output update logical size: global_name=%d "
 				"w=%d h=%d\n", output->global_name, w, h);
-
-	if ( output->status == OUTPUT_STATUS_USED || output->status == OUTPUT_STATUS_UNUSED )
-		update_bars(output);
 }
 
 static const struct zxdg_output_v1_listener xdg_output_listener = {
@@ -166,6 +184,8 @@ static const struct zxdg_output_v1_listener xdg_output_listener = {
 	.name             = xdg_output_handle_name,
 	.logical_position = noop,
 	.description      = noop,
+
+	/* Deprecated since version 3, xdg_output property changes now send wl_output.done */
 	.done             = noop
 };
 
@@ -184,30 +204,18 @@ bool configure_output (struct Lava_output *output)
 		fputs("ERROR: Could not get XDG output.\n", stderr);
 		return false;
 	}
+
 	zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener,
 			output);
 
-	/* Roundtrip to allow the output handlers to "catch up", as the outputs
-	 * dimensions as well as name are needed for creating the bar.
+	output->status = OUTPUT_STATUS_UNUSED;
+
+	/* The bars will be created when the wl_output.done event is received.
+	 * This event is guaranteed to be send, since the name and logical
+	 * size are guaranteed to be advertised.
 	 */
-	if ( wl_display_roundtrip(data->display) == -1 )
-	{
-		fputs("ERROR: Roundtrip failed.\n", stderr);
-		return false;
-	}
 
-	if ( output->w == 0 || output->h == 0 )
-	{
-		fprintf(stderr, "WARNING: Nonsensical output: global_name=%d\n"
-				"         This output has a width and/or height of 0.\n"
-				"         This is very likely a bug in your compositor.\n"
-				"         LavaLauncher will ignore this output.\n",
-				output->global_name);
-		output->status = OUTPUS_STATUS_BAD;
-		return true;
-	}
-
-	return update_bars(output);
+	return true;
 }
 
 bool create_output (struct Lava_data *data, struct wl_registry *registry,
@@ -227,11 +235,12 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 		return false;
 	}
 
-	output->data        = data;
-	output->global_name = name;
-	output->scale       = 1;
-	output->wl_output   = wl_output;
-	output->status      = OUTPUT_STATUS_UNCONFIGURED;
+	output->data          = data;
+	output->global_name   = name;
+	output->scale         = 1;
+	output->wl_output     = wl_output;
+	output->status        = OUTPUT_STATUS_UNCONFIGURED;
+	output->w = output->h = 0;
 
 	memset(output->name, '\0', sizeof(output->name));
 

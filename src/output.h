@@ -34,9 +34,6 @@ enum Lava_output_status
 
 	/* Output has xdg_output, but currently no bars. */
 	OUTPUT_STATUS_UNUSED,
-
-	/* Output can not be used. */
-	OUTPUS_STATUS_BAD
 };
 
 struct Lava_output

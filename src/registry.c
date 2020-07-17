@@ -77,7 +77,7 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		if (data->verbose)
 			fputs("Get zxdg_output_manager_v1.\n", stderr);
 		data->xdg_output_manager = wl_registry_bind(registry, name,
-				&zxdg_output_manager_v1_interface, 2);
+				&zxdg_output_manager_v1_interface, 3);
 	}
 	else if (! strcmp(interface, wl_seat_interface.name))
 	{

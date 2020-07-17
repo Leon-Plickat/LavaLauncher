@@ -76,6 +76,7 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	strncpy(pattern->cursor_name, "pointer", sizeof(pattern->cursor_name) - 1);
 
 	pattern->condition_scale      = 0;
+	pattern->condition_transform  = -1;
 	pattern->condition_resolution = RESOLUTION_ALL;
 }
 
@@ -445,7 +446,7 @@ static bool bar_pattern_set_condition_scale (struct Lava_bar_pattern *pattern,
 	}
 
 	pattern->condition_scale = atoi(arg);
-	if ( pattern->effect_padding <= 0 )
+	if ( pattern->condition_scale <= 0 )
 	{
 		fputs("ERROR: Scale condition must be an integer greater than"
 				"zero or 'all'.\n", stderr);
@@ -470,6 +471,24 @@ static bool bar_pattern_set_condition_resolution (struct Lava_bar_pattern *patte
 		return false;
 	}
 
+	return true;
+}
+
+static bool bar_pattern_set_condition_transform (struct Lava_bar_pattern *pattern,
+		const char *arg, const char direction)
+{
+	if (! strcmp(arg, "all"))
+	{
+		pattern->condition_transform = -1;
+		return true;
+	}
+
+	pattern->condition_transform = atoi(arg);
+	if ( pattern->condition_transform < 0 || pattern->condition_transform > 4 )
+	{
+		fputs("ERROR: Transform condition can be 0, 1, 2, 3 or 'all'.\n", stderr);
+		return false;
+	}
 	return true;
 }
 
@@ -501,7 +520,8 @@ struct
 	{ .variable = "effect-padding",       .set = bar_pattern_set_effect_padding,       .direction = '0'},
 	{ .variable = "cursor-name",          .set = bar_pattern_set_cursor_name,          .direction = '0'},
 	{ .variable = "condition-scale",      .set = bar_pattern_set_condition_scale,      .direction = '0'},
-	{ .variable = "condition-resolution", .set = bar_pattern_set_condition_resolution, .direction = '0'}
+	{ .variable = "condition-resolution", .set = bar_pattern_set_condition_resolution, .direction = '0'},
+	{ .variable = "condition-transform",  .set = bar_pattern_set_condition_transform,  .direction = '0'}
 };
 
 bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,

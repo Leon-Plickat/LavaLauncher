@@ -87,6 +87,12 @@ as follows.
 	The scale an output must have for the bar to be displayed on it. Can be
 	either an integer greater than zero or "all". The default is "all".
 
+*condition-transform*
+	The rotation an output must have for the bar to be displayed on it. Can be
+	"all", 0, 1, 2 or 3. The numerical values represent rotations of 0, 90,
+	180 and 270 degrees, with the exact correspondence depending on the
+	compositor. The default is "all".
+
 *cursor-name*
 	Name of the cursor displayed when hovering the pointer over the bar. The
 	default cursor is "pointer". Behold: What cursors are available depends

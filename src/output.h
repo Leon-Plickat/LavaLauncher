@@ -49,6 +49,7 @@ struct Lava_output
 	char     name[64];
 	uint32_t global_name;
 	int32_t  scale;
+	int32_t  transform;
 	int32_t  w, h;
 
 	enum Lava_output_status status;

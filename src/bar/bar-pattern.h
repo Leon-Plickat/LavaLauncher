@@ -123,6 +123,7 @@ struct Lava_bar_pattern
 
 	/* Conditions an output must match for the pattern to generate a bar on it. */
 	int32_t condition_scale;
+	int32_t condition_transform;
 	enum Condition_resolution condition_resolution;
 };
 

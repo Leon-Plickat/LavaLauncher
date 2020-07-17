@@ -65,6 +65,10 @@ static bool pattern_conditions_match_output (struct Lava_bar_pattern *pattern,
 			&& output->h < output->w )
 		return false;
 
+	if ( pattern->condition_transform != -1
+			&& pattern->condition_transform != output->transform )
+		return false;
+
 	return true;
 }
 
@@ -134,6 +138,19 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 				output->global_name, output->scale);
 }
 
+static void output_handle_geometry(void *raw_data, struct wl_output *wl_output,
+		int32_t x, int32_t y, int32_t phy_width, int32_t phy_height,
+		int32_t subpixel, const char *make, const char *model,
+		int32_t transform)
+{
+	struct Lava_output *output = (struct Lava_output *)raw_data;
+	output->transform          = transform;
+
+	if (output->data->verbose)
+		fprintf(stderr, "Output update transform: global_name=%d transform=%d\n",
+				output->global_name, output->transform);
+}
+
 static void output_handle_done (void *raw_data, struct wl_output *wl_output)
 {
 	/* This event is sent after all output property changes (by wl_output
@@ -150,7 +167,7 @@ static void output_handle_done (void *raw_data, struct wl_output *wl_output)
 
 static const struct wl_output_listener output_listener = {
 	.scale    = output_handle_scale,
-	.geometry = noop,
+	.geometry = output_handle_geometry,
 	.mode     = noop,
 	.done     = output_handle_done
 };

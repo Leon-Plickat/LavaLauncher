@@ -58,6 +58,13 @@ static bool pattern_conditions_match_output (struct Lava_bar_pattern *pattern,
 			&& pattern->condition_scale != output->scale )
 		return false;
 
+	if ( pattern->condition_resolution == RESOLUTION_WIDER_THAN_HIGH
+			&& output->w < output->h )
+		return false;
+	if ( pattern->condition_resolution == RESOLUTION_HIGHER_THEN_WIDE
+			&& output->h < output->w )
+		return false;
+
 	return true;
 }
 

@@ -62,6 +62,13 @@ enum Draw_effect
 	EFFECT_CIRCLE,
 };
 
+enum Condition_resolution
+{
+	RESOLUTION_WIDER_THAN_HIGH,
+	RESOLUTION_HIGHER_THEN_WIDE,
+	RESOLUTION_ALL
+};
+
 struct Lava_bar_pattern
 {
 	struct Lava_data *data;
@@ -116,6 +123,7 @@ struct Lava_bar_pattern
 
 	/* Conditions an output must match for the pattern to generate a bar on it. */
 	int32_t condition_scale;
+	enum Condition_resolution condition_resolution;
 };
 
 bool create_bar_pattern (struct Lava_data *data);

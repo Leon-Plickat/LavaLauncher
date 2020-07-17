@@ -78,6 +78,11 @@ as follows.
 *border-{top, right, bottom, left}*
 	The individual border sizes.
 
+*condition-resolution*
+	The resolution proportions an output must have for the bar to be displayed
+	on it. Can be either "all", "wider-than-high" or "higher-than-wide". The
+	default is "all".
+
 *condition-scale*
 	The scale an output must have for the bar to be displayed on it. Can be
 	either an integer greater than zero or "all". The default is "all".

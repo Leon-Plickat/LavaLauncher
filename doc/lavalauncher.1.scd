@@ -124,8 +124,8 @@ as follows.
 	implementation is compositor dependant; A compositor may choose to
 	ignore the requested exclusive zone of surfaces.
 
-*icon-size*
-	Size of the icons. The default size is 80.
+*icon-padding*
+	Padding around the icons. The default 2.
 
 *layer*
 	Layer of the bar surface. Can be "overlay", "top", "bottom" or
@@ -160,6 +160,9 @@ as follows.
 *position*
 	Position of the bar. Can be "top", "right", "bottom", "left". The bar
 	will dock to that edge of the output(s). The default position is "bottom".
+
+*size*
+	Size of the bar. The default size is 80.
 
 ## BAR COPY
 Every "bar-copy" context will add a bar. This new bar has the same configuration
@@ -214,9 +217,8 @@ this context are as follows.
 Commands are executed using sh(1). If the command is "exit", LavaLauncher will
 exit, if it is "reload", LavaLauncher will reload. LavaLauncher replaces certain
 tokens in the command string with values when the command is executed. These
-tokens are "%index%", "%buttons%", "%icon-size%",
-"%border-{top,right,bottom,left}%", "%margin-{top,right,bottom,left}%",
-"%output%" and "%scale%".
+tokens are "%index%", "%buttons%", "%size%", "%border-{top,right,bottom,left}%",
+"%margin-{top,right,bottom,left}%", "%output%" and "%scale%".
 
 ## COLOURS
 LavaLauncher excepts colours in the formats "#RRGGBBAA" or "#RRGGBB". Therefore,
@@ -269,7 +271,7 @@ bar # this is a second bar
 {
 	output    all;
 	position  top;
-	icon-size 50;
+	size      50;
 	border    0;
 	alignment start;
 

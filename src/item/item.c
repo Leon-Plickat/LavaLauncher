@@ -178,7 +178,7 @@ unsigned int get_item_length_sum (struct Lava_bar_pattern *pattern)
 	return sum;
 }
 
-/* When items are created when parsing the config file, the icon size is not yet
+/* When items are created when parsing the config file, the size is not yet
  * available, so items need to be finalized later.
  */
 bool finalize_items (struct Lava_bar_pattern *pattern)
@@ -195,7 +195,7 @@ bool finalize_items (struct Lava_bar_pattern *pattern)
 	wl_list_for_each_reverse_safe(it1, it2, &pattern->items, link)
 	{
 		if ( it1->type == TYPE_BUTTON )
-			it1->length = pattern->icon_size;
+			it1->length = pattern->size;
 
 		it1->index    = index;
 		it1->ordinate = ordinate;

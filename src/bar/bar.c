@@ -102,13 +102,13 @@ static void mode_default_dimensions (struct Lava_bar *bar)
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 	{
 		bar->buffer_width  = bar->output->w;
-		bar->buffer_height = pattern->icon_size
+		bar->buffer_height = pattern->size
 			+ pattern->border_top
 			+ pattern->border_bottom;
 	}
 	else
 	{
-		bar->buffer_width  = pattern->icon_size
+		bar->buffer_width  = pattern->size
 			+ pattern->border_left
 			+ pattern->border_right;
 		bar->buffer_height = bar->output->h;
@@ -171,7 +171,7 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 		bar->bar_height = bar->item_area_height + pattern->border_top + pattern->border_bottom;
 
 		bar->buffer_width  = bar->output->w;
-		bar->buffer_height = pattern->icon_size
+		bar->buffer_height = pattern->size
 			+ pattern->border_top
 			+ pattern->border_bottom;
 	}
@@ -183,7 +183,7 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 		bar->bar_width  = bar->item_area_width + pattern->border_left + pattern->border_right;
 		bar->bar_height = output->h - pattern->margin_top - pattern->margin_bottom;
 
-		bar->buffer_width  = pattern->icon_size
+		bar->buffer_width  = pattern->size
 			+ pattern->border_left
 			+ pattern->border_right;
 		bar->buffer_height = bar->output->h;
@@ -224,11 +224,11 @@ static void update_dimensions (struct Lava_bar *bar)
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 	{
 		bar->item_area_width  = get_item_length_sum(pattern);
-		bar->item_area_height = pattern->icon_size;
+		bar->item_area_height = pattern->size;
 	}
 	else
 	{
-		bar->item_area_width  = pattern->icon_size;
+		bar->item_area_width  = pattern->size;
 		bar->item_area_height = get_item_length_sum(pattern);
 	}
 

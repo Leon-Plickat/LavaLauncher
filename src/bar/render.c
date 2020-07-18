@@ -89,7 +89,7 @@ static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 	struct Lava_bar_pattern *pattern = bar->pattern;
 
 	int scale    = bar->output->scale;
-	int32_t size = pattern->icon_size * scale;
+	int32_t size = pattern->size * scale;
 	int32_t *increment, increment_offset;
 	int32_t x = bar->item_area_x * scale, y = bar->item_area_y * scale;
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
@@ -107,7 +107,11 @@ static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 						item->background_colour);
 			draw_effect(cairo, x, y, size, pattern->effect_padding,
 					pattern->effect_colour, pattern->effect);
-			lldg_draw_square_image(cairo, x, y, size, item->img);
+			lldg_draw_square_image(cairo,
+					x + pattern->icon_padding,
+					y + pattern->icon_padding,
+					size - (2 * pattern->icon_padding),
+					item->img);
 		}
 }
 

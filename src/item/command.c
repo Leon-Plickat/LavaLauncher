@@ -75,7 +75,7 @@ static void handle_tokens (struct Lava_bar *bar, struct Lava_item *item, char *b
 	} tokens[] = {
 		{ .token = "%index%",         .replacement_string = NULL,         .replacement_int = item->index,            },
 		{ .token = "%items%",         .replacement_string = NULL,         .replacement_int = pattern->item_amount,   },
-		{ .token = "%icon-size%",     .replacement_string = NULL,         .replacement_int = pattern->icon_size,     },
+		{ .token = "%size%",          .replacement_string = NULL,         .replacement_int = pattern->size,          },
 		{ .token = "%border-top%",    .replacement_string = NULL,         .replacement_int = pattern->border_top,    },
 		{ .token = "%border-left%",   .replacement_string = NULL,         .replacement_int = pattern->border_left,   },
 		{ .token = "%border-bottom%", .replacement_string = NULL,         .replacement_int = pattern->border_bottom, },

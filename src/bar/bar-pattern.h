@@ -89,8 +89,7 @@ struct Lava_bar_pattern
 	/* Layer the surface will be rendered on. */
 	enum zwlr_layer_shell_v1_layer layer;
 
-	/* Size of icons and bar borders. */
-	int icon_size;
+	int size, icon_padding;
 	int border_top, border_right, border_bottom, border_left;
 
 	float bar_colour[4];

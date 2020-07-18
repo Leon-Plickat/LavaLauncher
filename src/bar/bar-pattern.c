@@ -44,7 +44,8 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->mode              = MODE_DEFAULT;
 	pattern->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 
-	pattern->icon_size         = 80;
+	pattern->size              = 80;
+	pattern->icon_padding      = 2;
 	pattern->border_top        = 2;
 	pattern->border_right      = 2;
 	pattern->border_bottom     = 2;
@@ -124,7 +125,8 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 	pattern->alignment        = last_pattern->alignment;
 	pattern->mode             = last_pattern->mode;
 	pattern->layer            = last_pattern->layer;
-	pattern->icon_size        = last_pattern->icon_size;
+	pattern->size             = last_pattern->size;
+	pattern->icon_padding     = last_pattern->icon_padding;
 	pattern->border_top       = last_pattern->border_top;
 	pattern->border_right     = last_pattern->border_right;
 	pattern->border_bottom    = last_pattern->border_bottom;
@@ -281,14 +283,26 @@ static bool bar_pattern_set_layer (struct Lava_bar_pattern *pattern,
 	return true;
 }
 
-static bool bar_pattern_set_icon_size (struct Lava_bar_pattern *pattern,
+static bool bar_pattern_set_size (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
 	// TODO check issdigit()
-	pattern->icon_size = atoi(arg);
-	if ( pattern->icon_size <= 0 )
+	pattern->size = atoi(arg);
+	if ( pattern->size <= 0 )
 	{
-		log_message(NULL, 0, "ERROR: Icon size must be greater than zero.\n");
+		log_message(NULL, 0, "ERROR: Size must be greater than zero.\n");
+		return false;
+	}
+	return true;
+}
+
+static bool bar_pattern_set_icon_padding (struct Lava_bar_pattern *pattern,
+		const char *arg, const char direction)
+{
+	pattern->icon_padding = atoi(arg);
+	if ( pattern->icon_padding < 0 )
+	{
+		log_message(NULL, 0, "ERROR: Icon padding must be greater than or equal to zero.\n");
 		return false;
 	}
 	return true;
@@ -493,7 +507,8 @@ struct
 	{ .variable = "alignment",            .set = bar_pattern_set_alignment,            .direction = '0'},
 	{ .variable = "mode",                 .set = bar_pattern_set_mode,                 .direction = '0'},
 	{ .variable = "layer",                .set = bar_pattern_set_layer,                .direction = '0'},
-	{ .variable = "icon-size",            .set = bar_pattern_set_icon_size,            .direction = '0'},
+	{ .variable = "size",                 .set = bar_pattern_set_size,                 .direction = '0'},
+	{ .variable = "icon-padding",         .set = bar_pattern_set_icon_padding,         .direction = '0'},
 	{ .variable = "border",               .set = bar_pattern_set_border_size,          .direction = 'a'},
 	{ .variable = "border-top",           .set = bar_pattern_set_border_size,          .direction = 't'},
 	{ .variable = "border-right",         .set = bar_pattern_set_border_size,          .direction = 'r'},
@@ -523,8 +538,7 @@ bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,
 		if (! strcmp(pattern_configs[i].variable, variable))
 			return pattern_configs[i].set(pattern, value,
 					pattern_configs[i].direction);
-	log_message(NULL, 0, "ERROR: Unrecognized bar pattern setting \"%s\": "
-			"line=%d\n", variable, line);
+	log_message(NULL, 0, "ERROR: Unrecognized bar setting \"%s\" on line %d\n", variable, line);
 	return false;
 }
 

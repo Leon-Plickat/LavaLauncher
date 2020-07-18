@@ -35,6 +35,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"output.h"
 #include"draw-generics.h"
 #include"bar/bar-pattern.h"
@@ -243,13 +244,12 @@ static void update_dimensions (struct Lava_bar *bar)
 bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 {
 	struct Lava_data *data = pattern->data;
-	if (data->verbose)
-		fputs("Creating bar.\n", stderr);
+	log_message(data, 1, "[bar] Creating bar: global_name=%d\n", output->global_name);
 
 	struct Lava_bar *bar = calloc(1, sizeof(struct Lava_bar));
 	if ( bar == NULL )
 	{
-		fputs("ERROR: Could not allocate.\n", stderr);
+		log_message(NULL, 0, "ERROR: Could not allocate.\n");
 		return false;
 	}
 	wl_list_insert(&output->bars, &bar->link);
@@ -262,7 +262,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 
 	if ( NULL == (bar->wl_surface = wl_compositor_create_surface(data->compositor)) )
 	{
-		fputs("ERROR: Compositor did not create wl_surface.\n", stderr);
+		log_message(NULL, 0, "ERROR: Compositor did not create wl_surface.\n");
 		return false;
 	}
 
@@ -271,7 +271,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 					output->wl_output, pattern->layer,
 					"LavaLauncher")) )
 	{
-		fputs("ERROR: Compositor did not create layer_surface.\n", stderr);
+		log_message(NULL, 0, "ERROR: Compositor did not create layer_surface.\n");
 		return false;
 	}
 
@@ -299,8 +299,7 @@ void destroy_bar (struct Lava_bar *bar)
 
 void destroy_all_bars (struct Lava_output *output)
 {
-	if (output->data->verbose)
-		fputs("Destroying bars.\n", stderr);
+	log_message(output->data, 1, "[bar] Destroying bars: global-name=%d\n", output->global_name);
 	struct Lava_bar *b1, *b2;
 	wl_list_for_each_safe(b1, b2, &output->bars, link)
 		destroy_bar(b1);

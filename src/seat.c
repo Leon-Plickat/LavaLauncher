@@ -35,6 +35,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"seat.h"
 #include"cursor.h"
 #include"input.h"
@@ -48,8 +49,7 @@ static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
 	struct Lava_data *data = seat->data;
 
-	if (data->verbose)
-		fputs("Handling seat capabilities.\n", stderr);
+	log_message(data, 1, "[seat] Handling seat capabilities.\n");
 
 	if ( seat->pointer.wl_pointer != NULL )
 	{
@@ -59,8 +59,7 @@ static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 
 	if ( capabilities & WL_SEAT_CAPABILITY_POINTER )
 	{
-		if (data->verbose)
-			fputs("Seat has pointer capabilities.\n", stderr);
+		log_message(data, 2, "[seat] Seat has pointer capabilities.\n");
 		seat->pointer.wl_pointer = wl_seat_get_pointer(wl_seat);
 		wl_pointer_add_listener(seat->pointer.wl_pointer,
 				&pointer_listener, seat);
@@ -68,8 +67,7 @@ static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 
 	if ( capabilities & WL_SEAT_CAPABILITY_TOUCH )
 	{
-		if (data->verbose)
-			fputs("Seat has touch capabilities.\n", stderr);
+		log_message(data, 2, "[seat] Seat has touch capabilities.\n");
 		seat->touch.wl_touch = wl_seat_get_touch(wl_seat);
 		wl_touch_add_listener(seat->touch.wl_touch,
 				&touch_listener, seat);
@@ -84,15 +82,14 @@ static const struct wl_seat_listener seat_listener = {
 bool create_seat (struct Lava_data *data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version)
 {
-	if (data->verbose)
-		fputs("Adding seat.\n", stderr);
+	log_message(data, 1, "[seat] Adding seat.\n");
 
 	struct wl_seat *wl_seat = wl_registry_bind(registry, name,
 			&wl_seat_interface, 5);
 	struct Lava_seat *seat = calloc(1, sizeof(struct Lava_seat));
 	if ( seat == NULL )
 	{
-		fputs("ERROR: Could not allocate.\n", stderr);
+		log_message(NULL, 0, "ERROR: Can not allocate.\n");
 		return false;
 	}
 
@@ -120,22 +117,21 @@ static void destroy_seat (struct Lava_seat *seat)
 
 void destroy_all_seats (struct Lava_data *data)
 {
-	if (data->verbose)
-		fputs("Destroying seats.\n", stderr);
+	log_message(data, 1, "[seat] Destroying all seats.\n");
 	struct Lava_seat *st_1, *st_2;
 	wl_list_for_each_safe(st_1, st_2, &data->seats, link)
 		destroy_seat(st_1);
 }
 
 bool create_touchpoint (struct Lava_seat *seat, int32_t id,
-          struct Lava_bar *bar, struct Lava_item *item){
-	if (seat->data->verbose)
-		fputs("Creating touchpoint.\n", stderr);
+          struct Lava_bar *bar, struct Lava_item *item)
+{
+	log_message(seat->data, 1, "[seat] Creating touchpoint.\n");
 
 	struct Lava_touchpoint *touchpoint = calloc(1, sizeof(struct Lava_touchpoint));
 	if ( touchpoint == NULL )
 	{
-		fputs("ERROR: Could not allocate.\n", stderr);
+		log_message(NULL, 0, "ERROR: Can not allocate.\n");
 		return false;
 	}
 
@@ -156,9 +152,7 @@ void destroy_touchpoint (struct Lava_touchpoint *touchpoint)
 
 void destroy_all_touchpoints (struct Lava_seat *seat)
 {
-	if (seat->data->verbose)
-		fputs("Destroying touchpoints.\n", stderr);
-	
+	log_message(seat->data, 1, "[seat] Destroying all touchpoints.\n");
 	struct Lava_touchpoint *tp, *temp;
 	wl_list_for_each_safe(tp, temp, &seat->touch.touchpoints, link)
 		destroy_touchpoint(tp);

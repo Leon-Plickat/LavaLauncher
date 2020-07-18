@@ -31,6 +31,7 @@
 #include<wayland-client-protocol.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"bar/bar-pattern.h"
 #include"item/item.h"
 #include"config/colour.h"
@@ -82,13 +83,12 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 
 bool create_bar_pattern (struct Lava_data *data)
 {
-	if (data->verbose)
-		fputs("Creating bar pattern.\n", stderr);
+	log_message(data, 1, "[bar-pattern] Creating bar pattern.\n");
 
 	struct Lava_bar_pattern *pattern = calloc(1, sizeof(struct Lava_bar_pattern));
 	if ( pattern == NULL )
 	{
-		fputs("ERROR: Could not allocate.\n", stderr);
+		log_message(NULL, 0, "ERROR: Could not allocate.\n");
 		return false;
 	}
 
@@ -106,12 +106,11 @@ bool create_bar_pattern (struct Lava_data *data)
 
 bool copy_last_bar_pattern (struct Lava_data *data)
 {
-	if (data->verbose)
-		fputs("Copying last bar pattern.\n", stderr);
+	log_message(data, 1, "[bar-pattern] Copying last bar pattern.\n");
 
 	if ( data->last_pattern == NULL )
 	{
-		fputs("ERROR: Can not copy bar. There is no previous bar to copy.\n", stderr);
+		log_message(NULL, 0, "ERROR: Can not copy bar. There is no previous bar to copy.\n");
 		return false;
 	}
 
@@ -169,8 +168,7 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 
 bool finalize_bar_pattern (struct Lava_bar_pattern *pattern)
 {
-	if (pattern->data->verbose)
-		fputs("Finalize bar pattern.\n", stderr);
+	log_message(pattern->data, 1, "[bar-pattern] Finalize bar pattern.\n");
 	if (! finalize_items(pattern))
 		return false;
 	switch (pattern->position)
@@ -197,8 +195,7 @@ static void destroy_bar_pattern (struct Lava_bar_pattern *pattern)
 
 void destroy_all_bar_patterns (struct Lava_data *data)
 {
-	if (data->verbose)
-		fputs("Destroy all bar patterns.\n", stderr);
+	log_message(data, 1, "Destroy all bar patterns.\n");
 	struct Lava_bar_pattern *pt1, *pt2;
 	wl_list_for_each_safe(pt1, pt2, &data->patterns, link)
 		destroy_bar_pattern(pt1);
@@ -217,7 +214,7 @@ static bool bar_pattern_set_position (struct Lava_bar_pattern *pattern,
 		pattern->position = POSITION_LEFT;
 	else
 	{
-		fprintf(stderr, "ERROR: Unrecognized position \"%s\".\n"
+		log_message(NULL, 0, "ERROR: Unrecognized position \"%s\".\n"
 				"INFO: Possible positions are 'top', 'right', "
 				"'bottom' and 'left'.\n", arg);
 		return false;
@@ -236,7 +233,7 @@ static bool bar_pattern_set_alignment (struct Lava_bar_pattern *pattern,
 		pattern->alignment = ALIGNMENT_END;
 	else
 	{
-		fprintf(stderr, "ERROR: Unrecognized alignment \"%s\".\n"
+		log_message(NULL, 0, "ERROR: Unrecognized alignment \"%s\".\n"
 				"INFO: Possible alignments are 'start', "
 				"'center' and 'end'.\n", arg);
 		return false;
@@ -255,7 +252,7 @@ static bool bar_pattern_set_mode (struct Lava_bar_pattern *pattern,
 		pattern->mode = MODE_SIMPLE;
 	else
 	{
-		fprintf(stderr, "ERROR: Unrecognized mode \"%s\".\n"
+		log_message(NULL, 0, "ERROR: Unrecognized mode \"%s\".\n"
 				"INFO: Possible alignments are 'default', "
 				"'full' and 'simple'.\n", arg);
 		return false;
@@ -276,7 +273,7 @@ static bool bar_pattern_set_layer (struct Lava_bar_pattern *pattern,
 		pattern->layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
 	else
 	{
-		fprintf(stderr, "ERROR: Unrecognized layer \"%s\".\n"
+		log_message(NULL, 0, "ERROR: Unrecognized layer \"%s\".\n"
 				"INFO: Possible layers are 'overlay', "
 				"'top', 'bottom', and 'background'.\n", arg);
 		return false;
@@ -291,7 +288,7 @@ static bool bar_pattern_set_icon_size (struct Lava_bar_pattern *pattern,
 	pattern->icon_size = atoi(arg);
 	if ( pattern->icon_size <= 0 )
 	{
-		fputs("ERROR: Icon size must be greater than zero.\n", stderr);
+		log_message(NULL, 0, "ERROR: Icon size must be greater than zero.\n");
 		return false;
 	}
 	return true;
@@ -303,8 +300,7 @@ static bool bar_pattern_set_border_size (struct Lava_bar_pattern *pattern,
 	int size = atoi(arg);
 	if ( size < 0 )
 	{
-		fputs("ERROR: Border size must be equal to or greater than zero.\n",
-				stderr);
+		log_message(NULL, 0, "ERROR: Border size must be equal to or greater than zero.\n");
 		return false;
 	}
 
@@ -330,8 +326,7 @@ static bool bar_pattern_set_margin_size (struct Lava_bar_pattern *pattern,
 	int size = atoi(arg);
 	if ( size < 0 )
 	{
-		fputs("ERROR: Margin size must be equal to or greater than zero.\n",
-				stderr);
+		log_message(NULL, 0, "ERROR: Margin size must be equal to or greater than zero.\n");
 		return false;
 	}
 
@@ -366,7 +361,7 @@ static bool bar_pattern_set_exclusive_zone (struct Lava_bar_pattern *pattern,
 		pattern->exclusive_zone = -1;
 	else
 	{
-		fprintf(stderr, "ERROR: Unrecognized exclusive zone option \"%s\".\n"
+		log_message(NULL, 0, "ERROR: Unrecognized exclusive zone option \"%s\".\n"
 				"INFO: Possible options are 'true', "
 				"'false' and 'stationary'.\n", arg);
 		return false;
@@ -408,7 +403,7 @@ static bool bar_pattern_set_effect (struct Lava_bar_pattern *pattern,
 		pattern->effect = EFFECT_CIRCLE;
 	else
 	{
-		fprintf(stderr, "ERROR: Unrecognized effect \"%s\".\n"
+		log_message(NULL, 0, "ERROR: Unrecognized effect \"%s\".\n"
 				"INFO: Possible options are 'none', "
 				"'box', 'phone' and 'circle'.\n", arg);
 		return false;
@@ -422,8 +417,7 @@ static bool bar_pattern_set_effect_padding (struct Lava_bar_pattern *pattern,
 	pattern->effect_padding = atoi(arg);
 	if ( pattern->effect_padding < 0 )
 	{
-		fputs("ERROR: Effect padding size must be equal to or "
-				"greater than zero.\n", stderr);
+		log_message(NULL, 0, "ERROR: Effect padding size must be equal to or greater than zero.\n");
 		return false;
 	}
 	return true;
@@ -448,8 +442,7 @@ static bool bar_pattern_set_condition_scale (struct Lava_bar_pattern *pattern,
 	pattern->condition_scale = atoi(arg);
 	if ( pattern->condition_scale <= 0 )
 	{
-		fputs("ERROR: Scale condition must be an integer greater than"
-				"zero or 'all'.\n", stderr);
+		log_message(NULL, 0, "ERROR: Scale condition must be an integer greater than  zero or 'all'.\n");
 		return false;
 	}
 	return true;
@@ -466,8 +459,7 @@ static bool bar_pattern_set_condition_resolution (struct Lava_bar_pattern *patte
 		pattern->condition_resolution = RESOLUTION_HIGHER_THEN_WIDE;
 	else
 	{
-		fputs("ERROR: Resolution condition can be 'all', "
-				"'wider-than-high' or 'higher-than-wide'.\n", stderr);
+		log_message(NULL, 0, "ERROR: Resolution condition can be 'all', 'wider-than-high' or 'higher-than-wide'.\n" );
 		return false;
 	}
 
@@ -486,7 +478,7 @@ static bool bar_pattern_set_condition_transform (struct Lava_bar_pattern *patter
 	pattern->condition_transform = atoi(arg);
 	if ( pattern->condition_transform < 0 || pattern->condition_transform > 4 )
 	{
-		fputs("ERROR: Transform condition can be 0, 1, 2, 3 or 'all'.\n", stderr);
+		log_message(NULL, 0, "ERROR: Transform condition can be 0, 1, 2, 3 or 'all'.\n");
 		return false;
 	}
 	return true;
@@ -531,7 +523,7 @@ bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,
 		if (! strcmp(pattern_configs[i].variable, variable))
 			return pattern_configs[i].set(pattern, value,
 					pattern_configs[i].direction);
-	fprintf(stderr, "ERROR: Unrecognized bar pattern setting \"%s\": "
+	log_message(NULL, 0, "ERROR: Unrecognized bar pattern setting \"%s\": "
 			"line=%d\n", variable, line);
 	return false;
 }

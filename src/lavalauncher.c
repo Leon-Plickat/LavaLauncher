@@ -40,6 +40,7 @@
 #include<wayland-client-protocol.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"registry.h"
 #include"config/parser.h"
 #include"bar/bar-pattern.h"
@@ -53,8 +54,7 @@ static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
 
 static void main_loop (struct Lava_data *data)
 {
-	if (data->verbose)
-		fputs("Starting main loop.\n", stderr);
+	log_message(data, 1, "[main] Starting main loop.\n");
 
 #ifdef WATCH_CONFIG
 	if (! data->watch)
@@ -66,7 +66,7 @@ static void main_loop (struct Lava_data *data)
 	fds[0].events = POLLIN;
 	if ( -1 ==  (fds[0].fd = wl_display_get_fd(data->display)) )
 	{
-		fputs("ERROR: Unable to open Wayland display fd.\n", stderr);
+		log_message(NULL, 0, "ERROR: Unable to open Wayland display fd.\n");
 		goto error;
 	}
 
@@ -74,15 +74,15 @@ static void main_loop (struct Lava_data *data)
 	fds[1].events = POLLIN;
 	if ( -1 ==  (fds[1].fd = inotify_init1(IN_NONBLOCK)) )
 	{
-		fputs("ERROR: Unable to open inotify fd.\n", stderr);
-		perror("inotify_init1");
+		log_message(NULL, 0, "ERROR: Unable to open inotify fd.\n"
+				"ERROR: inotify_init1: %s\n", strerror(errno));
 		goto error;
 	}
 
 	/* Add config file to inotify watch list. */
 	if ( -1 == inotify_add_watch(fds[1].fd, data->config_path, IN_MODIFY) )
 	{
-		fputs("ERROR: Unable to add config path to inotify watchlist.\n", stderr);
+		log_message(NULL, 0, "ERROR: Unable to add config path to inotify watchlist.\n");
 		goto error;
 	}
 
@@ -94,7 +94,7 @@ static void main_loop (struct Lava_data *data)
 		do {
 			if ( wl_display_flush(data->display) == 1 && errno != EAGAIN )
 			{
-				fprintf(stderr, "ERROR: wl_display_flush: %s\n",
+				log_message(NULL, 0, "ERROR: wl_display_flush: %s\n",
 						strerror(errno));
 				break;
 			}
@@ -104,29 +104,26 @@ static void main_loop (struct Lava_data *data)
 		{
 			if ( errno == EINTR )
 				continue;
-			fprintf(stderr, "poll: %s\n", strerror(errno));
+			log_message(NULL, 0, "poll: %s\n", strerror(errno));
 			goto error;
 		}
 
 		/* Wayland events. */
 		if ( fds[0].revents & POLLIN && wl_display_dispatch(data->display) == -1 )
 		{
-			fprintf(stderr, "ERROR: wl_display_flush: %s\n",
-					strerror(errno));
+			log_message(NULL, 0, "ERROR: wl_display_flush: %s\n", strerror(errno));
 			goto error;
 		}
 		if ( fds[0].revents & POLLOUT && wl_display_flush(data->display) == -1 )
 		{
-			fprintf(stderr, "ERROR: wl_display_flush: %s\n",
-					strerror(errno));
+			log_message(NULL, 0, "ERROR: wl_display_flush: %s\n", strerror(errno));
 			goto error;
 		}
 
 		/* Inotify events. */
 		if ( fds[1].revents & POLLIN )
 		{
-			if (data->verbose)
-				fputs("Config file modified; Triggering reload.\n", stderr);
+			log_message(data, 1, "[main] Config file modified; Triggering reload.\n");
 			data->loop = false;
 			data->reload = true;
 			goto exit;
@@ -168,7 +165,7 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 				return false;
 
 			case 'v':
-				data->verbose = true;
+				data->verbosity++;
 				break;
 
 			default:
@@ -197,15 +194,14 @@ static bool get_default_config_path (struct Lava_data *data)
 		goto success;
 	}
 
-	fputs("ERROR: Neither $XDG_CONFIG_HOME nor $HOME are set.\n"
+	log_message(NULL, 0, "ERROR: Neither $XDG_CONFIG_HOME nor $HOME are set.\n"
 			"ERROR: Impossible to get default configuration file path.\n"
 			"INFO: There probably is something wrong with your session.\n"
-			"INFO: You can provide a path manually with '-c'.\n", stderr);
+			"INFO: You can provide a path manually with '-c'.\n");
 	return false;
 
 success:
-	if (data->verbose)
-		fprintf(stderr, "Using default configuration file path: %s\n", data->config_path);
+	log_message(data, 1, "[main] Using default configuration file path: %s\n", data->config_path);
 	return true;
 }
 
@@ -214,7 +210,7 @@ static void init_data (struct Lava_data *data)
 	data->ret          = EXIT_FAILURE;
 	data->loop         = true;
 	data->reload       = false;
-	data->verbose      = false;
+	data->verbosity    = 0;
 	data->last_pattern = NULL;
 
 #ifdef WATCH_CONFIG
@@ -245,8 +241,8 @@ reload:
 	if (! handle_command_flags(&data, argc, argv))
 		return data.ret;
 
-	if (data.verbose)
-		fputs("LavaLauncher " VERSION"\n", stderr);
+
+	log_message(&data, 1, "[main] LavaLauncher: version=%s\n", VERSION);
 
 	/* If the user did not provide the path to a configuration file, try
 	 * the default location.

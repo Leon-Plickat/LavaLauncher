@@ -36,6 +36,7 @@ executable(
   'lavalauncher',
   files(
     'src/lavalauncher.c',
+    'src/log.c',
     'src/input.c',
     'src/seat.c',
     'src/output.c',

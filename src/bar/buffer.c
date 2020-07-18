@@ -30,6 +30,7 @@
 #include <cairo/cairo.h>
 
 #include"buffer.h"
+#include"log.h"
 
 static void randomize_string (char *str, size_t len)
 {
@@ -90,7 +91,7 @@ static bool get_shm_fd (int *fd, size_t size)
 		 */
 		if ( errno != EEXIST )
 		{
-			fprintf(stderr, "ERROR: shm_open: %s\n", strerror(errno));
+			log_message(NULL, 0, "ERROR: shm_open: %s\n", strerror(errno));
 			return false;
 		}
 	}
@@ -139,7 +140,7 @@ static bool create_buffer (struct wl_shm *shm, struct Lava_buffer *buffer,
 					fd, 0)) )
 	{
 		close(fd);
-		fprintf(stderr, "ERROR: mmap: %s\n", strerror(errno));
+		log_message(NULL, 0, "ERROR: mmap: %s\n", strerror(errno));
 		return false;
 	}
 
@@ -183,7 +184,7 @@ bool next_buffer (struct Lava_buffer **buffer, struct wl_shm *shm,
 		*buffer = &buffers[0];
 	if (! *buffer)
 	{
-		fputs("ERROR: All buffers are busy.\n", stderr);
+		log_message(NULL, 0, "ERROR: All buffers are busy.\n");
 		*buffer = NULL;
 		return false;
 	}

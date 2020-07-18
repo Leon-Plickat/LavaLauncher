@@ -36,6 +36,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"seat.h"
 #include"output.h"
 
@@ -46,36 +47,31 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 
 	if (! strcmp(interface, wl_compositor_interface.name))
 	{
-		if (data->verbose)
-			fputs("Get wl_compositor.\n", stderr);
+		log_message(data, 2, "[registry] Get wl_compositor.\n");
 		data->compositor = wl_registry_bind(registry, name,
 				&wl_compositor_interface, 4);
 	}
 	if (! strcmp(interface, wl_subcompositor_interface.name))
 	{
-		if (data->verbose)
-			fputs("Get wl_subcompositor.\n", stderr);
+		log_message(data, 2, "[registry] Get wl_subcompositor.\n");
 		data->subcompositor = wl_registry_bind(registry, name,
 				&wl_subcompositor_interface, 1);
 	}
 	else if (! strcmp(interface, wl_shm_interface.name))
 	{
-		if (data->verbose)
-			fputs("Get wl_shm.\n", stderr);
+		log_message(data, 2, "[registry] Get wl_shm.\n");
 		data->shm = wl_registry_bind(registry, name,
 				&wl_shm_interface, 1);
 	}
 	else if (! strcmp(interface, zwlr_layer_shell_v1_interface.name))
 	{
-		if (data->verbose)
-			fputs("Get zwlr_layer_shell_v1.\n", stderr);
+		log_message(data, 2, "[registry] Get zwlr_layer_shell_v1.\n");
 		data->layer_shell = wl_registry_bind(registry, name,
 				&zwlr_layer_shell_v1_interface, 1);
 	}
 	else if (! strcmp(interface, zxdg_output_manager_v1_interface.name))
 	{
-		if (data->verbose)
-			fputs("Get zxdg_output_manager_v1.\n", stderr);
+		log_message(data, 2, "[registry] Get zxdg_output_manager_v1.\n");
 		data->xdg_output_manager = wl_registry_bind(registry, name,
 				&zxdg_output_manager_v1_interface, 3);
 	}
@@ -100,10 +96,7 @@ static void registry_handle_global_remove (void *raw_data,
 		struct wl_registry *registry, uint32_t name)
 {
 	struct Lava_data *data = (struct Lava_data *)raw_data;
-
-	if (data->verbose)
-		fputs("Global remove.\n", stderr);
-
+	log_message(data, 1, "[registry] Global remove.\n");
 	destroy_output(get_output_from_global_name(data, name));
 }
 
@@ -117,8 +110,7 @@ static bool capability_test (void *ptr, const char *name)
 {
 	if ( ptr == NULL )
 	{
-		fprintf(stderr, "ERROR: Wayland compositor does not support %s.\n",
-				name);
+		log_message(NULL, 0, "ERROR: Wayland compositor does not support %s.\n", name);
 		return false;
 	}
 	return true;
@@ -126,24 +118,21 @@ static bool capability_test (void *ptr, const char *name)
 
 bool init_wayland (struct Lava_data *data)
 {
-	if (data->verbose)
-		fputs("Init Wayland.\n", stderr);
+	log_message(data, 1, "[registry] Init Wayland.\n");
 
 	/* Connect to Wayland server. */
-	if (data->verbose)
-		fputs("Connecting to server.\n", stderr);
+	log_message(data, 2, "[registry] Connecting to server.\n");
 	if ( NULL == (data->display = wl_display_connect(NULL)) )
 	{
-		fputs("ERROR: Can not connect to a Wayland server.\n", stderr);
+		log_message(NULL, 0, "ERROR: Can not connect to a Wayland server.\n");
 		return false;
 	}
 
 	/* Get registry and add listeners. */
-	if (data->verbose)
-		fputs("Get wl_registry.\n", stderr);
+	log_message(data, 2, "[registry] Get wl_registry.\n");
 	if ( NULL == (data->registry = wl_display_get_registry(data->display)) )
 	{
-		fputs("ERROR: Can not get registry.\n", stderr);
+		log_message(NULL, 0, "ERROR: Can not get registry.\n");
 		return false;
 	}
 	wl_registry_add_listener(data->registry, &registry_listener, data);
@@ -151,7 +140,7 @@ bool init_wayland (struct Lava_data *data)
 	/* Allow registry listeners to catch up. */
 	if ( wl_display_roundtrip(data->display) == -1 )
 	{
-		fputs("ERROR: Roundtrip failed.\n", stderr);
+		log_message(NULL, 0, "ERROR: Roundtrip failed.\n");
 		return false;
 	}
 
@@ -170,8 +159,7 @@ bool init_wayland (struct Lava_data *data)
 	/* Configure all outputs that were created before xdg_output_manager or
 	 * the layer_shell were available.
 	 */
-	if (data->verbose)
-		fputs("Catching up on output configuration.\n", stderr);
+	log_message(data, 2, "[registry] Catching up on output configuration.\n");
 	struct Lava_output *op, *temp;
 	wl_list_for_each_safe(op, temp, &data->outputs, link)
 		if ( op->status == OUTPUT_STATUS_UNCONFIGURED )
@@ -184,14 +172,12 @@ bool init_wayland (struct Lava_data *data)
 /* Finish him! */
 void finish_wayland (struct Lava_data *data)
 {
-	if (data->verbose)
-		fputs("Finish Wayland.\n", stderr);
+	log_message(data, 1, "[registry] Finish Wayland.\n");
 
 	destroy_all_outputs(data);
 	destroy_all_seats(data);
 
-	if (data->verbose)
-		fputs("Destroying Wayland objects.\n", stderr);
+	log_message(data, 2, "[registry] Destroying Wayland objects.\n");
 	if ( data->layer_shell != NULL )
 		zwlr_layer_shell_v1_destroy(data->layer_shell);
 	if ( data->compositor != NULL )
@@ -205,8 +191,7 @@ void finish_wayland (struct Lava_data *data)
 
 	if ( data->display != NULL )
 	{
-		if (data->verbose)
-			fputs("Diconnecting from server.\n", stderr);
+		log_message(data, 2, "[registry] Diconnecting from server.\n");
 		wl_display_disconnect(data->display);
 	}
 }

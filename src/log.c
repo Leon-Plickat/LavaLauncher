@@ -17,42 +17,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_LAVALAUNCHER_H
-#define LAVALAUNCHER_LAVALAUNCHER_H
+#define _POSIX_C_SOURCE 200809L
 
+#include<stdarg.h>
 #include<stdbool.h>
-#include<stdint.h>
-#include<wayland-server.h>
+#include<stdlib.h>
+#include<stdio.h>
+#include<string.h>
+#include<unistd.h>
 
-struct Lava_item;
-struct Lava_bar_pattern;
+#include"lavalauncher.h"
 
-struct Lava_data
+void log_message (struct Lava_data *data, int level, const char *fmt, ...)
 {
-	struct wl_display             *display;
-	struct wl_registry            *registry;
-	struct wl_compositor          *compositor;
-	struct wl_subcompositor       *subcompositor;
-	struct wl_shm                 *shm;
-	struct zwlr_layer_shell_v1    *layer_shell;
-	struct zxdg_output_manager_v1 *xdg_output_manager;
+	if ( data != NULL && level > data->verbosity )
+		return;
 
-	char config_path[1024];
+	va_list args;
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+}
 
-	struct wl_list patterns;
-	struct wl_list outputs;
-	struct wl_list seats;
-
-	struct Lava_bar_pattern *last_pattern;
-
-	bool loop;
-	bool reload;
-	int  verbosity;
-	int  ret;
-
-#ifdef WATCH_CONFIG
-	bool watch;
-#endif
-};
-
-#endif

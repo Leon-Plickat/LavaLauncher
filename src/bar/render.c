@@ -30,6 +30,7 @@
 #include<wayland-client-protocol.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"output.h"
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
@@ -117,6 +118,8 @@ void render_bar_frame (struct Lava_bar *bar)
 	struct Lava_output      *output  = bar->output;
 	int32_t                  scale   = output->scale;
 
+	log_message(data, 1, "[render] Render bar fraome: global_name=%d\n", bar->output->global_name);
+
 	/* Get new/next buffer. */
 	if (! next_buffer(&bar->current_buffer, data->shm, bar->buffers,
 				bar->buffer_width  * scale,
@@ -127,8 +130,7 @@ void render_bar_frame (struct Lava_bar *bar)
 	lldg_clear_buffer(cairo);
 
 	/* Draw bar. */
-	if (data->verbose)
-		fputs("Drawing bar.\n", stderr);
+	log_message(data, 2, "[render] Drawing bar.\n");
 	lldg_draw_bordered_rectangle(cairo,
 			bar->bar_x, bar->bar_y, bar->bar_width, bar->bar_height,
 			pattern->border_top, pattern->border_right,
@@ -136,13 +138,11 @@ void render_bar_frame (struct Lava_bar *bar)
 			scale, pattern->bar_colour, pattern->border_colour);
 
 	/* Draw icons. */
-	if (data->verbose)
-		fputs("Drawing icons.\n", stderr);
+	log_message(data, 2, "[render] Drawing icons.\n");
 	draw_items(bar, cairo);
 
 	/* Commit surface. */
-	if (data->verbose)
-		fputs("Committing surface.\n", stderr);
+	log_message(data, 2, "[render] Commiting surface.\n");
 	wl_surface_set_buffer_scale(bar->wl_surface, scale);
 	wl_surface_attach(bar->wl_surface, bar->current_buffer->buffer, 0, 0);
 	wl_surface_damage_buffer(bar->wl_surface, 0, 0, INT32_MAX, INT32_MAX);

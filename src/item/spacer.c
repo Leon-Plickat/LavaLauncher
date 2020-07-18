@@ -27,6 +27,7 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"item/item.h"
 
 static bool spacer_set_length (struct Lava_item *spacer, const char *length)
@@ -34,7 +35,7 @@ static bool spacer_set_length (struct Lava_item *spacer, const char *length)
 	int len = atoi(length);
 	if ( len <= 0 )
 	{
-		fputs("ERROR: Spacer size must be greater than 0.\n", stderr);
+		log_message(NULL, 0, "ERROR: Spacer size must be greater than 0.\n");
 		return false;
 	}
 	spacer->length = (unsigned int)len;
@@ -55,8 +56,7 @@ bool spacer_set_variable (struct Lava_item *spacer, const char *variable,
 	for (size_t i = 0; i < (sizeof(spacer_configs) / sizeof(spacer_configs[0])); i++)
 		if (! strcmp(spacer_configs[i].variable, variable))
 			return spacer_configs[i].set(spacer, value);
-	fprintf(stderr, "ERROR: Unrecognized spacer setting \"%s\": "
-			"line=%d\n", variable, line);
+	log_message(NULL, 0, "ERROR: Unrecognized spacer setting \"%s\" on line %d\n", variable, line);
 	return false;
 }
 

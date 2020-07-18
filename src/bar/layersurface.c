@@ -34,6 +34,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"output.h"
 #include"seat.h"
 #include"bar/bar-pattern.h"
@@ -103,8 +104,8 @@ void configure_layer_surface (struct Lava_bar *bar)
 	struct Lava_data        *data    = bar->data;
 	struct Lava_bar_pattern *pattern = bar->pattern;
 
-	if (data->verbose)
-		fputs("Configuring bar.\n", stderr);
+	log_message(bar->data, 1, "[bar] Configuring bar: global_name=%d\n",
+			bar->output->global_name);
 
 	zwlr_layer_surface_v1_set_size(bar->layer_surface,
 			bar->buffer_width, bar->buffer_height);
@@ -169,9 +170,8 @@ static void layer_surface_handle_configure (void *raw_data,
 	struct Lava_bar  *bar  = (struct Lava_bar *)raw_data;
 	struct Lava_data *data = bar->data;
 
-	if (data->verbose)
-		fprintf(stderr, "Layer surface configure request:"
-				" w=%d h=%d serial=%d\n", w, h, serial);
+	log_message(data, 1, "[bar] Layer surface configure request: global_name=%d w=%d h=%d serial=%d\n",
+			bar->output->global_name, w, h, serial);
 
 	bar->configured = true;
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
@@ -182,8 +182,7 @@ static void layer_surface_handle_closed (void *data,
 		struct zwlr_layer_surface_v1 *surface)
 {
 	struct Lava_bar *bar = (struct Lava_bar *)data;
-	if (bar->data->verbose)
-		fprintf(stderr, "Layer surface has been closed: global_name=%d\n",
+	log_message(bar->data, 1, "[bar] Layer surface has been closed: global_name=%d\n",
 				bar->output->global_name);
 	destroy_bar(bar);
 }

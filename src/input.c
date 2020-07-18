@@ -36,6 +36,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"output.h"
 #include"seat.h"
 #include"cursor.h"
@@ -57,8 +58,7 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 	seat->pointer.bar      = NULL;
 	seat->pointer.item     = NULL;
 
-	if (seat->data->verbose)
-		fputs("Pointer left surface.\n", stderr);
+	log_message(data, 1, "[input] Pointer left surface.\n");
 }
 
 static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
@@ -75,8 +75,7 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 	seat->pointer.x = wl_fixed_to_int(x);
 	seat->pointer.y = wl_fixed_to_int(y);
 
-	if (seat->data->verbose)
-		fprintf(stderr, "Pointer entered surface: x=%d y=%d\n",
+	log_message(data, 1, "[input] Pointer entered surface: x=%d y=%d\n",
 				seat->pointer.x, seat->pointer.y);
 }
 
@@ -95,8 +94,8 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	struct Lava_seat *seat = raw_data;
 	if ( seat->pointer.bar == NULL )
 	{
-		fputs("ERROR: Button press could not be handled: "
-				"Bar could not be found.\n", stderr);
+		log_message(NULL, 0, "ERROR: Button press could not be handled: "
+				"Bar could not be found.\n");
 		return;
 	}
 
@@ -105,16 +104,14 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	 */
 	if ( button_state == WL_POINTER_BUTTON_STATE_PRESSED )
 	{
-		if (seat->data->verbose)
-			fprintf(stderr, "Button pressed: x=%d y=%d\n",
+		log_message(seat->data, 1, "[input] Button pressed: x=%d y=%d\n",
 					seat->pointer.x, seat->pointer.y);
 		seat->pointer.item = item_from_coords(seat->pointer.bar,
 				seat->pointer.x, seat->pointer.y);
 	}
 	else
 	{
-		if (seat->data->verbose)
-			fprintf(stderr, "Button released: x=%d y=%d\n",
+		log_message(seat->data, 1, "[input] Button released: x=%d y=%d\n",
 					seat->pointer.x, seat->pointer.y);
 
 		if ( seat->pointer.item == NULL )
@@ -150,8 +147,8 @@ static void pointer_handle_axis (void *raw_data, struct wl_pointer *wl_pointer,
 	struct Lava_seat *seat = raw_data;
 	if ( seat->pointer.bar == NULL )
 	{
-		fputs("ERROR: Scrolling could not be handled: "
-				"Bar could not be found.\n", stderr);
+		log_message(NULL, 0, "ERROR: Scrolling could not be handled: "
+				"Bar could not be found.\n");
 		return;
 	}
 
@@ -173,8 +170,8 @@ static void pointer_handle_axis_discrete (void *raw_data,
 	struct Lava_seat *seat = raw_data;
 	if ( seat->pointer.bar == NULL )
 	{
-		fputs("ERROR: Discrete scrolling could not be handled: "
-				"Bar could not be found.\n", stderr);
+		log_message(NULL, 0, "ERROR: Discrete scrolling could not be handled: "
+				"Bar could not be found.\n");
 		return;
 	}
 
@@ -257,8 +254,7 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 	return;
 
 touchpoint_found:
-	if (seat->data->verbose)
-		fputs("Touch up.\n", stderr);
+	log_message(seat->data, 1, "[input] Touch up.\n");
 
 	item_interaction(current->bar, current->item, TYPE_TOUCH);
 	destroy_touchpoint(current);
@@ -272,13 +268,12 @@ static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
 	uint32_t x = wl_fixed_to_int(fx), y = wl_fixed_to_int(fy);
 
-	if (seat->data->verbose)
-		fprintf(stderr, "Touch down: x=%d y=%d\n", x, y);
+	log_message(seat->data, 1, "[input] Touch down: x=%d y=%d\n", x, y);
 
 	struct Lava_bar  *bar  = bar_from_surface(seat->data, surface);
 	struct Lava_item *item = item_from_coords(bar, x, y);
 	if (! create_touchpoint(seat, id, bar, item))
-		fputs("ERROR: could not create touchpoint\n", stderr);
+		log_message(NULL, 0, "ERROR: could not create touchpoint\n");
 }
 
 static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
@@ -292,8 +287,7 @@ static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
 	return;
 
 touchpoint_found:
-	if (seat->data->verbose)
-		fputs("Touch move\n", stdout);
+	log_message(seat->data, 2, "[input] Touch move\n");
 
 	/* If the item under the touch point is not the same we first touched,
 	 * we simply abort the touch operation.

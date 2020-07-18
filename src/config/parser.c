@@ -27,6 +27,7 @@
 #include<ctype.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"config/parser.h"
 #include"config/global.h"
 #include"item/item.h"
@@ -44,8 +45,7 @@ static bool parser_get_char (struct Lava_parser *parser, char *ch)
 		case EOF:
 			if ( errno != 0 )
 			{
-				fprintf(stderr, "ERROR: fgetc: %s\n",
-						strerror(errno));
+				log_message(NULL, 0, "ERROR: fgetc: %s\n", strerror(errno));
 				return false;
 			}
 			*ch = '\0';
@@ -85,7 +85,7 @@ static bool parser_handle_eof (struct Lava_parser *parser)
 		return true;
 	else
 	{
-		fputs("ERROR: Unexpectedly reached end of config file.\n", stderr);
+		log_message(NULL, 0, "ERROR: Unexpectedly reached end of config file.\n");
 		return false;
 	}
 }
@@ -187,7 +187,7 @@ static bool parser_handle_bracket (struct Lava_parser *parser, const char ch)
 {
 	if (! parser_is_waiting_for_bracket(parser, ch))
 	{
-		fprintf(stderr, "ERROR: Unexpected '%c' in config file: line=%d\n",
+		log_message(NULL, 0, "ERROR: Unexpected '%c' in config file on line %d.\n",
 				ch, parser->line);
 		return false;
 	}
@@ -202,7 +202,7 @@ static bool parser_handle_semicolon (struct Lava_parser *parser, const char ch)
 {
 	if ( parser->action != ACTION_ASSIGNED )
 	{
-		fprintf(stderr, "ERROR: Unexpected ';' in config file: line=%d\n",
+		log_message(NULL, 0, "ERROR: Unexpected ';' in config file on line %d.\n",
 				parser->line);
 		return false;
 	}
@@ -268,8 +268,7 @@ static bool parser_get_quoted_string (struct Lava_parser *parser)
 error_on_prev_line:
 	parser->line--;
 error:
-	fprintf(stderr, "ERROR: Unterminated quoted string: line=%d\n",
-			parser->line);
+	log_message(NULL, 0, "ERROR: Unterminated quoted string on line %d.\n", parser->line);
 	return false;
 }
 
@@ -376,7 +375,7 @@ static bool parser_handle_string (struct Lava_parser *parser)
 	}
 
 error:
-	fprintf(stderr, "ERROR: Unexpected \"%s\" in config file: line=%d\n",
+	log_message(NULL, 0, "ERROR: Unexpected \"%s\" in config file on line %d.\n",
 			parser->buffer, parser->line);
 	return false;
 }
@@ -394,7 +393,7 @@ bool parse_config_file (struct Lava_data *data)
 	};
 	if ( NULL == (parser.file = fopen(data->config_path, "r")) )
 	{
-		fprintf(stderr, "ERROR: Can not open config file \"%s\".\n"
+		log_message(NULL, 0, "ERROR: Can not open config file \"%s\".\n"
 				"ERROR: fopen: %s\n",
 				data->config_path, strerror(errno));
 		return false;

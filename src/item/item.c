@@ -27,6 +27,7 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
 #include"output.h"
@@ -67,12 +68,11 @@ static const char *item_type_to_string (enum Item_type type)
 
 bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type)
 {
-	if (pattern->data->verbose)
-		fprintf(stderr, "Creating item: type=%s\n", item_type_to_string(type));
+	log_message(pattern->data, 2, "[item] Creating item: type=%s\n", item_type_to_string(type));
 	struct Lava_item *new_item = calloc(1, sizeof(struct Lava_item));
 	if ( new_item == NULL )
 	{
-		fprintf(stderr, "ERROR: Could not allocate.\n");
+		log_message(NULL, 0, "ERROR: Could not allocate.\n");
 		return false;
 	}
 
@@ -186,7 +186,7 @@ bool finalize_items (struct Lava_bar_pattern *pattern)
 	pattern->item_amount = wl_list_length(&pattern->items);
 	if ( pattern->item_amount == 0 )
 	{
-		fputs("ERROR: Configuration defines a bar without items.\n", stderr);
+		log_message(NULL, 0, "ERROR: Configuration defines a bar without items.\n");
 		return false;
 	}
 
@@ -235,8 +235,7 @@ static void destroy_item (struct Lava_item *item)
 
 void destroy_all_items (struct Lava_bar_pattern *pattern)
 {
-	if (pattern->data->verbose)
-		fputs("Destroying items.\n", stderr);
+	log_message(pattern->data, 1, "[items] Destroying all items.\n");
 	struct Lava_item *bt_1, *bt_2;
 	wl_list_for_each_safe(bt_1, bt_2, &pattern->items, link)
 		destroy_item(bt_1);

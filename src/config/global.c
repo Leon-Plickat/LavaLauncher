@@ -25,6 +25,7 @@
 #include<string.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"config/parse-boolean.h"
 
 static bool global_set_watch (struct Lava_data *data, const char *arg)
@@ -36,12 +37,12 @@ static bool global_set_watch (struct Lava_data *data, const char *arg)
 		data->watch = false;
 	else
 	{
-		fputs("ERROR: 'watch-config-file' expects a boolean value.\n", stderr);
+		log_message(NULL, 0, "ERROR: 'watch-config-file' expects a boolean value.\n");
 		return false;
 	}
 	return true;
 #else
-	fputs("WARNING: LavaLauncher has been compiled without the ability to watch the configuration file.\n", stderr);
+	log_message(NULL, 0, "WARNING: LavaLauncher has been compiled without the ability to watch the configuration file.\n");
 	return true;
 #endif
 }
@@ -60,7 +61,6 @@ bool global_set_variable (struct Lava_data *data, const char *variable,
 	for (size_t i = 0; i < (sizeof(global_configs) / sizeof(global_configs[0])); i++)
 		if (! strcmp(global_configs[i].variable, variable))
 			return global_configs[i].set(data, value);
-	fprintf(stderr, "ERROR: Unrecognized global setting \"%s\": "
-			"line=%d\n", variable, line);
+	log_message(NULL, 0, "ERROR: Unrecognized global setting \"%s\" on line %d.\n", variable, line);
 	return false;
 }

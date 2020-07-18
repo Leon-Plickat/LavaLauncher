@@ -28,6 +28,7 @@
 #include<cairo/cairo.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"item/item.h"
 #include"config/colour.h"
 
@@ -71,7 +72,7 @@ static bool button_set_image_path (struct Lava_item *button, const char *path,
 	button->img = cairo_image_surface_create_from_png(path);
 	if ( errno != 0 )
 	{
-		fprintf(stderr, "ERROR: Failed loading image: %s\n"
+		log_message(NULL, 0, "ERROR: Failed loading image: %s\n"
 				"ERROR: cairo_image_surface_create_from_png: %s\n",
 				path, strerror(errno));
 		return false;
@@ -112,7 +113,7 @@ bool button_set_variable (struct Lava_item *button, const char *variable,
 	for (size_t i = 0; i < (sizeof(button_configs) / sizeof(button_configs[0])); i++)
 		if (! strcmp(button_configs[i].variable, variable))
 			return button_configs[i].set(button, value, button_configs[i].type);
-	fprintf(stderr, "ERROR: Unrecognized button setting \"%s\": "
-			"line=%d\n", variable, line);
+	log_message(NULL, 0, "ERROR: Unrecognized button setting \"%s\": on line %d\n",
+			variable, line);
 	return false;
 }

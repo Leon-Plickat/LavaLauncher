@@ -24,6 +24,8 @@
 #include<stdbool.h>
 #include<string.h>
 
+#include"log.h"
+
 /* Convert a hex colour string with or without alpha channel into RGBA floats. */
 bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
 {
@@ -50,7 +52,7 @@ bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_
 	return true;
 
 error:
-	fprintf(stderr, "ERROR: \"%s\" is not a valid colour.\n"
+	log_message(NULL, 0, "ERROR: \"%s\" is not a valid colour.\n"
 			"INFO: Colour codes are expected to be in the "
 			"format #RRGGBBAA or #RRGGBB\n", hex);
 	return false;

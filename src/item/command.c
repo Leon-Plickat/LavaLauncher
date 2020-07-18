@@ -28,6 +28,7 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"output.h"
 #include"command.h"
 #include"item/item.h"
@@ -101,7 +102,7 @@ static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item, const char *
 		errno = 0;
 		if ( setsid() == -1 )
 		{
-			fprintf(stderr, "ERROR: setsid: %s\n", strerror(errno));
+			log_message(NULL, 0, "ERROR: setsid: %s\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 
@@ -109,18 +110,16 @@ static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item, const char *
 		strncpy(buffer, cmd, STRING_BUFFER_SIZE);
 		handle_tokens(bar, item, buffer);
 
-		if (bar->data->verbose)
-			fprintf(stderr, "Executing: cmd='%s' raw='%s'\n",
-					buffer, cmd);
+		log_message(bar->data, 1, "[command] Executing: cmd='%s' raw='%s'\n", buffer, cmd);
 
 		/* execl() only returns on error. */
 		errno = 0;
 		execl("/bin/sh", "/bin/sh", "-c", buffer, NULL);
-		fprintf(stderr, "ERROR: execl: %s\n", strerror(errno));
+		log_message(NULL, 0, "ERROR: execl: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 	else if ( ret < 0 )
-		fprintf(stderr, "ERROR: fork: %s\n", strerror(errno));
+		log_message(NULL, 0, "ERROR: fork: %s\n", strerror(errno));
 }
 
 static char **command_pointer_by_type(struct Lava_item *item,
@@ -152,14 +151,12 @@ bool item_command (struct Lava_bar *bar, struct Lava_item *item,
 
 	if (! strcmp(*cmd, "exit"))
 	{
-		if (bar->pattern->data->verbose)
-			fputs("Exiting due to button command \"exit\".\n", stderr);
+		log_message(bar->data, 1, "[command] Exiting due to button command \"exit\".\n");
 		bar->data->loop = false;
 	}
 	else if (! strcmp(*cmd, "reload"))
 	{
-		if (bar->pattern->data->verbose)
-			fputs("Reloding due to button command \"reload\".\n", stderr);
+		log_message(bar->data, 1, "[command] Reloading due to button command \"reload\".\n");
 		bar->data->loop = false;
 		bar->data->reload = true;
 	}

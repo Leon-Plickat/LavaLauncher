@@ -34,6 +34,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"output.h"
 #include"bar/bar.h"
 #include"bar/bar-pattern.h"
@@ -79,9 +80,7 @@ static bool update_bars_on_output (struct Lava_output *output)
 		return true;
 
 	struct Lava_data *data = output->data;
-	if (data->verbose)
-		fprintf(stderr, "Updating bars for output: global_name=%d\n",
-				output->global_name);
+	log_message(data, 1, "[output] Updating bars: global_name=%d\n", output->global_name);
 
 	if ( output->w == 0 || output->h == 0 )
 	{
@@ -111,7 +110,7 @@ static bool update_bars_on_output (struct Lava_output *output)
 		{
 			if (! create_bar(pattern, output))
 			{
-				fputs("ERROR: Could not create bar.\n", stderr);
+				log_message(NULL, 0, "ERROR: Could not create bar.\n");
 				data->loop = false;
 				data->ret  = EXIT_FAILURE;
 				return false;
@@ -133,8 +132,7 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	output->scale              = factor;
 
-	if (output->data->verbose)
-		fprintf(stderr, "Output update scale: global_name=%d scale=%d\n",
+	log_message(output->data, 1, "[output] Property update: global_name=%d scale=%d\n",
 				output->global_name, output->scale);
 }
 
@@ -146,8 +144,7 @@ static void output_handle_geometry(void *raw_data, struct wl_output *wl_output,
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	output->transform          = transform;
 
-	if (output->data->verbose)
-		fprintf(stderr, "Output update transform: global_name=%d transform=%d\n",
+	log_message(output->data, 1, "[output] Property update: global_name=%d transform=%d\n",
 				output->global_name, output->transform);
 }
 
@@ -158,8 +155,7 @@ static void output_handle_done (void *raw_data, struct wl_output *wl_output)
 	 */
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 
-	if (output->data->verbose)
-		fprintf(stderr, "Output atomic update complete: global_name=%d\n",
+	log_message(output->data, 1, "[output] Atomic update complete: global_name=%d\n",
 				output->global_name);
 
 	update_bars_on_output(output);
@@ -178,8 +174,7 @@ static void xdg_output_handle_name (void *raw_data,
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	strncpy(output->name, name, sizeof(output->name) - 1);
 
-	if (output->data->verbose)
-		fprintf(stderr, "XDG-Output update name: global_name=%d name=%s\n",
+	log_message(output->data, 1, "[output] Property update: global_name=%d name=%s\n",
 				output->global_name, name);
 }
 
@@ -187,13 +182,11 @@ static void xdg_output_handle_logical_size (void *raw_data,
 		struct zxdg_output_v1 *xdg_output, int32_t w, int32_t h)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
-	struct Lava_data   *data   = output->data;
 	output->w                  = w;
 	output->h                  = h;
 
-	if (data->verbose)
-		fprintf(stderr, "XDG-Output update logical size: global_name=%d "
-				"w=%d h=%d\n", output->global_name, w, h);
+	log_message(output->data, 1, "[output] Property update: global_name=%d width=%d height=%d\n",
+				output->global_name, w, h);
 }
 
 static const struct zxdg_output_v1_listener xdg_output_listener = {
@@ -210,15 +203,13 @@ bool configure_output (struct Lava_output *output)
 {
 	struct Lava_data *data = output->data;
 
-	if (data->verbose)
-		fprintf(stderr, "Configuring output: global_name=%d\n",
-				output->global_name);
+	log_message(data, 1, "[output] Configuring: global_name=%d\n", output->global_name);
 
 	/* Create xdg_output and attach listeners. */
 	if ( NULL == (output->xdg_output = zxdg_output_manager_v1_get_xdg_output(
 					data->xdg_output_manager, output->wl_output)) )
 	{
-		fputs("ERROR: Could not get XDG output.\n", stderr);
+		log_message(NULL, 0, "ERROR: Could not get XDG output.\n");
 		return false;
 	}
 
@@ -238,8 +229,7 @@ bool configure_output (struct Lava_output *output)
 bool create_output (struct Lava_data *data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version)
 {
-	if (data->verbose)
-		fprintf(stderr, "Adding output: global_name=%d\n", name);
+	log_message(data, 1, "[output] Creating: global_name=%d\n", name);
 
 	struct wl_output *wl_output = wl_registry_bind(registry, name,
 			&wl_output_interface, 3);
@@ -248,7 +238,7 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	struct Lava_output *output = calloc(1, sizeof(struct Lava_output));
 	if ( output == NULL )
 	{
-		fputs("ERROR: Could not allocate.\n", stderr);
+		log_message(NULL, 0, "ERROR: Could not allocate.\n");
 		return false;
 	}
 
@@ -276,8 +266,8 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 		if (! configure_output(output))
 			return false;
 	}
-	else if (data->verbose)
-		fputs("Output not yet configureable.\n", stderr);
+	else
+		log_message(data, 2, "[output] Not yet configureable.\n");
 
 	return true;
 }
@@ -305,8 +295,7 @@ void destroy_output (struct Lava_output *output)
 
 void destroy_all_outputs (struct Lava_data *data)
 {
-	if (data->verbose)
-		fputs("Destroying outputs.\n", stderr);
+	log_message(data, 1, "[output] Destroying all outputs.\n");
 	struct Lava_output *op_1, *op_2;
 	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
 		destroy_output(op_1);

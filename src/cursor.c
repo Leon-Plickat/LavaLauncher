@@ -30,6 +30,7 @@
 #include<wayland-cursor.h>
 
 #include"lavalauncher.h"
+#include"log.h"
 #include"output.h"
 #include"cursor.h"
 #include"seat.h"
@@ -63,13 +64,13 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 
 	if ( NULL == (theme = wl_cursor_theme_load(NULL, cursor_size * scale, data->shm)) )
 	{
-		fputs("ERROR: Could not load cursor theme.\n", stderr);
+		log_message(NULL, 0, "ERROR: Could not load cursor theme.\n");
 		return;
 	}
 
 	if ( NULL == (cursor = wl_cursor_theme_get_cursor(theme, cursor_name)) )
 	{
-		fprintf(stderr, "WARNING: Could not get cursor \"%s\".\n"
+		log_message(NULL, 0, "WARNING: Could not get cursor \"%s\".\n"
 				"         This cursor is likely missing from your cursor theme.\n",
 				cursor_name);
 		return;
@@ -80,7 +81,7 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 
 	if ( NULL == (cursor_surface = wl_compositor_create_surface(data->compositor)) )
 	{
-		fputs("ERROR: Could not create cursor surface.\n", stderr);
+		log_message(NULL, 0, "ERROR: Could not create cursor surface.\n");
 		return;
 	}
 

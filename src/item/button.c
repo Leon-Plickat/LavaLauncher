@@ -31,6 +31,7 @@
 #include"log.h"
 #include"item/item.h"
 #include"config/colour.h"
+#include"config/filetype.h"
 
 static bool button_set_command (struct Lava_item *button,
 		const char *command, enum Interaction_type type)
@@ -66,6 +67,9 @@ static bool button_set_all_commands (struct Lava_item *button,
 static bool button_set_image_path (struct Lava_item *button, const char *path,
 		enum Interaction_type type)
 {
+	if (! is_png_file(path))
+		return false;
+
 	if ( button->img != NULL )
 		cairo_surface_destroy(button->img);
 	errno       = 0;

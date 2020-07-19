@@ -56,6 +56,7 @@ executable(
     'src/config/parse-boolean.c',
     'src/config/colour.c',
     'src/config/global.c',
+    'src/config/filetype.c',
   ),
   dependencies: [
     wayland_client,

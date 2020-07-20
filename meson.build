@@ -13,6 +13,7 @@ project(
 cc = meson.get_compiler('c')
 
 add_project_arguments(cc.get_supported_arguments([
+  '-fsigned-char',
   '-Wno-unused-parameter',
   '-Wpointer-arith',
   '-Wformat-security',

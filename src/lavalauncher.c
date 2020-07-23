@@ -226,10 +226,12 @@ static void init_data (struct Lava_data *data)
 	data->shm                = NULL;
 	data->layer_shell        = NULL;
 	data->xdg_output_manager = NULL;
+	data->toplevel_manager   = NULL;
 
 	wl_list_init(&data->patterns);
 	wl_list_init(&data->outputs);
 	wl_list_init(&data->seats);
+	wl_list_init(&data->toplevels);
 }
 
 int main (int argc, char *argv[])

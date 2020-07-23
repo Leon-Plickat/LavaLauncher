@@ -43,6 +43,7 @@ executable(
     'src/output.c',
     'src/registry.c',
     'src/cursor.c',
+    'src/toplevel.c',
     'src/bar/bar.c',
     'src/bar/bar-pattern.c',
     'src/bar/layersurface.c',

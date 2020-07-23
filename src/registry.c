@@ -32,6 +32,7 @@
 #include<wayland-client-protocol.h>
 
 #include"wlr-layer-shell-unstable-v1-protocol.h"
+#include"wlr-foreign-toplevel-management-unstable-v1-protocol.h"
 #include"xdg-output-unstable-v1-protocol.h"
 #include"xdg-shell-protocol.h"
 
@@ -39,6 +40,7 @@
 #include"log.h"
 #include"seat.h"
 #include"output.h"
+#include"toplevel.h"
 
 static void registry_handle_global (void *raw_data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version)
@@ -68,6 +70,12 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		log_message(data, 2, "[registry] Get zwlr_layer_shell_v1.\n");
 		data->layer_shell = wl_registry_bind(registry, name,
 				&zwlr_layer_shell_v1_interface, 1);
+	}
+	else if (! strcmp(interface, zwlr_foreign_toplevel_manager_v1_interface.name))
+	{
+		log_message(data, 2, "[registry] Get zwlr_foreign_toplevel_manager_v1.\n");
+		if (! create_toplevel_manager(data, registry, name))
+			goto error;
 	}
 	else if (! strcmp(interface, zxdg_output_manager_v1_interface.name))
 	{
@@ -156,6 +164,11 @@ bool init_wayland (struct Lava_data *data)
 	if (! capability_test(data->xdg_output_manager, "xdg_output_manager"))
 		return false;
 
+	/* We do not test for data->toplevel_listener. If the compositor does
+	 * not support foreign toplevel management, we just disable those
+	 * features instead of aborting.
+	 */
+
 	/* Configure all outputs that were created before xdg_output_manager or
 	 * the layer_shell were available.
 	 */
@@ -176,6 +189,7 @@ void finish_wayland (struct Lava_data *data)
 
 	destroy_all_outputs(data);
 	destroy_all_seats(data);
+	destroy_all_toplevels(data);
 
 	log_message(data, 2, "[registry] Destroying Wayland objects.\n");
 	if ( data->layer_shell != NULL )
@@ -188,6 +202,8 @@ void finish_wayland (struct Lava_data *data)
 		wl_shm_destroy(data->shm);
 	if ( data->registry != NULL )
 		wl_registry_destroy(data->registry);
+	if ( data->toplevel_manager != NULL )
+		zwlr_foreign_toplevel_manager_v1_destroy(data->toplevel_manager);
 
 	if ( data->display != NULL )
 	{

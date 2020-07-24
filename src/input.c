@@ -53,8 +53,8 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 		uint32_t serial, struct wl_surface *surface)
 {
 	struct Lava_seat *seat = data;
-	seat->pointer.x        = -1;
-	seat->pointer.y        = -1;
+	seat->pointer.x        = 0;
+	seat->pointer.y        = 0;
 	seat->pointer.bar      = NULL;
 	seat->pointer.item     = NULL;
 
@@ -72,8 +72,8 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 
 	attach_cursor(seat, serial);
 
-	seat->pointer.x = wl_fixed_to_int(x);
-	seat->pointer.y = wl_fixed_to_int(y);
+	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
+	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);
 
 	log_message(data, 1, "[input] Pointer entered surface: x=%d y=%d\n",
 				seat->pointer.x, seat->pointer.y);
@@ -84,8 +84,8 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 {
 	struct Lava_seat *seat = data;
 
-	seat->pointer.x = wl_fixed_to_int(x);
-	seat->pointer.y = wl_fixed_to_int(y);
+	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
+	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);
 }
 
 static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer,
@@ -175,7 +175,7 @@ static void pointer_handle_axis_discrete (void *raw_data,
 		return;
 	}
 
-	seat->pointer.discrete_steps += abs(steps);
+	seat->pointer.discrete_steps += (uint32_t)abs(steps);
 }
 
 static void pointer_handle_frame (void *raw_data, struct wl_pointer *wl_pointer)
@@ -266,7 +266,7 @@ static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
 		wl_fixed_t fx, wl_fixed_t fy)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-	uint32_t x = wl_fixed_to_int(fx), y = wl_fixed_to_int(fy);
+	uint32_t x = (uint32_t)wl_fixed_to_int(fx), y = (uint32_t)wl_fixed_to_int(fy);
 
 	log_message(seat->data, 1, "[input] Touch down: x=%d y=%d\n", x, y);
 
@@ -292,7 +292,7 @@ touchpoint_found:
 	/* If the item under the touch point is not the same we first touched,
 	 * we simply abort the touch operation.
 	 */
-	uint32_t x = wl_fixed_to_int(fx), y = wl_fixed_to_int(fy);
+	uint32_t x = (uint32_t)wl_fixed_to_int(fx), y = (uint32_t)wl_fixed_to_int(fy);
 	if ( item_from_coords(current->bar, x, y) != current->item )
 		destroy_touchpoint(current);
 }

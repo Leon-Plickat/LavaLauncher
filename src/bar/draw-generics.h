@@ -26,14 +26,14 @@
 struct Lava_data;
 struct Lava_bar;
 
-void lldg_circle (cairo_t *cairo, int32_t x, int32_t y, int32_t size);
-void lldg_rounded_square (cairo_t *cairo, int32_t x, int32_t y, int32_t size);
-void lldg_draw_square_image (cairo_t *cairo, int32_t x, int32_t y,
-		int32_t icon_size, cairo_surface_t *img);
-void lldg_draw_bordered_rectangle (cairo_t *cairo, int32_t x, int32_t y,
-		int32_t w, int32_t h, int32_t border_top, int32_t border_right,
-		int32_t border_bottom, int32_t border_left,
-		float scale, float center_colour[4], float border_colour[4]);
+void lldg_circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size);
+void lldg_rounded_square (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size);
+void lldg_draw_square_image (cairo_t *cairo, uint32_t x, uint32_t y,
+		uint32_t icon_size, cairo_surface_t *img);
+void lldg_draw_bordered_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
+		uint32_t w, uint32_t h, uint32_t border_top, uint32_t border_right,
+		uint32_t border_bottom, uint32_t border_left,
+		uint32_t scale, float center_colour[4], float border_colour[4]);
 void lldg_clear_buffer (cairo_t *cairo);
 
 #endif

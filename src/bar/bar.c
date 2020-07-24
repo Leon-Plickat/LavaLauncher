@@ -54,19 +54,19 @@ static void mode_default_dimensions (struct Lava_bar *bar)
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL ) switch (pattern->alignment)
 	{
 		case ALIGNMENT_START:
-			bar->item_area_x = pattern->border_left + pattern->margin_left;
+			bar->item_area_x = pattern->border_left + (uint32_t)pattern->margin_left;
 			bar->item_area_y = pattern->border_top;
 			break;
 
 		case ALIGNMENT_CENTER:
 			bar->item_area_x = (output->w / 2) - (bar->item_area_width / 2)
-				+ (pattern->margin_left - pattern->margin_right);
+				+ (uint32_t)(pattern->margin_left - pattern->margin_right);
 			bar->item_area_y = pattern->border_top;
 			break;
 
 		case ALIGNMENT_END:
 			bar->item_area_x = output->w - bar->item_area_width
-				- pattern->border_right - pattern->margin_right;
+				- pattern->border_right - (uint32_t)pattern->margin_right;
 			bar->item_area_y = pattern->border_top;
 			break;
 	}
@@ -74,19 +74,19 @@ static void mode_default_dimensions (struct Lava_bar *bar)
 	{
 		case ALIGNMENT_START:
 			bar->item_area_x = pattern->border_left;
-			bar->item_area_y = pattern->border_top + pattern->margin_top;
+			bar->item_area_y = pattern->border_top + (uint32_t)pattern->margin_top;
 			break;
 
 		case ALIGNMENT_CENTER:
 			bar->item_area_x = pattern->border_left;
 			bar->item_area_y = (output->h / 2) - (bar->item_area_height / 2)
-				+ (pattern->margin_top - pattern->margin_bottom);
+				+ (uint32_t)(pattern->margin_top - pattern->margin_bottom);
 			break;
 
 		case ALIGNMENT_END:
 			bar->item_area_x = pattern->border_left;
 			bar->item_area_y = output->h - bar->item_area_height
-				- pattern->border_bottom - pattern->margin_bottom;
+				- pattern->border_bottom - (uint32_t)pattern->margin_bottom;
 			break;
 	}
 
@@ -125,19 +125,19 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL ) switch (pattern->alignment)
 	{
 		case ALIGNMENT_START:
-			bar->item_area_x = pattern->border_left + pattern->margin_left;
+			bar->item_area_x = pattern->border_left + (uint32_t)pattern->margin_left;
 			bar->item_area_y = pattern->border_top;
 			break;
 
 		case ALIGNMENT_CENTER:
 			bar->item_area_x = (output->w / 2) - (bar->item_area_width / 2)
-				+ (pattern->margin_left - pattern->margin_right);
+				+ (uint32_t)(pattern->margin_left - pattern->margin_right);
 			bar->item_area_y = pattern->border_top;
 			break;
 
 		case ALIGNMENT_END:
 			bar->item_area_x = output->w - bar->item_area_width
-				- pattern->border_right - pattern->margin_right;
+				- pattern->border_right - (uint32_t)pattern->margin_right;
 			bar->item_area_y = pattern->border_top;
 			break;
 	}
@@ -145,29 +145,29 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 	{
 		case ALIGNMENT_START:
 			bar->item_area_x = pattern->border_left;
-			bar->item_area_y = pattern->border_top + pattern->margin_top;
+			bar->item_area_y = pattern->border_top + (uint32_t)pattern->margin_top;
 			break;
 
 		case ALIGNMENT_CENTER:
 			bar->item_area_x = pattern->border_left;
 			bar->item_area_y = (output->h / 2) - (bar->item_area_height / 2)
-				+ (pattern->margin_top - pattern->margin_bottom);
+				+ (uint32_t)(pattern->margin_top - pattern->margin_bottom);
 			break;
 
 		case ALIGNMENT_END:
 			bar->item_area_x = pattern->border_left;
 			bar->item_area_y = output->h - bar->item_area_height
-				- pattern->border_bottom - pattern->margin_bottom;
+				- pattern->border_bottom - (uint32_t)pattern->margin_bottom;
 			break;
 	}
 
 	/* Position and size of bar and size of buffer / surface. */
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 	{
-		bar->bar_x = pattern->margin_left;
+		bar->bar_x = (uint32_t)pattern->margin_left;
 		bar->bar_y = 0;
 
-		bar->bar_width  = output->w - pattern->margin_left - pattern->margin_right;
+		bar->bar_width  = output->w - (uint32_t)(pattern->margin_left + pattern->margin_right);
 		bar->bar_height = bar->item_area_height + pattern->border_top + pattern->border_bottom;
 
 		bar->buffer_width  = bar->output->w;
@@ -178,10 +178,10 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 	else
 	{
 		bar->bar_x = 0;
-		bar->bar_y = pattern->margin_top;
+		bar->bar_y = (uint32_t)pattern->margin_top;
 
 		bar->bar_width  = bar->item_area_width + pattern->border_left + pattern->border_right;
-		bar->bar_height = output->h - pattern->margin_top - pattern->margin_bottom;
+		bar->bar_height = output->h - (uint32_t)(pattern->margin_top + pattern->margin_bottom);
 
 		bar->buffer_width  = pattern->size
 			+ pattern->border_left

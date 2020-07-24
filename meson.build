@@ -19,6 +19,8 @@ add_project_arguments(cc.get_supported_arguments([
   '-Wformat-security',
   '-Wunreachable-code',
   '-Wformat',
+  '-Wconversion',
+  '-Wfloat-conversion',
 ]), language: 'c')
 
 if get_option('watch-config').enabled()

@@ -39,8 +39,8 @@
 #include"bar/buffer.h"
 #include"item/item.h"
 
-static void item_replace_background (cairo_t *cairo, int32_t x, int32_t y,
-		int32_t size, float colour[4])
+static void item_replace_background (cairo_t *cairo, uint32_t x, uint32_t y,
+		uint32_t size, float colour[4])
 {
 	cairo_save(cairo);
 	cairo_rectangle(cairo, x, y, size, size);
@@ -50,8 +50,8 @@ static void item_replace_background (cairo_t *cairo, int32_t x, int32_t y,
 	cairo_restore(cairo);
 }
 
-static void draw_effect (cairo_t *cairo, int32_t x, int32_t y, int32_t size,
-		int32_t padding, float colour[4], enum Draw_effect effect)
+static void draw_effect (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size,
+		uint32_t padding, float colour[4], enum Draw_effect effect)
 {
 	if ( effect == EFFECT_NONE )
 		return;
@@ -88,10 +88,10 @@ static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 {
 	struct Lava_bar_pattern *pattern = bar->pattern;
 
-	int scale    = bar->output->scale;
-	int32_t size = pattern->size * scale;
-	int32_t *increment, increment_offset;
-	int32_t x = bar->item_area_x * scale, y = bar->item_area_y * scale;
+	uint32_t scale = bar->output->scale;
+	uint32_t size = pattern->size * scale;
+	uint32_t *increment, increment_offset;
+	uint32_t x = bar->item_area_x * scale, y = bar->item_area_y * scale;
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 		increment = &x, increment_offset = x;
 	else
@@ -120,7 +120,7 @@ void render_bar_frame (struct Lava_bar *bar)
 	struct Lava_data        *data    = bar->data;
 	struct Lava_bar_pattern *pattern = bar->pattern;
 	struct Lava_output      *output  = bar->output;
-	int32_t                  scale   = output->scale;
+	uint32_t                 scale   = output->scale;
 
 	log_message(data, 1, "[render] Render bar fraome: global_name=%d\n", bar->output->global_name);
 
@@ -147,7 +147,7 @@ void render_bar_frame (struct Lava_bar *bar)
 
 	/* Commit surface. */
 	log_message(data, 2, "[render] Commiting surface.\n");
-	wl_surface_set_buffer_scale(bar->wl_surface, scale);
+	wl_surface_set_buffer_scale(bar->wl_surface, (int32_t)scale);
 	wl_surface_attach(bar->wl_surface, bar->current_buffer->buffer, 0, 0);
 	wl_surface_damage_buffer(bar->wl_surface, 0, 0, INT32_MAX, INT32_MAX);
 	wl_surface_commit(bar->wl_surface);

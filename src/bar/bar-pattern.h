@@ -89,8 +89,8 @@ struct Lava_bar_pattern
 	/* Layer the surface will be rendered on. */
 	enum zwlr_layer_shell_v1_layer layer;
 
-	int size, icon_padding;
-	int border_top, border_right, border_bottom, border_left;
+	uint32_t size, icon_padding;
+	uint32_t border_top, border_right, border_bottom, border_left;
 
 	float bar_colour[4];
 	float border_colour[4];
@@ -107,22 +107,22 @@ struct Lava_bar_pattern
 	 * at startup, otherwise its exact value is used, which should be either
 	 * 0 or -1.
 	 */
-	uint32_t exclusive_zone;
+	int32_t exclusive_zone;
 
 	/* Directional margins of the surface. */
-	int margin_top, margin_right, margin_bottom, margin_left;
+	int32_t margin_top, margin_right, margin_bottom, margin_left;
 
 
 	/* Draw effect applied to item. */
 	enum Draw_effect effect;
-	int effect_padding;
+	uint32_t effect_padding;
 
 	/* Name of cursor which should be attached to pointer on hover. */
 	char cursor_name[64];
 
 	/* Conditions an output must match for the pattern to generate a bar on it. */
-	int32_t condition_scale;
-	int32_t condition_transform;
+	uint32_t condition_scale;
+	int32_t  condition_transform;
 	enum Condition_resolution condition_resolution;
 };
 

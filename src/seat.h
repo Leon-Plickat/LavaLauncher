@@ -39,7 +39,7 @@ struct Lava_seat
 		struct wl_pointer *wl_pointer;
 
 		/* Current position. */
-		int32_t           x, y;
+		uint32_t          x, y;
 		struct Lava_bar  *bar;
 		struct Lava_item *item;
 

@@ -29,12 +29,12 @@
 #include"seat.h"
 #include"draw-generics.h"
 
-void lldg_circle (cairo_t *cairo, int32_t x, int32_t y, int32_t size)
+void lldg_circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size)
 {
 	cairo_arc(cairo, x + (size/2), y + (size/2), size / 2, 0, 2 * 3.1415927);
 }
 
-void lldg_rounded_square (cairo_t *cairo, int32_t x, int32_t y, int32_t size)
+void lldg_rounded_square (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size)
 {
 	double radius = size / 10.0, degrees = 3.1415927 / 180.0;
 
@@ -50,28 +50,29 @@ void lldg_rounded_square (cairo_t *cairo, int32_t x, int32_t y, int32_t size)
 	cairo_close_path(cairo);
 }
 
-void lldg_draw_square_image (cairo_t *cairo, int32_t x, int32_t y,
-		int32_t icon_size, cairo_surface_t *img)
+void lldg_draw_square_image (cairo_t *cairo, uint32_t x, uint32_t y,
+		uint32_t icon_size, cairo_surface_t *img)
 {
 	if ( img == NULL )
 		return;
 
-	float w = cairo_image_surface_get_width(img);
-	float h = cairo_image_surface_get_height(img);
+	int w = cairo_image_surface_get_width(img);
+	int h = cairo_image_surface_get_height(img);
 
 	cairo_save(cairo);
 	cairo_translate(cairo, x, y);
-	cairo_scale(cairo, icon_size / w, icon_size / h);
+	cairo_scale(cairo, (float)icon_size / (float)w,
+			(float)icon_size / (float)h);
 	cairo_set_source_surface(cairo, img, 0, 0);
 	cairo_paint(cairo);
 	cairo_restore(cairo);
 }
 
 /* Draw a rectangle with borders. */
-void lldg_draw_bordered_rectangle (cairo_t *cairo, int32_t x, int32_t y,
-		int32_t w, int32_t h, int32_t border_top, int32_t border_right,
-		int32_t border_bottom, int32_t border_left,
-		float scale, float center_colour[4], float border_colour[4])
+void lldg_draw_bordered_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
+		uint32_t w, uint32_t h, uint32_t border_top, uint32_t border_right,
+		uint32_t border_bottom, uint32_t border_left,
+		uint32_t scale, float center_colour[4], float border_colour[4])
 {
 	/* Scale. */
 	x *= scale, y *= scale, w *= scale, h *= scale;
@@ -79,7 +80,7 @@ void lldg_draw_bordered_rectangle (cairo_t *cairo, int32_t x, int32_t y,
 	border_left *= scale, border_right *= scale;
 
 	/* Calculate dimensions of center. */
-	int32_t cx = x + border_left,
+	uint32_t cx = x + border_left,
 		cy = y + border_top,
 		cw = w - border_left - border_right,
 		ch = h - border_top  - border_bottom;

@@ -108,7 +108,7 @@ void configure_layer_surface (struct Lava_bar *bar)
 			bar->output->global_name);
 
 	zwlr_layer_surface_v1_set_size(bar->layer_surface,
-			bar->buffer_width, bar->buffer_height);
+			(uint32_t)bar->buffer_width, (uint32_t)bar->buffer_height);
 
 	/* Anchor the surface to the correct edge. */
 	zwlr_layer_surface_v1_set_anchor(bar->layer_surface, get_anchor(pattern));
@@ -127,13 +127,13 @@ void configure_layer_surface (struct Lava_bar *bar)
 				0, pattern->margin_left);
 
 	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
-	int exclusive_zone;
+	int32_t exclusive_zone;
 	if ( pattern->exclusive_zone == 1 )
 	{
 		if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-			exclusive_zone = bar->buffer_height;
+			exclusive_zone = (int32_t)bar->buffer_height;
 		else
-			exclusive_zone = bar->buffer_width;
+			exclusive_zone = (int32_t)bar->buffer_width;
 	}
 	else
 		exclusive_zone = pattern->exclusive_zone;
@@ -145,7 +145,8 @@ void configure_layer_surface (struct Lava_bar *bar)
 	 * bar.
 	 */
 	struct wl_region *region = wl_compositor_create_region(data->compositor);
-	wl_region_add(region, bar->bar_x, bar->bar_y, bar->bar_width, bar->bar_height);
+	wl_region_add(region, (int32_t)bar->bar_x, (int32_t)bar->bar_y,
+			(int32_t)bar->bar_width, (int32_t)bar->bar_height);
 
 	/* Set input region. This is necessary to prevent the unused parts of
 	 * the surface to catch pointer and touch events.

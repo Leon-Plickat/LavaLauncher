@@ -287,7 +287,7 @@ static bool bar_pattern_set_size (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
 	// TODO check issdigit()
-	pattern->size = atoi(arg);
+	pattern->size = (uint32_t)atoi(arg);
 	if ( pattern->size <= 0 )
 	{
 		log_message(NULL, 0, "ERROR: Size must be greater than zero.\n");
@@ -299,19 +299,20 @@ static bool bar_pattern_set_size (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_icon_padding (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	pattern->icon_padding = atoi(arg);
-	if ( pattern->icon_padding < 0 )
+	int32_t temp = atoi(arg);
+	if ( temp < 0 )
 	{
 		log_message(NULL, 0, "ERROR: Icon padding must be greater than or equal to zero.\n");
 		return false;
 	}
+	pattern->icon_padding = (uint32_t)temp;
 	return true;
 }
 
 static bool bar_pattern_set_border_size (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	int size = atoi(arg);
+	int32_t size = atoi(arg);
 	if ( size < 0 )
 	{
 		log_message(NULL, 0, "ERROR: Border size must be equal to or greater than zero.\n");
@@ -320,15 +321,15 @@ static bool bar_pattern_set_border_size (struct Lava_bar_pattern *pattern,
 
 	switch (direction)
 	{
-		case 't': pattern->border_top    = size; break;
-		case 'r': pattern->border_right  = size; break;
-		case 'b': pattern->border_bottom = size; break;
-		case 'l': pattern->border_left   = size; break;
+		case 't': pattern->border_top    = (uint32_t)size; break;
+		case 'r': pattern->border_right  = (uint32_t)size; break;
+		case 'b': pattern->border_bottom = (uint32_t)size; break;
+		case 'l': pattern->border_left   = (uint32_t)size; break;
 		case 'a':
-			pattern->border_top    = size;
-			pattern->border_right  = size;
-			pattern->border_bottom = size;
-			pattern->border_left   = size;
+			pattern->border_top    = (uint32_t)size;
+			pattern->border_right  = (uint32_t)size;
+			pattern->border_bottom = (uint32_t)size;
+			pattern->border_left   = (uint32_t)size;
 			break;
 	}
 	return true;
@@ -337,7 +338,7 @@ static bool bar_pattern_set_border_size (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_margin_size (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	int size = atoi(arg);
+	int32_t size = atoi(arg);
 	if ( size < 0 )
 	{
 		log_message(NULL, 0, "ERROR: Margin size must be equal to or greater than zero.\n");
@@ -428,12 +429,13 @@ static bool bar_pattern_set_effect (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_effect_padding (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	pattern->effect_padding = atoi(arg);
-	if ( pattern->effect_padding < 0 )
+	int32_t temp = atoi(arg);
+	if ( temp < 0 )
 	{
 		log_message(NULL, 0, "ERROR: Effect padding size must be equal to or greater than zero.\n");
 		return false;
 	}
+	pattern->effect_padding = (uint32_t)temp;
 	return true;
 }
 
@@ -453,12 +455,13 @@ static bool bar_pattern_set_condition_scale (struct Lava_bar_pattern *pattern,
 		return true;
 	}
 
-	pattern->condition_scale = atoi(arg);
-	if ( pattern->condition_scale <= 0 )
+	int32_t temp = atoi(arg);
+	if ( temp <= 0 )
 	{
 		log_message(NULL, 0, "ERROR: Scale condition must be an integer greater than  zero or 'all'.\n");
 		return false;
 	}
+	pattern->condition_scale = (uint32_t)temp;
 	return true;
 }
 

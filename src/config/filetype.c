@@ -40,7 +40,7 @@ bool is_png_file (const char *path)
 	}
 
 	unsigned char buffer[BUFFER_SIZE];
-	int ret = fread(buffer, sizeof(unsigned char), BUFFER_SIZE, file);
+	size_t ret = fread(buffer, sizeof(unsigned char), BUFFER_SIZE, file);
 	fclose(file);
 
 	if ( ret == 0 )

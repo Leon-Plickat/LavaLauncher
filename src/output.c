@@ -67,7 +67,7 @@ static bool pattern_conditions_match_output (struct Lava_bar_pattern *pattern,
 		return false;
 
 	if ( pattern->condition_transform != -1
-			&& pattern->condition_transform != output->transform )
+			&& pattern->condition_transform != (int32_t)output->transform )
 		return false;
 
 	return true;
@@ -130,7 +130,7 @@ static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
 		int32_t factor)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
-	output->scale              = factor;
+	output->scale              = (uint32_t)factor;
 
 	log_message(output->data, 1, "[output] Property update: global_name=%d scale=%d\n",
 				output->global_name, output->scale);
@@ -142,7 +142,7 @@ static void output_handle_geometry(void *raw_data, struct wl_output *wl_output,
 		int32_t transform)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
-	output->transform          = transform;
+	output->transform          = (uint32_t)transform;
 
 	log_message(output->data, 1, "[output] Property update: global_name=%d transform=%d\n",
 				output->global_name, output->transform);
@@ -182,8 +182,8 @@ static void xdg_output_handle_logical_size (void *raw_data,
 		struct zxdg_output_v1 *xdg_output, int32_t w, int32_t h)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
-	output->w                  = w;
-	output->h                  = h;
+	output->w                  = (uint32_t)w;
+	output->h                  = (uint32_t)h;
 
 	log_message(output->data, 1, "[output] Property update: global_name=%d width=%d height=%d\n",
 				output->global_name, w, h);

@@ -36,9 +36,9 @@ struct Lava_bar
 	struct wl_surface            *wl_surface;
 	struct zwlr_layer_surface_v1 *layer_surface;
 
-	int32_t buffer_width, buffer_height;
-	int32_t bar_x, bar_y, bar_width, bar_height;
-	int32_t item_area_x, item_area_y, item_area_width, item_area_height;
+	uint32_t buffer_width, buffer_height;
+	uint32_t bar_x, bar_y, bar_width, bar_height;
+	uint32_t item_area_x, item_area_y, item_area_width, item_area_height;
 
 	struct Lava_buffer  buffers[2];
 	struct Lava_buffer *current_buffer;

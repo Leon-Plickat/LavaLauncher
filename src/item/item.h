@@ -68,7 +68,7 @@ bool item_set_variable (struct Lava_item *item, const char *variable,
 		const char *value, int line);
 void item_interaction (struct Lava_bar *bar, struct Lava_item *item,
 		enum Interaction_type type);
-struct Lava_item *item_from_coords (struct Lava_bar *bar, int32_t x, int32_t y);
+struct Lava_item *item_from_coords (struct Lava_bar *bar, uint32_t x, uint32_t y);
 unsigned int get_item_length_sum (struct Lava_bar_pattern *pattern);
 bool finalize_items (struct Lava_bar_pattern *pattern);
 void destroy_all_items (struct Lava_bar_pattern *pattern);

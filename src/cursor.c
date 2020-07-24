@@ -56,8 +56,8 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 	struct wl_cursor       *cursor         = seat->pointer.cursor;
 	char                   *cursor_name    = seat->pointer.bar->pattern->cursor_name;
 
-	unsigned int scale       = seat->pointer.bar->output->scale;
-	unsigned int cursor_size = 24; // TODO ?
+	int32_t scale       = (int32_t)seat->pointer.bar->output->scale;
+	int32_t cursor_size = 24; // TODO ?
 
 	/* Cleanup any leftover cursor stuff. */
 	cleanup_cursor(seat);
@@ -97,5 +97,5 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 	wl_surface_commit(cursor_surface);
 
 	wl_pointer_set_cursor(pointer, serial, cursor_surface,
-			image->hotspot_x / scale, image->hotspot_y / scale);
+			(int32_t)image->hotspot_x / scale, (int32_t)image->hotspot_y / scale);
 }

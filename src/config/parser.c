@@ -37,7 +37,7 @@
 static bool parser_get_char (struct Lava_parser *parser, char *ch)
 {
 	errno = 0;
-	*ch = fgetc(parser->file);
+	*ch = (char)fgetc(parser->file);
 	parser->last_char = *ch;
 
 	switch (*ch)

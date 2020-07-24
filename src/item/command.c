@@ -41,7 +41,7 @@
  */
 // This likely sucks...
 static void replace_token (char **str, const char *srch, const char *repl_s,
-		const int repl_i, size_t size)
+		const int32_t repl_i, size_t size)
 {
 	char  buffer[STRING_BUFFER_SIZE+1]; /* Local editing buffer. */
 	char *p;                            /* Pointer to beginning of *srch. */
@@ -50,7 +50,7 @@ static void replace_token (char **str, const char *srch, const char *repl_s,
 	while ((p = strstr(*str, srch)))
 	{
 		/* Copy str to buffer, but only until p. */
-		strncpy(buffer, *str, p - *str);
+		strncpy(buffer, *str, (size_t)(p - *str));
 
 		/* Insert replacement and rest of string. */
 		if ( repl_s == NULL )
@@ -73,19 +73,19 @@ static void handle_tokens (struct Lava_bar *bar, struct Lava_item *item, char *b
 		const char *replacement_string;
 		const int   replacement_int;
 	} tokens[] = {
-		{ .token = "%index%",         .replacement_string = NULL,         .replacement_int = item->index,            },
-		{ .token = "%items%",         .replacement_string = NULL,         .replacement_int = pattern->item_amount,   },
-		{ .token = "%size%",          .replacement_string = NULL,         .replacement_int = pattern->size,          },
-		{ .token = "%border-top%",    .replacement_string = NULL,         .replacement_int = pattern->border_top,    },
-		{ .token = "%border-left%",   .replacement_string = NULL,         .replacement_int = pattern->border_left,   },
-		{ .token = "%border-bottom%", .replacement_string = NULL,         .replacement_int = pattern->border_bottom, },
-		{ .token = "%border-right%",  .replacement_string = NULL,         .replacement_int = pattern->border_right,  },
-		{ .token = "%margin-top%",    .replacement_string = NULL,         .replacement_int = pattern->margin_top,    },
-		{ .token = "%margin-right%",  .replacement_string = NULL,         .replacement_int = pattern->margin_right,  },
-		{ .token = "%margin-bottom%", .replacement_string = NULL,         .replacement_int = pattern->margin_bottom, },
-		{ .token = "%margin-left%",   .replacement_string = NULL,         .replacement_int = pattern->margin_left,   },
-		{ .token = "%output%",        .replacement_string = output->name, .replacement_int = 0,                      },
-		{ .token = "%scale%",         .replacement_string = NULL,         .replacement_int = output->scale,          }
+		{ .token = "%index%",         .replacement_string = NULL,         .replacement_int = (int32_t)item->index,            },
+		{ .token = "%items%",         .replacement_string = NULL,         .replacement_int = (int32_t)pattern->item_amount,   },
+		{ .token = "%size%",          .replacement_string = NULL,         .replacement_int = (int32_t)pattern->size,          },
+		{ .token = "%border-top%",    .replacement_string = NULL,         .replacement_int = (int32_t)pattern->border_top,    },
+		{ .token = "%border-left%",   .replacement_string = NULL,         .replacement_int = (int32_t)pattern->border_left,   },
+		{ .token = "%border-bottom%", .replacement_string = NULL,         .replacement_int = (int32_t)pattern->border_bottom, },
+		{ .token = "%border-right%",  .replacement_string = NULL,         .replacement_int = (int32_t)pattern->border_right,  },
+		{ .token = "%margin-top%",    .replacement_string = NULL,         .replacement_int = (int32_t)pattern->margin_top,    },
+		{ .token = "%margin-right%",  .replacement_string = NULL,         .replacement_int = (int32_t)pattern->margin_right,  },
+		{ .token = "%margin-bottom%", .replacement_string = NULL,         .replacement_int = (int32_t)pattern->margin_bottom, },
+		{ .token = "%margin-left%",   .replacement_string = NULL,         .replacement_int = (int32_t)pattern->margin_left,   },
+		{ .token = "%output%",        .replacement_string = output->name, .replacement_int = 0,                               },
+		{ .token = "%scale%",         .replacement_string = NULL,         .replacement_int = (int32_t)output->scale,          }
 	};
 	for (size_t i = 0; i < (sizeof(tokens) / sizeof(tokens[0])); i++)
 		replace_token(&buffer, tokens[i].token,

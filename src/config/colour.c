@@ -44,10 +44,10 @@ bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_
 			&& 3 != sscanf(hex, "#%02x%02x%02x", &r, &g, &b) )
 		goto error;
 
-	*c_r = r / 255.0f;
-	*c_g = g / 255.0f;
-	*c_b = b / 255.0f;
-	*c_a = a / 255.0f;
+	*c_r = (float)r / 255.0f;
+	*c_g = (float)g / 255.0f;
+	*c_b = (float)b / 255.0f;
+	*c_a = (float)a / 255.0f;
 
 	return true;
 

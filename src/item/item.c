@@ -150,10 +150,10 @@ void item_interaction (struct Lava_bar *bar, struct Lava_item *item,
 /* Return pointer to Lava_item struct from item list which includes the
  * given surface-local coordinates on the surface of the given output.
  */
-struct Lava_item *item_from_coords (struct Lava_bar *bar, int32_t x, int32_t y)
+struct Lava_item *item_from_coords (struct Lava_bar *bar, uint32_t x, uint32_t y)
 {
 	struct Lava_bar_pattern *pattern = bar->pattern;
-	unsigned int ordinate;
+	uint32_t ordinate;
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 		ordinate = x - bar->item_area_x;
 	else

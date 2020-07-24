@@ -44,7 +44,7 @@ static void randomize_string (char *str, size_t len)
 		 * increase the ASCII character 'A' into another character,
 		 * which will then subsitute the character at *str.
 		 */
-		*str = 'A' + (r&15) + (r&16);
+		*str = (char)('A' + (r&15) + (r&16));
 		r >>= 5;
 	}
 }
@@ -78,7 +78,7 @@ static bool get_shm_fd (int *fd, size_t size)
 		if ( *fd >= 0 )
 		{
 			shm_unlink(name);
-			if ( ftruncate(*fd, size) < 0 )
+			if ( ftruncate(*fd, (__off64_t)size) < 0 )
 			{
 				close(*fd);
 				return false;
@@ -110,16 +110,18 @@ static const struct wl_buffer_listener buffer_listener = {
 };
 
 static bool create_buffer (struct wl_shm *shm, struct Lava_buffer *buffer,
-		int32_t w, int32_t h)
+		uint32_t _w, uint32_t _h)
 {
+	int32_t w = (int32_t)_w, h = (int32_t)_h;
+
 	const enum wl_shm_format wl_fmt    = WL_SHM_FORMAT_ARGB8888;
 	const cairo_format_t     cairo_fmt = CAIRO_FORMAT_ARGB32;
 
-	uint32_t stride = cairo_format_stride_for_width(cairo_fmt, w);
-	size_t   size   = stride * h;
+	int32_t stride = cairo_format_stride_for_width(cairo_fmt, w);
+	size_t   size  = (size_t)(stride * h);
 
-	buffer->w    = w;
-	buffer->h    = h;
+	buffer->w    = _w;
+	buffer->h    = _h;
 	buffer->size = size;
 
 	if ( size == 0 )
@@ -144,7 +146,7 @@ static bool create_buffer (struct wl_shm *shm, struct Lava_buffer *buffer,
 		return false;
 	}
 
-	struct wl_shm_pool *pool = wl_shm_create_pool(shm, fd, size);
+	struct wl_shm_pool *pool = wl_shm_create_pool(shm, fd, (int32_t)size);
 	buffer->buffer = wl_shm_pool_create_buffer(pool, 0, w, h, stride,
 			wl_fmt);
 	wl_buffer_add_listener(buffer->buffer, &buffer_listener, buffer);

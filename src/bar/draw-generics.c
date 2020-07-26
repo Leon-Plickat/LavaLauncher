@@ -50,24 +50,6 @@ void lldg_rounded_square (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size)
 	cairo_close_path(cairo);
 }
 
-void lldg_draw_square_image (cairo_t *cairo, uint32_t x, uint32_t y,
-		uint32_t icon_size, cairo_surface_t *img)
-{
-	if ( img == NULL )
-		return;
-
-	int w = cairo_image_surface_get_width(img);
-	int h = cairo_image_surface_get_height(img);
-
-	cairo_save(cairo);
-	cairo_translate(cairo, x, y);
-	cairo_scale(cairo, (float)icon_size / (float)w,
-			(float)icon_size / (float)h);
-	cairo_set_source_surface(cairo, img, 0, 0);
-	cairo_paint(cairo);
-	cairo_restore(cairo);
-}
-
 /* Draw a rectangle with borders. */
 void lldg_draw_bordered_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
 		uint32_t w, uint32_t h, uint32_t border_top, uint32_t border_right,

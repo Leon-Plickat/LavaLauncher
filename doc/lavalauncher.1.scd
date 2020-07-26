@@ -184,8 +184,8 @@ this context are as follows.
 	interactions.
 
 *image-path*
-	The path to a PNG image file, which will be used as the icon of the
-	button. It is recommended to use square images.
+	The path to an image file, which will be used as the icon of the
+	button.
 
 *left-click-command*
 	The shell command executed when the user left-clicks on the button.
@@ -231,6 +231,10 @@ whenever an outputs parameters are updated.
 
 You can use conditions in combinations with the "bar-copy" feature to create
 multiple versions of a bar for different conditions.
+
+## IMAGES
+LavaLauncher support PNG images and, if enabled at compile time, SVG images. It
+is recommended to use square images.
 
 ## EXAMPLE CONFIGURATION
 Below you will find an example configuration, which demonstrates all available

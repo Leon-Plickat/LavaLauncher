@@ -28,8 +28,6 @@ struct Lava_bar;
 
 void lldg_circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size);
 void lldg_rounded_square (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size);
-void lldg_draw_square_image (cairo_t *cairo, uint32_t x, uint32_t y,
-		uint32_t icon_size, cairo_surface_t *img);
 void lldg_draw_bordered_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
 		uint32_t w, uint32_t h, uint32_t border_top, uint32_t border_right,
 		uint32_t border_bottom, uint32_t border_left,

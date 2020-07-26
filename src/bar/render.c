@@ -32,6 +32,7 @@
 #include"lavalauncher.h"
 #include"log.h"
 #include"output.h"
+#include"image.h"
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
 #include"bar/render.h"
@@ -107,11 +108,12 @@ static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 						item->background_colour);
 			draw_effect(cairo, x, y, size, pattern->effect_padding,
 					pattern->effect_colour, pattern->effect);
-			lldg_draw_square_image(cairo,
-					x + pattern->icon_padding,
-					y + pattern->icon_padding,
-					size - (2 * pattern->icon_padding),
-					item->img);
+			if ( item->img != NULL )
+				image_draw_to_cairo(cairo, item->img,
+						x + pattern->icon_padding,
+						y + pattern->icon_padding,
+						size - (2 * pattern->icon_padding),
+						size - (2 * pattern->icon_padding));
 		}
 }
 

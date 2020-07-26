@@ -49,7 +49,8 @@ struct Lava_item
 	struct wl_list   link;
 	enum Item_type   type;
 
-	cairo_surface_t *img;
+	struct Lava_image *img;
+
 	unsigned int     index, ordinate, length;
 	float            background_colour[4];
 	bool             replace_background;

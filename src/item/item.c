@@ -31,6 +31,7 @@
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
 #include"output.h"
+#include"image.h"
 #include"item/item.h"
 #include"item/command.h"
 #include"item/button.h"
@@ -39,7 +40,6 @@
 static void item_nullify (struct Lava_item *item)
 {
 	item->type                  = 0;
-	item->img                   = NULL;
 	item->index                 = 0;
 	item->ordinate              = 0;
 	item->length                = 0;
@@ -54,6 +54,7 @@ static void item_nullify (struct Lava_item *item)
 	item->background_colour[2]  = 0.0;
 	item->background_colour[3]  = 1.0;
 	item->replace_background    = false;
+	item->img                   = NULL;
 }
 
 static const char *item_type_to_string (enum Item_type type)
@@ -100,11 +101,6 @@ bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
 	new_item->background_colour[3] = item->background_colour[3];
 	new_item->replace_background   = item->replace_background;
 
-	/* Create a new reference to the last items cairo image surface instead
-	 * of copying it.
-	 */
-	new_item->img = cairo_surface_reference(item->img);
-
 	if ( item->left_click_command != NULL )
 		new_item->left_click_command = strdup(item->left_click_command);
 	if ( item->middle_click_command != NULL )
@@ -117,6 +113,9 @@ bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
 		new_item->scroll_down_command = strdup(item->scroll_down_command);
 	if ( item->touch_command != NULL )
 		new_item->touch_command = strdup(item->touch_command);
+
+	if ( item->img != NULL )
+		new_item->img = image_reference(item->img);
 
 	return true;
 }
@@ -222,13 +221,8 @@ static void destroy_item (struct Lava_item *item)
 		free(item->scroll_down_command);
 	if ( item->touch_command != NULL )
 		free(item->touch_command);
-
-	/* This only destroys a cairo image surface only if the reference count
-	 * is 1. Otherwise this just reduces the reference count by one. As such,
-	 * no special code is needed to handle the image surface of copied items.
-	 */
 	if ( item->img != NULL )
-		cairo_surface_destroy(item->img);
+		image_destroy(item->img);
 
 	free(item);
 }

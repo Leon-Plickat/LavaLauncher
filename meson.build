@@ -32,6 +32,11 @@ wayland_client    = dependency('wayland-client')
 wayland_cursor    = dependency('wayland-cursor')
 cairo             = dependency('cairo')
 realtime          = cc.find_library('rt')
+librsvg           = dependency('librsvg-2.0', required: get_option('librsvg'))
+
+if librsvg.found()
+  add_project_arguments(cc.get_supported_arguments([ '-DSVG_SUPPORT' ]), language: 'c')
+endif
 
 subdir('protocol')
 
@@ -46,6 +51,7 @@ executable(
     'src/registry.c',
     'src/cursor.c',
     'src/toplevel.c',
+    'src/image.c',
     'src/bar/bar.c',
     'src/bar/bar-pattern.c',
     'src/bar/layersurface.c',
@@ -60,7 +66,6 @@ executable(
     'src/config/parse-boolean.c',
     'src/config/colour.c',
     'src/config/global.c',
-    'src/config/filetype.c',
   ),
   dependencies: [
     wayland_client,
@@ -69,6 +74,7 @@ executable(
     cairo,
     wl_protocols,
     realtime,
+    librsvg,
   ],
   include_directories: include_directories('src'),
   install: true,

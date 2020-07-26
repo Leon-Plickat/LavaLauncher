@@ -17,12 +17,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_CONFIG_FILETYPE_H
-#define LAVALAUNCHER_CONFIG_FILETYPE_H
+#ifndef LAVALAUNCHER_ITEM_IMAGE_H
+#define LAVALAUNCHER_ITEM_IMAGE_H
 
-#include<stdbool.h>
+#include<cairo/cairo.h>
 
-bool is_png_file (const char *path);
+#if SVG_SUPPORT
+#include<librsvg-2.0/librsvg/rsvg.h>
+#endif
+
+struct Lava_image
+{
+	cairo_surface_t *cairo_surface;
+
+#if SVG_SUPPORT
+	RsvgHandle *rsvg_handle;
+#endif
+
+	int references;
+};
+
+struct Lava_image *image_create_from_file (const char *path);
+struct Lava_image *image_reference (struct Lava_image *image);
+void image_destroy (struct Lava_image *image);
+void image_draw_to_cairo (cairo_t *cairo, struct Lava_image *image,
+		uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
 #endif
 

@@ -25,13 +25,12 @@
 #include<unistd.h>
 #include<string.h>
 #include<errno.h>
-#include<cairo/cairo.h>
 
 #include"lavalauncher.h"
 #include"log.h"
+#include"image.h"
 #include"item/item.h"
 #include"config/colour.h"
-#include"config/filetype.h"
 
 static bool button_set_command (struct Lava_item *button,
 		const char *command, enum Interaction_type type)
@@ -67,20 +66,10 @@ static bool button_set_all_commands (struct Lava_item *button,
 static bool button_set_image_path (struct Lava_item *button, const char *path,
 		enum Interaction_type type)
 {
-	if (! is_png_file(path))
-		return false;
-
 	if ( button->img != NULL )
-		cairo_surface_destroy(button->img);
-	errno       = 0;
-	button->img = cairo_image_surface_create_from_png(path);
-	if ( errno != 0 )
-	{
-		log_message(NULL, 0, "ERROR: Failed loading image: %s\n"
-				"ERROR: cairo_image_surface_create_from_png: %s\n",
-				path, strerror(errno));
+		image_destroy(button->img);
+	if ( NULL == (button->img = image_create_from_file(path)) )
 		return false;
-	}
 	return true;
 }
 

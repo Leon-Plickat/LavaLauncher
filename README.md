@@ -36,9 +36,11 @@ The following distributions have an official LavaLauncher package:
 
 ### Building
 
-LavaLauncher depends on Wayland, Wayland protocols and Cairo. To build
-this program you will need a C compiler, the meson & ninja build system and
-`scdoc` to generate the manpage.
+LavaLauncher depends on Wayland, Wayland protocols and Cairo. To compile
+LavaLauncher with SVG image support, it additionally depends on librsvg.
+
+To build this program you will need a C compiler, the meson & ninja build system
+and `scdoc` to generate the manpage.
 
     git clone https://git.sr.ht/~leon_plickat/lavalauncher
     cd lavalauncher

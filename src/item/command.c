@@ -18,8 +18,8 @@
  */
 
 #define _POSIX_C_SOURCE 200809L
-#define STRING_BUFFER_SIZE 4096
 
+#include<stdarg.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
@@ -35,65 +35,20 @@
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
 
-/* This function will search for a string (*srch) inside a given string (**str)
- * and replace it either with another string (*repl_s) or with a string-ified
- * integer (repl_i, when *repl_s == NULL).
- */
-// This likely sucks...
-static void replace_token (char **str, const char *srch, const char *repl_s,
-		const int32_t repl_i, size_t size)
+static void setenvf (const char *name, const char *fmt, ...)
 {
-	char  buffer[STRING_BUFFER_SIZE+1]; /* Local editing buffer. */
-	char *p;                            /* Pointer to beginning of *srch. */
+	char buffer[64];
+	memset(buffer, '\0', sizeof(buffer));
 
-	/* Iterate over all occurrences of *srch */
-	while ((p = strstr(*str, srch)))
-	{
-		/* Copy str to buffer, but only until p. */
-		strncpy(buffer, *str, (size_t)(p - *str));
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buffer, sizeof(buffer) - 1, fmt, args);
+	va_end(args);
 
-		/* Insert replacement and rest of string. */
-		if ( repl_s == NULL )
-			sprintf(buffer + (p - *str), "%d%s", repl_i, p + strlen(srch));
-		else
-			sprintf(buffer + (p - *str), "%s%s", repl_s, p + strlen(srch));
-
-		/* Copy buffer back to str. */
-		strncpy(*str, buffer, size+1);
-	}
+	setenv(name, buffer, true);
 }
 
-static void handle_tokens (struct Lava_bar *bar, struct Lava_item *item, char *buffer)
-{
-	struct Lava_output      *output  = bar->output;
-	struct Lava_bar_pattern *pattern = bar->pattern;
-	struct
-	{
-		const char *token;
-		const char *replacement_string;
-		const int   replacement_int;
-	} tokens[] = {
-		{ .token = "%index%",         .replacement_string = NULL,         .replacement_int = (int32_t)item->index,            },
-		{ .token = "%items%",         .replacement_string = NULL,         .replacement_int = (int32_t)pattern->item_amount,   },
-		{ .token = "%size%",          .replacement_string = NULL,         .replacement_int = (int32_t)pattern->size,          },
-		{ .token = "%border-top%",    .replacement_string = NULL,         .replacement_int = (int32_t)pattern->border_top,    },
-		{ .token = "%border-left%",   .replacement_string = NULL,         .replacement_int = (int32_t)pattern->border_left,   },
-		{ .token = "%border-bottom%", .replacement_string = NULL,         .replacement_int = (int32_t)pattern->border_bottom, },
-		{ .token = "%border-right%",  .replacement_string = NULL,         .replacement_int = (int32_t)pattern->border_right,  },
-		{ .token = "%margin-top%",    .replacement_string = NULL,         .replacement_int = (int32_t)pattern->margin_top,    },
-		{ .token = "%margin-right%",  .replacement_string = NULL,         .replacement_int = (int32_t)pattern->margin_right,  },
-		{ .token = "%margin-bottom%", .replacement_string = NULL,         .replacement_int = (int32_t)pattern->margin_bottom, },
-		{ .token = "%margin-left%",   .replacement_string = NULL,         .replacement_int = (int32_t)pattern->margin_left,   },
-		{ .token = "%output%",        .replacement_string = output->name, .replacement_int = 0,                               },
-		{ .token = "%scale%",         .replacement_string = NULL,         .replacement_int = (int32_t)output->scale,          }
-	};
-	for (size_t i = 0; i < (sizeof(tokens) / sizeof(tokens[0])); i++)
-		replace_token(&buffer, tokens[i].token,
-				tokens[i].replacement_string,
-				tokens[i].replacement_int, STRING_BUFFER_SIZE);
-}
-
-static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item, const char *cmd)
+static void fork_command (struct Lava_bar *bar, struct Lava_item *item, const char *cmd)
 {
 	errno   = 0;
 	int ret = fork();
@@ -106,15 +61,11 @@ static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item, const char *
 			exit(EXIT_FAILURE);
 		}
 
-		char buffer[STRING_BUFFER_SIZE+1];
-		strncpy(buffer, cmd, STRING_BUFFER_SIZE);
-		handle_tokens(bar, item, buffer);
+		setenvf("LAVALAUNCHER_OUTPUT_NAME",  "%s", bar->output->name);
+		setenvf("LAVALAUNCHER_OUTPUT_SCALE", "%d", bar->output->scale);
 
-		log_message(bar->data, 1, "[command] Executing: cmd='%s' raw='%s'\n", buffer, cmd);
-
-		/* execl() only returns on error. */
-		errno = 0;
-		execl("/bin/sh", "/bin/sh", "-c", buffer, NULL);
+		/* execl() only returns on error, on success it replaces this process. */
+		execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);
 		log_message(NULL, 0, "ERROR: execl: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
@@ -138,7 +89,7 @@ static char **command_pointer_by_type(struct Lava_item *item,
 	return NULL;
 }
 
-/* Helper function that catches any special cases before executing the item
+/* Wrapper function that catches any special cases before executing the item
  * command.
  */
 bool item_command (struct Lava_bar *bar, struct Lava_item *item,
@@ -161,7 +112,10 @@ bool item_command (struct Lava_bar *bar, struct Lava_item *item,
 		bar->data->reload = true;
 	}
 	else
-		exec_cmd(bar, item, *cmd);
+	{
+		log_message(bar->data, 1, "[command] Executing command: %s\n", cmd);
+		fork_command(bar, item, *cmd);
+	}
 
 	return true;
 }

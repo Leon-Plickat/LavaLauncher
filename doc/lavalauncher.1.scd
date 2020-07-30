@@ -214,11 +214,20 @@ this context are as follows.
 	Length of the spacer.
 
 ## COMMANDS
-Commands are executed using sh(1). If the command is "exit", LavaLauncher will
-exit, if it is "reload", LavaLauncher will reload. LavaLauncher replaces certain
-tokens in the command string with values when the command is executed. These
-tokens are "%index%", "%buttons%", "%size%", "%border-{top,right,bottom,left}%",
-"%margin-{top,right,bottom,left}%", "%output%" and "%scale%".
+Commands are executed using sh(1).
+
+If the command is "exit", LavaLauncher will exit, if it is "reload",
+LavaLauncher will reload.
+
+LavaLauncher sets some environmental variables for the processes it launches.
+Since all commands are executed via a shell, they can be used as arguments for
+the commands. These variables are as follows.
+
+*$LAVALAUNCHER_OUTPUT_NAME*
+	The name of the output the button has been clicked on.
+
+*$LAVALAUNCHER_OUTPUT_SCALE*
+	The scale of the output the button has been clicked on.
 
 ## COLOURS
 LavaLauncher excepts colours in the formats "#RRGGBBAA" or "#RRGGBB". Therefore,

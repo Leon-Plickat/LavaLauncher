@@ -175,6 +175,11 @@ Every "button" context will add a button to a bar. As such, this context is
 a nested inside the "bar" or "bar-copy" context. The assignments possible in
 this context are as follows.
 
+*app-id*
+	The app-id of toplevels LavaLauncher should consider to belong to this
+	button. Behold: This requires the compositor to implement foreign toplevel
+	management.
+
 *background-colour*
 	The background colour of the individual button. This overrides the
 	background colour of the bar.
@@ -228,6 +233,11 @@ the commands. These variables are as follows.
 
 *$LAVALAUNCHER_OUTPUT_SCALE*
 	The scale of the output the button has been clicked on.
+
+*$LAVALAUNCHER_APPID_COUNT*
+	The amount of current toplevels which share the app-id of the button. If the
+	compositor does not support foreign toplevel management, it is set to -1. If
+	no app-id has been configured for the button, it is set to -2.
 
 ## COLOURS
 LavaLauncher excepts colours in the formats "#RRGGBBAA" or "#RRGGBB". Therefore,

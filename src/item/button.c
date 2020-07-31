@@ -32,6 +32,13 @@
 #include"item/item.h"
 #include"config/colour.h"
 
+static bool button_set_app_id (struct Lava_item *button,
+		const char *arg, enum Interaction_type type)
+{
+	strncpy(button->app_id, arg, sizeof(button->app_id) - 1);
+	return true;
+}
+
 static bool button_set_command (struct Lava_item *button,
 		const char *command, enum Interaction_type type)
 {
@@ -89,6 +96,7 @@ struct
 	bool (*set)(struct Lava_item*, const char*, enum Interaction_type);
 	enum Interaction_type type;
 } button_configs[] = {
+	{ .variable = "app-id",               .set = button_set_app_id,            .type = 0                 },
 	{ .variable = "command",              .set = button_set_all_commands,      .type = 0                 },
 	{ .variable = "left-click-command",   .set = button_set_command,           .type = TYPE_LEFT_CLICK   },
 	{ .variable = "middle-click-command", .set = button_set_command,           .type = TYPE_MIDDLE_CLICK },

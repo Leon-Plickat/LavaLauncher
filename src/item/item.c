@@ -55,6 +55,8 @@ static void item_nullify (struct Lava_item *item)
 	item->background_colour[3]  = 1.0;
 	item->replace_background    = false;
 	item->img                   = NULL;
+
+	memset(item->app_id, '\0', sizeof(item->app_id));
 }
 
 static const char *item_type_to_string (enum Item_type type)

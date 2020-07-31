@@ -35,6 +35,40 @@
 #include"toplevel.h"
 #include"log.h"
 
+/* Returns amount of toplevels with the given app_id. */
+int32_t count_toplevels_with_appid (struct Lava_data *data, const char *app_id)
+{
+	if ( data->toplevel_manager == NULL )
+		return -1;
+	if ( *app_id == '\0' )
+		return -2;
+
+	int32_t ret = 0;
+	struct Lava_toplevel *toplevel;
+	wl_list_for_each(toplevel, &data->toplevels, link)
+		if (! strcmp(app_id, toplevel->current_app_id))
+		{
+			log_message(NULL, 0, "found one.\n");
+			ret++;
+		}
+
+	return ret;
+}
+
+/* Returns the first (meaning the oldest) toplevel with the given app-id. */
+struct Lava_toplevel *toplevel_from_app_id (struct Lava_data *data, const char *app_id)
+{
+	if ( data->toplevel_manager == NULL || *app_id == '\0' )
+		return NULL;
+
+	struct Lava_toplevel *toplevel;
+	wl_list_for_each(toplevel, &data->toplevels, link)
+		if (! strcmp(app_id, toplevel->current_app_id))
+			return toplevel;
+
+	return NULL;
+}
+
 /* No-Op function. */
 static void noop () {}
 

@@ -35,6 +35,8 @@ struct Lava_toplevel
 	char pending_app_id[64];
 };
 
+int32_t count_toplevels_with_appid (struct Lava_data *data, const char *app_id);
+struct Lava_toplevel *toplevel_from_app_id (struct Lava_data *data, const char *app_id);
 bool create_toplevel_manager (struct Lava_data *data, struct wl_registry *registry,
 		uint32_t name);
 void destroy_all_toplevels (struct Lava_data *data);

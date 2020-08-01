@@ -256,20 +256,29 @@ static bool get_default_config_path (struct Lava_data *data)
 	{
 		snprintf(data->config_path, sizeof(data->config_path) - 1,
 				"%s/lavalauncher/lavalauncher.conf", dir);
-		goto success;
+		if (! access(data->config_path, F_OK | R_OK))
+				goto success;
 	}
 
-	/* $XDG_CONFIG_HOME is not set, so let's try to just find .config in $HOME. */
 	if ( NULL != (dir = getenv("HOME")) )
 	{
 		snprintf(data->config_path, sizeof(data->config_path) - 1,
 				"%s/.config/lavalauncher/lavalauncher.conf", dir);
-		goto success;
+		if (! access(data->config_path, F_OK | R_OK))
+				goto success;
 	}
+	
+	snprintf(data->config_path, sizeof(data->config_path) - 1,
+			"/usr/local/etc/lavalauncher/lavalauncher.conf");
+	if (! access(data->config_path, F_OK | R_OK))
+			goto success;
 
-	log_message(NULL, 0, "ERROR: Neither $XDG_CONFIG_HOME nor $HOME are set.\n"
-			"ERROR: Impossible to get default configuration file path.\n"
-			"INFO: There probably is something wrong with your session.\n"
+	snprintf(data->config_path, sizeof(data->config_path) - 1,
+			"/etc/lavalauncher/lavalauncher.conf");
+	if (! access(data->config_path, F_OK | R_OK))
+			goto success;
+
+	log_message(NULL, 0, "ERROR: Can not find configuration file.\n"
 			"INFO: You can provide a path manually with '-c'.\n");
 	return false;
 

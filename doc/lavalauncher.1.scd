@@ -11,9 +11,7 @@ edges. A single LavaLauncher instance can provide multiple such bars, across
 multiple outputs.
 
 The Wayland compositor must implement the Layer-Shell and XDG-Output for
-LavaLauncher to work. If LavaLauncher is displayed but wont respond to clicks,
-chances are that the compositor you are using only displays Layer-Shell surfaces
-but does not forward events to them.
+LavaLauncher to work.
 
 
 # OPTIONS
@@ -30,12 +28,14 @@ but does not forward events to them.
 # CONFIGURATION
 LavaLauncher is configured with a configuration file.
 
-The default location of this file is "$XDG_CONFIG_HOME/lavalauncher/lavalauncher.conf".
-If that environmental variable is not set, "$HOME/.config/lavalauncher/lavalauncher.conf"
-is used instead. Alternatively, you can provide a path manually.
+Unless the path to a configuration file has been specified, LavaLauncher tries
+to find a configuration file at, in decending priority,
+"$XDG_CONFIG_HOME/lavalauncher/lavalauncher.conf",
+"$HOME/.config/lavalauncher/lavalauncher.conf"
+"/usr/local/etc/lavalauncher/lavalauncher.conf" and
+"/etc/lavalauncher/lavalauncher.conf"
 
 You can find an example configuration at the end of this section.
-
 
 ## STRUCTURE
 The configuration file has a simple structure. It consists of *contexts* and

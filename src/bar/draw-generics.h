@@ -26,12 +26,17 @@
 struct Lava_data;
 struct Lava_bar;
 
-void lldg_circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size);
-void lldg_rounded_square (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size);
-void lldg_draw_bordered_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
-		uint32_t w, uint32_t h, uint32_t border_top, uint32_t border_right,
+void circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size);
+void rounded_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
+		uint32_t width, uint32_t height,
+		double tl_r, double tr_r, double bl_r, double br_r);
+void draw_bar_background (cairo_t *cairo,
+		uint32_t x, uint32_t y, uint32_t w, uint32_t h,
+		uint32_t border_top, uint32_t border_right,
 		uint32_t border_bottom, uint32_t border_left,
+		uint32_t top_left_radius, uint32_t top_right_radius,
+		uint32_t bottom_left_radius, uint32_t bottom_right_radius,
 		uint32_t scale, float center_colour[4], float border_colour[4]);
-void lldg_clear_buffer (cairo_t *cairo);
+void clear_buffer (cairo_t *cairo);
 
 #endif

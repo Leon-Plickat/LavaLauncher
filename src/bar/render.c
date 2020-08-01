@@ -67,11 +67,13 @@ static void draw_effect (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size,
 			break;
 
 		case EFFECT_PHONE:
-			lldg_rounded_square(cairo, x, y, size);
+			rounded_rectangle(cairo, x, y, size, size,
+					size / 10.0, size / 10.0,
+					size / 10.0, size / 10.0);
 			break;
 
 		case EFFECT_CIRCLE:
-			lldg_circle(cairo, x, y, size);
+			circle(cairo, x, y, size);
 			break;
 
 		default:
@@ -133,14 +135,16 @@ void render_bar_frame (struct Lava_bar *bar)
 		return;
 
 	cairo_t *cairo = bar->current_buffer->cairo;
-	lldg_clear_buffer(cairo);
+	clear_buffer(cairo);
 
 	/* Draw bar. */
 	log_message(data, 2, "[render] Drawing bar.\n");
-	lldg_draw_bordered_rectangle(cairo,
+	draw_bar_background(cairo,
 			bar->bar_x, bar->bar_y, bar->bar_width, bar->bar_height,
 			pattern->border_top, pattern->border_right,
 			pattern->border_bottom, pattern->border_left,
+			pattern->radius_top_left, pattern->radius_top_right,
+			pattern->radius_bottom_left, pattern->radius_bottom_right,
 			scale, pattern->bar_colour, pattern->border_colour);
 
 	/* Draw icons. */

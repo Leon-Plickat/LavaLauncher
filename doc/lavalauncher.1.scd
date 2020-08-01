@@ -161,6 +161,14 @@ as follows.
 	Position of the bar. Can be "top", "right", "bottom", "left". The bar
 	will dock to that edge of the output(s). The default position is "bottom".
 
+*radius*
+	The radius of the corners. The Default is 5. Set to 0 to disable corner
+	roundness.
+
+*radius-{top-left, top-right, bottom-left, bottom-right}*
+	The individual corner radia.
+
+
 *size*
 	Size of the bar. The default size is 80.
 

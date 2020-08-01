@@ -44,16 +44,20 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->mode              = MODE_DEFAULT;
 	pattern->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 
-	pattern->size              = 80;
-	pattern->icon_padding      = 2;
-	pattern->border_top        = 2;
-	pattern->border_right      = 2;
-	pattern->border_bottom     = 2;
-	pattern->border_left       = 2;
-	pattern->margin_top        = 0;
-	pattern->margin_right      = 0;
-	pattern->margin_bottom     = 0;
-	pattern->margin_left       = 0;
+	pattern->size                = 80;
+	pattern->icon_padding        = 2;
+	pattern->border_top          = 2;
+	pattern->border_right        = 2;
+	pattern->border_bottom       = 2;
+	pattern->border_left         = 2;
+	pattern->radius_top_left     = 5;
+	pattern->radius_top_right    = 5;
+	pattern->radius_bottom_left  = 5;
+	pattern->radius_bottom_right = 5;
+	pattern->margin_top          = 0;
+	pattern->margin_right        = 0;
+	pattern->margin_bottom       = 0;
+	pattern->margin_left         = 0;
 
 	pattern->exclusive_zone    = 1;
 
@@ -501,6 +505,33 @@ static bool bar_pattern_set_condition_transform (struct Lava_bar_pattern *patter
 	return true;
 }
 
+static bool bar_pattern_set_radius (struct Lava_bar_pattern *pattern,
+		const char *arg, const char direction)
+{
+	int32_t size = atoi(arg);
+	if ( size < 0 )
+	{
+		log_message(NULL, 0, "ERROR: Radius must be equal to or greater than zero.\n");
+		return false;
+	}
+
+	switch (direction)
+	{
+		case 'l': pattern->radius_top_left     = (uint32_t)size; break;
+		case 'r': pattern->radius_top_right    = (uint32_t)size; break;
+		case 'L': pattern->radius_bottom_left  = (uint32_t)size; break;
+		case 'R': pattern->radius_bottom_right = (uint32_t)size; break;
+		case 'a':
+			pattern->radius_top_left     = (uint32_t)size;
+			pattern->radius_top_right    = (uint32_t)size;
+			pattern->radius_bottom_left  = (uint32_t)size;
+			pattern->radius_bottom_right = (uint32_t)size;
+			break;
+	}
+	return true;
+}
+
+
 struct
 {
 	const char *variable, direction;
@@ -531,7 +562,12 @@ struct
 	{ .variable = "cursor-name",          .set = bar_pattern_set_cursor_name,          .direction = '0'},
 	{ .variable = "condition-scale",      .set = bar_pattern_set_condition_scale,      .direction = '0'},
 	{ .variable = "condition-resolution", .set = bar_pattern_set_condition_resolution, .direction = '0'},
-	{ .variable = "condition-transform",  .set = bar_pattern_set_condition_transform,  .direction = '0'}
+	{ .variable = "condition-transform",  .set = bar_pattern_set_condition_transform,  .direction = '0'},
+	{ .variable = "radius",               .set = bar_pattern_set_radius,               .direction = 'a'},
+	{ .variable = "radius-top-left",      .set = bar_pattern_set_radius,               .direction = 'l'},
+	{ .variable = "radius-top-right",     .set = bar_pattern_set_radius,               .direction = 'r'},
+	{ .variable = "radius-bottom-left",   .set = bar_pattern_set_radius,               .direction = 'L'},
+	{ .variable = "radius-bottom-right",  .set = bar_pattern_set_radius,               .direction = 'R'}
 };
 
 bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,

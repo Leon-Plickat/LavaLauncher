@@ -24,15 +24,19 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
-#include<signal.h>
 #include<unistd.h>
 #include<string.h>
 #include<assert.h>
 #include<poll.h>
 #include<errno.h>
 
-#ifdef WATCH_CONFIG
+#if WATCH_CONFIG
 #include<sys/inotify.h>
+#endif
+
+#if HANDLE_SIGNALS
+#include<sys/signalfd.h>
+#include<signal.h>
 #endif
 
 #include<wayland-server.h>
@@ -56,35 +60,75 @@ static void main_loop (struct Lava_data *data)
 {
 	log_message(data, 1, "[main] Starting main loop.\n");
 
-#ifdef WATCH_CONFIG
-	if (! data->watch)
-		goto simple_loop;
+	size_t fd_count = 1, current = 0, wayland_fd = current++;
 
-	struct pollfd fds[2];
+#if HANDLE_SIGNALS
+	fd_count++;
+	size_t signal_fd = current++;
+#endif
+
+#if WATCH_CONFIG
+	size_t inotify_fd = current++;
+	if (data->watch)
+		fd_count++;
+#endif
+
+	struct pollfd *fds = calloc(fd_count, sizeof(struct pollfd));
 
 	/* Wayland fd. */
-	fds[0].events = POLLIN;
-	if ( -1 ==  (fds[0].fd = wl_display_get_fd(data->display)) )
+	fds[wayland_fd].events = POLLIN;
+	if ( -1 ==  (fds[wayland_fd].fd = wl_display_get_fd(data->display)) )
 	{
 		log_message(NULL, 0, "ERROR: Unable to open Wayland display fd.\n");
 		goto error;
 	}
 
-	/* Inotify fd to watch config file for modifications. */
-	fds[1].events = POLLIN;
-	if ( -1 ==  (fds[1].fd = inotify_init1(IN_NONBLOCK)) )
+#if HANDLE_SIGNALS
+	/* Signal fd. */
+	sigset_t mask;
+	struct signalfd_siginfo fdsi;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGQUIT);
+	sigaddset(&mask, SIGUSR1);
+	sigaddset(&mask, SIGUSR2);
+
+	if ( sigprocmask(SIG_BLOCK, &mask, NULL) == -1 )
 	{
-		log_message(NULL, 0, "ERROR: Unable to open inotify fd.\n"
-				"ERROR: inotify_init1: %s\n", strerror(errno));
+		log_message(NULL, 0, "ERROR: sigprocmask() failed.\n");
 		goto error;
 	}
 
-	/* Add config file to inotify watch list. */
-	if ( -1 == inotify_add_watch(fds[1].fd, data->config_path, IN_MODIFY) )
+	fds[signal_fd].events = POLLIN;
+	if ( -1 ==  (fds[signal_fd].fd = signalfd(-1, &mask, 0)) )
 	{
-		log_message(NULL, 0, "ERROR: Unable to add config path to inotify watchlist.\n");
+		log_message(NULL, 0, "ERROR: Unable to open signal fd.\n"
+				"ERROR: signalfd: %s\n", strerror(errno));
 		goto error;
 	}
+#endif
+
+#if WATCH_CONFIG
+	/* Inotify fd . */
+	if (data->watch)
+	{
+		fds[inotify_fd].events = POLLIN;
+		if ( -1 ==  (fds[inotify_fd].fd = inotify_init1(IN_NONBLOCK)) )
+		{
+			log_message(NULL, 0, "ERROR: Unable to open inotify fd.\n"
+					"ERROR: inotify_init1: %s\n", strerror(errno));
+			goto error;
+		}
+
+		/* Add config file to inotify watch list. */
+		if ( -1 == inotify_add_watch(fds[inotify_fd].fd, data->config_path, IN_MODIFY) )
+		{
+			log_message(NULL, 0, "ERROR: Unable to add config path to inotify watchlist.\n");
+			goto error;
+		}
+	}
+#endif
 
 	while (data->loop)
 	{
@@ -100,7 +144,8 @@ static void main_loop (struct Lava_data *data)
 			}
 		} while ( errno == EAGAIN );
 
-		if ( poll(fds, 2, -1) < 0 )
+		/* Polling. */
+		if ( poll(fds, fd_count, -1) < 0 )
 		{
 			if ( errno == EINTR )
 				continue;
@@ -109,42 +154,70 @@ static void main_loop (struct Lava_data *data)
 		}
 
 		/* Wayland events. */
-		if ( fds[0].revents & POLLIN && wl_display_dispatch(data->display) == -1 )
+		if ( fds[wayland_fd].revents & POLLIN && wl_display_dispatch(data->display) == -1 )
 		{
 			log_message(NULL, 0, "ERROR: wl_display_flush: %s\n", strerror(errno));
 			goto error;
 		}
-		if ( fds[0].revents & POLLOUT && wl_display_flush(data->display) == -1 )
+		if ( fds[wayland_fd].revents & POLLOUT && wl_display_flush(data->display) == -1 )
 		{
 			log_message(NULL, 0, "ERROR: wl_display_flush: %s\n", strerror(errno));
 			goto error;
 		}
 
+#if HANDLE_SIGNALS
+		/* Signal events. */
+		if ( fds[signal_fd].revents & POLLIN )
+		{
+			if ( read(fds[signal_fd].fd, &fdsi, sizeof(struct signalfd_siginfo))
+					!= sizeof(struct signalfd_siginfo) )
+			{
+				log_message(NULL, 0, "ERROR: Can not read signal info.\n");
+				goto error;
+			}
+
+			if ( fdsi.ssi_signo == SIGINT || fdsi.ssi_signo == SIGQUIT )
+			{
+				log_message(data, 1, "[loop] Received SIGTERM or SIGQUIT; Exiting.\n");
+				goto exit;
+			}
+			else if ( fdsi.ssi_signo == SIGUSR1 || fdsi.ssi_signo == SIGUSR2 )
+			{
+				log_message(data, 1, "[loop] Received SIGUSR; Triggering reload.\n");
+				data->loop = false;
+				data->reload = true;
+				goto exit;
+			}
+		}
+#endif
+
+#if WATCH_CONFIG
 		/* Inotify events. */
-		if ( fds[1].revents & POLLIN )
+		if ( fds[inotify_fd].revents & POLLIN )
 		{
 			log_message(data, 1, "[main] Config file modified; Triggering reload.\n");
 			data->loop = false;
 			data->reload = true;
 			goto exit;
 		}
+#endif
 	}
 
 error:
 	data->ret = EXIT_FAILURE;
 exit:
-	if ( fds[0].fd != -1 )
-		close(fds[0].fd);
-	if ( fds[1].fd != -1 )
-		close(fds[1].fd);
-	return;
-	
-	/* Simple, Wayland-only loop, used when the configuration file is not
-	 * watched. LavaLauncher will not reload on changes.
-	 */
-simple_loop:
+	if ( fds[wayland_fd].fd != -1 )
+		close(fds[wayland_fd].fd);
+#if HANDLE_SIGNALS
+	if ( fds[signal_fd].fd != -1 )
+		close(fds[signal_fd].fd);
 #endif
-	while ( data->loop && wl_display_dispatch(data->display) != -1 );
+#if WATCH_CONFIG
+	if ( fds[inotify_fd].fd != -1 )
+		close(fds[inotify_fd].fd);
+#endif
+	free(fds);
+	return;
 }
 
 static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[])
@@ -213,7 +286,7 @@ static void init_data (struct Lava_data *data)
 	data->verbosity    = 0;
 	data->last_pattern = NULL;
 
-#ifdef WATCH_CONFIG
+#if WATCH_CONFIG
 	data->watch = false;
 #endif
 
@@ -261,9 +334,6 @@ reload:
 
 	if (! init_wayland(&data))
 		goto exit;
-
-	/* Prevent zombies. */
-	signal(SIGCHLD, SIG_IGN);
 
 	data.ret = EXIT_SUCCESS;
 	main_loop(&data);

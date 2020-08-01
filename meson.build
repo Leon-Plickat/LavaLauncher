@@ -27,6 +27,10 @@ if get_option('watch-config').enabled()
   add_project_arguments(cc.get_supported_arguments([ '-DWATCH_CONFIG' ]), language: 'c')
 endif
 
+if get_option('handle-signals').enabled()
+  add_project_arguments(cc.get_supported_arguments([ '-DHANDLE_SIGNALS' ]), language: 'c')
+endif
+
 wayland_protocols = dependency('wayland-protocols')
 wayland_client    = dependency('wayland-client')
 wayland_cursor    = dependency('wayland-cursor')

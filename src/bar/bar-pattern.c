@@ -197,7 +197,7 @@ static void destroy_bar_pattern (struct Lava_bar_pattern *pattern)
 
 void destroy_all_bar_patterns (struct Lava_data *data)
 {
-	log_message(data, 1, "Destroy all bar patterns.\n");
+	log_message(data, 1, "[bar-pattern] Destroying all bar patterns.\n");
 	struct Lava_bar_pattern *pt1, *pt2;
 	wl_list_for_each_safe(pt1, pt2, &data->patterns, link)
 		destroy_bar_pattern(pt1);

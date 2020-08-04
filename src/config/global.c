@@ -47,12 +47,27 @@ static bool global_set_watch (struct Lava_data *data, const char *arg)
 #endif
 }
 
+static bool global_set_toplevel (struct Lava_data *data, const char *arg)
+{
+	if (is_boolean_true(arg))
+		data->use_toplevel = true;
+	else if (is_boolean_false(arg))
+		data->use_toplevel = false;
+	else
+	{
+		log_message(NULL, 0, "ERROR: 'use-foreign-toplevel' expects a boolean value.\n");
+		return false;
+	}
+	return true;
+}
+
 struct
 {
 	const char *variable;
 	bool (*set)(struct Lava_data*, const char*);
 } global_configs[] = {
-	{ .variable = "watch-config-file", .set = global_set_watch }
+	{ .variable = "watch-config-file",    .set = global_set_watch    },
+	{ .variable = "use-foreign-toplevel", .set = global_set_toplevel }
 };
 
 bool global_set_variable (struct Lava_data *data, const char *variable,

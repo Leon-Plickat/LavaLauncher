@@ -309,6 +309,7 @@ static void init_data (struct Lava_data *data)
 	data->layer_shell        = NULL;
 	data->xdg_output_manager = NULL;
 	data->toplevel_manager   = NULL;
+	data->use_toplevel       = false;
 
 	wl_list_init(&data->patterns);
 	wl_list_init(&data->outputs);

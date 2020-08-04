@@ -47,10 +47,7 @@ int32_t count_toplevels_with_appid (struct Lava_data *data, const char *app_id)
 	struct Lava_toplevel *toplevel;
 	wl_list_for_each(toplevel, &data->toplevels, link)
 		if (! strcmp(app_id, toplevel->current_app_id))
-		{
-			log_message(NULL, 0, "found one.\n");
 			ret++;
-		}
 
 	return ret;
 }

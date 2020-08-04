@@ -73,6 +73,8 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 	}
 	else if (! strcmp(interface, zwlr_foreign_toplevel_manager_v1_interface.name))
 	{
+		if (! data->use_toplevel)
+			return;
 		log_message(data, 2, "[registry] Get zwlr_foreign_toplevel_manager_v1.\n");
 		if (! create_toplevel_manager(data, registry, name))
 			goto error;

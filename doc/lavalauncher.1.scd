@@ -80,7 +80,7 @@ as follows.
 	The background colour of the bar. The default is "#000000".
 
 *border*
-	The border size. The Default is 2.
+	The border size. The Default is 1.
 
 *border-{top, right, bottom, left}*
 	The individual border sizes.
@@ -132,7 +132,7 @@ as follows.
 	ignore the requested exclusive zone of surfaces.
 
 *icon-padding*
-	Padding around the icons. The default 2.
+	Padding around the icons. The default 4.
 
 *layer*
 	Layer of the bar surface. Can be "overlay", "top", "bottom" or
@@ -177,7 +177,7 @@ as follows.
 
 
 *size*
-	Size of the bar. The default size is 80.
+	Size of the bar. The default size is 60.
 
 ## BAR COPY
 Every "bar-copy" context will add a bar. This new bar has the same configuration

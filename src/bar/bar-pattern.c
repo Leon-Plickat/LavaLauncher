@@ -44,12 +44,12 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->mode              = MODE_DEFAULT;
 	pattern->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 
-	pattern->size                = 80;
-	pattern->icon_padding        = 2;
-	pattern->border_top          = 2;
-	pattern->border_right        = 2;
-	pattern->border_bottom       = 2;
-	pattern->border_left         = 2;
+	pattern->size                = 60;
+	pattern->icon_padding        = 4;
+	pattern->border_top          = 1;
+	pattern->border_right        = 1;
+	pattern->border_bottom       = 1;
+	pattern->border_left         = 1;
 	pattern->radius_top_left     = 5;
 	pattern->radius_top_right    = 5;
 	pattern->radius_bottom_left  = 5;

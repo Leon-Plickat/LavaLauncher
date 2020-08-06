@@ -28,7 +28,7 @@
 
 #include"lavalauncher.h"
 #include"log.h"
-#include"image.h"
+#include"types/image.h"
 #include"item/item.h"
 #include"config/colour.h"
 

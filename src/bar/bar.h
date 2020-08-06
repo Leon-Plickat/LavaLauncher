@@ -21,7 +21,7 @@
 #define LAVALAUNCHER_BAR_H
 
 #include<wayland-server.h>
-#include"bar/buffer.h"
+#include"types/buffer.h"
 
 struct Lava_data;
 struct Lava_output;

@@ -17,28 +17,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_BAR_BUFFER_H
-#define LAVALAUNCHER_BAR_BUFFER_H
+#ifndef LAVALAUNCHER_TYPES_IMAGE_H
+#define LAVALAUNCHER_TYPES_IMAGE_H
 
-#include<stdint.h>
-#include<stdbool.h>
 #include<cairo/cairo.h>
-#include<wayland-client.h>
 
-struct Lava_buffer
+#if SVG_SUPPORT
+#include<librsvg-2.0/librsvg/rsvg.h>
+#endif
+
+struct Lava_image
 {
-	struct wl_buffer *buffer;
-	cairo_surface_t  *surface;
-	cairo_t          *cairo;
-	uint32_t          w;
-	uint32_t          h;
-	void             *memory_object;
-	size_t            size;
-	bool              busy;
+	cairo_surface_t *cairo_surface;
+
+#if SVG_SUPPORT
+	RsvgHandle *rsvg_handle;
+#endif
+
+	int references;
 };
 
-bool next_buffer (struct Lava_buffer **buffer, struct wl_shm *shm,
-		struct Lava_buffer buffers[static 2], uint32_t w, uint32_t h);
-void finish_buffer (struct Lava_buffer *buffer);
+struct Lava_image *image_create_from_file (const char *path);
+struct Lava_image *image_reference (struct Lava_image *image);
+void image_destroy (struct Lava_image *image);
+void image_draw_to_cairo (cairo_t *cairo, struct Lava_image *image,
+		uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
 #endif
+

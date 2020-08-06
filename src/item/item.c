@@ -31,7 +31,7 @@
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
 #include"output.h"
-#include"image.h"
+#include"types/image.h"
 #include"item/item.h"
 #include"item/command.h"
 #include"item/button.h"

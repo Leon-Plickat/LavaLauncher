@@ -153,13 +153,6 @@ void configure_layer_surface (struct Lava_bar *bar)
 	 */
 	wl_surface_set_input_region(bar->wl_surface, region);
 
-	/* If both border and background are opaque, set opaque region. This
-	 * will inform the compositor that it does not have to render anything
-	 * below the surface.
-	 */
-	if ( pattern->bar_colour[3] == 1 && pattern->border_colour[3] == 1 )
-		wl_surface_set_opaque_region(bar->wl_surface, region);
-
 	wl_region_destroy(region);
 }
 

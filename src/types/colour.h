@@ -17,9 +17,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_CONFIG_COLOUR_H
-#define LAVALAUNCHER_CONFIG_COLOUR_H
+#ifndef LAVALAUNCHER_TYPES_COLOUR_H
+#define LAVALAUNCHER_TYPES_COLOUR_H
 
-bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a);
+#include<stdbool.h>
+#include<cairo/cairo.h>
+
+struct Lava_colour
+{
+	char hex[10];
+	double r, g, b, a;
+};
+
+bool colour_from_string (struct Lava_colour *colour, const char *hex);
+void colour_set_cairo_source (cairo_t *cairo, struct Lava_colour *colour);
 
 #endif
+

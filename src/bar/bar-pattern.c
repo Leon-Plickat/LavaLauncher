@@ -34,8 +34,8 @@
 #include"log.h"
 #include"bar/bar-pattern.h"
 #include"item/item.h"
-#include"config/colour.h"
 #include"config/parse-boolean.h"
+#include"types/colour.h"
 
 static void sensible_defaults (struct Lava_bar_pattern *pattern)
 {
@@ -61,20 +61,10 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 
 	pattern->exclusive_zone    = 1;
 
-	pattern->bar_colour[0]     = 0.0f;
-	pattern->bar_colour[1]     = 0.0f;
-	pattern->bar_colour[2]     = 0.0f;
-	pattern->bar_colour[3]     = 1.0f;
+	colour_from_string(&pattern->bar_colour, "#000000ff");
+	colour_from_string(&pattern->border_colour, "#ffffffff");
+	colour_from_string(&pattern->effect_colour, "#285577ff");
 
-	pattern->border_colour[0]  = 1.0f;
-	pattern->border_colour[1]  = 1.0f;
-	pattern->border_colour[2]  = 1.0f;
-	pattern->border_colour[3]  = 1.0f;
-
-	pattern->effect_colour[0]  = 1.0f;
-	pattern->effect_colour[1]  = 1.0f;
-	pattern->effect_colour[2]  = 1.0f;
-	pattern->effect_colour[3]  = 1.0f;
 
 	pattern->effect            = EFFECT_NONE;
 	pattern->effect_padding    = 5;
@@ -140,20 +130,16 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 	pattern->margin_bottom    = last_pattern->margin_bottom;
 	pattern->margin_left      = last_pattern->margin_left;
 	pattern->exclusive_zone   = last_pattern->exclusive_zone;
-	pattern->bar_colour[0]    = last_pattern->bar_colour[0];
-	pattern->bar_colour[1]    = last_pattern->bar_colour[1];
-	pattern->bar_colour[2]    = last_pattern->bar_colour[2];
-	pattern->bar_colour[3]    = last_pattern->bar_colour[3];
-	pattern->border_colour[0] = last_pattern->border_colour[0];
-	pattern->border_colour[1] = last_pattern->border_colour[1];
-	pattern->border_colour[2] = last_pattern->border_colour[2];
-	pattern->border_colour[3] = last_pattern->border_colour[3];
-	pattern->effect_colour[0] = last_pattern->effect_colour[0];
-	pattern->effect_colour[1] = last_pattern->effect_colour[1];
-	pattern->effect_colour[2] = last_pattern->effect_colour[2];
-	pattern->effect_colour[3] = last_pattern->effect_colour[3];
 	pattern->effect           = last_pattern->effect;
 	pattern->effect_padding   = last_pattern->effect_padding;
+
+	memcpy(&pattern->bar_colour, &last_pattern->bar_colour,
+			sizeof(struct Lava_colour));
+	memcpy(&pattern->border_colour, &last_pattern->border_colour,
+			sizeof(struct Lava_colour));
+	memcpy(&pattern->effect_colour, &last_pattern->effect_colour,
+			sizeof(struct Lava_colour));
+
 
 	/* These strings are guaranteed to be terminated in last_pattern,
 	 * so we copy them entirely to avoid false compiler warnings when
@@ -391,22 +377,19 @@ static bool bar_pattern_set_exclusive_zone (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_bar_colour (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	return hex_to_rgba(arg, &(pattern->bar_colour[0]), &(pattern->bar_colour[1]),
-				&(pattern->bar_colour[2]), &(pattern->bar_colour[3]));
+	return colour_from_string(&pattern->bar_colour, arg);
 }
 
 static bool bar_pattern_set_border_colour (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	return hex_to_rgba(arg, &(pattern->border_colour[0]), &(pattern->border_colour[1]),
-				&(pattern->border_colour[2]), &(pattern->border_colour[3]));
+	return colour_from_string(&pattern->border_colour, arg);
 }
 
 static bool bar_pattern_set_effect_colour (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	return hex_to_rgba(arg, &(pattern->effect_colour[0]), &(pattern->effect_colour[1]),
-				&(pattern->effect_colour[2]), &(pattern->effect_colour[3]));
+	return colour_from_string(&pattern->effect_colour, arg);
 }
 
 static bool bar_pattern_set_effect (struct Lava_bar_pattern *pattern,

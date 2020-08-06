@@ -24,6 +24,8 @@
 #include<wayland-server.h>
 #include<cairo/cairo.h>
 
+#include"types/colour.h"
+
 struct Lava_data;
 struct Lava_bar_pattern;
 struct Lava_bar;
@@ -51,9 +53,9 @@ struct Lava_item
 
 	struct Lava_image *img;
 
-	unsigned int     index, ordinate, length;
-	float            background_colour[4];
-	bool             replace_background;
+	unsigned int       index, ordinate, length;
+	struct Lava_colour background_colour;
+	bool               replace_background;
 
 	char *left_click_command;
 	char *middle_click_command;

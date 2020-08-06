@@ -57,6 +57,7 @@ executable(
     'src/toplevel.c',
     'src/types/image.c',
     'src/types/buffer.c',
+    'src/types/colour.c',
     'src/bar/bar.c',
     'src/bar/bar-pattern.c',
     'src/bar/layersurface.c',
@@ -68,7 +69,6 @@ executable(
     'src/item/command.c',
     'src/config/parser.c',
     'src/config/parse-boolean.c',
-    'src/config/colour.c',
     'src/config/global.c',
   ),
   dependencies: [

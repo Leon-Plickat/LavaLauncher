@@ -29,8 +29,8 @@
 #include"lavalauncher.h"
 #include"log.h"
 #include"types/image.h"
+#include"types/colour.h"
 #include"item/item.h"
-#include"config/colour.h"
 
 static bool button_set_app_id (struct Lava_item *button,
 		const char *arg, enum Interaction_type type)
@@ -84,10 +84,7 @@ static bool button_set_background_colour (struct Lava_item *button, const char *
 		enum Interaction_type type)
 {
 	button->replace_background = true;
-	return hex_to_rgba(arg, &(button->background_colour[0]),
-				&(button->background_colour[1]),
-				&(button->background_colour[2]),
-				&(button->background_colour[3]));
+	return colour_from_string(&button->background_colour, arg);
 }
 
 struct

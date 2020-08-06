@@ -28,6 +28,7 @@
 #include"output.h"
 #include"seat.h"
 #include"draw-generics.h"
+#include"types/colour.h"
 
 void circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size)
 {
@@ -55,7 +56,8 @@ void draw_bar_background (cairo_t *cairo,
 		uint32_t border_bottom, uint32_t border_left,
 		uint32_t top_left_radius, uint32_t top_right_radius,
 		uint32_t bottom_left_radius, uint32_t bottom_right_radius,
-		uint32_t scale, float center_colour[4], float border_colour[4])
+		uint32_t scale, struct Lava_colour *bar_colour,
+		struct Lava_colour *border_colour)
 {
 	/* Scale. */
 	x *= scale, y *= scale, w *= scale, h *= scale;
@@ -74,8 +76,7 @@ void draw_bar_background (cairo_t *cairo,
 				&& border_left == 0 && border_right == 0 )
 		{
 			cairo_rectangle(cairo, x, y, w, h);
-			cairo_set_source_rgba(cairo, center_colour[0], center_colour[1],
-					center_colour[2], center_colour[3]);
+			colour_set_cairo_source(cairo, bar_colour);
 			cairo_fill(cairo);
 		}
 		else
@@ -94,14 +95,12 @@ void draw_bar_background (cairo_t *cairo,
 			cairo_rectangle(cairo, x, y + h - border_bottom, w, border_bottom);
 			cairo_rectangle(cairo, x, y + border_top, border_left,
 					h - border_top - border_bottom);
-			cairo_set_source_rgba(cairo, border_colour[0], border_colour[1],
-					border_colour[2], border_colour[3]);
+			colour_set_cairo_source(cairo, border_colour);
 			cairo_fill(cairo);
 
 			/* Center. */
 			cairo_rectangle(cairo, cx, cy, cw, ch);
-			cairo_set_source_rgba(cairo, center_colour[0], center_colour[1],
-					center_colour[2], center_colour[3]);
+			colour_set_cairo_source(cairo, bar_colour);
 			cairo_fill(cairo);
 		}
 	}
@@ -113,8 +112,7 @@ void draw_bar_background (cairo_t *cairo,
 			rounded_rectangle(cairo, x, y, w, h,
 					top_left_radius, top_right_radius,
 					bottom_left_radius, bottom_right_radius);
-			cairo_set_source_rgba(cairo, center_colour[0], center_colour[1],
-					center_colour[2], center_colour[3]);
+			colour_set_cairo_source(cairo, bar_colour);
 			cairo_fill(cairo);
 		}
 		else
@@ -122,8 +120,7 @@ void draw_bar_background (cairo_t *cairo,
 			rounded_rectangle(cairo, x, y, w, h,
 					top_left_radius, top_right_radius,
 					bottom_left_radius, bottom_right_radius);
-			cairo_set_source_rgba(cairo, border_colour[0], border_colour[1],
-					border_colour[2], border_colour[3]);
+			colour_set_cairo_source(cairo, border_colour);
 			cairo_fill(cairo);
 
 			rounded_rectangle(cairo, x + border_left, y + border_top,
@@ -131,8 +128,7 @@ void draw_bar_background (cairo_t *cairo,
 					h - (border_bottom + border_top),
 					top_left_radius, top_right_radius,
 					bottom_left_radius, bottom_right_radius);
-			cairo_set_source_rgba(cairo, center_colour[0], center_colour[1],
-					center_colour[2], center_colour[3]);
+			colour_set_cairo_source(cairo, bar_colour);
 			cairo_fill(cairo);
 		}
 	}

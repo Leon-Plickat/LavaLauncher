@@ -39,20 +39,21 @@
 #include"bar/render.h"
 #include"bar/draw-generics.h"
 #include"item/item.h"
+#include"types/colour.h"
 
 static void item_replace_background (cairo_t *cairo, uint32_t x, uint32_t y,
-		uint32_t size, float colour[4])
+		uint32_t size, struct Lava_colour *colour)
 {
 	cairo_save(cairo);
 	cairo_rectangle(cairo, x, y, size, size);
 	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
-	cairo_set_source_rgba(cairo, colour[0], colour[1], colour[2], colour[3]);
+	colour_set_cairo_source(cairo, colour);
 	cairo_fill(cairo);
 	cairo_restore(cairo);
 }
 
 static void draw_effect (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size,
-		uint32_t padding, float colour[4], enum Draw_effect effect)
+		uint32_t padding, struct Lava_colour *colour, enum Draw_effect effect)
 {
 	if ( effect == EFFECT_NONE )
 		return;
@@ -81,7 +82,7 @@ static void draw_effect (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size,
 	}
 
 	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
-	cairo_set_source_rgba(cairo, colour[0], colour[1], colour[2], colour[3]);
+	colour_set_cairo_source(cairo, colour);
 	cairo_fill(cairo);
 
 	cairo_restore(cairo);
@@ -107,9 +108,9 @@ static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 			*increment = (item->ordinate * scale) + increment_offset;
 			if (item->replace_background)
 				item_replace_background(cairo, x, y, item->length,
-						item->background_colour);
+						&item->background_colour);
 			draw_effect(cairo, x, y, size, pattern->effect_padding,
-					pattern->effect_colour, pattern->effect);
+					&pattern->effect_colour, pattern->effect);
 			if ( item->img != NULL )
 				image_draw_to_cairo(cairo, item->img,
 						x + pattern->icon_padding,
@@ -145,7 +146,7 @@ void render_bar_frame (struct Lava_bar *bar)
 			pattern->border_bottom, pattern->border_left,
 			pattern->radius_top_left, pattern->radius_top_right,
 			pattern->radius_bottom_left, pattern->radius_bottom_right,
-			scale, pattern->bar_colour, pattern->border_colour);
+			scale, &pattern->bar_colour, &pattern->border_colour);
 
 	/* Draw icons. */
 	log_message(data, 2, "[render] Drawing icons.\n");

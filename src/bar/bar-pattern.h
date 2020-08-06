@@ -23,6 +23,8 @@
 #include<wayland-server.h>
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 
+#include"types/colour.h"
+
 struct Lava_data;
 struct Lava_item;
 
@@ -93,9 +95,9 @@ struct Lava_bar_pattern
 	uint32_t border_top, border_right, border_bottom, border_left;
 	uint32_t radius_top_left, radius_top_right, radius_bottom_left, radius_bottom_right;
 
-	float bar_colour[4];
-	float border_colour[4];
-	float effect_colour[4];
+	struct Lava_colour bar_colour;
+	struct Lava_colour border_colour;
+	struct Lava_colour effect_colour;
 
 	/* If only_output[0] is \0, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.

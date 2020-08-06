@@ -23,17 +23,21 @@
 #include<stdlib.h>
 #include<stdbool.h>
 #include<string.h>
+#include<cairo/cairo.h>
 
 #include"log.h"
+#include"types/colour.h"
 
-/* Convert a hex colour string with or without alpha channel into RGBA floats. */
-bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_a)
+bool colour_from_string (struct Lava_colour *colour, const char *hex)
 {
-	if ( hex == NULL || *hex == '\0' || *hex == ' ' )
+	if ( colour == NULL || hex == NULL || *hex == '\0' || *hex == ' ' )
 		goto error;
 
-	unsigned int r = 0, g = 0, b = 0, a = 255;
 
+	memset(colour, '\0', sizeof(struct Lava_colour));
+	strncpy(colour->hex, hex, sizeof(colour->hex) - 1);
+
+	unsigned int r = 0, g = 0, b = 0, a = 255;
 	if (! strcmp(hex, "transparent"))
 		r = g = b = a = 0;
 	else if (! strcmp(hex, "black"))
@@ -44,10 +48,14 @@ bool hex_to_rgba (const char *hex, float *c_r, float *c_g, float *c_b, float *c_
 			&& 3 != sscanf(hex, "#%02x%02x%02x", &r, &g, &b) )
 		goto error;
 
-	*c_r = (float)r / 255.0f;
-	*c_g = (float)g / 255.0f;
-	*c_b = (float)b / 255.0f;
-	*c_a = (float)a / 255.0f;
+	// TODO parse multiple hex codes per Lava_colour for gradients
+	//      -> "#rrggbbaa|#rrggbbaa" horizontal gradient
+	//      -> "#rrggbbaa-#rrggbbaa" vertical   gradient
+
+	colour->r = (float)r / 255.0f;
+	colour->g = (float)g / 255.0f;
+	colour->b = (float)b / 255.0f;
+	colour->a = (float)a / 255.0f;
 
 	return true;
 
@@ -56,5 +64,10 @@ error:
 			"INFO: Colour codes are expected to be in the "
 			"format #RRGGBBAA or #RRGGBB\n", hex);
 	return false;
+}
+
+void colour_set_cairo_source (cairo_t *cairo, struct Lava_colour *colour)
+{
+	cairo_set_source_rgba(cairo, colour->r, colour->g, colour->b, colour->a);
 }
 

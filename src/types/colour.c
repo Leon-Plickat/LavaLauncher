@@ -21,6 +21,7 @@
 
 #include<stdio.h>
 #include<stdlib.h>
+#include<stdint.h>
 #include<stdbool.h>
 #include<string.h>
 #include<cairo/cairo.h>
@@ -28,29 +29,14 @@
 #include"log.h"
 #include"types/colour.h"
 
-bool colour_from_string (struct Lava_colour *colour, const char *hex)
+static bool colour_from_hex_string (struct Lava_colour *colour, const char *hex)
 {
-	if ( colour == NULL || hex == NULL || *hex == '\0' || *hex == ' ' )
-		goto error;
-
-
-	memset(colour, '\0', sizeof(struct Lava_colour));
-	strncpy(colour->hex, hex, sizeof(colour->hex) - 1);
-
 	unsigned int r = 0, g = 0, b = 0, a = 255;
-	if (! strcmp(hex, "transparent"))
-		r = g = b = a = 0;
-	else if (! strcmp(hex, "black"))
-		r = g = b = 0, a = 255;
-	else if (! strcmp(hex, "white"))
-		r = g = b = a = 255;
-	else if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a)
-			&& 3 != sscanf(hex, "#%02x%02x%02x", &r, &g, &b) )
-		goto error;
-
-	// TODO parse multiple hex codes per Lava_colour for gradients
-	//      -> "#rrggbbaa|#rrggbbaa" horizontal gradient
-	//      -> "#rrggbbaa-#rrggbbaa" vertical   gradient
+	if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a)
+			&& 3 != sscanf(hex, "#%02x%02x%02x", &r, &g, &b)
+			&& 4 != sscanf(hex, "0x%02x%02x%02x%02x", &r, &g, &b, &a)
+			&& 3 != sscanf(hex, "0x%02x%02x%02x", &r, &g, &b) )
+		return false;
 
 	colour->r = (float)r / 255.0f;
 	colour->g = (float)g / 255.0f;
@@ -58,11 +44,55 @@ bool colour_from_string (struct Lava_colour *colour, const char *hex)
 	colour->a = (float)a / 255.0f;
 
 	return true;
+}
+
+static bool colour_from_rgb_string (struct Lava_colour *colour, const char *str)
+{
+	int32_t r = 0, g = 0, b = 0, a = 255;
+	if ( 4 != sscanf(str, "rgba(%d,%d,%d,%d)", &r, &g, &b, &a)
+			&& 3 != sscanf(str, "rgb(%d,%d,%d)", &r, &g, &b) )
+		return false;
+
+	if ( r > 255 || g > 255 || b > 255 || a > 255 )
+		return false;
+	if ( r < 0 || g < 0 || b < 0 || a < 0 )
+		return false;
+
+	colour->r = (float)r / 255.0f;
+	colour->g = (float)g / 255.0f;
+	colour->b = (float)b / 255.0f;
+	colour->a = (float)a / 255.0f;
+
+	return true;
+}
+
+bool colour_from_string (struct Lava_colour *colour, const char *str)
+{
+	if ( colour == NULL || str == NULL || *str == '\0' )
+		goto error;
+
+	// TODO maybe parse multiple hex codes per Lava_colour for gradients?
+	//      -> "#rrggbbaa-#rrggbbaa" horizontal gradient
+	//      -> "#rrggbbaa|#rrggbbaa" vertical   gradient
+
+	if ( *str == '#' || strstr(str, "0x") == str )
+	{
+		if (! colour_from_hex_string(colour, str))
+			goto error;
+	}
+	else if ( strstr(str, "rgb") == str )
+	{
+		if (! colour_from_rgb_string(colour, str))
+			goto error;
+	}
+	else
+		goto error;
+
+	return true;
 
 error:
 	log_message(NULL, 0, "ERROR: \"%s\" is not a valid colour.\n"
-			"INFO: Colour codes are expected to be in the "
-			"format #RRGGBBAA or #RRGGBB\n", hex);
+			"INFO: Read lavalauncher(1) to find out what colour formats are supported.\n", str);
 	return false;
 }
 

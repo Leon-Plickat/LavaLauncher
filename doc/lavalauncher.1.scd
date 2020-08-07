@@ -256,9 +256,11 @@ the commands. These variables are as follows.
 	has been configured for the button, it is set to -2.
 
 ## COLOURS
-LavaLauncher excepts colours in the formats "#RRGGBBAA" or "#RRGGBB". Therefore,
-colour codes must be quoted to not be interpreted as comments. Alternatively,
-"transparent", "white" and "black" are accepted as well.
+LavaLauncher can parse hex code colours and read RGB values directly.
+
+The supported formats are "#RRGGBB", "#RRGGBBAA", "0xRRGGBB" and "0xRRGGBBAA"
+for hex code colours and "rgb(rrr,ggg,bbb)" and "rgba(rrr,ggg,bbb,aaa)" for RGB
+colours.
 
 ## CONDITIONS
 Conditions are (re-)evaluated and bars created and destroyed accordingly

@@ -25,7 +25,6 @@
 
 struct Lava_colour
 {
-	char hex[10];
 	double r, g, b, a;
 };
 

@@ -24,8 +24,11 @@
 #include<stdbool.h>
 #include<stdint.h>
 
+#include"types/buffer.h"
+
 struct Lava_data;
 struct Lava_bar;
+struct Lava_item_indicator;
 
 struct Lava_seat
 {
@@ -46,6 +49,9 @@ struct Lava_seat
 		/* Stuff needed to gracefully handle scroll events. */
 		uint32_t   discrete_steps, last_update_time;
 		wl_fixed_t value;
+
+		/* Hover indicator. */
+		struct Lava_item_indicator *indicator;
 
 		/* Stuff needed to change the cursor image. */
 		struct wl_surface      *cursor_surface;

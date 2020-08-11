@@ -40,6 +40,7 @@
 #include"draw-generics.h"
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
+#include"bar/indicator.h"
 #include"bar/layersurface.h"
 #include"bar/render.h"
 #include"item/item.h"
@@ -252,6 +253,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 		log_message(NULL, 0, "ERROR: Could not allocate.\n");
 		return false;
 	}
+
 	wl_list_insert(&output->bars, &bar->link);
 	bar->data          = data;
 	bar->pattern       = pattern;
@@ -261,6 +263,8 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 	bar->layer_surface = NULL;
 	bar->subsurface    = NULL;
 	bar->configured    = false;
+
+	wl_list_init(&bar->indicators);
 
 	/* Main surface for the bar. */
 	if ( NULL == (bar->bar_surface = wl_compositor_create_surface(data->compositor)) )
@@ -307,6 +311,10 @@ void destroy_bar (struct Lava_bar *bar)
 	if ( bar == NULL )
 		return;
 
+	struct Lava_item_indicator *indicator, *temp;
+	wl_list_for_each_safe(indicator, temp, &bar->indicators, link)
+		destroy_indicator(indicator);
+
 	if ( bar->layer_surface != NULL )
 		zwlr_layer_surface_v1_destroy(bar->layer_surface);
 	if ( bar->subsurface != NULL )
@@ -315,6 +323,12 @@ void destroy_bar (struct Lava_bar *bar)
 		wl_surface_destroy(bar->bar_surface);
 	if ( bar->icon_surface != NULL )
 		wl_surface_destroy(bar->icon_surface);
+
+	finish_buffer(&bar->bar_buffers[0]);
+	finish_buffer(&bar->bar_buffers[1]);
+	finish_buffer(&bar->icon_buffers[0]);
+	finish_buffer(&bar->icon_buffers[1]);
+
 	wl_list_remove(&bar->link);
 	free(bar);
 }

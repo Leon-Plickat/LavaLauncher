@@ -120,6 +120,17 @@ as follows.
 *icon-padding*
 	Padding around the icons. The default 4.
 
+*indicator-active-colour*
+	The colour of the indicator for items being activated. The default is
+	"#606060".
+
+*indicator-hover-colour*
+	The colour of the indicator for items over which the cursor hovers. The
+	default is "#404040".
+
+*indicator-padding*
+	Padding around the icon indicator. The default 0.
+
 *layer*
 	Layer of the bar surface. Can be "overlay", "top", "bottom" or
 	"background". Typically, "bottom" and "background" will be underneath

@@ -183,24 +183,23 @@ bool next_buffer (struct Lava_buffer **buffer, struct wl_shm *shm,
 	if (! buffers[0].busy)
 		*buffer = &buffers[0];
 	else if (! buffers[1].busy)
-		*buffer = &buffers[0];
-	if (! *buffer)
+		*buffer = &buffers[1];
+	else
 	{
 		log_message(NULL, 0, "ERROR: All buffers are busy.\n");
 		*buffer = NULL;
 		return false;
 	}
 
-	/* If the buffers dimensions do not match, close it and create a new one. */
-	if ( (*buffer)->w != w || (*buffer)->h != h )
+	/* If the buffers dimensions do not match, or if there is no wl_buffer
+	 * or if the buffer does not exist, close it and create a new one.
+	 */
+	if ( (*buffer)->w != w || (*buffer)->h != h || ! (*buffer)->buffer )
 	{
 		finish_buffer(*buffer);
 		if (! create_buffer(shm, *buffer, w, h))
 			return false;
 	}
-	/* If there is no wl_buffer or buffer does not exist, create a new one. */
-	else if (! (*buffer)->buffer && ! create_buffer(shm, *buffer, w, h))
-		return false;
 
 	return true;
 }

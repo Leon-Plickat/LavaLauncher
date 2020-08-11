@@ -63,6 +63,7 @@ executable(
     'src/bar/layersurface.c',
     'src/bar/render.c',
     'src/bar/draw-generics.c',
+    'src/bar/indicator.c',
     'src/item/item.c',
     'src/item/button.c',
     'src/item/spacer.c',

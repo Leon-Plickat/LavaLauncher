@@ -42,6 +42,8 @@
 #include"cursor.h"
 #include"item/item.h"
 #include"bar/bar.h"
+#include"bar/bar-pattern.h"
+#include"bar/indicator.h"
 
 const int      continuous_scroll_threshhold = 10000;
 const uint32_t continuous_scroll_timeout    = 1000;
@@ -53,12 +55,16 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 		uint32_t serial, struct wl_surface *surface)
 {
 	struct Lava_seat *seat = data;
+
+	if ( seat->pointer.indicator != NULL )
+		destroy_indicator(seat->pointer.indicator);
+
 	seat->pointer.x        = 0;
 	seat->pointer.y        = 0;
 	seat->pointer.bar      = NULL;
 	seat->pointer.item     = NULL;
 
-	log_message(data, 1, "[input] Pointer left surface.\n");
+	log_message(seat->data, 1, "[input] Pointer left surface.\n");
 }
 
 static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
@@ -75,7 +81,7 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
 	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);
 
-	log_message(data, 1, "[input] Pointer entered surface: x=%d y=%d\n",
+	log_message(seat->data, 1, "[input] Pointer entered surface: x=%d y=%d\n",
 				seat->pointer.x, seat->pointer.y);
 }
 
@@ -86,6 +92,43 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 
 	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
 	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);
+
+	/* It is enough to only update the indicator every other motion event. */
+	static bool skip = false;
+	if (skip)
+	{
+		skip = false;
+		return;
+	}
+	else
+		skip = true;
+
+	struct Lava_item *item = item_from_coords(seat->pointer.bar,
+			seat->pointer.x, seat->pointer.y);
+
+	if ( item == NULL || item->type != TYPE_BUTTON )
+	{
+		if ( seat->pointer.indicator != NULL )
+			destroy_indicator(seat->pointer.indicator);
+		return;
+	}
+
+	if ( seat->pointer.indicator == NULL )
+	{
+		seat->pointer.indicator = create_indicator(seat->pointer.bar);
+		if ( seat->pointer.indicator == NULL )
+		{
+			log_message(NULL, 0, "ERROR: Could not create indicator.\n");
+			return;
+		}
+		seat->pointer.indicator->seat = seat;
+
+		indicator_set_colour(seat->pointer.indicator,
+				&seat->pointer.bar->pattern->indicator_hover_colour);
+	}
+
+	move_indicator(seat->pointer.indicator, item);
+	indicator_commit(seat->pointer.indicator);
 }
 
 static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer,
@@ -104,6 +147,13 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	 */
 	if ( button_state == WL_POINTER_BUTTON_STATE_PRESSED )
 	{
+		if ( seat->pointer.indicator != NULL )
+		{
+			indicator_set_colour(seat->pointer.indicator,
+					&seat->pointer.bar->pattern->indicator_active_colour);
+			indicator_commit(seat->pointer.indicator);
+		}
+
 		log_message(seat->data, 1, "[input] Button pressed: x=%d y=%d\n",
 					seat->pointer.x, seat->pointer.y);
 		seat->pointer.item = item_from_coords(seat->pointer.bar,
@@ -111,6 +161,13 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	}
 	else
 	{
+		if ( seat->pointer.indicator != NULL )
+		{
+			indicator_set_colour(seat->pointer.indicator,
+					&seat->pointer.bar->pattern->indicator_hover_colour);
+			indicator_commit(seat->pointer.indicator);
+		}
+
 		log_message(seat->data, 1, "[input] Button released: x=%d y=%d\n",
 					seat->pointer.x, seat->pointer.y);
 

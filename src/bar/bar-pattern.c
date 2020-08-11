@@ -58,11 +58,13 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->margin_right        = 0;
 	pattern->margin_bottom       = 0;
 	pattern->margin_left         = 0;
+	pattern->exclusive_zone      = 1;
+	pattern->indicator_padding   = 0;
 
-	pattern->exclusive_zone    = 1;
-
-	colour_from_string(&pattern->bar_colour, "#000000ff");
-	colour_from_string(&pattern->border_colour, "#ffffffff");
+	colour_from_string(&pattern->bar_colour, "#000000");
+	colour_from_string(&pattern->border_colour, "#ffffff");
+	colour_from_string(&pattern->indicator_hover_colour, "#404040");
+	colour_from_string(&pattern->indicator_active_colour, "#606060");
 
 	strncpy(pattern->cursor_name, "pointer", sizeof(pattern->cursor_name) - 1);
 
@@ -110,25 +112,30 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 	struct Lava_bar_pattern *pattern = data->last_pattern;
 
 	/* Copy all settings. */
-	pattern->position         = last_pattern->position;
-	pattern->alignment        = last_pattern->alignment;
-	pattern->mode             = last_pattern->mode;
-	pattern->layer            = last_pattern->layer;
-	pattern->size             = last_pattern->size;
-	pattern->icon_padding     = last_pattern->icon_padding;
-	pattern->border_top       = last_pattern->border_top;
-	pattern->border_right     = last_pattern->border_right;
-	pattern->border_bottom    = last_pattern->border_bottom;
-	pattern->border_left      = last_pattern->border_left;
-	pattern->margin_top       = last_pattern->margin_top;
-	pattern->margin_right     = last_pattern->margin_right;
-	pattern->margin_bottom    = last_pattern->margin_bottom;
-	pattern->margin_left      = last_pattern->margin_left;
-	pattern->exclusive_zone   = last_pattern->exclusive_zone;
+	pattern->position          = last_pattern->position;
+	pattern->alignment         = last_pattern->alignment;
+	pattern->mode              = last_pattern->mode;
+	pattern->layer             = last_pattern->layer;
+	pattern->size              = last_pattern->size;
+	pattern->icon_padding      = last_pattern->icon_padding;
+	pattern->border_top        = last_pattern->border_top;
+	pattern->border_right      = last_pattern->border_right;
+	pattern->border_bottom     = last_pattern->border_bottom;
+	pattern->border_left       = last_pattern->border_left;
+	pattern->margin_top        = last_pattern->margin_top;
+	pattern->margin_right      = last_pattern->margin_right;
+	pattern->margin_bottom     = last_pattern->margin_bottom;
+	pattern->margin_left       = last_pattern->margin_left;
+	pattern->exclusive_zone    = last_pattern->exclusive_zone;
+	pattern->indicator_padding = last_pattern->indicator_padding;
 
 	memcpy(&pattern->bar_colour, &last_pattern->bar_colour,
 			sizeof(struct Lava_colour));
 	memcpy(&pattern->border_colour, &last_pattern->border_colour,
+			sizeof(struct Lava_colour));
+	memcpy(&pattern->indicator_hover_colour, &last_pattern->indicator_hover_colour,
+			sizeof(struct Lava_colour));
+	memcpy(&pattern->indicator_active_colour, &last_pattern->indicator_active_colour,
 			sizeof(struct Lava_colour));
 
 	/* These strings are guaranteed to be terminated in last_pattern,
@@ -464,40 +471,67 @@ static bool bar_pattern_set_radius (struct Lava_bar_pattern *pattern,
 	return true;
 }
 
+static bool bar_pattern_set_indicator_padding (struct Lava_bar_pattern *pattern,
+		const char *arg, const char direction)
+{
+	int32_t size = atoi(arg);
+	if ( size < 0 )
+	{
+		log_message(NULL, 0, "ERROR: Indicator padding must be equal to or greater than zero.\n");
+		return false;
+	}
+	pattern->indicator_padding = (uint32_t)size;
+	return true;
+}
+
+static bool bar_pattern_set_indicator_colour (struct Lava_bar_pattern *pattern,
+		const char *arg, const char direction)
+{
+	if ( direction == 'a')
+		return colour_from_string(&pattern->indicator_active_colour, arg);
+	else if ( direction == 'h')
+		return colour_from_string(&pattern->indicator_hover_colour, arg);
+	else
+		return false;
+}
+
 
 struct
 {
 	const char *variable, direction;
 	bool (*set)(struct Lava_bar_pattern*, const char*, const char);
 } pattern_configs[] = {
-	{ .variable = "position",             .set = bar_pattern_set_position,             .direction = '0'},
-	{ .variable = "alignment",            .set = bar_pattern_set_alignment,            .direction = '0'},
-	{ .variable = "mode",                 .set = bar_pattern_set_mode,                 .direction = '0'},
-	{ .variable = "layer",                .set = bar_pattern_set_layer,                .direction = '0'},
-	{ .variable = "size",                 .set = bar_pattern_set_size,                 .direction = '0'},
-	{ .variable = "icon-padding",         .set = bar_pattern_set_icon_padding,         .direction = '0'},
-	{ .variable = "border",               .set = bar_pattern_set_border_size,          .direction = 'a'},
-	{ .variable = "border-top",           .set = bar_pattern_set_border_size,          .direction = 't'},
-	{ .variable = "border-right",         .set = bar_pattern_set_border_size,          .direction = 'r'},
-	{ .variable = "border-bottom",        .set = bar_pattern_set_border_size,          .direction = 'b'},
-	{ .variable = "border-left",          .set = bar_pattern_set_border_size,          .direction = 'l'},
-	{ .variable = "margin-top",           .set = bar_pattern_set_margin_size,          .direction = 't'},
-	{ .variable = "margin-right",         .set = bar_pattern_set_margin_size,          .direction = 'r'},
-	{ .variable = "margin-bottom",        .set = bar_pattern_set_margin_size,          .direction = 'b'},
-	{ .variable = "margin-left",          .set = bar_pattern_set_margin_size,          .direction = 'l'},
-	{ .variable = "output",               .set = bar_pattern_set_only_output,          .direction = '0'},
-	{ .variable = "exclusive-zone",       .set = bar_pattern_set_exclusive_zone,       .direction = '0'},
-	{ .variable = "background-colour",    .set = bar_pattern_set_bar_colour,           .direction = '0'},
-	{ .variable = "border-colour",        .set = bar_pattern_set_border_colour,        .direction = '0'},
-	{ .variable = "cursor-name",          .set = bar_pattern_set_cursor_name,          .direction = '0'},
-	{ .variable = "condition-scale",      .set = bar_pattern_set_condition_scale,      .direction = '0'},
-	{ .variable = "condition-resolution", .set = bar_pattern_set_condition_resolution, .direction = '0'},
-	{ .variable = "condition-transform",  .set = bar_pattern_set_condition_transform,  .direction = '0'},
-	{ .variable = "radius",               .set = bar_pattern_set_radius,               .direction = 'a'},
-	{ .variable = "radius-top-left",      .set = bar_pattern_set_radius,               .direction = 'l'},
-	{ .variable = "radius-top-right",     .set = bar_pattern_set_radius,               .direction = 'r'},
-	{ .variable = "radius-bottom-left",   .set = bar_pattern_set_radius,               .direction = 'L'},
-	{ .variable = "radius-bottom-right",  .set = bar_pattern_set_radius,               .direction = 'R'}
+	{ .variable = "position",                .set = bar_pattern_set_position,             .direction = '0'},
+	{ .variable = "alignment",               .set = bar_pattern_set_alignment,            .direction = '0'},
+	{ .variable = "mode",                    .set = bar_pattern_set_mode,                 .direction = '0'},
+	{ .variable = "layer",                   .set = bar_pattern_set_layer,                .direction = '0'},
+	{ .variable = "size",                    .set = bar_pattern_set_size,                 .direction = '0'},
+	{ .variable = "icon-padding",            .set = bar_pattern_set_icon_padding,         .direction = '0'},
+	{ .variable = "border",                  .set = bar_pattern_set_border_size,          .direction = 'a'},
+	{ .variable = "border-top",              .set = bar_pattern_set_border_size,          .direction = 't'},
+	{ .variable = "border-right",            .set = bar_pattern_set_border_size,          .direction = 'r'},
+	{ .variable = "border-bottom",           .set = bar_pattern_set_border_size,          .direction = 'b'},
+	{ .variable = "border-left",             .set = bar_pattern_set_border_size,          .direction = 'l'},
+	{ .variable = "margin-top",              .set = bar_pattern_set_margin_size,          .direction = 't'},
+	{ .variable = "margin-right",            .set = bar_pattern_set_margin_size,          .direction = 'r'},
+	{ .variable = "margin-bottom",           .set = bar_pattern_set_margin_size,          .direction = 'b'},
+	{ .variable = "margin-left",             .set = bar_pattern_set_margin_size,          .direction = 'l'},
+	{ .variable = "output",                  .set = bar_pattern_set_only_output,          .direction = '0'},
+	{ .variable = "exclusive-zone",          .set = bar_pattern_set_exclusive_zone,       .direction = '0'},
+	{ .variable = "background-colour",       .set = bar_pattern_set_bar_colour,           .direction = '0'},
+	{ .variable = "border-colour",           .set = bar_pattern_set_border_colour,        .direction = '0'},
+	{ .variable = "cursor-name",             .set = bar_pattern_set_cursor_name,          .direction = '0'},
+	{ .variable = "condition-scale",         .set = bar_pattern_set_condition_scale,      .direction = '0'},
+	{ .variable = "condition-resolution",    .set = bar_pattern_set_condition_resolution, .direction = '0'},
+	{ .variable = "condition-transform",     .set = bar_pattern_set_condition_transform,  .direction = '0'},
+	{ .variable = "radius",                  .set = bar_pattern_set_radius,               .direction = 'a'},
+	{ .variable = "radius-top-left",         .set = bar_pattern_set_radius,               .direction = 'l'},
+	{ .variable = "radius-top-right",        .set = bar_pattern_set_radius,               .direction = 'r'},
+	{ .variable = "radius-bottom-left",      .set = bar_pattern_set_radius,               .direction = 'L'},
+	{ .variable = "radius-bottom-right",     .set = bar_pattern_set_radius,               .direction = 'R'},
+	{ .variable = "indicator-padding",       .set = bar_pattern_set_indicator_padding,    .direction = '0'},
+	{ .variable = "indicator-active-colour", .set = bar_pattern_set_indicator_colour,     .direction = 'a'},
+	{ .variable = "indicator-hover-colour",  .set = bar_pattern_set_indicator_colour,     .direction = 'h'}
 };
 
 bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,

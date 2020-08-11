@@ -48,6 +48,8 @@ struct Lava_bar
 	struct Lava_buffer  icon_buffers[2];
 	struct Lava_buffer *current_icon_buffer;
 
+	struct wl_list indicators;
+
 	bool configured;
 };
 

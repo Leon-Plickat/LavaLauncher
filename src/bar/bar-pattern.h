@@ -90,6 +90,10 @@ struct Lava_bar_pattern
 	struct Lava_colour bar_colour;
 	struct Lava_colour border_colour;
 
+	uint32_t indicator_padding;
+	struct Lava_colour indicator_hover_colour;
+	struct Lava_colour indicator_active_colour;
+
 	/* If only_output[0] is \0, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.
 	 * Examples of valid names are "eDP-1" or "HDMI-A-1" (likely compositor

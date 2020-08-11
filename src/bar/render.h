@@ -23,6 +23,7 @@
 struct Lava_bar;
 
 void render_bar_frame (struct Lava_bar *bar);
+void render_icon_frame (struct Lava_bar *bar);
 
 #endif
 

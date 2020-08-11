@@ -56,14 +56,6 @@ enum Bar_alignment
 	ALIGNMENT_END
 };
 
-enum Draw_effect
-{
-	EFFECT_NONE,
-	EFFECT_BOX,
-	EFFECT_PHONE,
-	EFFECT_CIRCLE,
-};
-
 enum Condition_resolution
 {
 	RESOLUTION_WIDER_THAN_HIGH,
@@ -97,7 +89,6 @@ struct Lava_bar_pattern
 
 	struct Lava_colour bar_colour;
 	struct Lava_colour border_colour;
-	struct Lava_colour effect_colour;
 
 	/* If only_output[0] is \0, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.
@@ -114,11 +105,6 @@ struct Lava_bar_pattern
 
 	/* Directional margins of the surface. */
 	int32_t margin_top, margin_right, margin_bottom, margin_left;
-
-
-	/* Draw effect applied to item. */
-	enum Draw_effect effect;
-	uint32_t effect_padding;
 
 	/* Name of cursor which should be attached to pointer on hover. */
 	char cursor_name[64];

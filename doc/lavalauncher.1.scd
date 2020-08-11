@@ -105,20 +105,6 @@ as follows.
 	default cursor is "pointer". Behold: What cursors are available depends
 	on your cursor theme.
 
-*effect*
-	Drawing effect applied to the buttons. Can be "none", "box", "phone"
-	or "circle". If "box", LavaLauncher will draw a rectangle underneath the
-	button icons. If "phone", LavaLauncher will draw a rounded rectangle
-	underneath the button icons, similar to how application icons look on
-	phones. If "circle", LavaLauncher will draw a circle underneath the
-	button icons. The default is "none".
-
-*effect-colour*
-	Colour of the drawing effect. The default is "#FFFFFF".
-
-*effect-padding*
-	Padding between drawing effect and bar outlines.
-
 *exclusive-zone*
 	Exclusive zone of the surface. Can be "true", "false" or "stationary".
 	If "true", the compositor is informed that it should not obstruct the
@@ -194,10 +180,6 @@ this context are as follows.
 	The app-id of toplevels LavaLauncher should consider to belong to this
 	button. Behold: This requires the global option "use-foreign-toplevel" to be
 	enabled.
-
-*background-colour*
-	The background colour of the individual button. This overrides the
-	background colour of the bar.
 
 *command*
 	Sets the shell command for left-, right-, middle-click and touch

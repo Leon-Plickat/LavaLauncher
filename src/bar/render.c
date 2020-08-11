@@ -41,53 +41,6 @@
 #include"item/item.h"
 #include"types/colour.h"
 
-static void item_replace_background (cairo_t *cairo, uint32_t x, uint32_t y,
-		uint32_t size, struct Lava_colour *colour)
-{
-	cairo_save(cairo);
-	cairo_rectangle(cairo, x, y, size, size);
-	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
-	colour_set_cairo_source(cairo, colour);
-	cairo_fill(cairo);
-	cairo_restore(cairo);
-}
-
-static void draw_effect (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size,
-		uint32_t padding, struct Lava_colour *colour, enum Draw_effect effect)
-{
-	if ( effect == EFFECT_NONE )
-		return;
-
-	cairo_save(cairo);
-
-	x += padding, y += padding, size -= 2 * padding;
-	switch (effect)
-	{
-		case EFFECT_BOX:
-			cairo_rectangle(cairo, x, y, size, size);
-			break;
-
-		case EFFECT_PHONE:
-			rounded_rectangle(cairo, x, y, size, size,
-					size / 10.0, size / 10.0,
-					size / 10.0, size / 10.0);
-			break;
-
-		case EFFECT_CIRCLE:
-			circle(cairo, x, y, size);
-			break;
-
-		default:
-			break;
-	}
-
-	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
-	colour_set_cairo_source(cairo, colour);
-	cairo_fill(cairo);
-
-	cairo_restore(cairo);
-}
-
 static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 {
 	struct Lava_bar_pattern *pattern = bar->pattern;
@@ -95,29 +48,23 @@ static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 	uint32_t scale = bar->output->scale;
 	uint32_t size = pattern->size * scale;
 	uint32_t *increment, increment_offset;
-	uint32_t x = bar->item_area_x * scale, y = bar->item_area_y * scale;
+	uint32_t x = 0, y = 0;
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 		increment = &x, increment_offset = x;
 	else
 		increment = &y, increment_offset = y;
 
-	struct Lava_item *item, *temp;
-	wl_list_for_each_reverse_safe(item, temp, &pattern->items, link)
-		if ( item->type == TYPE_BUTTON )
-		{
-			*increment = (item->ordinate * scale) + increment_offset;
-			if (item->replace_background)
-				item_replace_background(cairo, x, y, item->length,
-						&item->background_colour);
-			draw_effect(cairo, x, y, size, pattern->effect_padding,
-					&pattern->effect_colour, pattern->effect);
-			if ( item->img != NULL )
-				image_draw_to_cairo(cairo, item->img,
-						x + pattern->icon_padding,
-						y + pattern->icon_padding,
-						size - (2 * pattern->icon_padding),
-						size - (2 * pattern->icon_padding));
-		}
+	struct Lava_item *item;
+	wl_list_for_each_reverse(item, &pattern->items, link) if ( item->type == TYPE_BUTTON )
+	{
+		*increment = (item->ordinate * scale) + increment_offset;
+		if ( item->img != NULL )
+			image_draw_to_cairo(cairo, item->img,
+					x + pattern->icon_padding,
+					y + pattern->icon_padding,
+					size - (2 * pattern->icon_padding),
+					size - (2 * pattern->icon_padding));
+	}
 }
 
 void render_bar_frame (struct Lava_bar *bar)
@@ -127,15 +74,15 @@ void render_bar_frame (struct Lava_bar *bar)
 	struct Lava_output      *output  = bar->output;
 	uint32_t                 scale   = output->scale;
 
-	log_message(data, 1, "[render] Render bar fraome: global_name=%d\n", bar->output->global_name);
+	log_message(data, 2, "[render] Render bar frame: global_name=%d\n", bar->output->global_name);
 
 	/* Get new/next buffer. */
-	if (! next_buffer(&bar->current_buffer, data->shm, bar->buffers,
+	if (! next_buffer(&bar->current_bar_buffer, data->shm, bar->bar_buffers,
 				bar->buffer_width  * scale,
 				bar->buffer_height * scale))
 		return;
 
-	cairo_t *cairo = bar->current_buffer->cairo;
+	cairo_t *cairo = bar->current_bar_buffer->cairo;
 	clear_buffer(cairo);
 
 	/* Draw bar. */
@@ -148,14 +95,32 @@ void render_bar_frame (struct Lava_bar *bar)
 			pattern->radius_bottom_left, pattern->radius_bottom_right,
 			scale, &pattern->bar_colour, &pattern->border_colour);
 
+	wl_surface_set_buffer_scale(bar->bar_surface, (int32_t)scale);
+	wl_surface_attach(bar->bar_surface, bar->current_bar_buffer->buffer, 0, 0);
+	wl_surface_damage_buffer(bar->bar_surface, 0, 0, INT32_MAX, INT32_MAX);
+}
+
+void render_icon_frame (struct Lava_bar *bar)
+{
+	struct Lava_data   *data    = bar->data;
+	struct Lava_output *output  = bar->output;
+	uint32_t            scale   = output->scale;
+
+	log_message(data, 2, "[render] Render icon frame: global_name=%d\n", bar->output->global_name);
+
+	/* Get new/next buffer. */
+	if (! next_buffer(&bar->current_icon_buffer, data->shm, bar->icon_buffers,
+				bar->item_area_width  * scale,
+				bar->item_area_height * scale))
+		return;
+
+	cairo_t *cairo = bar->current_icon_buffer->cairo;
+	clear_buffer(cairo);
+
 	/* Draw icons. */
-	log_message(data, 2, "[render] Drawing icons.\n");
 	draw_items(bar, cairo);
 
-	/* Commit surface. */
-	log_message(data, 2, "[render] Commiting surface.\n");
-	wl_surface_set_buffer_scale(bar->wl_surface, (int32_t)scale);
-	wl_surface_attach(bar->wl_surface, bar->current_buffer->buffer, 0, 0);
-	wl_surface_damage_buffer(bar->wl_surface, 0, 0, INT32_MAX, INT32_MAX);
-	wl_surface_commit(bar->wl_surface);
+	wl_surface_set_buffer_scale(bar->icon_surface, (int32_t)scale);
+	wl_surface_attach(bar->icon_surface, bar->current_icon_buffer->buffer, 0, 0);
+	wl_surface_damage_buffer(bar->icon_surface, 0, 0, INT32_MAX, INT32_MAX);
 }

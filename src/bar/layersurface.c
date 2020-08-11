@@ -151,7 +151,7 @@ void configure_layer_surface (struct Lava_bar *bar)
 	/* Set input region. This is necessary to prevent the unused parts of
 	 * the surface to catch pointer and touch events.
 	 */
-	wl_surface_set_input_region(bar->wl_surface, region);
+	wl_surface_set_input_region(bar->bar_surface, region);
 
 	wl_region_destroy(region);
 }
@@ -185,4 +185,19 @@ const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 	.configure = layer_surface_handle_configure,
 	.closed    = layer_surface_handle_closed
 };
+
+void configure_subsurface (struct Lava_bar *bar)
+{
+	struct Lava_data        *data    = bar->data;
+
+	log_message(bar->data, 1, "[bar] Configuring icons: global_name=%d\n",
+			bar->output->global_name);
+
+	wl_subsurface_set_position(bar->subsurface, (int32_t)bar->item_area_x, (int32_t)bar->item_area_y);
+
+	// TODO it probably makes more sense to use the input events of the subsurface
+	struct wl_region *region = wl_compositor_create_region(data->compositor);
+	wl_surface_set_input_region(bar->icon_surface, region);
+	wl_region_destroy(region);
+}
 

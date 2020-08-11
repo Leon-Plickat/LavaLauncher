@@ -49,7 +49,6 @@ static void item_nullify (struct Lava_item *item)
 	item->scroll_up_command     = NULL;
 	item->scroll_down_command   = NULL;
 	item->touch_command         = NULL;
-	item->replace_background    = false;
 	item->img                   = NULL;
 
 	memset(item->app_id, '\0', sizeof(item->app_id));
@@ -93,10 +92,6 @@ bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
 	new_item->index                = item->index;
 	new_item->ordinate             = item->ordinate;
 	new_item->length               = item->length;
-	
-	memcpy(&new_item->background_colour, &item->background_colour,
-			sizeof(struct Lava_colour));
-	new_item->replace_background   = item->replace_background;
 
 	if ( item->left_click_command != NULL )
 		new_item->left_click_command = strdup(item->left_click_command);

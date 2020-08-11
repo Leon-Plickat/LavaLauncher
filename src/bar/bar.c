@@ -256,18 +256,20 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 	bar->data          = data;
 	bar->pattern       = pattern;
 	bar->output        = output;
-	bar->wl_surface    = NULL;
+	bar->bar_surface   = NULL;
+	bar->icon_surface  = NULL;
 	bar->layer_surface = NULL;
+	bar->subsurface    = NULL;
 	bar->configured    = false;
 
-	if ( NULL == (bar->wl_surface = wl_compositor_create_surface(data->compositor)) )
+	/* Main surface for the bar. */
+	if ( NULL == (bar->bar_surface = wl_compositor_create_surface(data->compositor)) )
 	{
 		log_message(NULL, 0, "ERROR: Compositor did not create wl_surface.\n");
 		return false;
 	}
-
 	if ( NULL == (bar->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-					data->layer_shell, bar->wl_surface,
+					data->layer_shell, bar->bar_surface,
 					output->wl_output, pattern->layer,
 					"LavaLauncher")) )
 	{
@@ -275,11 +277,27 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 		return false;
 	}
 
+	/* Subsurface for the icons. */
+	if ( NULL == (bar->icon_surface = wl_compositor_create_surface(data->compositor)) )
+	{
+		log_message(NULL, 0, "ERROR: Compositor did not create wl_surface.\n");
+		return false;
+	}
+	if ( NULL == (bar->subsurface = wl_subcompositor_get_subsurface(
+					data->subcompositor, bar->icon_surface,
+					bar->bar_surface)) )
+	{
+		log_message(NULL, 0, "ERROR: Compositor did not create wl_subsurface.\n");
+		return false;
+	}
+
 	update_dimensions(bar);
 	configure_layer_surface(bar);
+	configure_subsurface(bar);
 	zwlr_layer_surface_v1_add_listener(bar->layer_surface,
 			&layer_surface_listener, bar);
-	wl_surface_commit(bar->wl_surface);
+	wl_surface_commit(bar->icon_surface);
+	wl_surface_commit(bar->bar_surface);
 
 	return true;
 }
@@ -291,8 +309,12 @@ void destroy_bar (struct Lava_bar *bar)
 
 	if ( bar->layer_surface != NULL )
 		zwlr_layer_surface_v1_destroy(bar->layer_surface);
-	if ( bar->wl_surface != NULL )
-		wl_surface_destroy(bar->wl_surface);
+	if ( bar->subsurface != NULL )
+		wl_subsurface_destroy(bar->subsurface);
+	if ( bar->bar_surface != NULL )
+		wl_surface_destroy(bar->bar_surface);
+	if ( bar->icon_surface != NULL )
+		wl_surface_destroy(bar->icon_surface);
 	wl_list_remove(&bar->link);
 	free(bar);
 }
@@ -317,8 +339,14 @@ void update_bar (struct Lava_bar *bar)
 		return;
 
 	update_dimensions(bar);
+
+	configure_subsurface(bar);
+	render_icon_frame(bar);
+	wl_surface_commit(bar->icon_surface);
+
 	configure_layer_surface(bar);
 	render_bar_frame(bar);
+	wl_surface_commit(bar->bar_surface);
 }
 
 struct Lava_bar *bar_from_surface (struct Lava_data *data, struct wl_surface *surface)
@@ -331,7 +359,7 @@ struct Lava_bar *bar_from_surface (struct Lava_data *data, struct wl_surface *su
 	{
 		wl_list_for_each_safe(b1, b2, &op1->bars, link)
 		{
-			if ( b1->wl_surface == surface )
+			if ( b1->bar_surface == surface )
 				return b1;
 		}
 	}

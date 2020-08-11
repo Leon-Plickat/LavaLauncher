@@ -33,15 +33,20 @@ struct Lava_bar
 	struct wl_list                link;
 	struct Lava_bar_pattern      *pattern;
 	struct Lava_output           *output;
-	struct wl_surface            *wl_surface;
+	struct wl_surface            *bar_surface;
+	struct wl_surface            *icon_surface;
+	struct wl_subsurface         *subsurface;
 	struct zwlr_layer_surface_v1 *layer_surface;
 
 	uint32_t buffer_width, buffer_height;
 	uint32_t bar_x, bar_y, bar_width, bar_height;
 	uint32_t item_area_x, item_area_y, item_area_width, item_area_height;
 
-	struct Lava_buffer  buffers[2];
-	struct Lava_buffer *current_buffer;
+	struct Lava_buffer  bar_buffers[2];
+	struct Lava_buffer *current_bar_buffer;
+
+	struct Lava_buffer  icon_buffers[2];
+	struct Lava_buffer *current_icon_buffer;
 
 	bool configured;
 };

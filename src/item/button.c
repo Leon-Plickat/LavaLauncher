@@ -80,13 +80,6 @@ static bool button_set_image_path (struct Lava_item *button, const char *path,
 	return true;
 }
 
-static bool button_set_background_colour (struct Lava_item *button, const char *arg,
-		enum Interaction_type type)
-{
-	button->replace_background = true;
-	return colour_from_string(&button->background_colour, arg);
-}
-
 struct
 {
 	const char *variable;
@@ -101,8 +94,7 @@ struct
 	{ .variable = "scroll-up-command",    .set = button_set_command,           .type = TYPE_SCROLL_UP    },
 	{ .variable = "scroll-down-command",  .set = button_set_command,           .type = TYPE_SCROLL_DOWN  },
 	{ .variable = "touch-command",        .set = button_set_command,           .type = TYPE_TOUCH        },
-	{ .variable = "image-path",           .set = button_set_image_path,        .type = 0                 },
-	{ .variable = "background-colour",    .set = button_set_background_colour, .type = 0                 }
+	{ .variable = "image-path",           .set = button_set_image_path,        .type = 0                 }
 };
 
 bool button_set_variable (struct Lava_item *button, const char *variable,

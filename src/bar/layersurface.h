@@ -26,6 +26,7 @@ struct Lava_bar;
 extern const struct zwlr_layer_surface_v1_listener layer_surface_listener;
 
 void configure_layer_surface (struct Lava_bar *bar);
+void configure_subsurface (struct Lava_bar *bar);
 
 #endif
 

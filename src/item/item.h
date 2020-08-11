@@ -53,9 +53,7 @@ struct Lava_item
 
 	struct Lava_image *img;
 
-	unsigned int       index, ordinate, length;
-	struct Lava_colour background_colour;
-	bool               replace_background;
+	unsigned int index, ordinate, length;
 
 	char *left_click_command;
 	char *middle_click_command;

@@ -63,11 +63,6 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 
 	colour_from_string(&pattern->bar_colour, "#000000ff");
 	colour_from_string(&pattern->border_colour, "#ffffffff");
-	colour_from_string(&pattern->effect_colour, "#285577ff");
-
-
-	pattern->effect            = EFFECT_NONE;
-	pattern->effect_padding    = 5;
 
 	strncpy(pattern->cursor_name, "pointer", sizeof(pattern->cursor_name) - 1);
 
@@ -130,16 +125,11 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 	pattern->margin_bottom    = last_pattern->margin_bottom;
 	pattern->margin_left      = last_pattern->margin_left;
 	pattern->exclusive_zone   = last_pattern->exclusive_zone;
-	pattern->effect           = last_pattern->effect;
-	pattern->effect_padding   = last_pattern->effect_padding;
 
 	memcpy(&pattern->bar_colour, &last_pattern->bar_colour,
 			sizeof(struct Lava_colour));
 	memcpy(&pattern->border_colour, &last_pattern->border_colour,
 			sizeof(struct Lava_colour));
-	memcpy(&pattern->effect_colour, &last_pattern->effect_colour,
-			sizeof(struct Lava_colour));
-
 
 	/* These strings are guaranteed to be terminated in last_pattern,
 	 * so we copy them entirely to avoid false compiler warnings when
@@ -386,46 +376,6 @@ static bool bar_pattern_set_border_colour (struct Lava_bar_pattern *pattern,
 	return colour_from_string(&pattern->border_colour, arg);
 }
 
-static bool bar_pattern_set_effect_colour (struct Lava_bar_pattern *pattern,
-		const char *arg, const char direction)
-{
-	return colour_from_string(&pattern->effect_colour, arg);
-}
-
-static bool bar_pattern_set_effect (struct Lava_bar_pattern *pattern,
-		const char *arg, const char direction)
-{
-	if (! strcmp(arg, "none"))
-		pattern->effect = EFFECT_NONE;
-	else if (! strcmp(arg, "box"))
-		pattern->effect = EFFECT_BOX;
-	else if (! strcmp(arg, "phone"))
-		pattern->effect = EFFECT_PHONE;
-	else if (! strcmp(arg, "circle"))
-		pattern->effect = EFFECT_CIRCLE;
-	else
-	{
-		log_message(NULL, 0, "ERROR: Unrecognized effect \"%s\".\n"
-				"INFO: Possible options are 'none', "
-				"'box', 'phone' and 'circle'.\n", arg);
-		return false;
-	}
-	return true;
-}
-
-static bool bar_pattern_set_effect_padding (struct Lava_bar_pattern *pattern,
-		const char *arg, const char direction)
-{
-	int32_t temp = atoi(arg);
-	if ( temp < 0 )
-	{
-		log_message(NULL, 0, "ERROR: Effect padding size must be equal to or greater than zero.\n");
-		return false;
-	}
-	pattern->effect_padding = (uint32_t)temp;
-	return true;
-}
-
 static bool bar_pattern_set_cursor_name (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
@@ -539,9 +489,6 @@ struct
 	{ .variable = "exclusive-zone",       .set = bar_pattern_set_exclusive_zone,       .direction = '0'},
 	{ .variable = "background-colour",    .set = bar_pattern_set_bar_colour,           .direction = '0'},
 	{ .variable = "border-colour",        .set = bar_pattern_set_border_colour,        .direction = '0'},
-	{ .variable = "effect-colour",        .set = bar_pattern_set_effect_colour,        .direction = '0'},
-	{ .variable = "effect",               .set = bar_pattern_set_effect,               .direction = '0'},
-	{ .variable = "effect-padding",       .set = bar_pattern_set_effect_padding,       .direction = '0'},
 	{ .variable = "cursor-name",          .set = bar_pattern_set_cursor_name,          .direction = '0'},
 	{ .variable = "condition-scale",      .set = bar_pattern_set_condition_scale,      .direction = '0'},
 	{ .variable = "condition-resolution", .set = bar_pattern_set_condition_resolution, .direction = '0'},

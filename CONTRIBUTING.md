@@ -51,19 +51,13 @@ This is a list of both rough spots in the code that need some improvement as
 well as features I have planned for LavaLauncher. Feel free to pick up any of
 these projects.
 
-* It would be nice to draw all icons to separate subsurfaces. This would enable
-  two ways of indicating the currently selected item: 1) The items icon could be
-  moved (up for bottom, right for left, etc.) or 2) An additional subsurface
-  showing some indicator or a solid colour could be moved underneath the icon
-  subsurface.
-* There needs to be some way of highlighting the item over which the cursor
-  hovers; See above. This falls into the "nice to have" category, but would
-  massively improve the perceived professionalism of this little program.
-* Some widgets would be useful. Maybe a clock (ideally without using any real
-  font drawing), battery indicator (like a little colourful bar), workspace
-  indicator (possibly needs `toplevel-control` or compositor specific
-  extensions), etc. With such widgets, LavaLauncher would be complete
-  replacement for status bars.
+* Some widgets would be useful. With indicators for battery capacity, network
+  status, time and workspace, LavaLauncher could completely replace a status
+  bar. The sanest way to achieve this is probably to allow external applications
+  to draw to a buffer which is attached to a wl_surface which is set as a
+  subsurface of the bar surface (that way, we might not even need to do anything
+  special in the event loop to communicate with those applications). This needs
+  more investigation and thought.
 * In LavaLaunchers code, scaling is done all over the place. It would be nice
   (and probably reduces complexity as well) if scaling was done all at once.
 * LavaLauncher should handle drawing tablet events.

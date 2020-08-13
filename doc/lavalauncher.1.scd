@@ -121,15 +121,20 @@ as follows.
 	Padding around the icons. The default 4.
 
 *indicator-active-colour*
-	The colour of the indicator for items being activated. The default is
+	The colour of the indicator for icons being activated. The default is
 	"#606060".
 
 *indicator-hover-colour*
-	The colour of the indicator for items over which the cursor hovers. The
+	The colour of the indicator for icons over which the cursor hovers. The
 	default is "#404040".
 
 *indicator-padding*
 	Padding around the icon indicator. The default 0.
+
+*indicator-style*
+	Style of the icon indicator. Can be "rectangle", "rounded-rectangle" and
+	"circle". The default is "rounded-rectangle". The corner radia for
+	"rounded-rectangle" are the same as the ones of the bar itself.
 
 *layer*
 	Layer of the bar surface. Can be "overlay", "top", "bottom" or

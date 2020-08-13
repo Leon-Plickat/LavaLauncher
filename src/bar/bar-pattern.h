@@ -63,6 +63,13 @@ enum Condition_resolution
 	RESOLUTION_ALL
 };
 
+enum Item_indicator_style
+{
+	STYLE_RECTANGLE,
+	STYLE_ROUNDED_RECTANGLE,
+	STYLE_CIRCLE
+};
+
 struct Lava_bar_pattern
 {
 	struct Lava_data *data;
@@ -93,6 +100,7 @@ struct Lava_bar_pattern
 	uint32_t indicator_padding;
 	struct Lava_colour indicator_hover_colour;
 	struct Lava_colour indicator_active_colour;
+	enum Item_indicator_style indicator_style;
 
 	/* If only_output[0] is \0, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.

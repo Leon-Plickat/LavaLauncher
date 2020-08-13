@@ -124,9 +124,23 @@ void indicator_set_colour (struct Lava_item_indicator *indicator, struct Lava_co
 	cairo_t *cairo = indicator->current_indicator_buffer->cairo;
 	clear_buffer(cairo);
 
-	rounded_rectangle(cairo, 0, 0, buffer_size, buffer_size,
-			buffer_size / 10, buffer_size / 10,
-			buffer_size / 10, buffer_size / 10);
+	switch (pattern->indicator_style)
+	{
+		case STYLE_RECTANGLE:
+			/* Cairo implicitly fills everything if no shape has been drawn. */
+			cairo_rectangle(cairo, 0, 0, buffer_size, buffer_size);
+			break;
+
+		case STYLE_ROUNDED_RECTANGLE:
+			rounded_rectangle(cairo, 0, 0, buffer_size, buffer_size,
+					pattern->radius_top_left, pattern->radius_top_right,
+					pattern->radius_bottom_left, pattern->radius_bottom_right);
+			break;
+
+		case STYLE_CIRCLE:
+			circle(cairo, 0, 0, buffer_size);
+			break;
+	}
 
 	colour_set_cairo_source(cairo, colour);
 	cairo_fill(cairo);

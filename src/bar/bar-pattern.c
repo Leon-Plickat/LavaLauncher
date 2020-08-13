@@ -60,6 +60,7 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->margin_left         = 0;
 	pattern->exclusive_zone      = 1;
 	pattern->indicator_padding   = 0;
+	pattern->indicator_style     = STYLE_ROUNDED_RECTANGLE;
 
 	colour_from_string(&pattern->bar_colour, "#000000");
 	colour_from_string(&pattern->border_colour, "#ffffff");
@@ -128,6 +129,7 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 	pattern->margin_left       = last_pattern->margin_left;
 	pattern->exclusive_zone    = last_pattern->exclusive_zone;
 	pattern->indicator_padding = last_pattern->indicator_padding;
+	pattern->indicator_style   = last_pattern->indicator_style;
 
 	memcpy(&pattern->bar_colour, &last_pattern->bar_colour,
 			sizeof(struct Lava_colour));
@@ -495,6 +497,25 @@ static bool bar_pattern_set_indicator_colour (struct Lava_bar_pattern *pattern,
 		return false;
 }
 
+static bool bar_pattern_set_indicator_style (struct Lava_bar_pattern *pattern,
+		const char *arg, const char direction)
+{
+	if (! strcmp(arg, "rectangle"))
+		pattern->indicator_style = STYLE_RECTANGLE;
+	else if (! strcmp(arg, "rounded-rectangle"))
+		pattern->indicator_style = STYLE_ROUNDED_RECTANGLE;
+	else if (! strcmp(arg, "circle"))
+		pattern->indicator_style = STYLE_CIRCLE;
+	else
+	{
+		log_message(NULL, 0, "ERROR: Unrecognized indicator style \"%s\".\n"
+				"INFO: Possible styles are 'rectangle', "
+				"'rounded-rectangle' and 'circle'.\n", arg);
+		return false;
+	}
+	return true;
+}
+
 
 struct
 {
@@ -531,7 +552,8 @@ struct
 	{ .variable = "radius-bottom-right",     .set = bar_pattern_set_radius,               .direction = 'R'},
 	{ .variable = "indicator-padding",       .set = bar_pattern_set_indicator_padding,    .direction = '0'},
 	{ .variable = "indicator-active-colour", .set = bar_pattern_set_indicator_colour,     .direction = 'a'},
-	{ .variable = "indicator-hover-colour",  .set = bar_pattern_set_indicator_colour,     .direction = 'h'}
+	{ .variable = "indicator-hover-colour",  .set = bar_pattern_set_indicator_colour,     .direction = 'h'},
+	{ .variable = "indicator-style",         .set = bar_pattern_set_indicator_style,      .direction = 'h'}
 };
 
 bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,

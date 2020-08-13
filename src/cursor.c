@@ -48,13 +48,9 @@ void cleanup_cursor (struct Lava_seat *seat)
 
 void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 {
-	struct Lava_data       *data           = seat->data;
-	struct wl_pointer      *pointer        = seat->pointer.wl_pointer;
-	struct wl_surface      *cursor_surface = seat->pointer.cursor_surface;
-	struct wl_cursor_theme *theme          = seat->pointer.cursor_theme;
-	struct wl_cursor_image *image          = seat->pointer.cursor_image;
-	struct wl_cursor       *cursor         = seat->pointer.cursor;
-	char                   *cursor_name    = seat->pointer.bar->pattern->cursor_name;
+	struct Lava_data  *data        = seat->data;
+	struct wl_pointer *pointer     = seat->pointer.wl_pointer;
+	char              *cursor_name = seat->pointer.bar->pattern->cursor_name;
 
 	int32_t scale       = (int32_t)seat->pointer.bar->output->scale;
 	int32_t cursor_size = 24; // TODO ?
@@ -62,13 +58,14 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 	/* Cleanup any leftover cursor stuff. */
 	cleanup_cursor(seat);
 
-	if ( NULL == (theme = wl_cursor_theme_load(NULL, cursor_size * scale, data->shm)) )
+	if ( NULL == (seat->pointer.cursor_theme = wl_cursor_theme_load(NULL, cursor_size * scale, data->shm)) )
 	{
 		log_message(NULL, 0, "ERROR: Could not load cursor theme.\n");
 		return;
 	}
 
-	if ( NULL == (cursor = wl_cursor_theme_get_cursor(theme, cursor_name)) )
+	if ( NULL == (seat->pointer.cursor = wl_cursor_theme_get_cursor(
+					seat->pointer.cursor_theme, cursor_name)) )
 	{
 		log_message(NULL, 0, "WARNING: Could not get cursor \"%s\".\n"
 				"         This cursor is likely missing from your cursor theme.\n",
@@ -76,10 +73,10 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 		return;
 	}
 
-	image = cursor->images[0];
-	assert(image);
+	seat->pointer.cursor_image = seat->pointer.cursor->images[0];
+	assert(seat->pointer.cursor_image);
 
-	if ( NULL == (cursor_surface = wl_compositor_create_surface(data->compositor)) )
+	if ( NULL == (seat->pointer.cursor_surface = wl_compositor_create_surface(data->compositor)) )
 	{
 		log_message(NULL, 0, "ERROR: Could not create cursor surface.\n");
 		return;
@@ -91,11 +88,14 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 	 * apply the scale of the current output to the cursor.
 	 */
 
-	wl_surface_set_buffer_scale(cursor_surface, scale);
-	wl_surface_attach(cursor_surface, wl_cursor_image_get_buffer(image), 0, 0);
-	wl_surface_damage_buffer(cursor_surface, 0, 0, INT32_MAX, INT32_MAX);
-	wl_surface_commit(cursor_surface);
+	wl_surface_set_buffer_scale(seat->pointer.cursor_surface, scale);
+	wl_surface_attach(seat->pointer.cursor_surface,
+			wl_cursor_image_get_buffer(seat->pointer.cursor_image),
+			0, 0);
+	wl_surface_damage_buffer(seat->pointer.cursor_surface, 0, 0, INT32_MAX, INT32_MAX);
+	wl_surface_commit(seat->pointer.cursor_surface);
 
-	wl_pointer_set_cursor(pointer, serial, cursor_surface,
-			(int32_t)image->hotspot_x / scale, (int32_t)image->hotspot_y / scale);
+	wl_pointer_set_cursor(pointer, serial, seat->pointer.cursor_surface,
+			(int32_t)seat->pointer.cursor_image->hotspot_x / scale,
+			(int32_t)seat->pointer.cursor_image->hotspot_y / scale);
 }

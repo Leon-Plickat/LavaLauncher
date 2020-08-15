@@ -160,8 +160,10 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 bool finalize_bar_pattern (struct Lava_bar_pattern *pattern)
 {
 	log_message(pattern->data, 1, "[bar-pattern] Finalize bar pattern.\n");
+
 	if (! finalize_items(pattern))
 		return false;
+
 	switch (pattern->position)
 	{
 		case POSITION_TOP:
@@ -174,6 +176,23 @@ bool finalize_bar_pattern (struct Lava_bar_pattern *pattern)
 			pattern->orientation = ORIENTATION_VERTICAL;
 			break;
 	}
+
+	if ( 3 * pattern->icon_padding > pattern->size )
+	{
+		log_message(NULL, 0, "WARNING: Configured 'icon-padding' too large for bar size. "
+				"Automatically shrinking to a reasonable size.\n");
+		while ( 3 * pattern->icon_padding > pattern->size )
+			pattern->icon_padding -= 5;
+	}
+
+	if ( 3 * pattern->indicator_padding > pattern->size )
+	{
+		log_message(NULL, 0, "WARNING: Configured 'indicator-padding' too large for bar size. "
+				"Automatically shrinking to a reasonable size.\n");
+		while ( 3 * pattern->indicator_padding > pattern->size )
+			pattern->indicator_padding -= 5;
+	}
+
 	return true;
 }
 

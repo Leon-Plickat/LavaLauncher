@@ -60,7 +60,8 @@ static void main_loop (struct Lava_data *data)
 {
 	log_message(data, 1, "[main] Starting main loop.\n");
 
-	size_t fd_count = 1, current = 0, wayland_fd = current++;
+	nfds_t fd_count = 1;
+	size_t current = 0, wayland_fd = current++;
 
 #if HANDLE_SIGNALS
 	fd_count++;

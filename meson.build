@@ -38,6 +38,14 @@ cairo             = dependency('cairo')
 realtime          = cc.find_library('rt')
 librsvg           = dependency('librsvg-2.0', required: get_option('librsvg'))
 
+if ['dragonfly', 'freebsd', 'netbsd', 'openbsd'].contains(host_machine.system())
+  libinotify      = dependency('libinotify', required: get_option('watch-config'))
+  libepoll        = dependency('epoll-shim', required: get_option('handle-signals'))
+else
+  libinotify      = []
+  libepoll        = []
+endif
+
 if librsvg.found()
   add_project_arguments(cc.get_supported_arguments([ '-DSVG_SUPPORT' ]), language: 'c')
 endif
@@ -80,6 +88,8 @@ executable(
     wl_protocols,
     realtime,
     librsvg,
+    libinotify,
+    libepoll,
   ],
   include_directories: include_directories('src'),
   install: true,

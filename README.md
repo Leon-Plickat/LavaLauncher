@@ -29,10 +29,7 @@ and [hikari](https://hikari.acmelabs.space/).
 
 ### Packages
 
-The following distributions have an official LavaLauncher package:
-
-* Fedora
-* Gentoo
+[![Packaging status](https://repology.org/badge/vertical-allrepos/lavalauncher.svg)](https://repology.org/project/lavalauncher/versions)
 
 ### Building
 

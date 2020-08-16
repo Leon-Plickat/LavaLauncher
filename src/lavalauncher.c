@@ -206,7 +206,9 @@ static void main_loop (struct Lava_data *data)
 
 error:
 	data->ret = EXIT_FAILURE;
+#if HANDLE_SIGNALS || WATCH_CONFIG
 exit:
+#endif
 	if ( fds[wayland_fd].fd != -1 )
 		close(fds[wayland_fd].fd);
 #if HANDLE_SIGNALS

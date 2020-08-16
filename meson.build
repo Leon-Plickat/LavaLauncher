@@ -36,7 +36,7 @@ wayland_client    = dependency('wayland-client', include_type: 'system')
 wayland_cursor    = dependency('wayland-cursor', include_type: 'system')
 cairo             = dependency('cairo')
 realtime          = cc.find_library('rt')
-librsvg           = dependency('librsvg-2.0', required: get_option('librsvg'))
+librsvg           = dependency('librsvg-2.0', version: '>= 2.45.6', required: get_option('librsvg'))
 
 if ['dragonfly', 'freebsd', 'netbsd', 'openbsd'].contains(host_machine.system())
   libinotify      = dependency('libinotify', required: get_option('watch-config'))

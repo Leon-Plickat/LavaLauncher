@@ -32,8 +32,8 @@ if get_option('handle-signals').enabled()
 endif
 
 wayland_protocols = dependency('wayland-protocols')
-wayland_client    = dependency('wayland-client')
-wayland_cursor    = dependency('wayland-cursor')
+wayland_client    = dependency('wayland-client', include_type: 'system')
+wayland_cursor    = dependency('wayland-cursor', include_type: 'system')
 cairo             = dependency('cairo')
 realtime          = cc.find_library('rt')
 librsvg           = dependency('librsvg-2.0', required: get_option('librsvg'))

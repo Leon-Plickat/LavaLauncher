@@ -34,6 +34,7 @@ endforeach
 wl_protocols_lib = static_library(
   'lavalauncher_protocols',
   wl_protocols_src + wl_protocols_headers,
+  dependencies: [ wayland_client ],
 )
 
 wl_protocols = declare_dependency(

@@ -1,0 +1,21 @@
+image: freebsd/latest
+packages:
+  - cairo
+  - evdev-proto
+  - libepoll-shim
+  - libinotify
+  - librsvg2-rust
+  - meson
+  - pkgconf
+  - scdoc
+  - wayland
+  - wayland-protocols
+sources:
+  - https://git.sr.ht/~leon_plickat/lavalauncher
+tasks:
+  - setup: |
+      cd lavalauncher
+      meson --buildtype=release build
+  - build: |
+      cd lavalauncher
+      ninja -C build

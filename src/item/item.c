@@ -32,6 +32,7 @@
 #include"bar/bar.h"
 #include"output.h"
 #include"types/image.h"
+#include"types/string-container.h"
 #include"item/item.h"
 #include"item/command.h"
 #include"item/button.h"
@@ -49,9 +50,8 @@ static void item_nullify (struct Lava_item *item)
 	item->scroll_up_command     = NULL;
 	item->scroll_down_command   = NULL;
 	item->touch_command         = NULL;
+	item->app_id                = NULL;
 	item->img                   = NULL;
-
-	memset(item->app_id, '\0', sizeof(item->app_id));
 }
 
 static const char *item_type_to_string (enum Item_type type)
@@ -94,17 +94,19 @@ bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
 	new_item->length               = item->length;
 
 	if ( item->left_click_command != NULL )
-		new_item->left_click_command = strdup(item->left_click_command);
+		new_item->left_click_command = string_container_reference(item->left_click_command);
 	if ( item->middle_click_command != NULL )
-		new_item->middle_click_command = strdup(item->middle_click_command);
+		new_item->middle_click_command = string_container_reference(item->middle_click_command);
 	if ( item->right_click_command != NULL )
-		new_item->right_click_command = strdup(item->right_click_command);
+		new_item->right_click_command = string_container_reference(item->right_click_command);
 	if ( item->scroll_up_command != NULL )
-		new_item->scroll_up_command = strdup(item->scroll_up_command);
+		new_item->scroll_up_command = string_container_reference(item->scroll_up_command);
 	if ( item->scroll_down_command != NULL )
-		new_item->scroll_down_command = strdup(item->scroll_down_command);
+		new_item->scroll_down_command = string_container_reference(item->scroll_down_command);
 	if ( item->touch_command != NULL )
-		new_item->touch_command = strdup(item->touch_command);
+		new_item->touch_command = string_container_reference(item->touch_command);
+	if ( item->app_id != NULL )
+		new_item->touch_command = string_container_reference(item->app_id);
 
 	if ( item->img != NULL )
 		new_item->img = image_reference(item->img);
@@ -202,17 +204,19 @@ static void destroy_item (struct Lava_item *item)
 {
 	wl_list_remove(&item->link);
 	if ( item->left_click_command != NULL )
-		free(item->left_click_command);
+		string_container_destroy(item->left_click_command);
 	if ( item->middle_click_command != NULL )
-		free(item->middle_click_command);
+		string_container_destroy(item->middle_click_command);
 	if ( item->right_click_command != NULL )
-		free(item->right_click_command);
+		string_container_destroy(item->right_click_command);
 	if ( item->scroll_up_command != NULL )
-		free(item->scroll_up_command);
+		string_container_destroy(item->scroll_up_command);
 	if ( item->scroll_down_command != NULL )
-		free(item->scroll_down_command);
+		string_container_destroy(item->scroll_down_command);
 	if ( item->touch_command != NULL )
-		free(item->touch_command);
+		string_container_destroy(item->touch_command);
+	if ( item->app_id != NULL )
+		string_container_destroy(item->app_id);
 	if ( item->img != NULL )
 		image_destroy(item->img);
 

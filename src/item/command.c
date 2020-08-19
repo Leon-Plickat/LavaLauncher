@@ -35,6 +35,7 @@
 #include"item/item.h"
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
+#include"types/string-container.h"
 
 static void setenvf (const char *name, const char *fmt, ...)
 {
@@ -67,7 +68,9 @@ static void fork_command (struct Lava_bar *bar, struct Lava_item *item, const ch
 		setenvf("LAVALAUNCHER_OUTPUT_SCALE", "%d", bar->output->scale);
 
 		/* Toplevel properties. */
-		setenvf("LAVALAUNCHER_APPID_COUNT", "%d", count_toplevels_with_appid(bar->data, item->app_id));
+		setenvf("LAVALAUNCHER_APPID_COUNT", "%d",
+				item->app_id == NULL ? -2
+				: count_toplevels_with_appid(bar->data, item->app_id->string));
 
 		/* execl() only returns on error, on success it replaces this process. */
 		execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);
@@ -78,17 +81,17 @@ static void fork_command (struct Lava_bar *bar, struct Lava_item *item, const ch
 		log_message(NULL, 0, "ERROR: fork: %s\n", strerror(errno));
 }
 
-static char **command_pointer_by_type(struct Lava_item *item,
+static struct Lava_string_container *command_by_type(struct Lava_item *item,
 		enum Interaction_type type)
 {
 	switch (type)
 	{
-		case TYPE_LEFT_CLICK:   return &item->left_click_command;
-		case TYPE_MIDDLE_CLICK: return &item->middle_click_command;
-		case TYPE_RIGHT_CLICK:  return &item->right_click_command;
-		case TYPE_SCROLL_UP:    return &item->scroll_up_command;
-		case TYPE_SCROLL_DOWN:  return &item->scroll_down_command;
-		case TYPE_TOUCH:        return &item->touch_command;
+		case TYPE_LEFT_CLICK:   return item->left_click_command;
+		case TYPE_MIDDLE_CLICK: return item->middle_click_command;
+		case TYPE_RIGHT_CLICK:  return item->right_click_command;
+		case TYPE_SCROLL_UP:    return item->scroll_up_command;
+		case TYPE_SCROLL_DOWN:  return item->scroll_down_command;
+		case TYPE_TOUCH:        return item->touch_command;
 	}
 
 	return NULL;
@@ -100,17 +103,17 @@ static char **command_pointer_by_type(struct Lava_item *item,
 bool item_command (struct Lava_bar *bar, struct Lava_item *item,
 		enum Interaction_type type)
 {
-	char **cmd = command_pointer_by_type(item, type);
+	struct Lava_string_container *cmd = command_by_type(item, type);
 
-	if ( cmd == NULL || *cmd == NULL )
+	if ( cmd == NULL )
 		return false;
 
-	if (! strcmp(*cmd, "exit"))
+	if (! strcmp(cmd->string, "exit"))
 	{
 		log_message(bar->data, 1, "[command] Exiting due to button command \"exit\".\n");
 		bar->data->loop = false;
 	}
-	else if (! strcmp(*cmd, "reload"))
+	else if (! strcmp(cmd->string, "reload"))
 	{
 		log_message(bar->data, 1, "[command] Reloading due to button command \"reload\".\n");
 		bar->data->loop = false;
@@ -118,9 +121,10 @@ bool item_command (struct Lava_bar *bar, struct Lava_item *item,
 	}
 	else
 	{
-		log_message(bar->data, 1, "[command] Executing command: %s\n", *cmd);
-		fork_command(bar, item, *cmd);
+		log_message(bar->data, 1, "[command] Executing command: %s\n", cmd->string);
+		fork_command(bar, item, cmd->string);
 	}
 
 	return true;
 }
+

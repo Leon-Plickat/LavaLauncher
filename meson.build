@@ -66,6 +66,7 @@ executable(
     'src/types/image.c',
     'src/types/buffer.c',
     'src/types/colour.c',
+    'src/types/string-container.c',
     'src/bar/bar.c',
     'src/bar/bar-pattern.c',
     'src/bar/layersurface.c',

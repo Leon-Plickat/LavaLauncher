@@ -38,6 +38,7 @@
 #include"output.h"
 #include"bar/bar.h"
 #include"bar/bar-pattern.h"
+#include"types/string-container.h"
 
 /* No-Op function. */
 static void noop () {}
@@ -93,7 +94,7 @@ static bool update_bars_on_output (struct Lava_output *output)
 	wl_list_for_each_safe(pattern, temp, &data->patterns, link)
 	{
 		/* The name of an output can expected to remain the same. */
-		if ( pattern->only_output[0] != '\0' && strcmp(output->name, pattern->only_output) )
+		if ( pattern->only_output != NULL && strcmp(output->name, pattern->only_output->string) )
 			continue;
 
 		bool conditions = pattern_conditions_match_output(pattern, output);

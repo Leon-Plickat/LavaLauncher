@@ -29,6 +29,7 @@
 struct Lava_data;
 struct Lava_bar_pattern;
 struct Lava_bar;
+struct Lava_string_container;
 
 enum Item_type
 {
@@ -55,14 +56,13 @@ struct Lava_item
 
 	unsigned int index, ordinate, length;
 
-	char *left_click_command;
-	char *middle_click_command;
-	char *right_click_command;
-	char *scroll_up_command;
-	char *scroll_down_command;
-	char *touch_command;
-
-	char app_id[64];
+	struct Lava_string_container *left_click_command;
+	struct Lava_string_container *middle_click_command;
+	struct Lava_string_container *right_click_command;
+	struct Lava_string_container *scroll_up_command;
+	struct Lava_string_container *scroll_down_command;
+	struct Lava_string_container *touch_command;
+	struct Lava_string_container *app_id;
 };
 
 bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type);

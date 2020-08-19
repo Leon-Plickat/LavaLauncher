@@ -27,6 +27,7 @@
 
 struct Lava_data;
 struct Lava_item;
+struct Lava_string_container;
 
 enum Bar_position
 {
@@ -107,7 +108,7 @@ struct Lava_bar_pattern
 	 * Examples of valid names are "eDP-1" or "HDMI-A-1" (likely compositor
 	 * dependant).
 	 */
-	char only_output[64];
+	struct Lava_string_container *only_output;
 
 	/* If exclusive_zone is 1, it will be set to the width/height of the bar
 	 * at startup, otherwise its exact value is used, which should be either
@@ -119,7 +120,7 @@ struct Lava_bar_pattern
 	int32_t margin_top, margin_right, margin_bottom, margin_left;
 
 	/* Name of cursor which should be attached to pointer on hover. */
-	char cursor_name[64];
+	struct Lava_string_container *cursor_name;
 
 	/* Conditions an output must match for the pattern to generate a bar on it. */
 	uint32_t condition_scale;

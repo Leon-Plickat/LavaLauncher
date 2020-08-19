@@ -36,6 +36,7 @@
 #include"item/item.h"
 #include"config/parse-boolean.h"
 #include"types/colour.h"
+#include"types/string-container.h"
 
 static void sensible_defaults (struct Lava_bar_pattern *pattern)
 {
@@ -67,7 +68,7 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	colour_from_string(&pattern->indicator_hover_colour, "#404040");
 	colour_from_string(&pattern->indicator_active_colour, "#606060");
 
-	strncpy(pattern->cursor_name, "pointer", sizeof(pattern->cursor_name) - 1);
+	pattern->cursor_name = string_container_from("pointer");
 
 	pattern->condition_scale      = 0;
 	pattern->condition_transform  = -1;
@@ -85,8 +86,8 @@ bool create_bar_pattern (struct Lava_data *data)
 		return false;
 	}
 
-	memset(pattern->cursor_name, '\0', sizeof(pattern->cursor_name));
-	memset(pattern->only_output, '\0', sizeof(pattern->only_output));
+	pattern->cursor_name = NULL;
+	pattern->only_output = NULL;
 
 	sensible_defaults(pattern);
 	pattern->data = data;
@@ -140,14 +141,10 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 	memcpy(&pattern->indicator_active_colour, &last_pattern->indicator_active_colour,
 			sizeof(struct Lava_colour));
 
-	/* These strings are guaranteed to be terminated in last_pattern,
-	 * so we copy them entirely to avoid false compiler warnings when
-	 * -Wstringop-truncation is used.
-	 */
-	strncpy(pattern->cursor_name, last_pattern->cursor_name,
-			sizeof(pattern->cursor_name));
-	strncpy(pattern->only_output, last_pattern->only_output,
-			sizeof(pattern->only_output));
+	if ( last_pattern->cursor_name != NULL )
+		pattern->cursor_name = string_container_reference(last_pattern->cursor_name);
+	if ( last_pattern->only_output != NULL )
+		pattern->only_output = string_container_reference(last_pattern->only_output);
 
 	struct Lava_item *item, *temp;
 	wl_list_for_each_reverse_safe(item, temp, &last_pattern->items, link)
@@ -200,6 +197,10 @@ static void destroy_bar_pattern (struct Lava_bar_pattern *pattern)
 {
 	wl_list_remove(&pattern->link);
 	destroy_all_items(pattern);
+	if ( pattern->cursor_name != NULL )
+		string_container_destroy(pattern->cursor_name);
+	if ( pattern->only_output != NULL )
+		string_container_destroy(pattern->only_output);
 	free(pattern);
 }
 
@@ -366,10 +367,12 @@ static bool bar_pattern_set_margin_size (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_only_output (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	if ( ! strcmp(arg, "all") || *arg == '*' )
-		pattern->only_output[0] = '\0';
-	else
-		strncpy(pattern->only_output, arg, sizeof(pattern->only_output) - 1);
+	if ( pattern->only_output != NULL )
+		string_container_destroy(pattern->only_output);
+
+	if ( strcmp(arg, "all") && *arg != '*' )
+		pattern->only_output = string_container_from(arg);
+
 	return true;
 }
 
@@ -407,7 +410,9 @@ static bool bar_pattern_set_border_colour (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_cursor_name (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	strncpy(pattern->cursor_name, arg, sizeof(pattern->cursor_name) - 1);
+	if ( pattern->cursor_name != NULL )
+		string_container_destroy(pattern->cursor_name);
+	pattern->cursor_name = string_container_from(arg);
 	return true;
 }
 

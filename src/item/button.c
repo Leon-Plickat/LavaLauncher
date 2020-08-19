@@ -30,19 +30,22 @@
 #include"log.h"
 #include"types/image.h"
 #include"types/colour.h"
+#include"types/string-container.h"
 #include"item/item.h"
 
 static bool button_set_app_id (struct Lava_item *button,
 		const char *arg, enum Interaction_type type)
 {
-	strncpy(button->app_id, arg, sizeof(button->app_id) - 1);
+	if ( button->app_id != NULL )
+		string_container_destroy(button->app_id);
+	button->app_id = string_container_from(arg);
 	return true;
 }
 
 static bool button_set_command (struct Lava_item *button,
 		const char *command, enum Interaction_type type)
 {
-	char **ptr;
+	struct Lava_string_container **ptr;
 	switch (type)
 	{
 		case TYPE_MIDDLE_CLICK: ptr = &button->middle_click_command; break;
@@ -55,8 +58,8 @@ static bool button_set_command (struct Lava_item *button,
 	}
 
 	if ( *ptr != NULL )
-		free(*ptr);
-	*ptr = strdup(command);
+		string_container_destroy(*ptr);
+	*ptr = string_container_from(command);
 	return true;
 }
 

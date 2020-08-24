@@ -29,6 +29,14 @@
 #include"types/string-container.h"
 #include<log.h>
 
+char *string_container_get_string_or_else (struct Lava_string_container *sc, char *or_else)
+{
+	if ( sc != NULL )
+		return sc->string;
+	else
+		return or_else;
+}
+
 struct Lava_string_container *string_container_from (const char *in)
 {
 	struct Lava_string_container *sc = calloc(1, sizeof(struct Lava_string_container));

@@ -32,6 +32,7 @@ struct Lava_string_container
 	uint32_t references, length;
 };
 
+char *string_container_get_string_or_else (struct Lava_string_container *sc, char *or_else);
 struct Lava_string_container *string_container_from (const char *in);
 struct Lava_string_container *string_container_reference (struct Lava_string_container *sc);
 void string_container_destroy (struct Lava_string_container *sc);

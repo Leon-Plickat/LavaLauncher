@@ -68,8 +68,6 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	colour_from_string(&pattern->indicator_hover_colour, "#404040");
 	colour_from_string(&pattern->indicator_active_colour, "#606060");
 
-	pattern->cursor_name = string_container_from("pointer");
-
 	pattern->condition_scale      = 0;
 	pattern->condition_transform  = -1;
 	pattern->condition_resolution = RESOLUTION_ALL;

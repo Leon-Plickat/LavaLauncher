@@ -276,7 +276,8 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 	if ( NULL == (bar->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
 					data->layer_shell, bar->bar_surface,
 					output->wl_output, pattern->layer,
-					pattern->namespace == NULL ? "LavaLauncher" : pattern->namespace->string)) )
+					string_container_get_string_or_else(
+						pattern->namespace, "LavaLauncher"))) )
 	{
 		log_message(NULL, 0, "ERROR: Compositor did not create layer_surface.\n");
 		return false;

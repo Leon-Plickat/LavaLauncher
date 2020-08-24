@@ -161,6 +161,11 @@ as follows.
 	even depending on the alignment. This is not a bug in LavaLauncher but a
 	limitation of your compositor.
 
+*namespace*
+	The namespace of the layershell surface of the bar. Some compositors may
+	treat layershell surfaces differently based on their namespace. The default
+	is "LavaLauncher".
+
 *output*
 	Name of the output on which the bar should be displayed. Output names
 	are compositor dependant. If set to "all" or "\*", LavaLauncher will

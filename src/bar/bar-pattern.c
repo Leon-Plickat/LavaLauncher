@@ -88,6 +88,7 @@ bool create_bar_pattern (struct Lava_data *data)
 
 	pattern->cursor_name = NULL;
 	pattern->only_output = NULL;
+	pattern->namespace   = NULL;
 
 	sensible_defaults(pattern);
 	pattern->data = data;
@@ -145,6 +146,8 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 		pattern->cursor_name = string_container_reference(last_pattern->cursor_name);
 	if ( last_pattern->only_output != NULL )
 		pattern->only_output = string_container_reference(last_pattern->only_output);
+	if ( last_pattern->namespace != NULL )
+		pattern->namespace = string_container_reference(last_pattern->namespace);
 
 	struct Lava_item *item, *temp;
 	wl_list_for_each_reverse_safe(item, temp, &last_pattern->items, link)
@@ -201,6 +204,8 @@ static void destroy_bar_pattern (struct Lava_bar_pattern *pattern)
 		string_container_destroy(pattern->cursor_name);
 	if ( pattern->only_output != NULL )
 		string_container_destroy(pattern->only_output);
+	if ( pattern->namespace != NULL )
+		string_container_destroy(pattern->namespace);
 	free(pattern);
 }
 
@@ -372,6 +377,17 @@ static bool bar_pattern_set_only_output (struct Lava_bar_pattern *pattern,
 
 	if ( strcmp(arg, "all") && *arg != '*' )
 		pattern->only_output = string_container_from(arg);
+
+	return true;
+}
+
+static bool bar_pattern_set_namespace (struct Lava_bar_pattern *pattern,
+		const char *arg, const char direction)
+{
+	if ( pattern->namespace != NULL )
+		string_container_destroy(pattern->namespace);
+
+	pattern->namespace = string_container_from(arg);
 
 	return true;
 }
@@ -562,6 +578,7 @@ struct
 	{ .variable = "margin-bottom",           .set = bar_pattern_set_margin_size,          .direction = 'b'},
 	{ .variable = "margin-left",             .set = bar_pattern_set_margin_size,          .direction = 'l'},
 	{ .variable = "output",                  .set = bar_pattern_set_only_output,          .direction = '0'},
+	{ .variable = "namespace",               .set = bar_pattern_set_namespace,            .direction = '0'},
 	{ .variable = "exclusive-zone",          .set = bar_pattern_set_exclusive_zone,       .direction = '0'},
 	{ .variable = "background-colour",       .set = bar_pattern_set_bar_colour,           .direction = '0'},
 	{ .variable = "border-colour",           .set = bar_pattern_set_border_colour,        .direction = '0'},

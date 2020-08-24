@@ -110,6 +110,12 @@ struct Lava_bar_pattern
 	 */
 	struct Lava_string_container *only_output;
 
+	/* Some compositors apparently expose different behaviours based on the
+	 * namespace of a layer surface, therefore it must be configurable.
+	 * This may be dropped once the layershell has been standardized.
+	 */
+	struct Lava_string_container *namespace;
+
 	/* If exclusive_zone is 1, it will be set to the width/height of the bar
 	 * at startup, otherwise its exact value is used, which should be either
 	 * 0 or -1.

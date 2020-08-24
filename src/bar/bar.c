@@ -44,6 +44,7 @@
 #include"bar/layersurface.h"
 #include"bar/render.h"
 #include"item/item.h"
+#include"types/string-container.h"
 
 /* Positions and dimensions for MODE_DEFAULT. */
 static void mode_default_dimensions (struct Lava_bar *bar)
@@ -275,7 +276,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 	if ( NULL == (bar->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
 					data->layer_shell, bar->bar_surface,
 					output->wl_output, pattern->layer,
-					"LavaLauncher")) )
+					pattern->namespace == NULL ? "LavaLauncher" : pattern->namespace->string)) )
 	{
 		log_message(NULL, 0, "ERROR: Compositor did not create layer_surface.\n");
 		return false;

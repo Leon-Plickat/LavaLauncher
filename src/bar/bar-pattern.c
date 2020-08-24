@@ -175,20 +175,42 @@ bool finalize_bar_pattern (struct Lava_bar_pattern *pattern)
 			break;
 	}
 
-	if ( 3 * pattern->icon_padding > pattern->size )
+	if ( pattern->icon_padding > pattern->size / 3 )
 	{
 		log_message(NULL, 0, "WARNING: Configured 'icon-padding' too large for bar size. "
 				"Automatically shrinking to a reasonable size.\n");
-		while ( 3 * pattern->icon_padding > pattern->size )
-			pattern->icon_padding -= 5;
+		pattern->icon_padding = pattern->size / 3;
 	}
-
-	if ( 3 * pattern->indicator_padding > pattern->size )
+	if ( pattern->indicator_padding > pattern->size / 3 )
 	{
 		log_message(NULL, 0, "WARNING: Configured 'indicator-padding' too large for bar size. "
 				"Automatically shrinking to a reasonable size.\n");
-		while ( 3 * pattern->indicator_padding > pattern->size )
-			pattern->indicator_padding -= 5;
+		pattern->indicator_padding = pattern->size / 3;
+	}
+
+	if ( pattern->radius_bottom_left > pattern->size / 2 )
+	{
+		log_message(NULL, 0, "WARNING: Configured 'radius-bottom-left' too large for bar size. "
+				"Automatically shrinking to a reasonable size.\n");
+		pattern->radius_bottom_left = pattern->size / 2;
+	}
+	if ( pattern->radius_bottom_right > pattern->size / 2 )
+	{
+		log_message(NULL, 0, "WARNING: Configured 'radius-bottom-right' too large for bar size. "
+				"Automatically shrinking to a reasonable size.\n");
+		pattern->radius_bottom_right = pattern->size / 2;
+	}
+	if ( pattern->radius_top_left > pattern->size / 2 )
+	{
+		log_message(NULL, 0, "WARNING: Configured 'radius-top-left' too large for bar size. "
+				"Automatically shrinking to a reasonable size.\n");
+		pattern->radius_top_left = pattern->size / 2;
+	}
+	if ( pattern->radius_top_right > pattern->size / 2 )
+	{
+		log_message(NULL, 0, "WARNING: Configured 'radius-top-right' too large for bar size. "
+				"Automatically shrinking to a reasonable size.\n");
+		pattern->radius_top_right = pattern->size / 2;
 	}
 
 	return true;

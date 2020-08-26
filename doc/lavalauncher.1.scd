@@ -41,14 +41,16 @@ You can find an example configuration at the end of this section.
 The configuration file has a simple structure. It consists of *contexts* and
 *assignments*.
 
-Assignments are defined by a string, the variable to be changed, followed by
-another string, the new value for the variable, and finally a semicolon (';').
-Assignments are always inside contexts.
+Assignments are always inside contexts and consist of three parts: The variable
+to be changed, followed by the new value for the variable, and finally a
+semicolon (';'). The value string must be separated from the variable name by
+whitespace and may be quoted, causing LavaLauncher to use it as is, including
+all whitespace that would otherwise be stripped from the final string.
 
-A context is defined by a string, the context name, followed by an opening
-bracket. To leave a context, use a closing bracket. Contexts can be nested, but
-unless specifically pointed out as otherwise, every context mentioned in this
-document is a top-level context.
+A context consist of at least three parts: The context name, followed by an
+opening bracket, optionally contents, and finally a closing bracket. All these
+must be separated by whitespace. Some Contexts must be nested as contents of
+other contexts.
 
 Comments start with an octothorpe ('#').
 
@@ -239,8 +241,6 @@ this context are as follows.
 ## COMMANDS
 Commands are executed using sh(1).
 
-Command strings (just like any other string in the config) can be quoted.
-
 LavaLauncher understands typical backslash escape sequences.
 
 If the command is "exit", LavaLauncher will exit, if it is "reload",
@@ -281,9 +281,7 @@ LavaLauncher support PNG images and, if enabled at compile time, SVG images. It
 is recommended to use square images.
 
 ## EXAMPLE CONFIGURATION
-Below you will find an example configuration, which demonstrates all available
-contexts and some of the assignments by defining three bars and changing global
-settings.
+This is an example configuration which defines two bars.
 
 ```
 global-settings
@@ -299,13 +297,8 @@ bar # this is the first bar
 
 	button
 	{
-		image-path "/path/to/image.png";
-		command    "useful-script.sh";
-	}
-
-	spacer
-	{
-		length 20;
+		image-path /path/to/image.png;
+		command    useful-script.sh;
 	}
 
 	button
@@ -315,24 +308,15 @@ bar # this is the first bar
 	}
 }
 
-bar # this is a second bar
+bar # this is the second bar
 {
-	output    all;
-	position  top;
-	size      50;
-	border    0;
-	alignment start;
+	output all;
 
 	button
 	{
 		image-path "/path/to/a/third/image.png";
 		command    "do-something"
 	}
-}
-
-bar-copy # this copies the previous bar
-{
-	position left;
 }
 ```
 

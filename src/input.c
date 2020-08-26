@@ -304,17 +304,14 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 		uint32_t serial, uint32_t time, int32_t id)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-	struct Lava_touchpoint *current;
-	wl_list_for_each(current, &seat->touch.touchpoints, link)
-		if ( current->id == id )
-			goto touchpoint_found;
-	return;
+	struct Lava_touchpoint *touchpoint = touchpoint_from_id(seat, id);
+	if ( touchpoint == NULL )
+		return;
 
-touchpoint_found:
 	log_message(seat->data, 1, "[input] Touch up.\n");
 
-	item_interaction(current->bar, current->item, TYPE_TOUCH);
-	destroy_touchpoint(current);
+	item_interaction(touchpoint->bar, touchpoint->item, TYPE_TOUCH);
+	destroy_touchpoint(touchpoint);
 }
 
 static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
@@ -337,21 +334,18 @@ static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
 		uint32_t time, int32_t id, wl_fixed_t fx, wl_fixed_t fy)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-	struct Lava_touchpoint *current=NULL;
-	wl_list_for_each(current, &seat->touch.touchpoints, link)
-		if ( current->id == id )
-			goto touchpoint_found;
-	return;
+	struct Lava_touchpoint *touchpoint = touchpoint_from_id(seat, id);
+	if ( touchpoint == NULL )
+		return;
 
-touchpoint_found:
 	log_message(seat->data, 2, "[input] Touch move\n");
 
 	/* If the item under the touch point is not the same we first touched,
 	 * we simply abort the touch operation.
 	 */
 	uint32_t x = (uint32_t)wl_fixed_to_int(fx), y = (uint32_t)wl_fixed_to_int(fy);
-	if ( item_from_coords(current->bar, x, y) != current->item )
-		destroy_touchpoint(current);
+	if ( item_from_coords(touchpoint->bar, x, y) != touchpoint->item )
+		destroy_touchpoint(touchpoint);
 }
 
 static void touch_handle_cancel (void *raw, struct wl_touch *touch)

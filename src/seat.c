@@ -157,3 +157,12 @@ void destroy_all_touchpoints (struct Lava_seat *seat)
 	wl_list_for_each_safe(tp, temp, &seat->touch.touchpoints, link)
 		destroy_touchpoint(tp);
 }
+
+struct Lava_touchpoint *touchpoint_from_id (struct Lava_seat *seat, int32_t id)
+{
+	struct Lava_touchpoint *touchpoint;
+	wl_list_for_each(touchpoint, &seat->touch.touchpoints, link)
+		if ( touchpoint->id == id )
+			return touchpoint;
+	return NULL;
+}

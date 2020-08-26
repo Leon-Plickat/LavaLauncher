@@ -83,4 +83,5 @@ bool create_touchpoint (struct Lava_seat *seat, int32_t id,
 		struct Lava_bar *bar, struct Lava_item *item);
 void destroy_touchpoint (struct Lava_touchpoint *touchpoint);
 void destroy_all_touchpoints (struct Lava_seat *seat);
+struct Lava_touchpoint *touchpoint_from_id (struct Lava_seat *seat, int32_t id);
 #endif

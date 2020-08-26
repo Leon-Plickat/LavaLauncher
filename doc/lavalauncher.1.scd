@@ -82,10 +82,9 @@ as follows.
 	The background colour of the bar. The default is "#000000".
 
 *border*
-	The border size. The Default is 1.
-
-*border-{top, right, bottom, left}*
-	The individual border sizes.
+	The border size. Expects either one integer, to set the size of all borders,
+	or four integers, to set the individual sizes for the top, left, right and
+	bottom border. The default border size is 1.
 
 *condition-resolution*
 	The resolution proportions an output must have for the bar to be displayed
@@ -145,8 +144,10 @@ as follows.
 	the exact placement on the z axis depends on the implementation of the
 	compositor. The default layer is "bottom".
 
-*margin-{top, right, bottom, left}*
-	Directional margins of the surface. The default margins are 0.
+*margin*
+	The margin of the surface. Expects either one integer, to set the margin in
+	all directions, or four integers, to set the individual top-, left-, right-
+	and bottom-margins. The default margin is 0.
 
 *mode*
 	The display mode of the bar. Can be "default", "full" or "simple". In
@@ -178,12 +179,10 @@ as follows.
 	will dock to that edge of the output(s). The default position is "bottom".
 
 *radius*
-	The radius of the corners. The Default is 5. Set to 0 to disable corner
-	roundness.
-
-*radius-{top-left, top-right, bottom-left, bottom-right}*
-	The individual corner radia.
-
+	The radius of the corners. Expects either one integer, to set the radius of
+	all corners, or four integers, to set the individual radii for the top-left,
+	top-right, bottom-left and bottom-right corner. The default radius is 5. Set
+	to 0 to disable corner roundness.
 
 *size*
 	Size of the bar. The default size is 60.

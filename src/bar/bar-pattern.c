@@ -25,6 +25,7 @@
 #include<unistd.h>
 #include<string.h>
 #include<assert.h>
+#include<ctype.h>
 
 #include<wayland-server.h>
 #include<wayland-client.h>
@@ -237,6 +238,69 @@ void destroy_all_bar_patterns (struct Lava_data *data)
 		destroy_bar_pattern(pt1);
 }
 
+static uint32_t count_args (const char *arg)
+{
+	uint32_t args = 0;
+	bool on_arg = false;
+	for (const char *i = arg; *i != '\0'; i++)
+	{
+		if (isspace(*i))
+		{
+			if (on_arg)
+				on_arg = false;
+		}
+		else if (! on_arg)
+		{
+			on_arg = true;
+			args++;
+		}
+	}
+	return args;
+}
+
+static bool directional_config (void *_a, void *_b, void *_c, void *_d,
+		const char *arg, const char *conf_name, const char *conf_name_2,
+		bool sign)
+{
+	int32_t a, b, c, d;
+
+	if ( 4 == count_args(arg) && 4 == sscanf(arg, "%d %d %d %d", &a, &b, &c, &d) )
+		goto done;
+
+	if ( 1 == count_args(arg) && 1 == sscanf(arg, "%d", &d) )
+	{
+		a = b = c = d;
+		goto done;
+	}
+
+	log_message(NULL, 0, "ERROR: Invalid %s configuration: %s\n", conf_name, arg);
+	return false;
+
+done:
+	if ( a < 0 || b < 0 || c < 0 || d < 0 )
+	{
+		log_message(NULL, 0, "ERROR: %s can not be negative.\n", conf_name_2);
+		return false;
+	}
+
+	// TODO make this less ugly -> make margins uint32_t?
+	if (sign)
+	{
+		*(int32_t*)_a = a;
+		*(int32_t*)_b = b;
+		*(int32_t*)_c = c;
+		*(int32_t*)_d = d;
+	}
+	else
+	{
+		*(uint32_t*)_a = (uint32_t)a;
+		*(uint32_t*)_b = (uint32_t)b;
+		*(uint32_t*)_c = (uint32_t)c;
+		*(uint32_t*)_d = (uint32_t)d;
+	}
+	return true;
+}
+
 static bool bar_pattern_set_position (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
@@ -346,47 +410,17 @@ static bool bar_pattern_set_icon_padding (struct Lava_bar_pattern *pattern,
 static bool bar_pattern_set_border_size (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	int32_t size = atoi(arg);
-	if ( size < 0 )
-	{
-		log_message(NULL, 0, "ERROR: Border size must be equal to or greater than zero.\n");
-		return false;
-	}
-
-	switch (direction)
-	{
-		case 't': pattern->border_top    = (uint32_t)size; break;
-		case 'r': pattern->border_right  = (uint32_t)size; break;
-		case 'b': pattern->border_bottom = (uint32_t)size; break;
-		case 'l': pattern->border_left   = (uint32_t)size; break;
-		case 'a':
-			pattern->border_top    = (uint32_t)size;
-			pattern->border_right  = (uint32_t)size;
-			pattern->border_bottom = (uint32_t)size;
-			pattern->border_left   = (uint32_t)size;
-			break;
-	}
-	return true;
+	return directional_config((void*)&pattern->border_top, (void*)&pattern->border_right,
+			(void*)&pattern->border_bottom, (void*)&pattern->border_left,
+			arg, "border", "Border size", false);
 }
 
 static bool bar_pattern_set_margin_size (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	int32_t size = atoi(arg);
-	if ( size < 0 )
-	{
-		log_message(NULL, 0, "ERROR: Margin size must be equal to or greater than zero.\n");
-		return false;
-	}
-
-	switch (direction)
-	{
-		case 't': pattern->margin_top    = size; break;
-		case 'r': pattern->margin_right  = size; break;
-		case 'b': pattern->margin_bottom = size; break;
-		case 'l': pattern->margin_left   = size; break;
-	}
-	return true;
+	return directional_config((void*)&pattern->margin_top, (void*)&pattern->margin_right,
+			(void*)&pattern->margin_bottom, (void*)&pattern->margin_left,
+			arg, "margin", "Margins", true);
 }
 
 static bool bar_pattern_set_only_output (struct Lava_bar_pattern *pattern,
@@ -510,27 +544,9 @@ static bool bar_pattern_set_condition_transform (struct Lava_bar_pattern *patter
 static bool bar_pattern_set_radius (struct Lava_bar_pattern *pattern,
 		const char *arg, const char direction)
 {
-	int32_t size = atoi(arg);
-	if ( size < 0 )
-	{
-		log_message(NULL, 0, "ERROR: Radius must be equal to or greater than zero.\n");
-		return false;
-	}
-
-	switch (direction)
-	{
-		case 'l': pattern->radius_top_left     = (uint32_t)size; break;
-		case 'r': pattern->radius_top_right    = (uint32_t)size; break;
-		case 'L': pattern->radius_bottom_left  = (uint32_t)size; break;
-		case 'R': pattern->radius_bottom_right = (uint32_t)size; break;
-		case 'a':
-			pattern->radius_top_left     = (uint32_t)size;
-			pattern->radius_top_right    = (uint32_t)size;
-			pattern->radius_bottom_left  = (uint32_t)size;
-			pattern->radius_bottom_right = (uint32_t)size;
-			break;
-	}
-	return true;
+	return directional_config((void*)&pattern->radius_top_left, (void*)&pattern->radius_top_right,
+			(void*)&pattern->radius_bottom_left, (void*)&pattern->radius_bottom_right,
+			arg, "radius", "Radii", false);
 }
 
 static bool bar_pattern_set_indicator_padding (struct Lava_bar_pattern *pattern,
@@ -588,15 +604,8 @@ struct
 	{ .variable = "layer",                   .set = bar_pattern_set_layer,                .direction = '0'},
 	{ .variable = "size",                    .set = bar_pattern_set_size,                 .direction = '0'},
 	{ .variable = "icon-padding",            .set = bar_pattern_set_icon_padding,         .direction = '0'},
-	{ .variable = "border",                  .set = bar_pattern_set_border_size,          .direction = 'a'},
-	{ .variable = "border-top",              .set = bar_pattern_set_border_size,          .direction = 't'},
-	{ .variable = "border-right",            .set = bar_pattern_set_border_size,          .direction = 'r'},
-	{ .variable = "border-bottom",           .set = bar_pattern_set_border_size,          .direction = 'b'},
-	{ .variable = "border-left",             .set = bar_pattern_set_border_size,          .direction = 'l'},
-	{ .variable = "margin-top",              .set = bar_pattern_set_margin_size,          .direction = 't'},
-	{ .variable = "margin-right",            .set = bar_pattern_set_margin_size,          .direction = 'r'},
-	{ .variable = "margin-bottom",           .set = bar_pattern_set_margin_size,          .direction = 'b'},
-	{ .variable = "margin-left",             .set = bar_pattern_set_margin_size,          .direction = 'l'},
+	{ .variable = "border",                  .set = bar_pattern_set_border_size,          .direction = '0'},
+	{ .variable = "margin",                  .set = bar_pattern_set_margin_size,          .direction = '0'},
 	{ .variable = "output",                  .set = bar_pattern_set_only_output,          .direction = '0'},
 	{ .variable = "namespace",               .set = bar_pattern_set_namespace,            .direction = '0'},
 	{ .variable = "exclusive-zone",          .set = bar_pattern_set_exclusive_zone,       .direction = '0'},
@@ -606,11 +615,7 @@ struct
 	{ .variable = "condition-scale",         .set = bar_pattern_set_condition_scale,      .direction = '0'},
 	{ .variable = "condition-resolution",    .set = bar_pattern_set_condition_resolution, .direction = '0'},
 	{ .variable = "condition-transform",     .set = bar_pattern_set_condition_transform,  .direction = '0'},
-	{ .variable = "radius",                  .set = bar_pattern_set_radius,               .direction = 'a'},
-	{ .variable = "radius-top-left",         .set = bar_pattern_set_radius,               .direction = 'l'},
-	{ .variable = "radius-top-right",        .set = bar_pattern_set_radius,               .direction = 'r'},
-	{ .variable = "radius-bottom-left",      .set = bar_pattern_set_radius,               .direction = 'L'},
-	{ .variable = "radius-bottom-right",     .set = bar_pattern_set_radius,               .direction = 'R'},
+	{ .variable = "radius",                  .set = bar_pattern_set_radius,               .direction = '0'},
 	{ .variable = "indicator-padding",       .set = bar_pattern_set_indicator_padding,    .direction = '0'},
 	{ .variable = "indicator-active-colour", .set = bar_pattern_set_indicator_colour,     .direction = 'a'},
 	{ .variable = "indicator-hover-colour",  .set = bar_pattern_set_indicator_colour,     .direction = 'h'},

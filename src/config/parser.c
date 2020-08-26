@@ -210,6 +210,13 @@ static bool parser_handle_semicolon (struct Lava_parser *parser, const char ch)
 	return true;
 }
 
+static void parser_buffer_trim_whitespace (struct Lava_parser *parser)
+{
+	size_t i = parser->buffer_length;
+	for (; isspace(parser->buffer[i-1]); i--);
+	parser->buffer[i] = '\0';
+}
+
 static void parser_buffer_add_char (struct Lava_parser *parser, char ch)
 {
 	parser->buffer[parser->buffer_length] = ch;
@@ -235,84 +242,86 @@ static bool parser_string_handle_escape (struct Lava_parser *parser)
 	return true;
 }
 
-static bool parser_get_unquoted_string (struct Lava_parser *parser)
+static bool parser_get_string (struct Lava_parser *parser, const char last_ch, bool single_word)
 {
-	parser->buffer[0]     = parser->last_char;
-	parser->buffer[1]     = '\0';
-	parser->buffer_length = 1;
-
-	for (char ch;;)
+	bool quoted;
+	if ( last_ch == '"' )
 	{
-		if (! parser_get_char(parser, &ch))
-			return false;
+		if (single_word)
+			goto unexpected_quote;
 
-		if ( ch == '\n' )
-		{
-			parser->line--;
-			goto seek;
-		}
-		else if ( isspace(ch) || ch == '\0' || ch == '\n' || ch == '#' || ch == ';' )
-			goto seek;
-		else if ( ch == '\\' )
-		{
-			if (! parser_string_handle_escape(parser))
-					return false;
-		}
-		else
-			parser_buffer_add_char(parser, ch);
+		parser->buffer_length = 0;
+		parser->buffer[0]     = '\0';
+		quoted                = true;
+	}
+	else
+	{
+		parser->buffer[0]     = last_ch;
+		parser->buffer[1]     = '\0';
+		parser->buffer_length = 1;
+		quoted                = false;
 	}
 
-seek:
-	parser->buffer[1024-1] = '\0'; /* Overflow protection. */
-	fseek(parser->file, -1, SEEK_CUR);
-	return true;;
-}
-
-static bool parser_get_quoted_string (struct Lava_parser *parser)
-{
-	/* This is a simple but effective protection against the case were no
-	 * chars are between the quotes.
-	 */
-	parser->buffer_length = 0;
-	parser->buffer[0] = '\0';
-
 	for (char ch;;)
 	{
+		if ( parser->buffer_length >= sizeof(parser->buffer) - 1 )
+			goto overflow;
+
 		if (! parser_get_char(parser, &ch))
 			return false;
 
 		if ( ch == '\0' )
-			goto error;
-		else if ( ch == '\n' )
-			goto error_on_prev_line;
+			goto unterm;
+		else if ( isspace(ch) ) /* Also handles '\n' */
+		{
+			if (single_word)
+				goto done;
+			if (! quoted)
+			{
+				if (! isspace(parser->buffer[parser->buffer_length-1]))
+					parser_buffer_add_char(parser, ' ');
+				continue;
+			}
+		}
+		else if ( ch == '#' || ch == ';' )
+		{
+			if ( single_word || ! quoted )
+				goto done_seek;
+		}
 		else if ( ch == '"' )
 		{
-			/* Overflow protection. */
-			parser->buffer[1024-1] = '\0';
-			return true;
+			if (quoted)
+				goto done;
 		}
 		else if ( ch == '\\' )
 		{
 			if (! parser_string_handle_escape(parser))
 					return false;
+			continue;
 		}
-		else
-			parser_buffer_add_char(parser, ch);
+
+		parser_buffer_add_char(parser, ch);
 	}
 
-error_on_prev_line:
-	parser->line--;
-error:
-	log_message(NULL, 0, "ERROR: Unterminated quoted string on line %d.\n", parser->line);
-	return false;
-}
+done_seek:
+	fseek(parser->file, -1, SEEK_CUR);
+done:
+	parser->buffer[1024-1] = '\0';
+	if (! quoted)
+		parser_buffer_trim_whitespace(parser);
+	return true;
 
-static bool parser_get_string (struct Lava_parser *parser, const char ch)
-{
-	if ( ch == '"' )
-		return parser_get_quoted_string(parser);
-	else
-		return parser_get_unquoted_string(parser);
+unterm:
+	log_message(NULL, 0, "ERROR: Unterminated string on line %d.\n", parser->line);
+	return false;
+
+overflow:
+	log_message(NULL, 0, "ERROR: Buffer overflow due to too long string on line %d.\n", parser->line);
+	return false;
+
+unexpected_quote:
+	log_message(NULL, 0, "ERROR: Unexpected quotes on line %d.\n", parser->line);
+	return false;
 }
 
 /* Handle a string which is part of an assign-operation. The string could be
@@ -356,10 +365,13 @@ static bool parser_handle_settings (struct Lava_parser *parser)
 	return false;
 }
 
-static bool parser_handle_string (struct Lava_parser *parser)
+static bool parser_handle_string (struct Lava_parser *parser, const char ch)
 {
 	if ( parser->action == ACTION_ASSIGNED )
 		goto error;
+
+	if (! parser_get_string(parser, ch, parser->action == ACTION_NONE))
+		return false;
 
 	switch (parser->context)
 	{
@@ -461,8 +473,7 @@ bool parse_config_file (struct Lava_data *data)
 		else if ( ch == ';' )
 			ret = parser_handle_semicolon(&parser, ch);
 		else
-			ret = (parser_get_string(&parser, ch)
-					&& parser_handle_string(&parser));
+			ret = parser_handle_string(&parser, ch);
 
 		/* If an error occurred, exit. */
 		if (! ret)

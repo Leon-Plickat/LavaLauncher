@@ -354,6 +354,21 @@ touchpoint_found:
 		destroy_touchpoint(current);
 }
 
+static void touch_handle_cancel (void *raw, struct wl_touch *touch)
+{
+	/* The cancel event means that the compositor has decided to take over
+	 * the touch-input, possibly for gestures, and that therefore we should
+	 * stop caring about all active touchpoints.
+	 *
+	 * The vast majority of such compositor guestures will already be caught
+	 * by touch_handle_motion(), but nothing stops a compositor from having
+	 * "hold for X seconds" as a valid gesture.
+	 */
+
+	struct Lava_seat *seat = (struct Lava_seat *)raw;
+	destroy_all_touchpoints(seat);
+}
+
 /* These are the handlers for touch events. We only want to interact with an
  * item, if both touch-down and touch-up were over the same item. To
  * achieve this, each touch event is stored in the wl_list, inside seat->touch.
@@ -364,7 +379,7 @@ const struct wl_touch_listener touch_listener = {
 	.up          = touch_handle_up,
 	.motion      = touch_handle_motion,
 	.frame       = noop,
-	.cancel      = noop,
+	.cancel      = touch_handle_cancel,
 	.shape       = noop,
 	.orientation = noop
 };

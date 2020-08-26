@@ -210,6 +210,31 @@ static bool parser_handle_semicolon (struct Lava_parser *parser, const char ch)
 	return true;
 }
 
+static void parser_buffer_add_char (struct Lava_parser *parser, char ch)
+{
+	parser->buffer[parser->buffer_length] = ch;
+	parser->buffer_length++;
+	parser->buffer[parser->buffer_length] = '\0';
+}
+
+static bool parser_string_handle_escape (struct Lava_parser *parser)
+{
+	char ch;
+	if (! parser_get_char(parser, &ch))
+		return false;
+
+	if ( ch == 'n' )
+		ch = '\n';
+	else if ( ch == 't' )
+		ch = '\t';
+	else if ( ch == 'v' )
+		ch = '\v';
+
+	parser_buffer_add_char(parser, ch);
+
+	return true;
+}
+
 static bool parser_get_unquoted_string (struct Lava_parser *parser)
 {
 	parser->buffer[0]     = parser->last_char;
@@ -220,16 +245,21 @@ static bool parser_get_unquoted_string (struct Lava_parser *parser)
 	{
 		if (! parser_get_char(parser, &ch))
 			return false;
+
 		if ( ch == '\n' )
 		{
 			parser->line--;
 			goto seek;
 		}
-		if ( isspace(ch) || ch == '\0' || ch == '\n' || ch == '#' || ch == ';' )
+		else if ( isspace(ch) || ch == '\0' || ch == '\n' || ch == '#' || ch == ';' )
 			goto seek;
-		parser->buffer[parser->buffer_length] = ch;
-		parser->buffer_length++;
-		parser->buffer[parser->buffer_length] = '\0';
+		else if ( ch == '\\' )
+		{
+			if (! parser_string_handle_escape(parser))
+					return false;
+		}
+		else
+			parser_buffer_add_char(parser, ch);
 	}
 
 seek:
@@ -250,6 +280,7 @@ static bool parser_get_quoted_string (struct Lava_parser *parser)
 	{
 		if (! parser_get_char(parser, &ch))
 			return false;
+
 		if ( ch == '\0' )
 			goto error;
 		else if ( ch == '\n' )
@@ -260,9 +291,13 @@ static bool parser_get_quoted_string (struct Lava_parser *parser)
 			parser->buffer[1024-1] = '\0';
 			return true;
 		}
-		parser->buffer[parser->buffer_length] = ch;
-		parser->buffer_length++;
-		parser->buffer[parser->buffer_length] = '\0';
+		else if ( ch == '\\' )
+		{
+			if (! parser_string_handle_escape(parser))
+					return false;
+		}
+		else
+			parser_buffer_add_char(parser, ch);
 	}
 
 error_on_prev_line:

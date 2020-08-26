@@ -41,16 +41,16 @@ You can find an example configuration at the end of this section.
 The configuration file has a simple structure. It consists of *contexts* and
 *assignments*.
 
-Assignments are defined by a string (the variable to be changed) followed by
-another string (the new value for the variable) and finally a semicolon (';').
+Assignments are defined by a string, the variable to be changed, followed by
+another string, the new value for the variable, and finally a semicolon (';').
 Assignments are always inside contexts.
 
-A context is defined by a string (the context name) followed by an opening
+A context is defined by a string, the context name, followed by an opening
 bracket. To leave a context, use a closing bracket. Contexts can be nested, but
 unless specifically pointed out as otherwise, every context mentioned in this
 document is a top-level context.
 
-Comments start with an octothorpe ('#'). Any string can be quoted.
+Comments start with an octothorpe ('#').
 
 ## GLOBAL  SETTINGS
 Global settings can be configured int the "global-settings" context. The
@@ -238,6 +238,10 @@ this context are as follows.
 
 ## COMMANDS
 Commands are executed using sh(1).
+
+Command strings (just like any other string in the config) can be quoted.
+
+LavaLauncher understands typical backslash escape sequences.
 
 If the command is "exit", LavaLauncher will exit, if it is "reload",
 LavaLauncher will reload.

@@ -77,6 +77,8 @@ struct Lava_touchpoint
 	int32_t           id;
 	struct Lava_bar  *bar;
 	struct Lava_item *item;
+
+	struct Lava_item_indicator *indicator;
 };
 
 bool create_touchpoint (struct Lava_seat *seat, int32_t id,

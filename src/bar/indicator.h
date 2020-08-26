@@ -31,8 +31,9 @@ struct Lava_item_indicator
 {
 	struct wl_list link;
 
-	struct Lava_seat *seat;
-	struct Lava_bar  *bar;
+	struct Lava_seat       *seat;
+	struct Lava_touchpoint *touchpoint;
+	struct Lava_bar        *bar;
 
 	struct wl_surface    *indicator_surface;
 	struct wl_subsurface *indicator_subsurface;

@@ -47,8 +47,12 @@ void destroy_indicator (struct Lava_item_indicator *indicator)
 		wl_subsurface_destroy(indicator->indicator_subsurface);
 	if ( indicator->indicator_surface != NULL )
 		wl_surface_destroy(indicator->indicator_surface);
+
+	/* Cleanup in the parent. */
 	if ( indicator->seat != NULL )
 		indicator->seat->pointer.indicator = NULL;
+	if ( indicator->touchpoint != NULL )
+		indicator->touchpoint->indicator = NULL;
 
 	finish_buffer(&indicator->indicator_buffers[0]);
 	finish_buffer(&indicator->indicator_buffers[1]);
@@ -71,8 +75,9 @@ struct Lava_item_indicator *create_indicator (struct Lava_bar *bar)
 
 	wl_list_insert(&bar->indicators, &indicator->link);
 
-	indicator->seat = NULL;
-	indicator->bar  = bar;
+	indicator->seat       = NULL;
+	indicator->touchpoint = NULL;
+	indicator->bar        = bar;
 
 	if ( NULL == (indicator->indicator_surface = wl_compositor_create_surface(data->compositor)) )
 	{

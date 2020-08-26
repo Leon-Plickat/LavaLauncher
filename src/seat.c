@@ -39,6 +39,9 @@
 #include"seat.h"
 #include"cursor.h"
 #include"input.h"
+#include"bar/bar.h"
+#include"bar/bar-pattern.h"
+#include"bar/indicator.h"
 
 /* No-Op function. */
 static void noop () {}
@@ -139,6 +142,17 @@ bool create_touchpoint (struct Lava_seat *seat, int32_t id,
 	touchpoint->bar  = bar;
 	touchpoint->item = item;
 
+	touchpoint->indicator = create_indicator(bar);
+	if ( touchpoint->indicator != NULL )
+	{
+		touchpoint->indicator->touchpoint = touchpoint;
+		indicator_set_colour(touchpoint->indicator, &bar->pattern->indicator_active_colour);
+		move_indicator(touchpoint->indicator, item);
+		indicator_commit(touchpoint->indicator);
+	}
+	else
+		log_message(NULL, 0, "ERROR: Could not create indicator.\n");
+
 	wl_list_insert(&seat->touch.touchpoints, &touchpoint->link);
 
 	return true;
@@ -146,6 +160,9 @@ bool create_touchpoint (struct Lava_seat *seat, int32_t id,
 
 void destroy_touchpoint (struct Lava_touchpoint *touchpoint)
 {
+	if ( touchpoint->indicator != NULL )
+		destroy_indicator(touchpoint->indicator);
+
 	wl_list_remove(&touchpoint->link);
 	free(touchpoint);
 }

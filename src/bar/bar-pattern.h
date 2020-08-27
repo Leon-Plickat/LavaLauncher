@@ -123,7 +123,7 @@ struct Lava_bar_pattern
 	int32_t exclusive_zone;
 
 	/* Directional margins of the surface. */
-	int32_t margin_top, margin_right, margin_bottom, margin_left;
+	uint32_t margin_top, margin_right, margin_bottom, margin_left;
 
 	/* Name of cursor which should be attached to pointer on hover. */
 	struct Lava_string_container *cursor_name;

@@ -115,16 +115,16 @@ void configure_layer_surface (struct Lava_bar *bar)
 
 	if ( pattern->mode == MODE_SIMPLE )
 		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
-				pattern->margin_top, pattern->margin_right,
-				pattern->margin_bottom, pattern->margin_left);
+				(int32_t)pattern->margin_top, (int32_t)pattern->margin_right,
+				(int32_t)pattern->margin_bottom, (int32_t)pattern->margin_left);
 	else if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
-				pattern->margin_top, 0,
-				pattern->margin_bottom, 0);
+				(int32_t)pattern->margin_top, 0,
+				(int32_t)pattern->margin_bottom, 0);
 	else
 		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
-				0, pattern->margin_right,
-				0, pattern->margin_left);
+				0, (int32_t)pattern->margin_right,
+				0, (int32_t)pattern->margin_left);
 
 	/* Set exclusive zone to prevent other surfaces from obstructing ours. */
 	int32_t exclusive_zone;

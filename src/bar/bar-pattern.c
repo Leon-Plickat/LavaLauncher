@@ -258,9 +258,8 @@ static uint32_t count_args (const char *arg)
 	return args;
 }
 
-static bool directional_config (void *_a, void *_b, void *_c, void *_d,
-		const char *arg, const char *conf_name, const char *conf_name_2,
-		bool sign)
+static bool directional_config (uint32_t *_a, uint32_t *_b, uint32_t *_c, uint32_t *_d,
+		const char *arg, const char *conf_name, const char *conf_name_2)
 {
 	int32_t a, b, c, d;
 
@@ -282,44 +281,34 @@ done:
 		log_message(NULL, 0, "ERROR: %s can not be negative.\n", conf_name_2);
 		return false;
 	}
+	
+	*_a = (uint32_t)a;
+	*_b = (uint32_t)b;
+	*_c = (uint32_t)c;
+	*_d = (uint32_t)d;
 
-	// TODO make this less ugly -> make margins uint32_t?
-	if (sign)
-	{
-		*(int32_t*)_a = a;
-		*(int32_t*)_b = b;
-		*(int32_t*)_c = c;
-		*(int32_t*)_d = d;
-	}
-	else
-	{
-		*(uint32_t*)_a = (uint32_t)a;
-		*(uint32_t*)_b = (uint32_t)b;
-		*(uint32_t*)_c = (uint32_t)c;
-		*(uint32_t*)_d = (uint32_t)d;
-	}
 	return true;
 }
 
 static bool bar_pattern_set_border_size (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	return directional_config((void*)&pattern->border_top, (void*)&pattern->border_right,
-			(void*)&pattern->border_bottom, (void*)&pattern->border_left,
-			arg, "border", "Border size", false);
+	return directional_config(&pattern->border_top, &pattern->border_right,
+			&pattern->border_bottom, &pattern->border_left,
+			arg, "border", "Border size");
 }
 
 static bool bar_pattern_set_margin_size (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	return directional_config((void*)&pattern->margin_top, (void*)&pattern->margin_right,
-			(void*)&pattern->margin_bottom, (void*)&pattern->margin_left,
-			arg, "margin", "Margins", true);
+	return directional_config(&pattern->margin_top, &pattern->margin_right,
+			&pattern->margin_bottom, &pattern->margin_left,
+			arg, "margin", "Margins");
 }
 
 static bool bar_pattern_set_radius (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	return directional_config((void*)&pattern->radius_top_left, (void*)&pattern->radius_top_right,
-			(void*)&pattern->radius_bottom_left, (void*)&pattern->radius_bottom_right,
-			arg, "radius", "Radii", false);
+	return directional_config(&pattern->radius_top_left, &pattern->radius_top_right,
+			&pattern->radius_bottom_left, &pattern->radius_bottom_right,
+			arg, "radius", "Radii");
 }
 
 static bool bar_pattern_set_position (struct Lava_bar_pattern *pattern, const char *arg)

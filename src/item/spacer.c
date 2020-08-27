@@ -50,13 +50,20 @@ struct
 	{ .variable = "length", .set = spacer_set_length }
 };
 
-bool spacer_set_variable (struct Lava_item *spacer, const char *variable,
-		const char *value, int line)
+bool spacer_set_variable (struct Lava_data *data, struct Lava_item *spacer,
+		const char *variable, const char *value, int line)
 {
 	for (size_t i = 0; i < (sizeof(spacer_configs) / sizeof(spacer_configs[0])); i++)
 		if (! strcmp(spacer_configs[i].variable, variable))
-			return spacer_configs[i].set(spacer, value);
-	log_message(NULL, 0, "ERROR: Unrecognized spacer setting \"%s\" on line %d\n", variable, line);
+		{
+			if (spacer_configs[i].set(spacer, value))
+				return true;
+			goto exit;
+		}
+	log_message(NULL, 0, "ERROR: Unrecognized spacer setting \"%s\".\n", variable);
+exit:
+	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",
+			line, data->config_path);
 	return false;
 }
 

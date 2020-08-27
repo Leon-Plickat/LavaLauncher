@@ -22,9 +22,10 @@
 
 #include<stdbool.h>
 
+struct Lava_data;
 struct Lava_item;
 
-bool spacer_set_variable (struct Lava_item *spacer, const char *variable,
-		const char *value, int line);
+bool spacer_set_variable (struct Lava_data *data, struct Lava_item *spacer,
+		const char *variable, const char *value, int line);
 
 #endif

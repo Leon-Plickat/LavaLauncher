@@ -272,7 +272,9 @@ static bool directional_config (uint32_t *_a, uint32_t *_b, uint32_t *_c, uint32
 		goto done;
 	}
 
-	log_message(NULL, 0, "ERROR: Invalid %s configuration: %s\n", conf_name, arg);
+	log_message(NULL, 0, "ERROR: Invalid %s configuration: %s\n"
+			"INFO: You have to specify either one or four integers.\n",
+			conf_name, arg);
 	return false;
 
 done:
@@ -595,8 +597,15 @@ bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,
 {
 	for (size_t i = 0; i < (sizeof(pattern_configs) / sizeof(pattern_configs[0])); i++)
 		if (! strcmp(pattern_configs[i].variable, variable))
-			return pattern_configs[i].set(pattern, value);
-	log_message(NULL, 0, "ERROR: Unrecognized bar setting \"%s\" on line %d\n", variable, line);
+		{
+			if (pattern_configs[i].set(pattern, value))
+				return true;
+			goto exit;
+		}
+	log_message(NULL, 0, "ERROR: Unrecognized bar setting \"%s\".\n", variable);
+exit:
+	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",
+			line, pattern->data->config_path);
 	return false;
 }
 

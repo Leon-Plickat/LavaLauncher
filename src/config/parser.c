@@ -354,7 +354,8 @@ static bool parser_handle_settings (struct Lava_parser *parser)
 
 			case CONTEXT_BUTTON:
 			case CONTEXT_SPACER:
-				return item_set_variable(parser->data->last_pattern->last_item,
+				return item_set_variable(parser->data,
+						parser->data->last_pattern->last_item,
 						parser->buffer_2, parser->buffer,
 						parser->line);
 

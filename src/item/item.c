@@ -114,13 +114,13 @@ bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
 	return true;
 }
 
-bool item_set_variable (struct Lava_item *item, const char *variable,
-		const char *value, int line)
+bool item_set_variable (struct Lava_data *data, struct Lava_item *item,
+		const char *variable, const char *value, int line)
 {
 	switch (item->type)
 	{
-		case TYPE_BUTTON: return button_set_variable(item, variable, value, line);
-		case TYPE_SPACER: return spacer_set_variable(item, variable, value, line);
+		case TYPE_BUTTON: return button_set_variable(data, item, variable, value, line);
+		case TYPE_SPACER: return spacer_set_variable(data, item, variable, value, line);
 		default:          return false;
 	}
 }

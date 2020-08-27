@@ -100,13 +100,19 @@ struct
 	{ .variable = "image-path",           .set = button_set_image_path,        .type = 0                 }
 };
 
-bool button_set_variable (struct Lava_item *button, const char *variable,
-		const char *value, int line)
+bool button_set_variable (struct Lava_data *data, struct Lava_item *button,
+		const char *variable, const char *value, int line)
 {
 	for (size_t i = 0; i < (sizeof(button_configs) / sizeof(button_configs[0])); i++)
 		if (! strcmp(button_configs[i].variable, variable))
-			return button_configs[i].set(button, value, button_configs[i].type);
-	log_message(NULL, 0, "ERROR: Unrecognized button setting \"%s\": on line %d\n",
-			variable, line);
+		{
+			if (button_configs[i].set(button, value, button_configs[i].type))
+				return true;
+			goto exit;
+		}
+	log_message(NULL, 0, "ERROR: Unrecognized button setting \"%s\".\n", variable);
+exit:
+	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",
+			line, data->config_path);
 	return false;
 }

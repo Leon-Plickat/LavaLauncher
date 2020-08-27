@@ -22,9 +22,10 @@
 
 #include<stdbool.h>
 
+struct Lava_data;
 struct Lava_item;
 
-bool button_set_variable (struct Lava_item *button, const char *variable,
-		const char *value, int line);
+bool button_set_variable (struct Lava_data *data, struct Lava_item *button,
+		const char *variable, const char *value, int line);
 
 #endif

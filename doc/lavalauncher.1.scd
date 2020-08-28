@@ -5,13 +5,28 @@ LavaLauncher - A simple launcher panel for Wayland desktops
 
 
 # DESCRIPTION
-LavaLauncher serves a simple purpose: Letting the user execute shell commands
-by clicking on icons on a dynamically sized bar, placed at one of the screen
-edges. A single LavaLauncher instance can provide multiple such bars, across
-multiple outputs.
+LavaLauncher is a simple launcher panel for Wayland desktops.
+
+It displays a dynamically sized bar with user defined buttons. These Buttons
+consist of an image, which is displayed as the button icon on the bar, and at
+least one shell command, which is executed when the user activates the button.
+
+Buttons can be activated with pointer and touch events.
+
+A single LavaLauncher instance can provide multiple such bars, across multiple
+outputs.
 
 The Wayland compositor must implement the Layer-Shell and XDG-Output for
 LavaLauncher to work.
+
+Beware: Unlike applications launchers which are similar in visual design to
+LavaLauncher, which are often called "docks", LavaLauncher does not care about
+.desktop files or icon themes nor does it keep track running applications.
+Instead, LavaLaunchers approach of manually defined buttons is considerably more
+flexible: You could have buttons not just for launching applications, but for
+practically anything you could do in your shell, like for ejecting your optical
+drive, rotating your screen, sending your cat an email, playing a funny sound,
+muting all audio, toggling your lamps and a lot more. Be creative!
 
 
 # OPTIONS

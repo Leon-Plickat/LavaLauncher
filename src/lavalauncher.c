@@ -253,8 +253,11 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 
 static bool get_default_config_path (struct Lava_data *data)
 {
-	char *dir;
+	snprintf(data->config_path, sizeof(data->config_path) - 1, "./lavalauncher.conf");
+	if (! access(data->config_path, F_OK | R_OK))
+			goto success;
 
+	char *dir;
 	if ( NULL != (dir = getenv("XDG_CONFIG_HOME")) )
 	{
 		snprintf(data->config_path, sizeof(data->config_path) - 1,

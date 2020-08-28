@@ -50,7 +50,6 @@ static void item_nullify (struct Lava_item *item)
 	item->scroll_up_command     = NULL;
 	item->scroll_down_command   = NULL;
 	item->touch_command         = NULL;
-	item->app_id                = NULL;
 	item->img                   = NULL;
 }
 
@@ -105,8 +104,6 @@ bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
 		new_item->scroll_down_command = string_container_reference(item->scroll_down_command);
 	if ( item->touch_command != NULL )
 		new_item->touch_command = string_container_reference(item->touch_command);
-	if ( item->app_id != NULL )
-		new_item->touch_command = string_container_reference(item->app_id);
 
 	if ( item->img != NULL )
 		new_item->img = image_reference(item->img);
@@ -215,8 +212,6 @@ static void destroy_item (struct Lava_item *item)
 		string_container_destroy(item->scroll_down_command);
 	if ( item->touch_command != NULL )
 		string_container_destroy(item->touch_command);
-	if ( item->app_id != NULL )
-		string_container_destroy(item->app_id);
 	if ( item->img != NULL )
 		image_destroy(item->img);
 

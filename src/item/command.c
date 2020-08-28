@@ -30,7 +30,6 @@
 #include"lavalauncher.h"
 #include"log.h"
 #include"output.h"
-#include"toplevel.h"
 #include"item/command.h"
 #include"item/item.h"
 #include"bar/bar-pattern.h"
@@ -66,11 +65,6 @@ static void fork_command (struct Lava_bar *bar, struct Lava_item *item, const ch
 		/* Output properties. */
 		setenvf("LAVALAUNCHER_OUTPUT_NAME",  "%s", bar->output->name);
 		setenvf("LAVALAUNCHER_OUTPUT_SCALE", "%d", bar->output->scale);
-
-		/* Toplevel properties. */
-		setenvf("LAVALAUNCHER_APPID_COUNT", "%d",
-				item->app_id == NULL ? -2
-				: count_toplevels_with_appid(bar->data, item->app_id->string));
 
 		/* execl() only returns on error, on success it replaces this process. */
 		execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);

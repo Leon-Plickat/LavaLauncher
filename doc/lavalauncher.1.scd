@@ -58,13 +58,6 @@ Comments start with an octothorpe ('#').
 Global settings can be configured int the "global-settings" context. The
 assignments which can be made in this context are as follows.
 
-*use-foreign-toplevel*
-	Use foreign toplevel mangement protocol extension to enable toplevel and
-	app-id related functionality. Can be "true" or "false". The default is
-	"false". Behold: Not every compositor supports this extension. Enabling this
-	option causes LavaLauncher to use CPU cycles on toplevel operations like
-	spawning, focusing and closing windows and to consume slightly more memory.
-
 *watch-config-file*
 	Automatically reload when a change in the configuration file is detected.
 	Can be "true" or "false". The default is "false". Behold: If the
@@ -198,11 +191,6 @@ Every "button" context will add a button to a bar. As such, this context is
 a nested inside the "bar" or "bar-copy" context. The assignments possible in
 this context are as follows.
 
-*app-id*
-	The app-id of toplevels LavaLauncher should consider to belong to this
-	button. Behold: This requires the global option "use-foreign-toplevel" to be
-	enabled.
-
 *command*
 	Sets the shell command for left-, right-, middle-click and touch
 	interactions.
@@ -254,12 +242,6 @@ the commands. These variables are as follows.
 
 *$LAVALAUNCHER_OUTPUT_SCALE*
 	The scale of the output the button has been clicked on.
-
-*$LAVALAUNCHER_APPID_COUNT*
-	The amount of current toplevels which share the app-id of the button. If the
-	compositor does not support foreign toplevel management or the global option
-	"use-foreign-toplevel" has not been enabled, it is set to -1. If no app-id
-	has been configured for the button, it is set to -2.
 
 ## COLOURS
 LavaLauncher can parse hex code colours and read RGB values directly.

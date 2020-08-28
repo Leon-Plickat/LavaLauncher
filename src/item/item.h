@@ -62,7 +62,6 @@ struct Lava_item
 	struct Lava_string_container *scroll_up_command;
 	struct Lava_string_container *scroll_down_command;
 	struct Lava_string_container *touch_command;
-	struct Lava_string_container *app_id;
 };
 
 bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type);

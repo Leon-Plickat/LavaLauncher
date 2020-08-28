@@ -62,7 +62,6 @@ executable(
     'src/output.c',
     'src/registry.c',
     'src/cursor.c',
-    'src/toplevel.c',
     'src/types/image.c',
     'src/types/buffer.c',
     'src/types/colour.c',

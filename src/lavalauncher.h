@@ -37,10 +37,6 @@ struct Lava_data
 	struct zwlr_layer_shell_v1    *layer_shell;
 	struct zxdg_output_manager_v1 *xdg_output_manager;
 
-	bool use_toplevel;
-	struct zwlr_foreign_toplevel_manager_v1 *toplevel_manager;
-	struct wl_list toplevels;
-
 	char config_path[1024];
 
 	struct wl_list patterns;

@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define VERSION "1.7.1"
+#define VERSION "2.0.0"
 
 #define _POSIX_C_SOURCE 200809L
 

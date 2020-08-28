@@ -1,4 +1,4 @@
-lavalauncher(1) ["Version 1.7.0" ["Version 1.7.0"]]
+lavalauncher(1) ["Version 2.0.0" ["Version 2.0.0"]]
 
 # NAME
 LavaLauncher - A simple launcher panel for Wayland desktops

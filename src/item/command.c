@@ -75,39 +75,21 @@ static void fork_command (struct Lava_bar *bar, struct Lava_item *item, const ch
 		log_message(NULL, 0, "ERROR: fork: %s\n", strerror(errno));
 }
 
-static struct Lava_string_container *command_by_type(struct Lava_item *item,
-		enum Interaction_type type)
-{
-	switch (type)
-	{
-		case TYPE_LEFT_CLICK:   return item->left_click_command;
-		case TYPE_MIDDLE_CLICK: return item->middle_click_command;
-		case TYPE_RIGHT_CLICK:  return item->right_click_command;
-		case TYPE_SCROLL_UP:    return item->scroll_up_command;
-		case TYPE_SCROLL_DOWN:  return item->scroll_down_command;
-		case TYPE_TOUCH:        return item->touch_command;
-	}
-
-	return NULL;
-}
-
 /* Wrapper function that catches any special cases before executing the item
  * command.
  */
 bool item_command (struct Lava_bar *bar, struct Lava_item *item,
 		enum Interaction_type type)
 {
-	struct Lava_string_container *cmd = command_by_type(item, type);
-
-	if ( cmd == NULL )
+	if ( item->command[type] == NULL )
 		return false;
 
-	if (! strcmp(cmd->string, "exit"))
+	if (! strcmp(item->command[type]->string, "exit"))
 	{
 		log_message(bar->data, 1, "[command] Exiting due to button command \"exit\".\n");
 		bar->data->loop = false;
 	}
-	else if (! strcmp(cmd->string, "reload"))
+	else if (! strcmp(item->command[type]->string, "reload"))
 	{
 		log_message(bar->data, 1, "[command] Reloading due to button command \"reload\".\n");
 		bar->data->loop = false;
@@ -115,8 +97,9 @@ bool item_command (struct Lava_bar *bar, struct Lava_item *item,
 	}
 	else
 	{
-		log_message(bar->data, 1, "[command] Executing command: %s\n", cmd->string);
-		fork_command(bar, item, cmd->string);
+		log_message(bar->data, 1, "[command] Executing command: %s\n",
+				item->command[type]->string);
+		fork_command(bar, item, item->command[type]->string);
 	}
 
 	return true;

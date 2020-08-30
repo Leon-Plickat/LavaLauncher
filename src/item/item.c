@@ -44,13 +44,10 @@ static void item_nullify (struct Lava_item *item)
 	item->index                 = 0;
 	item->ordinate              = 0;
 	item->length                = 0;
-	item->left_click_command    = NULL;
-	item->middle_click_command  = NULL;
-	item->right_click_command   = NULL;
-	item->scroll_up_command     = NULL;
-	item->scroll_down_command   = NULL;
-	item->touch_command         = NULL;
 	item->img                   = NULL;
+
+	for (int i = 0; i < TYPE_AMOUNT; i++)
+		item->command[i] = NULL;
 }
 
 static const char *item_type_to_string (enum Item_type type)
@@ -92,18 +89,9 @@ bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
 	new_item->ordinate             = item->ordinate;
 	new_item->length               = item->length;
 
-	if ( item->left_click_command != NULL )
-		new_item->left_click_command = string_container_reference(item->left_click_command);
-	if ( item->middle_click_command != NULL )
-		new_item->middle_click_command = string_container_reference(item->middle_click_command);
-	if ( item->right_click_command != NULL )
-		new_item->right_click_command = string_container_reference(item->right_click_command);
-	if ( item->scroll_up_command != NULL )
-		new_item->scroll_up_command = string_container_reference(item->scroll_up_command);
-	if ( item->scroll_down_command != NULL )
-		new_item->scroll_down_command = string_container_reference(item->scroll_down_command);
-	if ( item->touch_command != NULL )
-		new_item->touch_command = string_container_reference(item->touch_command);
+	for (int i = 0; i < TYPE_AMOUNT; i++)
+		if ( item->command[i] != NULL )
+			new_item->command[i] = string_container_reference(item->command[i]);
 
 	if ( item->img != NULL )
 		new_item->img = image_reference(item->img);
@@ -200,18 +188,11 @@ bool finalize_items (struct Lava_bar_pattern *pattern)
 static void destroy_item (struct Lava_item *item)
 {
 	wl_list_remove(&item->link);
-	if ( item->left_click_command != NULL )
-		string_container_destroy(item->left_click_command);
-	if ( item->middle_click_command != NULL )
-		string_container_destroy(item->middle_click_command);
-	if ( item->right_click_command != NULL )
-		string_container_destroy(item->right_click_command);
-	if ( item->scroll_up_command != NULL )
-		string_container_destroy(item->scroll_up_command);
-	if ( item->scroll_down_command != NULL )
-		string_container_destroy(item->scroll_down_command);
-	if ( item->touch_command != NULL )
-		string_container_destroy(item->touch_command);
+
+	for (int i = 0; i < TYPE_AMOUNT; i++)
+		if ( item->command[i] != NULL )
+			string_container_destroy(item->command[i]);
+
 	if ( item->img != NULL )
 		image_destroy(item->img);
 

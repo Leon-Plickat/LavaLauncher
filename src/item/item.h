@@ -39,12 +39,13 @@ enum Item_type
 
 enum Interaction_type
 {
-	TYPE_RIGHT_CLICK,
+	TYPE_RIGHT_CLICK = 0,
 	TYPE_MIDDLE_CLICK,
 	TYPE_LEFT_CLICK,
 	TYPE_SCROLL_UP,
 	TYPE_SCROLL_DOWN,
-	TYPE_TOUCH
+	TYPE_TOUCH,
+	TYPE_AMOUNT
 };
 
 struct Lava_item
@@ -56,12 +57,7 @@ struct Lava_item
 
 	unsigned int index, ordinate, length;
 
-	struct Lava_string_container *left_click_command;
-	struct Lava_string_container *middle_click_command;
-	struct Lava_string_container *right_click_command;
-	struct Lava_string_container *scroll_up_command;
-	struct Lava_string_container *scroll_down_command;
-	struct Lava_string_container *touch_command;
+	struct Lava_string_container *command[TYPE_AMOUNT];
 };
 
 bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type);

@@ -36,21 +36,9 @@
 static bool button_set_command (struct Lava_item *button,
 		const char *command, enum Interaction_type type)
 {
-	struct Lava_string_container **ptr;
-	switch (type)
-	{
-		case TYPE_MIDDLE_CLICK: ptr = &button->middle_click_command; break;
-		case TYPE_RIGHT_CLICK:  ptr = &button->right_click_command;  break;
-		case TYPE_SCROLL_UP:    ptr = &button->scroll_up_command;    break;
-		case TYPE_SCROLL_DOWN:  ptr = &button->scroll_down_command;  break;
-		case TYPE_TOUCH:        ptr = &button->touch_command;        break;
-		default:
-		case TYPE_LEFT_CLICK:   ptr = &button->left_click_command;   break;
-	}
-
-	if ( *ptr != NULL )
-		string_container_destroy(*ptr);
-	*ptr = string_container_from(command);
+	if ( button->command[type] != NULL )
+		string_container_destroy(button->command[type]);
+	button->command[type] = string_container_from(command);
 	return true;
 }
 

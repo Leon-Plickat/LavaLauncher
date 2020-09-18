@@ -78,7 +78,7 @@ static bool get_shm_fd (int *fd, size_t size)
 		if ( *fd >= 0 )
 		{
 			shm_unlink(name);
-			if ( ftruncate(*fd, (__off64_t)size) < 0 )
+			if ( ftruncate(*fd, (off_t)size) < 0 )
 			{
 				close(*fd);
 				return false;

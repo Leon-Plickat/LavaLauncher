@@ -30,14 +30,17 @@ muting all audio, toggling your lamps and a lot more. Be creative!
 
 
 # OPTIONS
-*-c <path>*
+*-c <path>*, *--config <path>*
 	Path to the configuration file.
 
-*-h*
+*-h*, *--help*
 	Display a helpful help message and exit.
 
-*-v*
+*-v*, *--verbose*
 	Enable verbose output.
+
+*-V*, *--version*
+	Show version.
 
 
 # CONFIGURATION

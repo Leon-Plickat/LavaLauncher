@@ -29,6 +29,7 @@
 #include<assert.h>
 #include<poll.h>
 #include<errno.h>
+#include<getopt.h>
 
 #if WATCH_CONFIG
 #include<sys/inotify.h>
@@ -48,13 +49,6 @@
 #include"registry.h"
 #include"config/parser.h"
 #include"bar/bar-pattern.h"
-
-static const char usage[] = "LavaLauncher -- Version "VERSION"\n\n"
-                            "Usage: lavalauncher [options...]\n"
-			    "  -c <path> Path to config file.\n"
-			    "  -h        Print this help text.\n"
-			    "  -v        Enable verbose output.\n\n"
-			    "The configuration syntax is documented in the man page.\n";
 
 static void main_loop (struct Lava_data *data)
 {
@@ -225,28 +219,49 @@ exit:
 
 static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[])
 {
+	const char usage[] =
+		"Usage: lavalauncher [options...]\n"
+		"  -c <path>, --config <path> Path to config file.\n"
+		"  -h,        --help          Print this help text.\n"
+		"  -v,        --verbose       Enable verbose output.\n"
+		"  -V,        --version       Show version.\n"
+		"\n"
+		"The configuration syntax is documented in the man page.\n";
+
+	static struct option opts[] = {
+		{"config",  required_argument, NULL, 'c'},
+		{"help",    no_argument,       NULL, 'h'},
+		{"verbose", no_argument,       NULL, 'v'},
+		{"version", no_argument,       NULL, 'V'},
+		{0,         0,                 0,    0  }
+	};
+
 	extern int optind;
 	optind = 0;
 	extern char *optarg;
-	for (int c; (c = getopt(argc, argv, "c:hv")) != -1 ;)
-		switch (c)
-		{
-			case 'c':
-				strncpy(data->config_path, optarg, sizeof(data->config_path) - 1);
-				break;
+	for (int c; (c = getopt_long(argc, argv, "c:hvV", opts, &optind)) != -1 ;) switch (c)
+	{
+		case 'c':
+			strncpy(data->config_path, optarg, sizeof(data->config_path) - 1);
+			break;
 
-			case 'h':
-				fputs(usage, stderr);
-				data->ret = EXIT_SUCCESS;
-				return false;
+		case 'h':
+			fputs(usage, stderr);
+			data->ret = EXIT_SUCCESS;
+			return false;
 
-			case 'v':
-				data->verbosity++;
-				break;
+		case 'v':
+			data->verbosity++;
+			break;
 
-			default:
-				return false;
-		}
+		case 'V':
+			fputs("LavaLauncher version " VERSION"\n", stderr);
+			data->ret = EXIT_SUCCESS;
+			return false;
+
+		default:
+			return false;
+	}
 
 	return true;
 }

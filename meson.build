@@ -52,6 +52,13 @@ endif
 
 subdir('protocol')
 
+summary({
+  'watch-config': get_option('watch-config').enabled(),
+  'handle-signals': get_option('handle-signals').enabled(),
+  'man-pages': get_option('man-pages').enabled(),
+  'librsvg': librsvg.found(),
+}, bool_yn: true)
+
 executable(
   'lavalauncher',
   files(

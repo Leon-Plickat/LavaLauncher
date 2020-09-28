@@ -66,6 +66,24 @@ void draw_bar_background (cairo_t *cairo,
 	top_left_radius *= scale, top_right_radius *= scale;
 	bottom_left_radius *= scale, bottom_right_radius *= scale;
 
+	/* Calculate dimensions of center. */
+	uint32_t cx = x + border_left,
+		 cy = y + border_top,
+		 cw = w - (border_left + border_right),
+		 ch = h - (border_top + border_bottom);
+
+
+	/* Avoid radii so big they cause unexpected drawing behaviour. */
+	uint32_t smallest_side = cw < ch ? cw : ch;
+	if ( top_left_radius > smallest_side / 2 )
+		top_left_radius = smallest_side / 2;
+	if ( top_right_radius > smallest_side / 2 )
+		top_right_radius = smallest_side / 2;
+	if ( bottom_left_radius > smallest_side / 2 )
+		bottom_left_radius = smallest_side / 2;
+	if ( bottom_right_radius > smallest_side / 2 )
+		bottom_right_radius = smallest_side / 2;
+
 	cairo_save(cairo);
 	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
 
@@ -81,13 +99,6 @@ void draw_bar_background (cairo_t *cairo,
 		}
 		else
 		{
-			fputs("here\n", stderr);
-			/* Calculate dimensions of center. */
-			uint32_t cx = x + border_left,
-				cy = y + border_top,
-				cw = w - (border_left + border_right),
-				ch = h - (border_top + border_bottom);
-
 			/* Borders. */
 			cairo_rectangle(cairo, x, y, w, border_top);
 			cairo_rectangle(cairo, x + w - border_right, y + border_top,
@@ -123,9 +134,7 @@ void draw_bar_background (cairo_t *cairo,
 			colour_set_cairo_source(cairo, border_colour);
 			cairo_fill(cairo);
 
-			rounded_rectangle(cairo, x + border_left, y + border_top,
-					w - (border_left + border_right),
-					h - (border_bottom + border_top),
+			rounded_rectangle(cairo, cx, cy, cw, ch,
 					top_left_radius, top_right_radius,
 					bottom_left_radius, bottom_right_radius);
 			colour_set_cairo_source(cairo, bar_colour);

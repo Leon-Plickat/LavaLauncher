@@ -47,6 +47,7 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 
 	pattern->size                = 60;
+	pattern->hidden_size         = 0;
 	pattern->icon_padding        = 4;
 	pattern->border_top          = 1;
 	pattern->border_right        = 1;
@@ -119,6 +120,7 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 	pattern->mode              = last_pattern->mode;
 	pattern->layer             = last_pattern->layer;
 	pattern->size              = last_pattern->size;
+	pattern->hidden_size       = last_pattern->hidden_size;
 	pattern->icon_padding      = last_pattern->icon_padding;
 	pattern->border_top        = last_pattern->border_top;
 	pattern->border_right      = last_pattern->border_right;
@@ -366,13 +368,13 @@ static bool bar_pattern_set_layer (struct Lava_bar_pattern *pattern, const char 
 
 static bool bar_pattern_set_size (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	// TODO check issdigit()
-	pattern->size = (uint32_t)atoi(arg);
-	if ( pattern->size <= 0 )
+	int32_t size = atoi(arg);
+	if ( size <= 0 )
 	{
 		log_message(NULL, 0, "ERROR: Size must be greater than zero.\n");
 		return false;
 	}
+	pattern->size = (uint32_t)size;
 	return true;
 }
 
@@ -424,6 +426,18 @@ static bool bar_pattern_set_exclusive_zone (struct Lava_bar_pattern *pattern, co
 				"'false' and 'stationary'.\n", arg);
 		return false;
 	}
+	return true;
+}
+
+static bool bar_pattern_set_hidden_size (struct Lava_bar_pattern *pattern, const char *arg)
+{
+	int32_t hidden_size = atoi(arg);
+	if ( hidden_size < 0 )
+	{
+		log_message(NULL, 0, "ERROR: Hidden size may not be smaller than zero.\n");
+		return false;
+	}
+	pattern->hidden_size = (uint32_t)hidden_size;
 	return true;
 }
 
@@ -552,6 +566,7 @@ struct
 	{ .variable = "condition-transform",     .set = bar_pattern_set_condition_transform     },
 	{ .variable = "cursor-name",             .set = bar_pattern_set_cursor_name             },
 	{ .variable = "exclusive-zone",          .set = bar_pattern_set_exclusive_zone          },
+	{ .variable = "hidden-size",             .set = bar_pattern_set_hidden_size             },
 	{ .variable = "icon-padding",            .set = bar_pattern_set_icon_padding            },
 	{ .variable = "indicator-active-colour", .set = bar_pattern_set_indicator_colour_active },
 	{ .variable = "indicator-hover-colour",  .set = bar_pattern_set_indicator_colour_hover  },

@@ -107,8 +107,24 @@ void configure_layer_surface (struct Lava_bar *bar)
 	log_message(bar->data, 1, "[bar] Configuring bar: global_name=%d\n",
 			bar->output->global_name);
 
-	zwlr_layer_surface_v1_set_size(bar->layer_surface,
-			(uint32_t)bar->buffer_width, (uint32_t)bar->buffer_height);
+	uint32_t buffer_width, buffer_height;
+	int32_t bar_width, bar_height;
+	if (bar->hidden)
+	{
+		buffer_width  = bar->buffer_width_hidden;
+		buffer_height = bar->buffer_height_hidden;
+		bar_width     = (int32_t)bar->bar_width_hidden;
+		bar_height    = (int32_t)bar->bar_height_hidden;
+	}
+	else
+	{
+		buffer_width  = bar->buffer_width;
+		buffer_height = bar->buffer_height;
+		bar_width     = (int32_t)bar->bar_width;
+		bar_height    = (int32_t)bar->bar_height;
+	}
+
+	zwlr_layer_surface_v1_set_size(bar->layer_surface, buffer_width, buffer_height);
 
 	/* Anchor the surface to the correct edge. */
 	zwlr_layer_surface_v1_set_anchor(bar->layer_surface, get_anchor(pattern));
@@ -131,9 +147,9 @@ void configure_layer_surface (struct Lava_bar *bar)
 	if ( pattern->exclusive_zone == 1 )
 	{
 		if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-			exclusive_zone = (int32_t)bar->buffer_height;
+			exclusive_zone = (int32_t)buffer_height;
 		else
-			exclusive_zone = (int32_t)bar->buffer_width;
+			exclusive_zone = (int32_t)buffer_width;
 	}
 	else
 		exclusive_zone = pattern->exclusive_zone;
@@ -146,7 +162,7 @@ void configure_layer_surface (struct Lava_bar *bar)
 	 */
 	struct wl_region *region = wl_compositor_create_region(data->compositor);
 	wl_region_add(region, (int32_t)bar->bar_x, (int32_t)bar->bar_y,
-			(int32_t)bar->bar_width, (int32_t)bar->bar_height);
+			bar_width, bar_height);
 
 	/* Set input region. This is necessary to prevent the unused parts of
 	 * the surface to catch pointer and touch events.
@@ -193,7 +209,8 @@ void configure_subsurface (struct Lava_bar *bar)
 	log_message(bar->data, 1, "[bar] Configuring icons: global_name=%d\n",
 			bar->output->global_name);
 
-	wl_subsurface_set_position(bar->subsurface, (int32_t)bar->item_area_x, (int32_t)bar->item_area_y);
+	wl_subsurface_set_position(bar->subsurface,
+			(int32_t)bar->item_area_x, (int32_t)bar->item_area_y);
 
 	// TODO it probably makes more sense to use the input events of the subsurface
 	struct wl_region *region = wl_compositor_create_region(data->compositor);

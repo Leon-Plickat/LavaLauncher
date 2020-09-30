@@ -74,12 +74,27 @@ void render_bar_frame (struct Lava_bar *bar)
 	struct Lava_output      *output  = bar->output;
 	uint32_t                 scale   = output->scale;
 
+	uint32_t buffer_width, buffer_height, bar_width, bar_height;
+	if (bar->hidden)
+	{
+		buffer_height = bar->buffer_height_hidden;
+		buffer_width  = bar->buffer_width_hidden;
+		bar_height    = bar->bar_height_hidden;
+		bar_width     = bar->bar_width_hidden;
+	}
+	else
+	{
+		buffer_height = bar->buffer_height;
+		buffer_width  = bar->buffer_width;
+		bar_height    = bar->bar_height;
+		bar_width     = bar->bar_width;
+	}
+
 	log_message(data, 2, "[render] Render bar frame: global_name=%d\n", bar->output->global_name);
 
 	/* Get new/next buffer. */
 	if (! next_buffer(&bar->current_bar_buffer, data->shm, bar->bar_buffers,
-				bar->buffer_width  * scale,
-				bar->buffer_height * scale))
+				buffer_width  * scale, buffer_height * scale))
 		return;
 
 	cairo_t *cairo = bar->current_bar_buffer->cairo;
@@ -88,7 +103,7 @@ void render_bar_frame (struct Lava_bar *bar)
 	/* Draw bar. */
 	log_message(data, 2, "[render] Drawing bar.\n");
 	draw_bar_background(cairo,
-			bar->bar_x, bar->bar_y, bar->bar_width, bar->bar_height,
+			bar->bar_x, bar->bar_y, bar_width, bar_height,
 			pattern->border_top, pattern->border_right,
 			pattern->border_bottom, pattern->border_left,
 			pattern->radius_top_left, pattern->radius_top_right,
@@ -118,7 +133,8 @@ void render_icon_frame (struct Lava_bar *bar)
 	clear_buffer(cairo);
 
 	/* Draw icons. */
-	draw_items(bar, cairo);
+	if (! bar->hidden)
+		draw_items(bar, cairo);
 
 	wl_surface_set_buffer_scale(bar->icon_surface, (int32_t)scale);
 	wl_surface_attach(bar->icon_surface, bar->current_icon_buffer->buffer, 0, 0);

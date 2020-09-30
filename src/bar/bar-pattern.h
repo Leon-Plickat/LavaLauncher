@@ -95,6 +95,9 @@ struct Lava_bar_pattern
 	uint32_t border_top, border_right, border_bottom, border_left;
 	uint32_t radius_top_left, radius_top_right, radius_bottom_left, radius_bottom_right;
 
+	/* Size of the bar when hidden. If 0, bar will not hide. */
+	uint32_t hidden_size;
+
 	struct Lava_colour bar_colour;
 	struct Lava_colour border_colour;
 

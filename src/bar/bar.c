@@ -100,20 +100,34 @@ static void mode_default_dimensions (struct Lava_bar *bar)
 	bar->bar_width  = bar->item_area_width  + pattern->border_left + pattern->border_right;
 	bar->bar_height = bar->item_area_height + pattern->border_top  + pattern->border_bottom;
 
-	/* Size of buffer / surface. */
+	/* Size of buffer / surface and hidden dimensions. */
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 	{
 		bar->buffer_width  = bar->output->w;
 		bar->buffer_height = pattern->size
-			+ pattern->border_top
-			+ pattern->border_bottom;
+			+ pattern->border_top + pattern->border_bottom;
+
+		bar->buffer_width_hidden = bar->buffer_width;
+		bar->buffer_height_hidden = pattern->hidden_size
+			+ pattern->border_top + pattern->border_bottom;
+
+		bar->bar_width_hidden = bar->bar_width;
+		bar->bar_height_hidden = pattern->hidden_size
+			+ pattern->border_top  + pattern->border_bottom;
 	}
 	else
 	{
 		bar->buffer_width  = pattern->size
-			+ pattern->border_left
-			+ pattern->border_right;
+			+ pattern->border_left + pattern->border_right;
 		bar->buffer_height = bar->output->h;
+
+		bar->buffer_width_hidden = pattern->hidden_size
+			+ pattern->border_left + pattern->border_right;
+		bar->buffer_height_hidden = bar->buffer_height;
+
+		bar->bar_width_hidden = pattern->hidden_size
+			+ pattern->border_left  + pattern->border_right;
+		bar->bar_height_hidden = bar->bar_height;
 	}
 }
 
@@ -163,7 +177,7 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 			break;
 	}
 
-	/* Position and size of bar and size of buffer / surface. */
+	/* Position and size of bar and size of buffer / surface and hidden dimensions. */
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 	{
 		bar->bar_x = (uint32_t)pattern->margin_left;
@@ -174,8 +188,15 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 
 		bar->buffer_width  = bar->output->w;
 		bar->buffer_height = pattern->size
-			+ pattern->border_top
-			+ pattern->border_bottom;
+			+ pattern->border_top + pattern->border_bottom;
+
+		bar->buffer_width_hidden = bar->buffer_width;
+		bar->buffer_height_hidden = pattern->hidden_size
+			+ pattern->border_top + pattern->border_bottom;
+
+		bar->bar_width_hidden = bar->bar_width;
+		bar->bar_height_hidden = pattern->hidden_size
+			+ pattern->border_top  + pattern->border_bottom;
 	}
 	else
 	{
@@ -186,9 +207,16 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 		bar->bar_height = output->h - (uint32_t)(pattern->margin_top + pattern->margin_bottom);
 
 		bar->buffer_width  = pattern->size
-			+ pattern->border_left
-			+ pattern->border_right;
+			+ pattern->border_left + pattern->border_right;
 		bar->buffer_height = bar->output->h;
+
+		bar->buffer_width_hidden = pattern->hidden_size
+			+ pattern->border_left + pattern->border_right;
+		bar->buffer_height_hidden = bar->buffer_height;
+
+		bar->bar_width_hidden = pattern->hidden_size
+			+ pattern->border_left  + pattern->border_right;
+		bar->bar_height_hidden = bar->bar_height;
 	}
 }
 
@@ -212,6 +240,22 @@ static void mode_simple_dimensions (struct Lava_bar *bar)
 	/* Size of buffer / surface. */
 	bar->buffer_width  = bar->bar_width;
 	bar->buffer_height = bar->bar_height;
+
+	/* Hidden dimensions. */
+	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+	{
+		bar->bar_width_hidden = bar->bar_width;
+		bar->bar_height_hidden = pattern->hidden_size
+			+ pattern->border_top + pattern->border_bottom;
+	}
+	else
+	{
+		bar->bar_width_hidden = pattern->hidden_size
+			+ pattern->border_left + pattern->border_right;
+		bar->bar_height_hidden = bar->bar_height;
+	}
+	bar->buffer_width_hidden  = bar->bar_width_hidden;
+	bar->buffer_height_hidden = bar->bar_height_hidden;
 }
 
 static void update_dimensions (struct Lava_bar *bar)
@@ -264,6 +308,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 	bar->layer_surface = NULL;
 	bar->subsurface    = NULL;
 	bar->configured    = false;
+	bar->hidden        = pattern->hidden_size > 0;
 
 	wl_list_init(&bar->indicators);
 
@@ -357,12 +402,29 @@ void update_bar (struct Lava_bar *bar)
 	update_dimensions(bar);
 
 	configure_subsurface(bar);
-	render_icon_frame(bar);
-	wl_surface_commit(bar->icon_surface);
-
 	configure_layer_surface(bar);
+
+	render_icon_frame(bar);
 	render_bar_frame(bar);
+
+	wl_surface_commit(bar->icon_surface);
 	wl_surface_commit(bar->bar_surface);
+}
+
+void hide_bar (struct Lava_bar *bar)
+{
+	if ( bar->pattern->hidden_size == 0 )
+		return;
+	bar->hidden = true;
+	update_bar(bar);
+}
+
+void unhide_bar (struct Lava_bar *bar)
+{
+	if (! bar->hidden)
+		return;
+	bar->hidden = false;
+	update_bar(bar);
 }
 
 struct Lava_bar *bar_from_surface (struct Lava_data *data, struct wl_surface *surface)

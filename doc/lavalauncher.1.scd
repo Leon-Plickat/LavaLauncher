@@ -129,6 +129,10 @@ as follows.
 	implementation is compositor dependant; A compositor may choose to
 	ignore the requested exclusive zone of surfaces.
 
+*hidden-size*
+	Size the bar will shrink to when it hides. If set to 0, bar hiding is
+	disabled. The default is 0.
+
 *icon-padding*
 	Padding around the icons. The default 4.
 

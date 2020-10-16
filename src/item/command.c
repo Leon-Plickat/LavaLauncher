@@ -23,9 +23,11 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
+#include<signal.h>
 #include<unistd.h>
 #include<string.h>
 #include<errno.h>
+#include<sys/wait.h>
 
 #include"lavalauncher.h"
 #include"log.h"
@@ -49,35 +51,62 @@ static void setenvf (const char *name, const char *fmt, ...)
 	setenv(name, buffer, true);
 }
 
-static void fork_command (struct Lava_bar *bar, struct Lava_item *item, const char *cmd)
+static void prepare_env (struct Lava_bar *bar)
 {
-	errno   = 0;
+		setenvf("LAVALAUNCHER_OUTPUT_NAME",  "%s", bar->output->name);
+		setenvf("LAVALAUNCHER_OUTPUT_SCALE", "%d", bar->output->scale);
+}
+
+static void exec_cmd (struct Lava_bar *bar, struct Lava_item *item, const char *cmd)
+{
+	prepare_env(bar);
+
+	/* execl() only returns on error, on success it replaces this process. */
+	execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);
+	log_message(NULL, 0, "ERROR: execl: %s\n", strerror(errno));
+}
+
+/* We need to fork two times for UNIXy resons. */
+static void secondary_fork (struct Lava_bar *bar, struct Lava_item *item, const char *cmd)
+{
+	errno = 0;
 	int ret = fork();
 	if ( ret == 0 )
 	{
-		errno = 0;
-		if ( setsid() == -1 )
-		{
-			log_message(NULL, 0, "ERROR: setsid: %s\n", strerror(errno));
-			exit(EXIT_FAILURE);
-		}
+		exec_cmd(bar, item, cmd);
+		_exit(EXIT_FAILURE);
+	}
+	else if ( ret < 0 )
+	{
+		log_message(NULL, 0, "ERROR: fork: %s\n", strerror(errno));
+		_exit(EXIT_FAILURE);
+	}
+}
 
-		/* Output properties. */
-		setenvf("LAVALAUNCHER_OUTPUT_NAME",  "%s", bar->output->name);
-		setenvf("LAVALAUNCHER_OUTPUT_SCALE", "%d", bar->output->scale);
+/* We need to fork two times for UNIXy resons. */
+static void primary_fork (struct Lava_bar *bar, struct Lava_item *item, const char *cmd)
+{
+	errno = 0;
+	int ret = fork();
+	if ( ret == 0 )
+	{
+		setsid();
 
-		/* execl() only returns on error, on success it replaces this process. */
-		execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);
-		log_message(NULL, 0, "ERROR: execl: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
+		/* Restore signals. */
+		sigset_t mask;
+		sigemptyset(&mask);
+		sigprocmask(SIG_SETMASK, &mask, NULL);
+
+		secondary_fork(bar, item, cmd);
+		_exit(EXIT_SUCCESS);
 	}
 	else if ( ret < 0 )
 		log_message(NULL, 0, "ERROR: fork: %s\n", strerror(errno));
+	else
+		waitpid(ret, NULL, 0);
 }
 
-/* Wrapper function that catches any special cases before executing the item
- * command.
- */
+/* Wrapper function that catches any special cases before executing the item command. */
 bool item_command (struct Lava_bar *bar, struct Lava_item *item,
 		enum Interaction_type type)
 {
@@ -99,7 +128,7 @@ bool item_command (struct Lava_bar *bar, struct Lava_item *item,
 	{
 		log_message(bar->data, 1, "[command] Executing command: %s\n",
 				item->command[type]->string);
-		fork_command(bar, item, item->command[type]->string);
+		primary_fork(bar, item, item->command[type]->string);
 	}
 
 	return true;

@@ -62,35 +62,37 @@ static bool button_set_image_path (struct Lava_item *button, const char *path,
 	return true;
 }
 
-struct
-{
-	const char *variable;
-	bool (*set)(struct Lava_item*, const char*, enum Interaction_type);
-	enum Interaction_type type;
-} button_configs[] = {
-	{ .variable = "command",              .set = button_set_all_commands,      .type = 0                 },
-	{ .variable = "left-click-command",   .set = button_set_command,           .type = TYPE_LEFT_CLICK   },
-	{ .variable = "middle-click-command", .set = button_set_command,           .type = TYPE_MIDDLE_CLICK },
-	{ .variable = "right-click-command",  .set = button_set_command,           .type = TYPE_RIGHT_CLICK  },
-	{ .variable = "scroll-up-command",    .set = button_set_command,           .type = TYPE_SCROLL_UP    },
-	{ .variable = "scroll-down-command",  .set = button_set_command,           .type = TYPE_SCROLL_DOWN  },
-	{ .variable = "touch-command",        .set = button_set_command,           .type = TYPE_TOUCH        },
-	{ .variable = "image-path",           .set = button_set_image_path,        .type = 0                 }
-};
-
 bool button_set_variable (struct Lava_data *data, struct Lava_item *button,
 		const char *variable, const char *value, int line)
 {
-	for (size_t i = 0; i < (sizeof(button_configs) / sizeof(button_configs[0])); i++)
-		if (! strcmp(button_configs[i].variable, variable))
+	struct
+	{
+		const char *variable;
+		bool (*set)(struct Lava_item*, const char*, enum Interaction_type);
+		enum Interaction_type type;
+	} configs[] = {
+		{ .variable = "command",              .set = button_set_all_commands, .type = 0                 },
+		{ .variable = "left-click-command",   .set = button_set_command,      .type = TYPE_LEFT_CLICK   },
+		{ .variable = "middle-click-command", .set = button_set_command,      .type = TYPE_MIDDLE_CLICK },
+		{ .variable = "right-click-command",  .set = button_set_command,      .type = TYPE_RIGHT_CLICK  },
+		{ .variable = "scroll-up-command",    .set = button_set_command,      .type = TYPE_SCROLL_UP    },
+		{ .variable = "scroll-down-command",  .set = button_set_command,      .type = TYPE_SCROLL_DOWN  },
+		{ .variable = "touch-command",        .set = button_set_command,      .type = TYPE_TOUCH        },
+		{ .variable = "image-path",           .set = button_set_image_path,   .type = 0                 }
+	};
+
+	for (size_t i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
+		if (! strcmp(configs[i].variable, variable))
 		{
-			if (button_configs[i].set(button, value, button_configs[i].type))
+			if (configs[i].set(button, value, configs[i].type))
 				return true;
 			goto exit;
 		}
+
 	log_message(NULL, 0, "ERROR: Unrecognized button setting \"%s\".\n", variable);
 exit:
 	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",
 			line, data->config_path);
 	return false;
 }
+

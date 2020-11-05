@@ -59,21 +59,31 @@ You can find an example configuration at the end of this section.
 The configuration file has a simple structure. It consists of *contexts* and
 *assignments*.
 
-Assignments are always inside contexts and consist of three parts: The variable
-to be changed, followed by the new value for the variable, and finally a
-semicolon (';'). The value string must be separated from the variable name by
-whitespace and may be quoted, causing LavaLauncher to use it as is, including
-all whitespace that would otherwise be stripped from the final string.
+Assignments are always inside context and have the following form.
 
-A context consist of at least three parts: The context name, followed by an
-opening bracket, optionally contents, and finally a closing bracket. All these
-must be separated by whitespace. Some Contexts must be nested as contents of
-other contexts.
+```
+<variable> = <value>;
+```
+
+Note that the value may be quoted, causing LavaLauncher to use it as is,
+including all whitespace that would otherwise be stripped from the final
+string.
+
+Contexts have the following form.
+
+```
+<context name>
+{
+	<context content>
+}
+```
+
+Some Contexts must be nested as contents of other contexts.
 
 Comments start with an octothorpe ('#').
 
 ## GLOBAL  SETTINGS
-Global settings can be configured int the "global-settings" context. The
+Global settings can be configured in the "global-settings" context. The
 assignments which can be made in this context are as follows.
 
 *watch-config-file*
@@ -149,7 +159,7 @@ as follows.
 
 *indicator-style*
 	Style of the icon indicator. Can be "rectangle", "rounded-rectangle" and
-	"circle". The default is "rounded-rectangle". The corner radia for
+	"circle". The default is "rounded-rectangle". The corner radii for
 	"rounded-rectangle" are the same as the ones of the bar itself.
 
 *layer*
@@ -248,7 +258,7 @@ this context are as follows.
 	Length of the spacer.
 
 ## COMMANDS
-Commands are executed using sh(1).
+Commands are executed using *sh(1)*.
 
 LavaLauncher understands typical backslash escape sequences.
 
@@ -284,41 +294,30 @@ LavaLauncher support PNG images and, if enabled at compile time, SVG images. It
 is recommended to use square images.
 
 ## EXAMPLE CONFIGURATION
-This is an example configuration which defines two bars.
+This is a simple example configuration.
 
 ```
 global-settings
 {
-	watch-config-file true;
+	watch-config-file = true;
 }
 
-bar # this is the first bar
+bar
 {
-	output eDP-1;
-	position bottom;
-	background-colour "#202020";
+	output            = eDP-1;
+	position          = bottom;
+	background-colour = "#202020";
 
 	button
 	{
-		image-path /path/to/image.png;
-		command    useful-script.sh;
+		image-path = /path/to/image.png;
+		command    = useful-script.sh;
 	}
 
 	button
 	{
-		image-path "/path/to/another/image.png";
-		command    "another-useful-script.sh";
-	}
-}
-
-bar # this is the second bar
-{
-	output all;
-
-	button
-	{
-		image-path "/path/to/a/third/image.png";
-		command    "do-something"
+		image-path = /path/to/another/image.png;
+		command    = another-useful-script.sh;
 	}
 }
 ```
@@ -345,3 +344,4 @@ following URL.
 
 # AUTHORS
 Leon Henrik Plickat <leonhenrik.plickat@stud.uni-goettingen.de>
+

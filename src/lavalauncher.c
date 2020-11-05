@@ -47,7 +47,7 @@
 #include"lavalauncher.h"
 #include"log.h"
 #include"registry.h"
-#include"config/parser.h"
+#include"config.h"
 #include"bar/bar-pattern.h"
 
 static void main_loop (struct Lava_data *data)

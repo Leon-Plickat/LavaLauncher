@@ -33,9 +33,9 @@
 
 #include"lavalauncher.h"
 #include"log.h"
+#include"config.h"
 #include"bar/bar-pattern.h"
 #include"item/item.h"
-#include"config/parse-boolean.h"
 #include"types/colour.h"
 #include"types/string-container.h"
 
@@ -413,6 +413,7 @@ static bool bar_pattern_set_namespace (struct Lava_bar_pattern *pattern, const c
 
 static bool bar_pattern_set_exclusive_zone (struct Lava_bar_pattern *pattern, const char *arg)
 {
+
 	if (is_boolean_true(arg))
 		pattern->exclusive_zone = 1;
 	else if (is_boolean_false(arg))
@@ -552,46 +553,47 @@ static bool bar_pattern_set_indicator_style (struct Lava_bar_pattern *pattern, c
 }
 
 
-struct
-{
-	const char *variable;
-	bool (*set)(struct Lava_bar_pattern*, const char*);
-} pattern_configs[] = {
-	{ .variable = "alignment",               .set = bar_pattern_set_alignment               },
-	{ .variable = "background-colour",       .set = bar_pattern_set_bar_colour              },
-	{ .variable = "border-colour",           .set = bar_pattern_set_border_colour           },
-	{ .variable = "border",                  .set = bar_pattern_set_border_size             },
-	{ .variable = "condition-resolution",    .set = bar_pattern_set_condition_resolution    },
-	{ .variable = "condition-scale",         .set = bar_pattern_set_condition_scale         },
-	{ .variable = "condition-transform",     .set = bar_pattern_set_condition_transform     },
-	{ .variable = "cursor-name",             .set = bar_pattern_set_cursor_name             },
-	{ .variable = "exclusive-zone",          .set = bar_pattern_set_exclusive_zone          },
-	{ .variable = "hidden-size",             .set = bar_pattern_set_hidden_size             },
-	{ .variable = "icon-padding",            .set = bar_pattern_set_icon_padding            },
-	{ .variable = "indicator-active-colour", .set = bar_pattern_set_indicator_colour_active },
-	{ .variable = "indicator-hover-colour",  .set = bar_pattern_set_indicator_colour_hover  },
-	{ .variable = "indicator-padding",       .set = bar_pattern_set_indicator_padding       },
-	{ .variable = "indicator-style",         .set = bar_pattern_set_indicator_style,        },
-	{ .variable = "layer",                   .set = bar_pattern_set_layer                   },
-	{ .variable = "margin",                  .set = bar_pattern_set_margin_size             },
-	{ .variable = "mode",                    .set = bar_pattern_set_mode                    },
-	{ .variable = "namespace",               .set = bar_pattern_set_namespace               },
-	{ .variable = "output",                  .set = bar_pattern_set_only_output             },
-	{ .variable = "position",                .set = bar_pattern_set_position                },
-	{ .variable = "radius",                  .set = bar_pattern_set_radius                  },
-	{ .variable = "size",                    .set = bar_pattern_set_size                    }
-};
-
 bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,
 		const char *variable, const char *value, int line)
 {
-	for (size_t i = 0; i < (sizeof(pattern_configs) / sizeof(pattern_configs[0])); i++)
-		if (! strcmp(pattern_configs[i].variable, variable))
+	struct
+	{
+		const char *variable;
+		bool (*set)(struct Lava_bar_pattern*, const char*);
+	} configs[] = {
+		{ .variable = "alignment",               .set = bar_pattern_set_alignment               },
+		{ .variable = "background-colour",       .set = bar_pattern_set_bar_colour              },
+		{ .variable = "border-colour",           .set = bar_pattern_set_border_colour           },
+		{ .variable = "border",                  .set = bar_pattern_set_border_size             },
+		{ .variable = "condition-resolution",    .set = bar_pattern_set_condition_resolution    },
+		{ .variable = "condition-scale",         .set = bar_pattern_set_condition_scale         },
+		{ .variable = "condition-transform",     .set = bar_pattern_set_condition_transform     },
+		{ .variable = "cursor-name",             .set = bar_pattern_set_cursor_name             },
+		{ .variable = "exclusive-zone",          .set = bar_pattern_set_exclusive_zone          },
+		{ .variable = "hidden-size",             .set = bar_pattern_set_hidden_size             },
+		{ .variable = "icon-padding",            .set = bar_pattern_set_icon_padding            },
+		{ .variable = "indicator-active-colour", .set = bar_pattern_set_indicator_colour_active },
+		{ .variable = "indicator-hover-colour",  .set = bar_pattern_set_indicator_colour_hover  },
+		{ .variable = "indicator-padding",       .set = bar_pattern_set_indicator_padding       },
+		{ .variable = "indicator-style",         .set = bar_pattern_set_indicator_style,        },
+		{ .variable = "layer",                   .set = bar_pattern_set_layer                   },
+		{ .variable = "margin",                  .set = bar_pattern_set_margin_size             },
+		{ .variable = "mode",                    .set = bar_pattern_set_mode                    },
+		{ .variable = "namespace",               .set = bar_pattern_set_namespace               },
+		{ .variable = "output",                  .set = bar_pattern_set_only_output             },
+		{ .variable = "position",                .set = bar_pattern_set_position                },
+		{ .variable = "radius",                  .set = bar_pattern_set_radius                  },
+		{ .variable = "size",                    .set = bar_pattern_set_size                    }
+	};
+
+	for (size_t i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
+		if (! strcmp(configs[i].variable, variable))
 		{
-			if (pattern_configs[i].set(pattern, value))
+			if (configs[i].set(pattern, value))
 				return true;
 			goto exit;
 		}
+
 	log_message(NULL, 0, "ERROR: Unrecognized bar setting \"%s\".\n", variable);
 exit:
 	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",

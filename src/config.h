@@ -17,24 +17,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define _POSIX_C_SOURCE 200809L
+#ifndef LAVALAUNCHER_CONFIG_H
+#define LAVALAUNCHER_CONFIG_H
 
-#include<stdio.h>
-#include<stdlib.h>
 #include<stdbool.h>
-#include<string.h>
 
-bool is_boolean_true (const char *in)
-{
-	if ( ! strcmp(in, "true") || ! strcmp(in, "yes") || ! strcmp(in, "on") )
-		return true;
-	return false;
-}
+struct Lava_data;
 
-bool is_boolean_false (const char *in)
-{
-	if ( ! strcmp(in, "false") || ! strcmp(in, "no") || ! strcmp(in, "off") )
-		return true;
-	return false;
-}
+bool is_boolean_true (const char *str);
+bool is_boolean_false (const char *str);
+bool set_boolean (bool *b, const char *value);
+bool parse_config_file (struct Lava_data *data);
 
+#endif

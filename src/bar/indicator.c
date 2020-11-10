@@ -39,7 +39,7 @@
 #include"bar/draw-generics.h"
 #include"bar/indicator.h"
 #include"types/colour.h"
-#include"log.h"
+#include"str.h"
 
 void destroy_indicator (struct Lava_item_indicator *indicator)
 {

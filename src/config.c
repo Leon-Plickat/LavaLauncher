@@ -25,7 +25,7 @@
 #include<ctype.h>
 
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"item/item.h"
 #include"bar/bar-pattern.h"
 

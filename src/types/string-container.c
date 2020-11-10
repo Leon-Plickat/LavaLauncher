@@ -27,7 +27,7 @@
 #include<string.h>
 
 #include"types/string-container.h"
-#include<log.h>
+#include<str.h>
 
 char *string_container_get_string_or_else (struct Lava_string_container *sc, char *or_else)
 {

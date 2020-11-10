@@ -30,7 +30,7 @@
 #include<sys/wait.h>
 
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"output.h"
 #include"item/command.h"
 #include"item/item.h"

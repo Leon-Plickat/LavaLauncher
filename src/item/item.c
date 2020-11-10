@@ -27,7 +27,7 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
 #include"output.h"

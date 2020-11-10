@@ -27,7 +27,7 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"item/item.h"
 
 static bool spacer_set_length (struct Lava_item *spacer, const char *length)

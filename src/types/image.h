@@ -20,6 +20,7 @@
 #ifndef LAVALAUNCHER_TYPES_IMAGE_H
 #define LAVALAUNCHER_TYPES_IMAGE_H
 
+#include<stdint.h>
 #include<cairo/cairo.h>
 
 #if SVG_SUPPORT

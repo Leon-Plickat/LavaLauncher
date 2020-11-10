@@ -46,7 +46,7 @@ struct Lava_output
 	struct wl_output      *wl_output;
 	struct zxdg_output_v1 *xdg_output;
 
-	char     name[64];
+	char    *name;
 	uint32_t global_name;
 	uint32_t scale;
 	uint32_t transform;

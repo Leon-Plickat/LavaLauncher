@@ -36,7 +36,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"output.h"
 #include"seat.h"
 #include"cursor.h"

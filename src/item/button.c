@@ -27,7 +27,7 @@
 #include<errno.h>
 
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"types/image.h"
 #include"types/colour.h"
 #include"types/string-container.h"

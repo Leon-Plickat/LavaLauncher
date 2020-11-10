@@ -45,10 +45,11 @@
 #include<wayland-client-protocol.h>
 
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"registry.h"
 #include"config.h"
 #include"bar/bar-pattern.h"
+#include"str.h"
 
 static void main_loop (struct Lava_data *data)
 {
@@ -242,7 +243,7 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 	for (int c; (c = getopt_long(argc, argv, "c:hvV", opts, &optind)) != -1 ;) switch (c)
 	{
 		case 'c':
-			strncpy(data->config_path, optarg, sizeof(data->config_path) - 1);
+			set_string(&data->config_path, optarg);
 			break;
 
 		case 'h':
@@ -268,44 +269,32 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 
 static bool get_default_config_path (struct Lava_data *data)
 {
-	snprintf(data->config_path, sizeof(data->config_path) - 1, "./lavalauncher.conf");
-	if (! access(data->config_path, F_OK | R_OK))
-			goto success;
-
-	char *dir;
-	if ( NULL != (dir = getenv("XDG_CONFIG_HOME")) )
+	struct
 	{
-		snprintf(data->config_path, sizeof(data->config_path) - 1,
-				"%s/lavalauncher/lavalauncher.conf", dir);
-		if (! access(data->config_path, F_OK | R_OK))
-				goto success;
-	}
+		const char *fmt;
+		const char *env;
+	} paths[] = {
+		{ .fmt = "./lavalauncher.conf",                           .env = NULL                      },
+		{ .fmt = "%s/lavalauncher/lavalauncher.conf",             .env = getenv("XDG_CONFIG_HOME") },
+		{ .fmt = "%s/.config/lavalauncher/lavalauncher.conf",     .env = getenv("HOME")            },
+		{ .fmt = "/usr/local/etc/lavalauncher/lavalauncher.conf", .env = NULL                      },
+		{ .fmt = "/etc/lavalauncher/lavalauncher.conf",           .env = NULL                      }
+	};
 
-	if ( NULL != (dir = getenv("HOME")) )
+	for (size_t i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
 	{
-		snprintf(data->config_path, sizeof(data->config_path) - 1,
-				"%s/.config/lavalauncher/lavalauncher.conf", dir);
+		data->config_path = get_formatted_buffer(paths[i].fmt, paths[i].env);
 		if (! access(data->config_path, F_OK | R_OK))
-				goto success;
+		{
+			log_message(data, 1, "[main] Using default configuration file path: %s\n", data->config_path);
+			return true;
+		}
+		free_if_set(data->config_path);
 	}
-	
-	snprintf(data->config_path, sizeof(data->config_path) - 1,
-			"/usr/local/etc/lavalauncher/lavalauncher.conf");
-	if (! access(data->config_path, F_OK | R_OK))
-			goto success;
-
-	snprintf(data->config_path, sizeof(data->config_path) - 1,
-			"/etc/lavalauncher/lavalauncher.conf");
-	if (! access(data->config_path, F_OK | R_OK))
-			goto success;
 
 	log_message(NULL, 0, "ERROR: Can not find configuration file.\n"
 			"INFO: You can provide a path manually with '-c'.\n");
 	return false;
-
-success:
-	log_message(data, 1, "[main] Using default configuration file path: %s\n", data->config_path);
-	return true;
 }
 
 static void init_data (struct Lava_data *data)
@@ -315,12 +304,11 @@ static void init_data (struct Lava_data *data)
 	data->reload       = false;
 	data->verbosity    = 0;
 	data->last_pattern = NULL;
+	data->config_path  = NULL;
 
 #if WATCH_CONFIG
 	data->watch = false;
 #endif
-
-	memset(data->config_path, '\0', sizeof(data->config_path));
 
 	data->display            = NULL;
 	data->registry           = NULL;
@@ -344,13 +332,12 @@ reload:
 	if (! handle_command_flags(&data, argc, argv))
 		return data.ret;
 
-
 	log_message(&data, 1, "[main] LavaLauncher: version=%s\n", VERSION);
 
 	/* If the user did not provide the path to a configuration file, try
 	 * the default location.
 	 */
-	if ( data.config_path[0] == '\0' )
+	if ( data.config_path == NULL )
 		if (! get_default_config_path(&data))
 			return EXIT_FAILURE;
 

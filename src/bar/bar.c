@@ -41,7 +41,7 @@
 #include"draw-generics.h"
 #include"item/item.h"
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"output.h"
 #include"types/box_t.h"
 #include"types/buffer.h"

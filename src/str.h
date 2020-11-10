@@ -17,11 +17,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_LOG_H
-#define LAVALAUNCHER_LOG_H
+#ifndef LAVALAUNCHER_STR_H
+#define LAVALAUNCHER_STR_H
 
 struct Lava_data;
 
 void log_message (struct Lava_data *data, int level, const char *fmt, ...);
+void free_if_set (void *ptr);
+void set_string (char **ptr, char *arg);
+char *get_formatted_buffer (const char *fmt, ...);
 
 #endif
+

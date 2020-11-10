@@ -32,7 +32,7 @@
 #include<wayland-client-protocol.h>
 
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"config.h"
 #include"bar/bar-pattern.h"
 #include"item/item.h"

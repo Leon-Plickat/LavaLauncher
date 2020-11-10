@@ -26,7 +26,7 @@
 #include<string.h>
 #include<cairo/cairo.h>
 
-#include"log.h"
+#include"str.h"
 #include"types/colour.h"
 
 static bool colour_from_hex_string (struct Lava_colour *colour, const char *hex)

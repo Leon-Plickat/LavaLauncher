@@ -33,7 +33,7 @@
 #endif
 
 #include"image.h"
-#include"log.h"
+#include"str.h"
 
 /* Returns: -1 On error
  *           0 If the file is not a PNG file

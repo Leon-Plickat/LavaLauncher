@@ -34,7 +34,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
-#include"log.h"
+#include"str.h"
 #include"output.h"
 #include"bar/bar.h"
 #include"bar/bar-pattern.h"
@@ -77,7 +77,7 @@ static bool pattern_conditions_match_output (struct Lava_bar_pattern *pattern,
 static bool update_bars_on_output (struct Lava_output *output)
 {
 	/* No xdg_output events have been received yet, so there is nothing todo. */
-	if ( output->status == OUTPUT_STATUS_UNCONFIGURED || output->name[0] == '\0' )
+	if ( output->status == OUTPUT_STATUS_UNCONFIGURED || output->name == NULL )
 		return true;
 
 	struct Lava_data *data = output->data;
@@ -173,7 +173,7 @@ static void xdg_output_handle_name (void *raw_data,
 		struct zxdg_output_v1 *xdg_output, const char *name)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
-	strncpy(output->name, name, sizeof(output->name) - 1);
+	set_string(&output->name, (char *)name);
 
 	log_message(output->data, 1, "[output] Property update: global_name=%d name=%s\n",
 				output->global_name, name);
@@ -245,12 +245,11 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 
 	output->data          = data;
 	output->global_name   = name;
+	output->name          = NULL;
 	output->scale         = 1;
 	output->wl_output     = wl_output;
 	output->status        = OUTPUT_STATUS_UNCONFIGURED;
 	output->w = output->h = 0;
-
-	memset(output->name, '\0', sizeof(output->name));
 
 	wl_list_init(&output->bars);
 
@@ -273,8 +272,7 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	return true;
 }
 
-struct Lava_output *get_output_from_global_name (struct Lava_data *data,
-		uint32_t name)
+struct Lava_output *get_output_from_global_name (struct Lava_data *data, uint32_t name)
 {
 	struct Lava_output *op, *temp;
 	wl_list_for_each_safe(op, temp, &data->outputs, link)

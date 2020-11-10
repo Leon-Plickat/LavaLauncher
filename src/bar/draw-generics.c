@@ -29,6 +29,8 @@
 #include"seat.h"
 #include"draw-generics.h"
 #include"types/colour.h"
+#include"types/box_t.h"
+#include"types/directions_t.h"
 
 void circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size)
 {
@@ -50,15 +52,15 @@ void rounded_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
 }
 
 /* Draw a rectangle with configurable borders and corners. */
-void draw_bar_background (cairo_t *cairo,
-		uint32_t x, uint32_t y, uint32_t w, uint32_t h,
-		uint32_t border_top, uint32_t border_right,
-		uint32_t border_bottom, uint32_t border_left,
+void draw_bar_background (cairo_t *cairo, ubox_t *dim, udirections_t *border,
 		uint32_t top_left_radius, uint32_t top_right_radius,
 		uint32_t bottom_left_radius, uint32_t bottom_right_radius,
 		uint32_t scale, struct Lava_colour *bar_colour,
 		struct Lava_colour *border_colour)
 {
+	uint32_t x = dim->x, y = dim->y, w = dim->w, h = dim->h;
+	uint32_t border_top = border->top, border_right = border->right,
+		 border_bottom = border->bottom, border_left = border->left;
 	/* Scale. */
 	x *= scale, y *= scale, w *= scale, h *= scale;
 	border_top *= scale, border_bottom *= scale;

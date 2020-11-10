@@ -175,19 +175,23 @@ as follows.
 	and bottom-margins. The default margin is 0.
 
 *mode*
-	The display mode of the bar. Can be "default", "full" or "simple". In
-	"default" mode, the bar is sized just large enough to house all the
-	buttons. Logically, the default mode is "default". In "full" mode, the
-	bar spans the entire length of the edge it is docked to. "simple" mode
-	is usually visually identical to "normal" mode, however the surface of the
-	bar is sized and anchored less aggressively, which may (or may not,
-	depending on the implementation of the compositor) improve how well
-	LavaLauncher geometrically integrates and fits onto the desktop (and also
-	will use less memory). It gives the compositor a lot more leeway regarding
-	the exact placement of the bar. Behold: In "simple" mode, some compositors
-	may not respect margins parallel to the bar or the exclusive zone, possibly
-	even depending on the alignment. This is not a bug in LavaLauncher but a
-	limitation of your compositor.
+	The display mode of the bar. Can be "default", "full" or "aggressive".
+
+	In "default" mode, the bar is sized just large enough to house all the
+	buttons. In this mode, compositors may not respect margins parallel to the
+	bar or the exclusive zone, possibly even depending on the alignment. This
+	is not a bug in LavaLauncher but a limitation of your compositor.
+
+	In "full" mode, the bar spans the entire length of the edge it is docked
+	to.
+
+	The "aggressive" mode is visually identical to "normal" mode, however the
+	surface of the bar is sized and anchored more aggressively. This mode is
+	intended for compositors with faulty layer shell implementations. If
+	LavaLauncher is not placed at the desired location or the exclusive zone or
+	margins parallel to the bar are ignored, this mode may help. Beware however
+	that it allows the compositor a lot less leeway when geometrically fitting
+	the bar onto the screen.
 
 *namespace*
 	The namespace of the layershell surface of the bar. Some compositors may

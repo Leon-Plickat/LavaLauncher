@@ -66,8 +66,6 @@ executable(
     'src/bar/bar-pattern.c',
     'src/bar/draw-generics.c',
     'src/bar/indicator.c',
-    'src/bar/layersurface.c',
-    'src/bar/render.c',
     'src/config.c',
     'src/cursor.c',
     'src/input.c',

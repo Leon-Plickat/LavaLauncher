@@ -22,6 +22,7 @@
 
 #include<wayland-server.h>
 #include"types/buffer.h"
+#include"types/box_t.h"
 
 struct Lava_data;
 struct Lava_output;
@@ -38,12 +39,12 @@ struct Lava_bar
 	struct wl_subsurface         *subsurface;
 	struct zwlr_layer_surface_v1 *layer_surface;
 
-	uint32_t buffer_width, buffer_height;
-	uint32_t bar_x, bar_y, bar_width, bar_height;
-	uint32_t item_area_x, item_area_y, item_area_width, item_area_height;
+	ubox_t surface;
+	ubox_t surface_hidden;
+	ubox_t bar;
+	ubox_t bar_hidden;
+	ubox_t item_area;
 
-	uint32_t buffer_width_hidden, buffer_height_hidden;
-	uint32_t bar_width_hidden, bar_height_hidden;
 	bool hidden;
 
 	struct Lava_buffer  bar_buffers[2];

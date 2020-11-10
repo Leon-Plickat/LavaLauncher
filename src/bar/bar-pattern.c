@@ -49,18 +49,18 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->size                = 60;
 	pattern->hidden_size         = 0;
 	pattern->icon_padding        = 4;
-	pattern->border_top          = 1;
-	pattern->border_right        = 1;
-	pattern->border_bottom       = 1;
-	pattern->border_left         = 1;
+	pattern->border.top          = 1;
+	pattern->border.right        = 1;
+	pattern->border.bottom       = 1;
+	pattern->border.left         = 1;
 	pattern->radius_top_left     = 5;
 	pattern->radius_top_right    = 5;
 	pattern->radius_bottom_left  = 5;
 	pattern->radius_bottom_right = 5;
-	pattern->margin_top          = 0;
-	pattern->margin_right        = 0;
-	pattern->margin_bottom       = 0;
-	pattern->margin_left         = 0;
+	pattern->margin.top          = 0;
+	pattern->margin.right        = 0;
+	pattern->margin.bottom       = 0;
+	pattern->margin.left         = 0;
 	pattern->exclusive_zone      = 1;
 	pattern->indicator_padding   = 0;
 	pattern->indicator_style     = STYLE_ROUNDED_RECTANGLE;
@@ -122,14 +122,14 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 	pattern->size              = last_pattern->size;
 	pattern->hidden_size       = last_pattern->hidden_size;
 	pattern->icon_padding      = last_pattern->icon_padding;
-	pattern->border_top        = last_pattern->border_top;
-	pattern->border_right      = last_pattern->border_right;
-	pattern->border_bottom     = last_pattern->border_bottom;
-	pattern->border_left       = last_pattern->border_left;
-	pattern->margin_top        = last_pattern->margin_top;
-	pattern->margin_right      = last_pattern->margin_right;
-	pattern->margin_bottom     = last_pattern->margin_bottom;
-	pattern->margin_left       = last_pattern->margin_left;
+	pattern->border.top        = last_pattern->border.top;
+	pattern->border.right      = last_pattern->border.right;
+	pattern->border.bottom     = last_pattern->border.bottom;
+	pattern->border.left       = last_pattern->border.left;
+	pattern->margin.top        = last_pattern->margin.top;
+	pattern->margin.right      = last_pattern->margin.right;
+	pattern->margin.bottom     = last_pattern->margin.bottom;
+	pattern->margin.left       = last_pattern->margin.left;
 	pattern->exclusive_zone    = last_pattern->exclusive_zone;
 	pattern->indicator_padding = last_pattern->indicator_padding;
 	pattern->indicator_style   = last_pattern->indicator_style;
@@ -271,15 +271,15 @@ done:
 
 static bool bar_pattern_set_border_size (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	return directional_config(&pattern->border_top, &pattern->border_right,
-			&pattern->border_bottom, &pattern->border_left,
+	return directional_config(&pattern->border.top, &pattern->border.right,
+			&pattern->border.bottom, &pattern->border.left,
 			arg, "border", "Border size");
 }
 
 static bool bar_pattern_set_margin_size (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	return directional_config(&pattern->margin_top, &pattern->margin_right,
-			&pattern->margin_bottom, &pattern->margin_left,
+	return directional_config(&pattern->margin.top, &pattern->margin.right,
+			&pattern->margin.bottom, &pattern->margin.left,
 			arg, "margin", "Margins");
 }
 

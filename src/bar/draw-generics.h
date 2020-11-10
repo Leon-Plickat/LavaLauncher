@@ -23,6 +23,9 @@
 #include<stdint.h>
 #include<cairo/cairo.h>
 
+#include"types/box_t.h"
+#include"types/directions_t.h"
+
 struct Lava_data;
 struct Lava_bar;
 struct Lava_colour;
@@ -31,10 +34,7 @@ void circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size);
 void rounded_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
 		uint32_t width, uint32_t height,
 		double tl_r, double tr_r, double bl_r, double br_r);
-void draw_bar_background (cairo_t *cairo,
-		uint32_t x, uint32_t y, uint32_t w, uint32_t h,
-		uint32_t border_top, uint32_t border_right,
-		uint32_t border_bottom, uint32_t border_left,
+void draw_bar_background (cairo_t *cairo, ubox_t *dim, udirections_t *border,
 		uint32_t top_left_radius, uint32_t top_right_radius,
 		uint32_t bottom_left_radius, uint32_t bottom_right_radius,
 		uint32_t scale, struct Lava_colour *bar_colour,

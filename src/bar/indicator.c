@@ -161,8 +161,8 @@ void move_indicator (struct Lava_item_indicator *indicator, struct Lava_item *it
 	struct Lava_bar         *bar     = indicator->bar;
 	struct Lava_bar_pattern *pattern = bar->pattern;
 
-	int32_t x = (int32_t)(bar->item_area_x + pattern->indicator_padding);
-	int32_t y = (int32_t)(bar->item_area_y + pattern->indicator_padding);
+	int32_t x = (int32_t)(bar->item_area.x + pattern->indicator_padding);
+	int32_t y = (int32_t)(bar->item_area.y + pattern->indicator_padding);
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 		x += (int32_t)item->ordinate;
 	else

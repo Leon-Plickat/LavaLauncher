@@ -24,6 +24,7 @@
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 
 #include"types/colour.h"
+#include"types/directions_t.h"
 
 struct Lava_data;
 struct Lava_item;
@@ -92,7 +93,8 @@ struct Lava_bar_pattern
 	enum zwlr_layer_shell_v1_layer layer;
 
 	uint32_t size, icon_padding;
-	uint32_t border_top, border_right, border_bottom, border_left;
+	udirections_t border;
+	udirections_t margin;
 	uint32_t radius_top_left, radius_top_right, radius_bottom_left, radius_bottom_right;
 
 	/* Size of the bar when hidden. If 0, bar will not hide. */
@@ -124,9 +126,6 @@ struct Lava_bar_pattern
 	 * 0 or -1.
 	 */
 	int32_t exclusive_zone;
-
-	/* Directional margins of the surface. */
-	uint32_t margin_top, margin_right, margin_bottom, margin_left;
 
 	/* Name of cursor which should be attached to pointer on hover. */
 	struct Lava_string_container *cursor_name;

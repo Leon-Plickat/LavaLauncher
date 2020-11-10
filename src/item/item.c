@@ -133,9 +133,9 @@ struct Lava_item *item_from_coords (struct Lava_bar *bar, uint32_t x, uint32_t y
 	struct Lava_bar_pattern *pattern = bar->pattern;
 	uint32_t ordinate;
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
-		ordinate = x - bar->item_area_x;
+		ordinate = x - bar->item_area.x;
 	else
-		ordinate = y - bar->item_area_y;
+		ordinate = y - bar->item_area.y;
 
 	struct Lava_item *item, *temp;
 	wl_list_for_each_reverse_safe(item, temp, &pattern->items, link)

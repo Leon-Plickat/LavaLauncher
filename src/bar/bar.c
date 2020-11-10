@@ -137,61 +137,50 @@ static void render_icon_frame (struct Lava_bar *bar)
 
 static uint32_t get_anchor (struct Lava_bar_pattern *pattern)
 {
-	struct {
-		uint32_t anchor_triplet;
-		uint32_t mode_simple_center_align;
-		uint32_t mode_simple_start_align;
-		uint32_t mode_simple_end_align;
-	} edges[4] = {
+	/* Look-Up-Table; Not fancy but still the best solution for this. */
+	struct
+	{
+		uint32_t triplet; /* Used for MODE_FULL and MODE_AGGRESSIVE. */
+		uint32_t mode_default[3];
+	} anchors[4] = {
 		[POSITION_TOP] = {
-			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
-			.mode_simple_center_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
-			.mode_simple_start_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
-			.mode_simple_end_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+			.triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
+			.mode_default = {
+				[ALIGNMENT_START]  = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
+				[ALIGNMENT_CENTER] = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+				[ALIGNMENT_END]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+			}
 		},
 		[POSITION_RIGHT] = {
-			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
-			.mode_simple_center_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
-			.mode_simple_start_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
-			.mode_simple_end_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+			.triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+			.mode_default = {
+				[ALIGNMENT_START]  = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+				[ALIGNMENT_CENTER] = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
+				[ALIGNMENT_END]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+			}
 		},
 		[POSITION_BOTTOM] = {
-			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
-			.mode_simple_center_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
-			.mode_simple_start_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
-			.mode_simple_end_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+			.triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
+			.mode_default = {
+				[ALIGNMENT_START]  = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
+				[ALIGNMENT_CENTER] = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+				[ALIGNMENT_END]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+			}
 		},
 		[POSITION_LEFT] = {
-			.anchor_triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
-			.mode_simple_center_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
-			.mode_simple_start_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
-			.mode_simple_end_align = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+			.triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+			.mode_default = {
+				[ALIGNMENT_START]  = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+				[ALIGNMENT_CENTER] = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
+				[ALIGNMENT_END]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+			}
 		},
 	};
 
-	if ( pattern->mode == MODE_SIMPLE ) switch (pattern->alignment)
-	{
-		case ALIGNMENT_CENTER: return edges[pattern->position].mode_simple_center_align;
-		case ALIGNMENT_START:  return edges[pattern->position].mode_simple_start_align;
-		case ALIGNMENT_END:    return edges[pattern->position].mode_simple_end_align;
-	}
-	return edges[pattern->position].anchor_triplet;
+	if ( pattern->mode == MODE_DEFAULT )
+		return anchors[pattern->position].mode_default[pattern->alignment];
+	else
+		return anchors[pattern->position].triplet;
 }
 
 static void configure_layer_surface (struct Lava_bar *bar)
@@ -213,7 +202,7 @@ static void configure_layer_surface (struct Lava_bar *bar)
 	/* Anchor the surface to the correct edge. */
 	zwlr_layer_surface_v1_set_anchor(bar->layer_surface, get_anchor(pattern));
 
-	if ( pattern->mode == MODE_SIMPLE )
+	if ( pattern->mode == MODE_DEFAULT )
 		zwlr_layer_surface_v1_set_margin(bar->layer_surface,
 				(int32_t)pattern->margin.top, (int32_t)pattern->margin.right,
 				(int32_t)pattern->margin.bottom, (int32_t)pattern->margin.left);
@@ -241,8 +230,7 @@ static void configure_layer_surface (struct Lava_bar *bar)
 			exclusive_zone);
 
 	/* Create a region of the visible part of the surface.
-	 * Behold: In MODE_DEFAULT, the actual surface is larger than the visible
-	 * bar.
+	 * Behold: In MODE_AGGRESSIVE, the actual surface is larger than the visible bar.
 	 */
 	struct wl_region *region = wl_compositor_create_region(data->compositor);
 	wl_region_add(region, (int32_t)bar->bar.x, (int32_t)bar->bar.y,
@@ -303,8 +291,8 @@ static void configure_subsurface (struct Lava_bar *bar)
 	wl_region_destroy(region);
 }
 
-/* Positions and dimensions for MODE_DEFAULT. */
-static void mode_default_dimensions (struct Lava_bar *bar)
+/* Positions and dimensions for MODE_AGGRESSIVE. */
+static void mode_aggressive_dimensions (struct Lava_bar *bar)
 {
 	struct Lava_bar_pattern *pattern = bar->pattern;
 	struct Lava_output      *output  = bar->output;
@@ -467,8 +455,8 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 	}
 }
 
-/* Position and size for MODE_SIMPLE. */
-static void mode_simple_dimensions (struct Lava_bar *bar)
+/* Position and size for MODE_DEFAULT. */
+static void mode_default_dimensions (struct Lava_bar *bar)
 {
 	struct Lava_bar_pattern *pattern = bar->pattern;
 
@@ -524,9 +512,9 @@ static void update_dimensions (struct Lava_bar *bar)
 	/* Other dimensions. */
 	switch (bar->pattern->mode)
 	{
-		case MODE_DEFAULT: mode_default_dimensions(bar); break;
-		case MODE_FULL:    mode_full_dimensions(bar);    break;
-		case MODE_SIMPLE:  mode_simple_dimensions(bar);  break;
+		case MODE_DEFAULT:    mode_default_dimensions(bar);    break;
+		case MODE_FULL:       mode_full_dimensions(bar);       break;
+		case MODE_AGGRESSIVE: mode_aggressive_dimensions(bar); break;
 	}
 }
 

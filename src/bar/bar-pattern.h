@@ -48,7 +48,7 @@ enum Bar_mode
 {
 	MODE_DEFAULT,
 	MODE_FULL,
-	MODE_SIMPLE
+	MODE_AGGRESSIVE
 };
 
 enum Bar_alignment

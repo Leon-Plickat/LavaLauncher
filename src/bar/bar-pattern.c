@@ -334,8 +334,8 @@ static bool bar_pattern_set_mode (struct Lava_bar_pattern *pattern, const char *
 		pattern->mode = MODE_DEFAULT;
 	else if (! strcmp(arg, "full"))
 		pattern->mode = MODE_FULL;
-	else if (! strcmp(arg, "simple"))
-		pattern->mode = MODE_SIMPLE;
+	else if (! strcmp(arg, "aggressive"))
+		pattern->mode = MODE_AGGRESSIVE;
 	else
 	{
 		log_message(NULL, 0, "ERROR: Unrecognized mode \"%s\".\n"

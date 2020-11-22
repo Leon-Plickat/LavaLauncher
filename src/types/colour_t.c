@@ -27,9 +27,9 @@
 #include<cairo/cairo.h>
 
 #include"str.h"
-#include"types/colour.h"
+#include"types/colour_t.h"
 
-static bool colour_from_hex_string (struct Lava_colour *colour, const char *hex)
+static bool colour_t_from_hex_string (colour_t *colour, const char *hex)
 {
 	unsigned int r = 0, g = 0, b = 0, a = 255;
 	if ( 4 != sscanf(hex, "#%02x%02x%02x%02x", &r, &g, &b, &a)
@@ -46,7 +46,7 @@ static bool colour_from_hex_string (struct Lava_colour *colour, const char *hex)
 	return true;
 }
 
-static bool colour_from_rgb_string (struct Lava_colour *colour, const char *str)
+static bool colour_t_from_rgb_string (colour_t *colour, const char *str)
 {
 	int32_t r = 0, g = 0, b = 0, a = 255;
 	if ( 4 != sscanf(str, "rgba(%d,%d,%d,%d)", &r, &g, &b, &a)
@@ -66,7 +66,7 @@ static bool colour_from_rgb_string (struct Lava_colour *colour, const char *str)
 	return true;
 }
 
-bool colour_from_string (struct Lava_colour *colour, const char *str)
+bool colour_t_from_string (colour_t *colour, const char *str)
 {
 	if ( colour == NULL || str == NULL || *str == '\0' )
 		goto error;
@@ -77,12 +77,12 @@ bool colour_from_string (struct Lava_colour *colour, const char *str)
 
 	if ( *str == '#' || strstr(str, "0x") == str )
 	{
-		if (! colour_from_hex_string(colour, str))
+		if (! colour_t_from_hex_string(colour, str))
 			goto error;
 	}
 	else if ( strstr(str, "rgb") == str )
 	{
-		if (! colour_from_rgb_string(colour, str))
+		if (! colour_t_from_rgb_string(colour, str))
 			goto error;
 	}
 	else
@@ -96,7 +96,7 @@ error:
 	return false;
 }
 
-void colour_set_cairo_source (cairo_t *cairo, struct Lava_colour *colour)
+void colour_t_set_cairo_source (cairo_t *cairo, colour_t *colour)
 {
 	cairo_set_source_rgba(cairo, colour->r, colour->g, colour->b, colour->a);
 }

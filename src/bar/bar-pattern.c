@@ -36,7 +36,7 @@
 #include"config.h"
 #include"bar/bar-pattern.h"
 #include"item/item.h"
-#include"types/colour.h"
+#include"types/colour_t.h"
 #include"types/string_t.h"
 
 static void sensible_defaults (struct Lava_bar_pattern *pattern)
@@ -65,10 +65,10 @@ static void sensible_defaults (struct Lava_bar_pattern *pattern)
 	pattern->indicator_padding   = 0;
 	pattern->indicator_style     = STYLE_ROUNDED_RECTANGLE;
 
-	colour_from_string(&pattern->bar_colour, "#000000");
-	colour_from_string(&pattern->border_colour, "#ffffff");
-	colour_from_string(&pattern->indicator_hover_colour, "#404040");
-	colour_from_string(&pattern->indicator_active_colour, "#606060");
+	colour_t_from_string(&pattern->bar_colour, "#000000");
+	colour_t_from_string(&pattern->border_colour, "#ffffff");
+	colour_t_from_string(&pattern->indicator_hover_colour, "#404040");
+	colour_t_from_string(&pattern->indicator_active_colour, "#606060");
 
 	pattern->condition_scale      = 0;
 	pattern->condition_transform  = -1;
@@ -134,14 +134,10 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 	pattern->indicator_padding = last_pattern->indicator_padding;
 	pattern->indicator_style   = last_pattern->indicator_style;
 
-	memcpy(&pattern->bar_colour, &last_pattern->bar_colour,
-			sizeof(struct Lava_colour));
-	memcpy(&pattern->border_colour, &last_pattern->border_colour,
-			sizeof(struct Lava_colour));
-	memcpy(&pattern->indicator_hover_colour, &last_pattern->indicator_hover_colour,
-			sizeof(struct Lava_colour));
-	memcpy(&pattern->indicator_active_colour, &last_pattern->indicator_active_colour,
-			sizeof(struct Lava_colour));
+	memcpy(&pattern->bar_colour, &last_pattern->bar_colour, sizeof(colour_t));
+	memcpy(&pattern->border_colour, &last_pattern->border_colour, sizeof(colour_t));
+	memcpy(&pattern->indicator_hover_colour, &last_pattern->indicator_hover_colour, sizeof(colour_t));
+	memcpy(&pattern->indicator_active_colour, &last_pattern->indicator_active_colour, sizeof(colour_t));
 
 	if ( last_pattern->cursor_name != NULL )
 		pattern->cursor_name = string_t_reference(last_pattern->cursor_name);
@@ -444,12 +440,12 @@ static bool bar_pattern_set_hidden_size (struct Lava_bar_pattern *pattern, const
 
 static bool bar_pattern_set_bar_colour (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	return colour_from_string(&pattern->bar_colour, arg);
+	return colour_t_from_string(&pattern->bar_colour, arg);
 }
 
 static bool bar_pattern_set_border_colour (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	return colour_from_string(&pattern->border_colour, arg);
+	return colour_t_from_string(&pattern->border_colour, arg);
 }
 
 static bool bar_pattern_set_cursor_name (struct Lava_bar_pattern *pattern, const char *arg)
@@ -526,12 +522,12 @@ static bool bar_pattern_set_indicator_padding (struct Lava_bar_pattern *pattern,
 
 static bool bar_pattern_set_indicator_colour_active (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	return colour_from_string(&pattern->indicator_active_colour, arg);
+	return colour_t_from_string(&pattern->indicator_active_colour, arg);
 }
 
 static bool bar_pattern_set_indicator_colour_hover (struct Lava_bar_pattern *pattern, const char *arg)
 {
-	return colour_from_string(&pattern->indicator_hover_colour, arg);
+	return colour_t_from_string(&pattern->indicator_hover_colour, arg);
 }
 
 static bool bar_pattern_set_indicator_style (struct Lava_bar_pattern *pattern, const char *arg)

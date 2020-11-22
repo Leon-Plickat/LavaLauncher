@@ -21,11 +21,11 @@
 #define LAVALAUNCHER_BAR_INDICATOR_H
 
 #include"types/buffer.h"
+#include"types/colour_t.h"
 
 struct Lava_seat;
 struct Lava_bar;
 struct Lava_item;
-struct Lava_colour;
 
 struct Lava_item_indicator
 {
@@ -44,7 +44,8 @@ struct Lava_item_indicator
 void destroy_indicator (struct Lava_item_indicator *indicator);
 struct Lava_item_indicator *create_indicator (struct Lava_bar *bar);
 void move_indicator (struct Lava_item_indicator *indicator, struct Lava_item *item);
-void indicator_set_colour (struct Lava_item_indicator *indicator, struct Lava_colour *colour);
+void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colour);
 void indicator_commit (struct Lava_item_indicator *indicator);
 
 #endif
+

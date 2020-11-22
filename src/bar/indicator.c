@@ -38,7 +38,7 @@
 #include"item/item.h"
 #include"bar/draw-generics.h"
 #include"bar/indicator.h"
-#include"types/colour.h"
+#include"types/colour_t.h"
 #include"str.h"
 
 void destroy_indicator (struct Lava_item_indicator *indicator)
@@ -107,7 +107,7 @@ error:
 	return NULL;
 }
 
-void indicator_set_colour (struct Lava_item_indicator *indicator, struct Lava_colour *colour)
+void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colour)
 {
 	struct Lava_bar         *bar     = indicator->bar;
 	struct Lava_data        *data    = bar->data;
@@ -147,7 +147,7 @@ void indicator_set_colour (struct Lava_item_indicator *indicator, struct Lava_co
 			break;
 	}
 
-	colour_set_cairo_source(cairo, colour);
+	colour_t_set_cairo_source(cairo, colour);
 	cairo_fill(cairo);
 
 	wl_surface_set_buffer_scale(indicator->indicator_surface, (int32_t)scale);

@@ -45,7 +45,6 @@
 #include"output.h"
 #include"types/box_t.h"
 #include"types/buffer.h"
-#include"types/colour.h"
 #include"types/image.h"
 #include"types/string_t.h"
 

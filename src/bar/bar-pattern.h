@@ -23,7 +23,7 @@
 #include<wayland-server.h>
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 
-#include"types/colour.h"
+#include"types/colour_t.h"
 #include"types/directions_t.h"
 #include"types/string_t.h"
 
@@ -100,12 +100,12 @@ struct Lava_bar_pattern
 	/* Size of the bar when hidden. If 0, bar will not hide. */
 	uint32_t hidden_size;
 
-	struct Lava_colour bar_colour;
-	struct Lava_colour border_colour;
+	colour_t bar_colour;
+	colour_t border_colour;
 
 	uint32_t indicator_padding;
-	struct Lava_colour indicator_hover_colour;
-	struct Lava_colour indicator_active_colour;
+	colour_t indicator_hover_colour;
+	colour_t indicator_active_colour;
 	enum Item_indicator_style indicator_style;
 
 	/* If only_output[0] is \0, a surface will be created for all outputs.

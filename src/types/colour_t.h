@@ -17,19 +17,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_TYPES_COLOUR_H
-#define LAVALAUNCHER_TYPES_COLOUR_H
+/* A simple RGB colour type. */
+
+#ifndef LAVALAUNCHER_TYPES_COLOUR_T_H
+#define LAVALAUNCHER_TYPES_COLOUR_T_H
 
 #include<stdbool.h>
 #include<cairo/cairo.h>
 
-struct Lava_colour
+typedef struct
 {
 	double r, g, b, a;
-};
+} colour_t;
 
-bool colour_from_string (struct Lava_colour *colour, const char *hex);
-void colour_set_cairo_source (cairo_t *cairo, struct Lava_colour *colour);
+bool colour_t_from_string (colour_t *colour, const char *str);
+void colour_t_set_cairo_source (cairo_t *cairo, colour_t *colour);
 
 #endif
 

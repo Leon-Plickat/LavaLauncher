@@ -29,7 +29,6 @@
 #include"lavalauncher.h"
 #include"str.h"
 #include"types/image.h"
-#include"types/colour.h"
 #include"types/string_t.h"
 #include"item/item.h"
 

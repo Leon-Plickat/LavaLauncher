@@ -24,7 +24,6 @@
 #include<wayland-server.h>
 #include<cairo/cairo.h>
 
-#include"types/colour.h"
 #include"types/string_t.h"
 
 struct Lava_data;

@@ -28,7 +28,7 @@
 #include"output.h"
 #include"seat.h"
 #include"draw-generics.h"
-#include"types/colour.h"
+#include"types/colour_t.h"
 #include"types/box_t.h"
 #include"types/directions_t.h"
 
@@ -55,8 +55,7 @@ void rounded_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
 void draw_bar_background (cairo_t *cairo, ubox_t *dim, udirections_t *border,
 		uint32_t top_left_radius, uint32_t top_right_radius,
 		uint32_t bottom_left_radius, uint32_t bottom_right_radius,
-		uint32_t scale, struct Lava_colour *bar_colour,
-		struct Lava_colour *border_colour)
+		uint32_t scale, colour_t *bar_colour, colour_t *border_colour)
 {
 	uint32_t x = dim->x, y = dim->y, w = dim->w, h = dim->h;
 	uint32_t border_top = border->top, border_right = border->right,
@@ -96,7 +95,7 @@ void draw_bar_background (cairo_t *cairo, ubox_t *dim, udirections_t *border,
 				&& border_left == 0 && border_right == 0 )
 		{
 			cairo_rectangle(cairo, x, y, w, h);
-			colour_set_cairo_source(cairo, bar_colour);
+			colour_t_set_cairo_source(cairo, bar_colour);
 			cairo_fill(cairo);
 		}
 		else
@@ -108,12 +107,12 @@ void draw_bar_background (cairo_t *cairo, ubox_t *dim, udirections_t *border,
 			cairo_rectangle(cairo, x, y + h - border_bottom, w, border_bottom);
 			cairo_rectangle(cairo, x, y + border_top, border_left,
 					h - border_top - border_bottom);
-			colour_set_cairo_source(cairo, border_colour);
+			colour_t_set_cairo_source(cairo, border_colour);
 			cairo_fill(cairo);
 
 			/* Center. */
 			cairo_rectangle(cairo, cx, cy, cw, ch);
-			colour_set_cairo_source(cairo, bar_colour);
+			colour_t_set_cairo_source(cairo, bar_colour);
 			cairo_fill(cairo);
 		}
 	}
@@ -125,7 +124,7 @@ void draw_bar_background (cairo_t *cairo, ubox_t *dim, udirections_t *border,
 			rounded_rectangle(cairo, x, y, w, h,
 					top_left_radius, top_right_radius,
 					bottom_left_radius, bottom_right_radius);
-			colour_set_cairo_source(cairo, bar_colour);
+			colour_t_set_cairo_source(cairo, bar_colour);
 			cairo_fill(cairo);
 		}
 		else
@@ -133,13 +132,13 @@ void draw_bar_background (cairo_t *cairo, ubox_t *dim, udirections_t *border,
 			rounded_rectangle(cairo, x, y, w, h,
 					top_left_radius, top_right_radius,
 					bottom_left_radius, bottom_right_radius);
-			colour_set_cairo_source(cairo, border_colour);
+			colour_t_set_cairo_source(cairo, border_colour);
 			cairo_fill(cairo);
 
 			rounded_rectangle(cairo, cx, cy, cw, ch,
 					top_left_radius, top_right_radius,
 					bottom_left_radius, bottom_right_radius);
-			colour_set_cairo_source(cairo, bar_colour);
+			colour_t_set_cairo_source(cairo, bar_colour);
 			cairo_fill(cairo);
 		}
 	}

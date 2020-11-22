@@ -79,7 +79,7 @@ executable(
     'src/seat.c',
     'src/str.c',
     'src/types/buffer.c',
-    'src/types/colour.c',
+    'src/types/colour_t.c',
     'src/types/image.c',
     'src/types/string_t.c',
   ),

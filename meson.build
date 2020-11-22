@@ -80,7 +80,7 @@ executable(
     'src/str.c',
     'src/types/buffer.c',
     'src/types/colour_t.c',
-    'src/types/image.c',
+    'src/types/image_t.c',
     'src/types/string_t.c',
   ),
   dependencies: [

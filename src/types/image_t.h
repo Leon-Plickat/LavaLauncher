@@ -17,6 +17,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* Ref-counted image type, combining a cairo surface and an rsvg handle. Once
+ * bar copies are removed in favour of a better conditional configuration method,
+ * the ref count can be removed.
+ */
+
 #ifndef LAVALAUNCHER_TYPES_IMAGE_H
 #define LAVALAUNCHER_TYPES_IMAGE_H
 
@@ -27,7 +32,7 @@
 #include<librsvg-2.0/librsvg/rsvg.h>
 #endif
 
-struct Lava_image
+typedef struct
 {
 	cairo_surface_t *cairo_surface;
 
@@ -36,12 +41,12 @@ struct Lava_image
 #endif
 
 	int references;
-};
+} image_t;
 
-struct Lava_image *image_create_from_file (const char *path);
-struct Lava_image *image_reference (struct Lava_image *image);
-void image_destroy (struct Lava_image *image);
-void image_draw_to_cairo (cairo_t *cairo, struct Lava_image *image,
+image_t *image_t_create_from_file (const char *path);
+image_t *image_t_reference (image_t *image);
+void image_t_destroy (image_t *image);
+void image_t_draw_to_cairo (cairo_t *cairo, image_t *image,
 		uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
 #endif

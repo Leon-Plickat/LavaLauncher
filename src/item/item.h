@@ -25,6 +25,7 @@
 #include<cairo/cairo.h>
 
 #include"types/string_t.h"
+#include"types/image_t.h"
 
 struct Lava_data;
 struct Lava_bar_pattern;
@@ -52,7 +53,7 @@ struct Lava_item
 	struct wl_list   link;
 	enum Item_type   type;
 
-	struct Lava_image *img;
+	image_t *img;
 
 	unsigned int index, ordinate, length;
 

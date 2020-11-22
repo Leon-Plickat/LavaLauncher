@@ -28,7 +28,7 @@
 
 #include"lavalauncher.h"
 #include"str.h"
-#include"types/image.h"
+#include"types/image_t.h"
 #include"types/string_t.h"
 #include"item/item.h"
 
@@ -55,8 +55,8 @@ static bool button_set_image_path (struct Lava_item *button, const char *path,
 		enum Interaction_type type)
 {
 	if ( button->img != NULL )
-		image_destroy(button->img);
-	if ( NULL == (button->img = image_create_from_file(path)) )
+		image_t_destroy(button->img);
+	if ( NULL == (button->img = image_t_create_from_file(path)) )
 		return false;
 	return true;
 }

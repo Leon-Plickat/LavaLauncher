@@ -32,8 +32,8 @@
 #include<librsvg-2.0/librsvg/rsvg.h>
 #endif
 
-#include"image.h"
 #include"str.h"
+#include"types/image_t.h"
 
 /* Returns: -1 On error
  *           0 If the file is not a PNG file
@@ -68,7 +68,7 @@ static int is_png_file (const char *path)
 	return 1;
 }
 
-static bool load_image (struct Lava_image *image, const char *path)
+static bool load_image (image_t *image, const char *path)
 {
 	if (access(path, F_OK))
 	{
@@ -136,9 +136,9 @@ static bool load_image (struct Lava_image *image, const char *path)
 	return false;
 }
 
-struct Lava_image *image_create_from_file (const char *path)
+image_t *image_t_create_from_file (const char *path)
 {
-	struct Lava_image *image = calloc(1, sizeof(struct Lava_image));
+	image_t *image = calloc(1, sizeof(image_t));
 	if ( image == NULL )
 	{
 		log_message(NULL, 0, "ERROR: Failed to allocate image.\n");
@@ -158,17 +158,15 @@ struct Lava_image *image_create_from_file (const char *path)
 	return NULL;
 }
 
-struct Lava_image *image_reference (struct Lava_image *image)
+image_t *image_t_reference (image_t *image)
 {
 	image->references++;
 	return image;
 }
 
-void image_destroy (struct Lava_image *image)
+void image_t_destroy (image_t *image)
 {
-	image->references--;
-
-	if ( image->references > 0 )
+	if ( --image->references > 0 )
 		return;
 
 	if ( image->cairo_surface != NULL )
@@ -182,7 +180,7 @@ void image_destroy (struct Lava_image *image)
 	free(image);
 }
 
-void image_draw_to_cairo (cairo_t *cairo, struct Lava_image *image,
+void image_t_draw_to_cairo (cairo_t *cairo, image_t *image,
 		uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
 	cairo_save(cairo);
@@ -224,3 +222,4 @@ void image_draw_to_cairo (cairo_t *cairo, struct Lava_image *image,
 
 	cairo_restore(cairo);
 }
+

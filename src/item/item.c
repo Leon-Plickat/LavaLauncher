@@ -31,7 +31,7 @@
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
 #include"output.h"
-#include"types/image.h"
+#include"types/image_t.h"
 #include"types/string_t.h"
 #include"item/item.h"
 #include"item/command.h"
@@ -94,7 +94,7 @@ bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
 			new_item->command[i] = string_t_reference(item->command[i]);
 
 	if ( item->img != NULL )
-		new_item->img = image_reference(item->img);
+		new_item->img = image_t_reference(item->img);
 
 	return true;
 }
@@ -194,7 +194,7 @@ static void destroy_item (struct Lava_item *item)
 			string_t_destroy(item->command[i]);
 
 	if ( item->img != NULL )
-		image_destroy(item->img);
+		image_t_destroy(item->img);
 
 	free(item);
 }

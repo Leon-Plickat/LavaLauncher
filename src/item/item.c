@@ -32,7 +32,7 @@
 #include"bar/bar.h"
 #include"output.h"
 #include"types/image.h"
-#include"types/string-container.h"
+#include"types/string_t.h"
 #include"item/item.h"
 #include"item/command.h"
 #include"item/button.h"
@@ -91,7 +91,7 @@ bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
 
 	for (int i = 0; i < TYPE_AMOUNT; i++)
 		if ( item->command[i] != NULL )
-			new_item->command[i] = string_container_reference(item->command[i]);
+			new_item->command[i] = string_t_reference(item->command[i]);
 
 	if ( item->img != NULL )
 		new_item->img = image_reference(item->img);
@@ -191,7 +191,7 @@ static void destroy_item (struct Lava_item *item)
 
 	for (int i = 0; i < TYPE_AMOUNT; i++)
 		if ( item->command[i] != NULL )
-			string_container_destroy(item->command[i]);
+			string_t_destroy(item->command[i]);
 
 	if ( item->img != NULL )
 		image_destroy(item->img);

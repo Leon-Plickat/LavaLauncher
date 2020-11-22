@@ -38,7 +38,6 @@
 #include"output.h"
 #include"bar/bar.h"
 #include"bar/bar-pattern.h"
-#include"types/string-container.h"
 
 /* No-Op function. */
 static void noop () {}

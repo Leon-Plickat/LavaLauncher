@@ -25,11 +25,11 @@
 #include<cairo/cairo.h>
 
 #include"types/colour.h"
+#include"types/string_t.h"
 
 struct Lava_data;
 struct Lava_bar_pattern;
 struct Lava_bar;
-struct Lava_string_container;
 
 enum Item_type
 {
@@ -57,7 +57,7 @@ struct Lava_item
 
 	unsigned int index, ordinate, length;
 
-	struct Lava_string_container *command[TYPE_AMOUNT];
+	string_t *command[TYPE_AMOUNT];
 };
 
 bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type);

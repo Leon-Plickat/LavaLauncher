@@ -26,49 +26,43 @@
 #include<unistd.h>
 #include<string.h>
 
-#include"types/string-container.h"
+#include"types/string_t.h"
 #include<str.h>
 
-char *string_container_get_string_or_else (struct Lava_string_container *sc, char *or_else)
+char *string_t_get_string_or_else (string_t *str, char *or_else)
 {
-	if ( sc != NULL )
-		return sc->string;
+	if ( str != NULL )
+		return str->string;
 	else
 		return or_else;
 }
 
-struct Lava_string_container *string_container_from (const char *in)
+string_t *string_t_from (const char *in)
 {
-	struct Lava_string_container *sc = calloc(1, sizeof(struct Lava_string_container));
-	if ( sc == NULL )
+	string_t *str = calloc(1, sizeof(string_t));
+	if ( str == NULL )
 	{
 		log_message(NULL, 0, "ERROR: Failed to allocate string container.\n");
 		return NULL;
 	}
 
-	sc->string     = strdup(in);
-	sc->length     = (uint32_t)strlen(sc->string);
-	sc->references = 1;
+	str->string     = strdup(in);
+	str->references = 1;
 
-	return sc;
+	return str;
 }
 
-struct Lava_string_container *string_container_reference (struct Lava_string_container *sc)
+string_t *string_t_reference (string_t *str)
 {
-	sc->references++;
-	return sc;
+	str->references++;
+	return str;
 }
 
-void string_container_destroy (struct Lava_string_container *sc)
+void string_t_destroy (string_t *str)
 {
-	sc->references--;
-
-	if ( sc->references > 0 )
+	if ( --str->references > 0 )
 		return;
-
-	if ( sc->string != NULL )
-		free(sc->string);
-
-	free(sc);
+	free_if_set(str->string);
+	free(str);
 }
 

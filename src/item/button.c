@@ -30,15 +30,15 @@
 #include"str.h"
 #include"types/image.h"
 #include"types/colour.h"
-#include"types/string-container.h"
+#include"types/string_t.h"
 #include"item/item.h"
 
 static bool button_set_command (struct Lava_item *button,
 		const char *command, enum Interaction_type type)
 {
 	if ( button->command[type] != NULL )
-		string_container_destroy(button->command[type]);
-	button->command[type] = string_container_from(command);
+		string_t_destroy(button->command[type]);
+	button->command[type] = string_t_from(command);
 	return true;
 }
 

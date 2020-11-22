@@ -37,7 +37,7 @@
 #include"bar/bar-pattern.h"
 #include"item/item.h"
 #include"types/colour.h"
-#include"types/string-container.h"
+#include"types/string_t.h"
 
 static void sensible_defaults (struct Lava_bar_pattern *pattern)
 {
@@ -144,11 +144,11 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 			sizeof(struct Lava_colour));
 
 	if ( last_pattern->cursor_name != NULL )
-		pattern->cursor_name = string_container_reference(last_pattern->cursor_name);
+		pattern->cursor_name = string_t_reference(last_pattern->cursor_name);
 	if ( last_pattern->only_output != NULL )
-		pattern->only_output = string_container_reference(last_pattern->only_output);
+		pattern->only_output = string_t_reference(last_pattern->only_output);
 	if ( last_pattern->namespace != NULL )
-		pattern->namespace = string_container_reference(last_pattern->namespace);
+		pattern->namespace = string_t_reference(last_pattern->namespace);
 
 	struct Lava_item *item, *temp;
 	wl_list_for_each_reverse_safe(item, temp, &last_pattern->items, link)
@@ -199,11 +199,11 @@ static void destroy_bar_pattern (struct Lava_bar_pattern *pattern)
 	wl_list_remove(&pattern->link);
 	destroy_all_items(pattern);
 	if ( pattern->cursor_name != NULL )
-		string_container_destroy(pattern->cursor_name);
+		string_t_destroy(pattern->cursor_name);
 	if ( pattern->only_output != NULL )
-		string_container_destroy(pattern->only_output);
+		string_t_destroy(pattern->only_output);
 	if ( pattern->namespace != NULL )
-		string_container_destroy(pattern->namespace);
+		string_t_destroy(pattern->namespace);
 	free(pattern);
 }
 
@@ -393,10 +393,10 @@ static bool bar_pattern_set_icon_padding (struct Lava_bar_pattern *pattern, cons
 static bool bar_pattern_set_only_output (struct Lava_bar_pattern *pattern, const char *arg)
 {
 	if ( pattern->only_output != NULL )
-		string_container_destroy(pattern->only_output);
+		string_t_destroy(pattern->only_output);
 
 	if ( strcmp(arg, "all") && *arg != '*' )
-		pattern->only_output = string_container_from(arg);
+		pattern->only_output = string_t_from(arg);
 
 	return true;
 }
@@ -404,9 +404,9 @@ static bool bar_pattern_set_only_output (struct Lava_bar_pattern *pattern, const
 static bool bar_pattern_set_namespace (struct Lava_bar_pattern *pattern, const char *arg)
 {
 	if ( pattern->namespace != NULL )
-		string_container_destroy(pattern->namespace);
+		string_t_destroy(pattern->namespace);
 
-	pattern->namespace = string_container_from(arg);
+	pattern->namespace = string_t_from(arg);
 
 	return true;
 }
@@ -455,8 +455,8 @@ static bool bar_pattern_set_border_colour (struct Lava_bar_pattern *pattern, con
 static bool bar_pattern_set_cursor_name (struct Lava_bar_pattern *pattern, const char *arg)
 {
 	if ( pattern->cursor_name != NULL )
-		string_container_destroy(pattern->cursor_name);
-	pattern->cursor_name = string_container_from(arg);
+		string_t_destroy(pattern->cursor_name);
+	pattern->cursor_name = string_t_from(arg);
 	return true;
 }
 

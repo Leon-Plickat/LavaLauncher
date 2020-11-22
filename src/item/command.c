@@ -36,7 +36,7 @@
 #include"item/item.h"
 #include"bar/bar-pattern.h"
 #include"bar/bar.h"
-#include"types/string-container.h"
+#include"types/string_t.h"
 
 static void setenvf (const char *name, const char *fmt, ...)
 {

@@ -25,10 +25,10 @@
 
 #include"types/colour.h"
 #include"types/directions_t.h"
+#include"types/string_t.h"
 
 struct Lava_data;
 struct Lava_item;
-struct Lava_string_container;
 
 enum Bar_position
 {
@@ -113,13 +113,13 @@ struct Lava_bar_pattern
 	 * Examples of valid names are "eDP-1" or "HDMI-A-1" (likely compositor
 	 * dependant).
 	 */
-	struct Lava_string_container *only_output;
+	string_t *only_output;
 
 	/* Some compositors apparently expose different behaviours based on the
 	 * namespace of a layer surface, therefore it must be configurable.
 	 * This may be dropped once the layershell has been standardized.
 	 */
-	struct Lava_string_container *namespace;
+	string_t *namespace;
 
 	/* If exclusive_zone is 1, it will be set to the width/height of the bar
 	 * at startup, otherwise its exact value is used, which should be either
@@ -128,7 +128,7 @@ struct Lava_bar_pattern
 	int32_t exclusive_zone;
 
 	/* Name of cursor which should be attached to pointer on hover. */
-	struct Lava_string_container *cursor_name;
+	string_t *cursor_name;
 
 	/* Conditions an output must match for the pattern to generate a bar on it. */
 	uint32_t condition_scale;

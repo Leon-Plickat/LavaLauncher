@@ -47,7 +47,7 @@
 #include"types/buffer.h"
 #include"types/colour.h"
 #include"types/image.h"
-#include"types/string-container.h"
+#include"types/string_t.h"
 
 static void draw_items (struct Lava_bar *bar, cairo_t *cairo)
 {
@@ -552,7 +552,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 	if ( NULL == (bar->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
 					data->layer_shell, bar->bar_surface,
 					output->wl_output, pattern->layer,
-					string_container_get_string_or_else(
+					string_t_get_string_or_else(
 						pattern->namespace, "LavaLauncher"))) )
 	{
 		log_message(NULL, 0, "ERROR: Compositor did not create layer_surface.\n");

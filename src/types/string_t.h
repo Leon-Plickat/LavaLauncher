@@ -17,8 +17,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_TYPES_STRING_CONTAINER_H
-#define LAVALAUNCHER_TYPES_STRING_CONTAINER_H
+/* string_t is a simple ref-counted string type. Its only use case is reducing
+ * the memory size of bar copies. Once bar copies are eventually removed in
+ * favour of a better conditional configuration method, this type can be removed
+ * as well.
+ */
+
+#ifndef LAVALAUNCHER_TYPES_STRING_T_H
+#define LAVALAUNCHER_TYPES_STRING_T_H
 
 #include<stdint.h>
 
@@ -26,16 +32,16 @@
 #include<librsvg-2.0/librsvg/rsvg.h>
 #endif
 
-struct Lava_string_container
+typedef struct
 {
 	char *string;
-	uint32_t references, length;
-};
+	uint32_t references;
+} string_t;
 
-char *string_container_get_string_or_else (struct Lava_string_container *sc, char *or_else);
-struct Lava_string_container *string_container_from (const char *in);
-struct Lava_string_container *string_container_reference (struct Lava_string_container *sc);
-void string_container_destroy (struct Lava_string_container *sc);
+char *string_t_get_string_or_else (string_t *str, char *or_else);
+string_t *string_t_from (const char *in);
+string_t *string_t_reference (string_t *str);
+void string_t_destroy (string_t *str);
 
 #endif
 

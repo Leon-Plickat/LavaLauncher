@@ -81,7 +81,7 @@ executable(
     'src/types/buffer.c',
     'src/types/colour.c',
     'src/types/image.c',
-    'src/types/string-container.c',
+    'src/types/string_t.c',
   ),
   dependencies: [
     cairo,

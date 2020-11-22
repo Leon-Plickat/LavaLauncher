@@ -36,7 +36,7 @@
 #include"seat.h"
 #include"bar/bar.h"
 #include"bar/bar-pattern.h"
-#include"types/string-container.h"
+#include"types/string_t.h"
 
 void cleanup_cursor (struct Lava_seat *seat)
 {
@@ -51,7 +51,7 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 {
 	struct Lava_data  *data        = seat->data;
 	struct wl_pointer *pointer     = seat->pointer.wl_pointer;
-	char              *cursor_name = string_container_get_string_or_else(
+	char              *cursor_name = string_t_get_string_or_else(
 			seat->pointer.bar->pattern->cursor_name, "pointer");
 
 	int32_t scale       = (int32_t)seat->pointer.bar->output->scale;

@@ -34,7 +34,7 @@
 
 void circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size)
 {
-	cairo_arc(cairo, x + (size/2), y + (size/2), size / 2, 0, 2 * 3.1415927);
+	cairo_arc(cairo, x + (size/2.0), y + (size/2.0), size / 2.0, 0, 2 * 3.1415927);
 }
 
 void rounded_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,

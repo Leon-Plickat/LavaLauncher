@@ -140,8 +140,9 @@ as follows.
 	ignore the requested exclusive zone of surfaces.
 
 *hidden-size*
-	Size the bar will shrink to when it hides. If set to 0, bar hiding is
-	disabled. The default is 0.
+	Size of the invisible area which replaces the bar when it is hidden.
+	Entering this area with a pointer unhides the bar. If set to 0, bar hiding
+	is disabled. The default is 0.
 
 *icon-padding*
 	Padding around the icons. The default 4.

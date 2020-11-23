@@ -98,11 +98,14 @@ static void render_bar_frame (struct Lava_bar *bar)
 	clear_buffer(cairo);
 
 	/* Draw bar. */
-	log_message(data, 2, "[render] Drawing bar.\n");
-	draw_bar_background(cairo, bar_dim, &pattern->border,
-			pattern->radius_top_left, pattern->radius_top_right,
-			pattern->radius_bottom_left, pattern->radius_bottom_right,
-			scale, &pattern->bar_colour, &pattern->border_colour);
+	if (! bar->hidden)
+	{
+		log_message(data, 2, "[render] Drawing bar.\n");
+		draw_bar_background(cairo, bar_dim, &pattern->border,
+				pattern->radius_top_left, pattern->radius_top_right,
+				pattern->radius_bottom_left, pattern->radius_bottom_right,
+				scale, &pattern->bar_colour, &pattern->border_colour);
+	}
 
 	wl_surface_set_buffer_scale(bar->bar_surface, (int32_t)scale);
 	wl_surface_attach(bar->bar_surface, bar->current_bar_buffer->buffer, 0, 0);
@@ -351,20 +354,20 @@ static void mode_aggressive_dimensions (struct Lava_bar *bar)
 		bar->surface.h = pattern->size + pattern->border.top + pattern->border.bottom;
 
 		bar->surface_hidden.w = bar->surface.w;
-		bar->surface_hidden.h = pattern->hidden_size + pattern->border.top + pattern->border.bottom;
+		bar->surface_hidden.h = pattern->hidden_size;
 
 		bar->bar_hidden.w = bar->bar.w;
-		bar->bar_hidden.h = pattern->hidden_size + pattern->border.top  + pattern->border.bottom;
+		bar->bar_hidden.h = pattern->hidden_size;
 	}
 	else
 	{
 		bar->surface.w = pattern->size + pattern->border.left + pattern->border.right;
 		bar->surface.h = bar->output->h;
 
-		bar->surface_hidden.w = pattern->hidden_size + pattern->border.left + pattern->border.right;
+		bar->surface_hidden.w = pattern->hidden_size;
 		bar->surface_hidden.h = bar->surface.h;
 
-		bar->bar_hidden.w = pattern->hidden_size + pattern->border.left  + pattern->border.right;
+		bar->bar_hidden.w = pattern->hidden_size;
 		bar->bar_hidden.h = bar->bar.h;
 	}
 	bar->bar_hidden.x = bar->bar.x;
@@ -430,10 +433,10 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 		bar->surface.h = pattern->size + pattern->border.top + pattern->border.bottom;
 
 		bar->surface_hidden.w = bar->surface.w;
-		bar->surface_hidden.h = pattern->hidden_size + pattern->border.top + pattern->border.bottom;
+		bar->surface_hidden.h = pattern->hidden_size;
 
 		bar->bar_hidden.w = bar->bar.w;
-		bar->bar_hidden.h = pattern->hidden_size + pattern->border.top  + pattern->border.bottom;
+		bar->bar_hidden.h = pattern->hidden_size;
 	}
 	else
 	{
@@ -446,10 +449,10 @@ static void mode_full_dimensions (struct Lava_bar *bar)
 		bar->surface.w = pattern->size + pattern->border.left + pattern->border.right;
 		bar->surface.h = bar->output->h;
 
-		bar->surface_hidden.w = pattern->hidden_size + pattern->border.left + pattern->border.right;
+		bar->surface_hidden.w = pattern->hidden_size;
 		bar->surface_hidden.h = bar->surface.h;
 
-		bar->bar_hidden.w = pattern->hidden_size + pattern->border.left  + pattern->border.right;
+		bar->bar_hidden.w = pattern->hidden_size;
 		bar->bar_hidden.h = bar->bar.h;
 	}
 }
@@ -475,11 +478,11 @@ static void mode_default_dimensions (struct Lava_bar *bar)
 	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
 	{
 		bar->bar_hidden.w = bar->bar.w;
-		bar->bar_hidden.h = pattern->hidden_size + pattern->border.top + pattern->border.bottom;
+		bar->bar_hidden.h = pattern->hidden_size;
 	}
 	else
 	{
-		bar->bar_hidden.w = pattern->hidden_size + pattern->border.left + pattern->border.right;
+		bar->bar_hidden.w = pattern->hidden_size;
 		bar->bar_hidden.h = bar->bar.h;
 	}
 

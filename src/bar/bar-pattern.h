@@ -24,8 +24,8 @@
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 
 #include"types/colour_t.h"
-#include"types/directions_t.h"
 #include"types/string_t.h"
+#include"types/box_t.h"
 
 struct Lava_data;
 struct Lava_item;
@@ -95,7 +95,7 @@ struct Lava_bar_pattern
 	uint32_t size, icon_padding;
 	udirections_t border;
 	udirections_t margin;
-	uint32_t radius_top_left, radius_top_right, radius_bottom_left, radius_bottom_right;
+	uradii_t radii;
 
 	/* Size of the bar when hidden. If 0, bar will not hide. */
 	uint32_t hidden_size;

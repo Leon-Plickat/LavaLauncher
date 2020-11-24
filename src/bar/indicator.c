@@ -137,9 +137,7 @@ void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colo
 			break;
 
 		case STYLE_ROUNDED_RECTANGLE:
-			rounded_rectangle(cairo, 0, 0, buffer_size, buffer_size,
-					pattern->radius_top_left, pattern->radius_top_right,
-					pattern->radius_bottom_left, pattern->radius_bottom_right);
+			rounded_rectangle(cairo, 0, 0, buffer_size, buffer_size, &pattern->radii);
 			break;
 
 		case STYLE_CIRCLE:

@@ -25,19 +25,19 @@
 
 #include"types/box_t.h"
 #include"types/colour_t.h"
-#include"types/directions_t.h"
 
 struct Lava_data;
 struct Lava_bar;
 
+/* A set functions for generic drawing operations. These are almost pure;
+ * The only side effect being modifications to the cairo context.
+ */
+
 void circle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t size);
-void rounded_rectangle (cairo_t *cairo, uint32_t x, uint32_t y,
-		uint32_t width, uint32_t height,
-		double tl_r, double tr_r, double bl_r, double br_r);
-void draw_bar_background (cairo_t *cairo, ubox_t *dim, udirections_t *border,
-		uint32_t top_left_radius, uint32_t top_right_radius,
-		uint32_t bottom_left_radius, uint32_t bottom_right_radius,
+void rounded_rectangle (cairo_t *cairo, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uradii_t *radii);
+void draw_bar_background (cairo_t *cairo, ubox_t *_dim, udirections_t *_border, uradii_t *_radii,
 		uint32_t scale, colour_t *bar_colour, colour_t *border_colour);
 void clear_buffer (cairo_t *cairo);
 
 #endif
+

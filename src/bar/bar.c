@@ -101,9 +101,7 @@ static void render_bar_frame (struct Lava_bar *bar)
 	if (! bar->hidden)
 	{
 		log_message(data, 2, "[render] Drawing bar.\n");
-		draw_bar_background(cairo, bar_dim, &pattern->border,
-				pattern->radius_top_left, pattern->radius_top_right,
-				pattern->radius_bottom_left, pattern->radius_bottom_right,
+		draw_bar_background(cairo, bar_dim, &pattern->border, &pattern->radii,
 				scale, &pattern->bar_colour, &pattern->border_colour);
 	}
 

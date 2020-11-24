@@ -78,6 +78,7 @@ executable(
     'src/registry.c',
     'src/seat.c',
     'src/str.c',
+    'src/types/box_t.c',
     'src/types/buffer.c',
     'src/types/colour_t.c',
     'src/types/image_t.c',

@@ -339,15 +339,15 @@ done:
 	return true;
 
 unterm:
-	fprintf(stderr, "ERROR: Unterminated string on line %d.\n", parser->line);
+	log_message(NULL, 0, "ERROR: Unterminated string on line %d.\n", parser->line);
 	return false;
 
 overflow:
-	fprintf(stderr, "ERROR: Buffer overflow due to too long string on line %d.\n", parser->line);
+	log_message(NULL, 0, "ERROR: Buffer overflow due to too long string on line %d.\n", parser->line);
 	return false;
 
 unexpected_quote:
-	fprintf(stderr, "ERROR: Unexpected quotes on line %d.\n", parser->line);
+	log_message(NULL, 0, "ERROR: Unexpected quotes on line %d.\n", parser->line);
 	return false;
 }
 

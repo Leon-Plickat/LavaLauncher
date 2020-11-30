@@ -97,6 +97,8 @@ static void render_bar_frame (struct Lava_bar *bar)
 	cairo_t *cairo = bar->current_bar_buffer->cairo;
 	clear_buffer(cairo);
 
+	cairo_set_antialias(cairo, CAIRO_ANTIALIAS_BEST);
+
 	/* Draw bar. */
 	if (! bar->hidden)
 	{
@@ -125,6 +127,8 @@ static void render_icon_frame (struct Lava_bar *bar)
 
 	cairo_t *cairo = bar->current_icon_buffer->cairo;
 	clear_buffer(cairo);
+
+	cairo_set_antialias(cairo, CAIRO_ANTIALIAS_BEST);
 
 	/* Draw icons. */
 	if (! bar->hidden)

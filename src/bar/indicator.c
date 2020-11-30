@@ -128,6 +128,7 @@ void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colo
 
 	cairo_t *cairo = indicator->current_indicator_buffer->cairo;
 	clear_buffer(cairo);
+	cairo_set_antialias(cairo, CAIRO_ANTIALIAS_BEST);
 
 	switch (pattern->indicator_style)
 	{

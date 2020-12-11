@@ -47,7 +47,7 @@ muting all audio, toggling your lamps and a lot more. Be creative!
 LavaLauncher is configured with a configuration file.
 
 Unless the path to a configuration file has been specified, LavaLauncher tries
-to find a configuration file at, in decending priority, "./lavalauncher.conf",
+to find a configuration file at, in descending priority, "./lavalauncher.conf",
 "$XDG_CONFIG_HOME/lavalauncher/lavalauncher.conf",
 "$HOME/.config/lavalauncher/lavalauncher.conf"
 "/usr/local/etc/lavalauncher/lavalauncher.conf" and

@@ -105,15 +105,22 @@ static const struct wl_registry_listener registry_listener = {
 	.global_remove = registry_handle_global_remove
 };
 
-/* Helper function for capability support error message. */
-static bool capability_test (void *ptr, const char *name)
+/* Test if all required interfaces are available. If not, return the name of the
+ * missing interface.
+ */
+static char *check_for_required_interfaces (struct Lava_data *data)
 {
-	if ( ptr == NULL )
-	{
-		log_message(NULL, 0, "ERROR: Wayland compositor does not support %s.\n", name);
-		return false;
-	}
-	return true;
+	if ( data->compositor == NULL )
+		return "wl_compositor";
+	if ( data->subcompositor == NULL )
+		return "wl_subcompositor";
+	if ( data->shm == NULL )
+		return "wl_shm";
+	if ( data->layer_shell == NULL )
+		return "zwlr_layershell_v1";
+	if ( data->xdg_output_manager == NULL )
+		return "zxdg_output_manager";
+	return NULL;
 }
 
 bool init_wayland (struct Lava_data *data)
@@ -144,17 +151,12 @@ bool init_wayland (struct Lava_data *data)
 		return false;
 	}
 
-	/* Testing compatibilities. */
-	if (! capability_test(data->compositor, "wl_compositor"))
+	const char *missing = check_for_required_interfaces(data);
+	if ( missing != NULL )
+	{
+		log_message(NULL, 0, "ERROR: Wayland compositor does not support %s.\n", missing);
 		return false;
-	if (! capability_test(data->subcompositor, "wl_subcompositor"))
-		return false;
-	if (! capability_test(data->shm, "wl_shm"))
-		return false;
-	if (! capability_test(data->layer_shell, "zwlr_layer_shell"))
-		return false;
-	if (! capability_test(data->xdg_output_manager, "xdg_output_manager"))
-		return false;
+	}
 
 	/* Configure all outputs that were created before xdg_output_manager or
 	 * the layer_shell were available.

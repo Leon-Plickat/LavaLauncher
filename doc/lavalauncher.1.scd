@@ -139,10 +139,20 @@ as follows.
 	implementation is compositor dependant; A compositor may choose to
 	ignore the requested exclusive zone of surfaces.
 
+*hidden-mode*
+	Hidden mode of the bar. Can be "never", "always" and "river-auto". Defaults
+	to "never".
+
+	In "never" mode, the bar is never hidden.
+
+	In "always" mode, the bar is always hidden.
+
+	The "river-auto" mode works only in the river Wayland compositor. In this
+	mode, the bar is only hidden if the output is currently occupied.
+
 *hidden-size*
-	Size of the invisible area which replaces the bar when it is hidden.
-	Entering this area with a pointer unhides the bar. If set to 0, bar hiding
-	is disabled. The default is 0.
+	Size of the invisible area where hovering with a pointer will unhide the bar
+	if it is hidden. Defaults to 10.
 
 *icon-padding*
 	Padding around the icons. The default 4.

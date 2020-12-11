@@ -45,7 +45,7 @@ struct Lava_bar
 	ubox_t bar_hidden;
 	ubox_t item_area;
 
-	bool hidden;
+	bool hidden, hover;
 
 	struct Lava_buffer  bar_buffers[2];
 	struct Lava_buffer *current_bar_buffer;
@@ -62,8 +62,7 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output);
 void destroy_bar (struct Lava_bar *bar);
 void destroy_all_bars (struct Lava_output *output);
 void update_bar (struct Lava_bar *bar);
-void hide_bar (struct Lava_bar *bar);
-void unhide_bar (struct Lava_bar *bar);
+void bar_update_hidden_status (struct Lava_bar *bar);
 struct Lava_bar *bar_from_surface (struct Lava_data *data, struct wl_surface *surface);
 
 #endif

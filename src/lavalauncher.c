@@ -312,11 +312,15 @@ static void init_data (struct Lava_data *data)
 
 	data->display            = NULL;
 	data->registry           = NULL;
+
 	data->compositor         = NULL;
 	data->subcompositor      = NULL;
 	data->shm                = NULL;
 	data->layer_shell        = NULL;
 	data->xdg_output_manager = NULL;
+
+	data->river_status_manager = NULL;
+	data->need_river_status    = false;
 
 	wl_list_init(&data->patterns);
 	wl_list_init(&data->outputs);

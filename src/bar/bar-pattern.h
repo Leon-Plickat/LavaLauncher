@@ -72,6 +72,13 @@ enum Item_indicator_style
 	STYLE_CIRCLE
 };
 
+enum Hidden_mode
+{
+	HIDDEN_MODE_NEVER,
+	HIDDEN_MODE_ALWAYS,
+	HIDDEN_MODE_RIVER_AUTO
+};
+
 struct Lava_bar_pattern
 {
 	struct Lava_data *data;
@@ -97,8 +104,8 @@ struct Lava_bar_pattern
 	udirections_t margin;
 	uradii_t radii;
 
-	/* Size of the bar when hidden. If 0, bar will not hide. */
 	uint32_t hidden_size;
+	enum Hidden_mode hidden_mode;
 
 	colour_t bar_colour;
 	colour_t border_colour;

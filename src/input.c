@@ -59,7 +59,8 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 	if ( seat->pointer.indicator != NULL )
 		destroy_indicator(seat->pointer.indicator);
 
-	hide_bar(seat->pointer.bar);
+	seat->pointer.bar->hover = false;
+	bar_update_hidden_status(seat->pointer.bar);
 
 	seat->pointer.x        = 0;
 	seat->pointer.y        = 0;
@@ -80,7 +81,8 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 
 	attach_cursor(seat, serial);
 
-	unhide_bar(seat->pointer.bar);
+	seat->pointer.bar->hover = true;
+	bar_update_hidden_status(seat->pointer.bar);
 
 	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
 	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);

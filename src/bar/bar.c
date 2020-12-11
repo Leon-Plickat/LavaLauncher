@@ -522,6 +522,35 @@ static void update_dimensions (struct Lava_bar *bar)
 	}
 }
 
+/* Return a bool indicating if the bar should currently be hidden or not. */
+static bool bar_should_hide (struct Lava_bar *bar)
+{
+	switch(bar->pattern->hidden_mode)
+	{
+		case HIDDEN_MODE_ALWAYS:
+			return !bar->hover;
+
+		case HIDDEN_MODE_RIVER_AUTO:
+			return ( bar->output->river_output_occupied && ! bar->hover );
+
+		case HIDDEN_MODE_NEVER:
+		default:
+			return false;
+	}
+}
+
+void bar_update_hidden_status (struct Lava_bar *bar)
+{
+	bool current = bar->hidden;
+	bar->hidden = bar_should_hide(bar);
+
+	/* No need to do something if nothing changed. */
+	if (current == bar->hidden)
+		return;
+
+	update_bar(bar);
+}
+
 bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 {
 	struct Lava_data *data = pattern->data;
@@ -543,7 +572,8 @@ bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output)
 	bar->layer_surface = NULL;
 	bar->subsurface    = NULL;
 	bar->configured    = false;
-	bar->hidden        = pattern->hidden_size > 0;
+	bar->hover         = false;
+	bar->hidden        = bar_should_hide(bar);
 
 	wl_list_init(&bar->indicators);
 
@@ -644,22 +674,6 @@ void update_bar (struct Lava_bar *bar)
 
 	wl_surface_commit(bar->icon_surface);
 	wl_surface_commit(bar->bar_surface);
-}
-
-void hide_bar (struct Lava_bar *bar)
-{
-	if ( bar->pattern->hidden_size == 0 )
-		return;
-	bar->hidden = true;
-	update_bar(bar);
-}
-
-void unhide_bar (struct Lava_bar *bar)
-{
-	if (! bar->hidden)
-		return;
-	bar->hidden = false;
-	update_bar(bar);
 }
 
 struct Lava_bar *bar_from_surface (struct Lava_data *data, struct wl_surface *surface)

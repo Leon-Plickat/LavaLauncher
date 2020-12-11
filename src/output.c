@@ -30,6 +30,7 @@
 #include<wayland-client.h>
 #include<wayland-client-protocol.h>
 
+#include"river-status-unstable-v1-protocol.h"
 #include"xdg-output-unstable-v1-protocol.h"
 #include"xdg-shell-protocol.h"
 
@@ -199,6 +200,40 @@ static const struct zxdg_output_v1_listener xdg_output_listener = {
 	.done             = noop
 };
 
+static void update_river_output_occupied_state (struct Lava_output *output)
+{
+	output->river_output_occupied = output->river_focused_tags & output->river_view_tags;
+	log_message(output->data, 3, "[output] River output status: occupied=%s\n",
+			output->river_output_occupied ? "true" : "false");
+	struct Lava_bar *bar;
+	wl_list_for_each(bar, &output->bars, link)
+		bar_update_hidden_status(bar);
+}
+
+static void river_status_handle_focused_tags (void *data, struct zriver_output_status_v1 *river_status,
+		uint32_t tags)
+{
+	struct Lava_output *output = (struct Lava_output *)data;
+	output->river_focused_tags = tags;
+	update_river_output_occupied_state(output);
+}
+
+static void river_status_handle_view_tags (void *data, struct zriver_output_status_v1 *river_status,
+		struct wl_array *tags)
+{
+	struct Lava_output *output = (struct Lava_output *)data;
+	uint32_t *i;
+	output->river_view_tags = 0;
+	wl_array_for_each(i, tags)
+		output->river_view_tags |= *i;
+	update_river_output_occupied_state(output);
+}
+
+static const struct zriver_output_status_v1_listener river_status_listener = {
+	.focused_tags = river_status_handle_focused_tags,
+	.view_tags    = river_status_handle_view_tags
+};
+
 bool configure_output (struct Lava_output *output)
 {
 	struct Lava_data *data = output->data;
@@ -212,9 +247,20 @@ bool configure_output (struct Lava_output *output)
 		log_message(NULL, 0, "ERROR: Could not get XDG output.\n");
 		return false;
 	}
-
 	zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener,
 			output);
+
+	/* Create river_output_status and attach listener, but only if we need it. */
+	if (output->data->need_river_status)
+	{
+		if ( NULL == (output->river_status = zriver_status_manager_v1_get_river_output_status(
+						output->data->river_status_manager, output->wl_output)) )
+		{
+			log_message(NULL, 0, "ERROR: Could not get river output status.\n");
+			return false;
+		}
+		zriver_output_status_v1_add_listener(output->river_status, &river_status_listener, output);
+	}
 
 	output->status = OUTPUT_STATUS_UNUSED;
 
@@ -250,6 +296,12 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	output->status        = OUTPUT_STATUS_UNCONFIGURED;
 	output->w = output->h = 0;
 
+	/* River output status stuff. */
+	output->river_status          = NULL;
+	output->river_focused_tags    = 0;
+	output->river_view_tags       = 0;
+	output->river_output_occupied = false;
+
 	wl_list_init(&output->bars);
 
 	wl_list_insert(&data->outputs, &output->link);
@@ -257,10 +309,12 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	wl_output_add_listener(wl_output, &output_listener, output);
 
 	/* We can only use the output if we have both xdg_output_manager and
-	 * the layer_shell. If either one is not available yet, we have to
-	 * configure the output later (see init_wayland()).
+	 * the layer_shell and, if we need it, river_output_manager. If either
+	 * one is not available yet, we have to configure the output later (see
+	 * init_wayland()).
 	 */
-	if ( data->xdg_output_manager != NULL && data->layer_shell != NULL )
+	if ( data->xdg_output_manager != NULL && data->layer_shell != NULL
+			&& ( !data->need_river_status || data->river_status_manager != NULL ) )
 	{
 		if (! configure_output(output))
 			return false;
@@ -284,6 +338,9 @@ void destroy_output (struct Lava_output *output)
 {
 	if ( output == NULL )
 		return;
+
+	if ( output->river_status != NULL )
+		zriver_output_status_v1_destroy(output->river_status);
 
 	destroy_all_bars(output);
 	wl_list_remove(&output->link);

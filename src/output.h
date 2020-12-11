@@ -46,6 +46,11 @@ struct Lava_output
 	struct wl_output      *wl_output;
 	struct zxdg_output_v1 *xdg_output;
 
+	/* River output status stuff (optional). */
+	struct zriver_output_status_v1 *river_status;
+	uint32_t river_focused_tags, river_view_tags;
+	bool river_output_occupied;
+
 	char    *name;
 	uint32_t global_name;
 	uint32_t scale;

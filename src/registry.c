@@ -32,6 +32,7 @@
 #include<wayland-client-protocol.h>
 
 #include"wlr-layer-shell-unstable-v1-protocol.h"
+#include"river-status-unstable-v1-protocol.h"
 #include"xdg-output-unstable-v1-protocol.h"
 #include"xdg-shell-protocol.h"
 
@@ -85,6 +86,12 @@ static void registry_handle_global (void *raw_data, struct wl_registry *registry
 		if (! create_output(data, registry, name, interface, version))
 			goto error;
 	}
+	else if (! strcmp(interface, zriver_status_manager_v1_interface.name))
+	{
+		if (data->need_river_status)
+			data->river_status_manager = wl_registry_bind(registry, name,
+				&zriver_status_manager_v1_interface, 1);
+	}
 
 	return;
 error:
@@ -120,6 +127,10 @@ static char *check_for_required_interfaces (struct Lava_data *data)
 		return "zwlr_layershell_v1";
 	if ( data->xdg_output_manager == NULL )
 		return "zxdg_output_manager";
+
+	if ( data->need_river_status && data->river_status_manager == NULL )
+		return "zriver_status_v1";
+
 	return NULL;
 }
 
@@ -190,6 +201,9 @@ void finish_wayland (struct Lava_data *data)
 		wl_shm_destroy(data->shm);
 	if ( data->registry != NULL )
 		wl_registry_destroy(data->registry);
+
+	if ( data->river_status_manager != NULL )
+		zriver_status_manager_v1_destroy(data->river_status_manager);
 
 	if ( data->display != NULL )
 	{

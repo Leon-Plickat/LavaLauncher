@@ -150,6 +150,9 @@ as follows.
 	The "river-auto" mode works only in the river Wayland compositor. In this
 	mode, the bar is only hidden if the output is currently occupied.
 
+	Behold: If you want a hidden bar which sits above windows on hover, you need
+	to set the layer to "top" and the exclusive zone to "off" or "stationary".
+
 *hidden-size*
 	Size of the invisible area where hovering with a pointer will unhide the bar
 	if it is hidden. Defaults to 10.

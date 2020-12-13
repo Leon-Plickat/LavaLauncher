@@ -17,8 +17,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define VERSION "2.0.0"
-
 #define _POSIX_C_SOURCE 200809L
 
 #include<stdio.h>
@@ -256,7 +254,7 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 			break;
 
 		case 'V':
-			fputs("LavaLauncher version " VERSION"\n", stderr);
+			fputs("LavaLauncher version " LAVALAUNCHER_VERSION"\n", stderr);
 			data->ret = EXIT_SUCCESS;
 			return false;
 
@@ -336,7 +334,7 @@ reload:
 	if (! handle_command_flags(&data, argc, argv))
 		return data.ret;
 
-	log_message(&data, 1, "[main] LavaLauncher: version=%s\n", VERSION);
+	log_message(&data, 1, "[main] LavaLauncher: version=%s\n", LAVALAUNCHER_VERSION);
 
 	/* If the user did not provide the path to a configuration file, try
 	 * the default location.

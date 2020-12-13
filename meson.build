@@ -1,7 +1,7 @@
 project(
   'lavalauncher',
   'c',
-  version: '1.7.0',
+  version: '2.0.0', # release version
   license: 'GPLv3',
   default_options: [
     'c_std=c11',
@@ -30,6 +30,20 @@ endif
 if get_option('handle-signals').enabled()
   add_project_arguments(cc.get_supported_arguments([ '-DHANDLE_SIGNALS' ]), language: 'c')
 endif
+
+version = '"@0@"'.format(meson.project_version())
+git = find_program('git', native: true, required: false)
+if git.found()
+  git_commit = run_command([git, 'rev-parse', '--short', 'HEAD'])
+  git_branch = run_command([git, 'rev-parse', '--abbrev-ref', 'HEAD'])
+  if git_commit.returncode() == 0 and git_branch.returncode() == 0
+    version = '"GIT-@0@ (" __DATE__ ", branch \'@1@\')"'.format(
+      git_commit.stdout().strip(),
+      git_branch.stdout().strip(),
+    )
+  endif
+endif
+add_project_arguments('-DLAVALAUNCHER_VERSION=@0@'.format(version), language: 'c')
 
 wayland_protocols = dependency('wayland-protocols')
 wayland_client    = dependency('wayland-client', include_type: 'system')

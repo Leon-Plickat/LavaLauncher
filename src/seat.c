@@ -54,12 +54,6 @@ static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 
 	log_message(data, 1, "[seat] Handling seat capabilities.\n");
 
-	if ( seat->pointer.wl_pointer != NULL )
-	{
-		wl_pointer_release(seat->pointer.wl_pointer);
-		seat->pointer.wl_pointer = NULL;
-	}
-
 	if ( capabilities & WL_SEAT_CAPABILITY_POINTER )
 	{
 		log_message(data, 2, "[seat] Seat has pointer capabilities.\n");
@@ -67,6 +61,12 @@ static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 		wl_pointer_add_listener(seat->pointer.wl_pointer,
 				&pointer_listener, seat);
 	}
+	else if ( seat->pointer.wl_pointer != NULL )
+	{
+		wl_pointer_release(seat->pointer.wl_pointer);
+		seat->pointer.wl_pointer = NULL;
+	}
+
 
 	if ( capabilities & WL_SEAT_CAPABILITY_TOUCH )
 	{
@@ -74,6 +74,11 @@ static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
 		seat->touch.wl_touch = wl_seat_get_touch(wl_seat);
 		wl_touch_add_listener(seat->touch.wl_touch,
 				&touch_listener, seat);
+	}
+	else if ( seat->touch.wl_touch != NULL )
+	{
+		wl_touch_release(seat->touch.wl_touch);
+		seat->touch.wl_touch = NULL;
 	}
 }
 

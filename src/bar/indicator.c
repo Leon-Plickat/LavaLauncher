@@ -35,7 +35,7 @@
 #include"output.h"
 #include"bar/bar.h"
 #include"bar/bar-pattern.h"
-#include"item/item.h"
+#include"item.h"
 #include"bar/draw-generics.h"
 #include"bar/indicator.h"
 #include"types/colour_t.h"

@@ -39,7 +39,7 @@
 #include"bar/draw-generics.h"
 #include"bar/indicator.h"
 #include"draw-generics.h"
-#include"item/item.h"
+#include"item.h"
 #include"lavalauncher.h"
 #include"str.h"
 #include"output.h"

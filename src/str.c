@@ -76,3 +76,16 @@ char *get_formatted_buffer (const char *fmt, ...)
 	return buffer;
 }
 
+
+void setenvf (const char *name, const char *fmt, ...)
+{
+	char buffer[64];
+	memset(buffer, '\0', sizeof(buffer));
+
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buffer, sizeof(buffer) - 1, fmt, args);
+	va_end(args);
+
+	setenv(name, buffer, true);
+}

@@ -26,7 +26,7 @@
 
 #include"lavalauncher.h"
 #include"str.h"
-#include"item/item.h"
+#include"item.h"
 #include"bar/bar-pattern.h"
 
 bool is_boolean_true (const char *str)

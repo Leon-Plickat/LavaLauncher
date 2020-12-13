@@ -59,8 +59,17 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 	if ( seat->pointer.indicator != NULL )
 		destroy_indicator(seat->pointer.indicator);
 
+	/* We have to check every seat before we can be sure that no pointer
+	 * hovers over the bar. Only if this is the case can we hide the bar.
+	 */
+	// TODO we may need to consider touch points here
+	struct Lava_seat *st;
+	wl_list_for_each(st, &seat->data->seats, link)
+		if ( st != seat && st->pointer.bar == seat->pointer.bar )
+			goto skip_update_hiding;
 	seat->pointer.bar->hover = false;
 	bar_update_hidden_status(seat->pointer.bar);
+skip_update_hiding:
 
 	seat->pointer.x        = 0;
 	seat->pointer.y        = 0;

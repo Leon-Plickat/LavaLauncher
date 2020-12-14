@@ -51,8 +51,7 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 {
 	struct Lava_data  *data        = seat->data;
 	struct wl_pointer *pointer     = seat->pointer.wl_pointer;
-	char              *cursor_name = string_t_get_string_or_else(
-			seat->pointer.bar->pattern->cursor_name, "pointer");
+	const char        *cursor_name = str_orelse(seat->pointer.bar->config->cursor_name, "pointer");
 
 	int32_t scale       = (int32_t)seat->pointer.bar->output->scale;
 	int32_t cursor_size = 24; // TODO ?

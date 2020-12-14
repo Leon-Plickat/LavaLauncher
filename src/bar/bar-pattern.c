@@ -40,39 +40,162 @@
 #include"types/string_t.h"
 #include"types/box_t.h"
 
-static void sensible_defaults (struct Lava_bar_pattern *pattern)
+static void bar_config_sensible_defaults (struct Lava_bar_configuration *config)
 {
-	pattern->position          = POSITION_BOTTOM;
-	pattern->alignment         = ALIGNMENT_CENTER;
-	pattern->mode              = MODE_DEFAULT;
-	pattern->layer             = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
+	config->position  = POSITION_BOTTOM;
+	config->alignment = ALIGNMENT_CENTER;
+	config->mode      = MODE_DEFAULT;
+	config->layer     = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 
-	pattern->size                = 60;
-	pattern->hidden_size         = 10;
-	pattern->hidden_mode         = HIDDEN_MODE_NEVER;
-	pattern->icon_padding        = 4;
-	pattern->exclusive_zone      = 1;
-	pattern->indicator_padding   = 0;
-	pattern->indicator_style     = STYLE_ROUNDED_RECTANGLE;
+	config->size              = 60;
+	config->hidden_size       = 10;
+	config->hidden_mode       = HIDDEN_MODE_NEVER;
+	config->icon_padding      = 4;
+	config->exclusive_zone    = 1;
+	config->indicator_padding = 0;
+	config->indicator_style   = STYLE_ROUNDED_RECTANGLE;
 
-	udirections_t_set_all(&pattern->border, 1);
-	udirections_t_set_all(&pattern->margin, 0);
-	uradii_t_set_all(&pattern->radii, 5);
+	udirections_t_set_all(&config->border, 1);
+	udirections_t_set_all(&config->margin, 0);
+	uradii_t_set_all(&config->radii, 5);
 
-	colour_t_from_string(&pattern->bar_colour, "#000000");
-	colour_t_from_string(&pattern->border_colour, "#ffffff");
-	colour_t_from_string(&pattern->indicator_hover_colour, "#404040");
-	colour_t_from_string(&pattern->indicator_active_colour, "#606060");
+	colour_t_from_string(&config->bar_colour, "#000000");
+	colour_t_from_string(&config->border_colour, "#ffffff");
+	colour_t_from_string(&config->indicator_hover_colour, "#404040");
+	colour_t_from_string(&config->indicator_active_colour, "#606060");
 
-	pattern->condition_scale      = 0;
-	pattern->condition_transform  = -1;
-	pattern->condition_resolution = RESOLUTION_ALL;
+	config->condition_scale      = 0;
+	config->condition_transform  = -1;
+	config->condition_resolution = RESOLUTION_ALL;
+
+	config->cursor_name = NULL;
+	config->only_output = NULL;
+	config->namespace   = NULL;
+}
+
+static void bar_config_copy_settings (struct Lava_bar_configuration *config,
+		struct Lava_bar_configuration *default_config)
+{
+	config->position  = default_config->position;
+	config->alignment = default_config->alignment;
+	config->mode      = default_config->mode;
+	config->layer     = default_config->layer;
+
+	config->size              = default_config->size;
+	config->hidden_size       = default_config->hidden_size;
+	config->hidden_mode       = default_config->hidden_mode;
+	config->icon_padding      = default_config->icon_padding;
+	config->exclusive_zone    = default_config->exclusive_zone;
+	config->indicator_padding = default_config->indicator_padding;
+	config->indicator_style   = default_config->indicator_style;
+
+	memcpy(&config->border, &default_config->border, sizeof(udirections_t));
+	memcpy(&config->margin, &default_config->margin, sizeof(udirections_t));
+	memcpy(&config->radii, &default_config->radii, sizeof(uradii_t));
+
+	memcpy(&config->bar_colour, &default_config->bar_colour, sizeof(colour_t));
+	memcpy(&config->border_colour, &default_config->border_colour, sizeof(colour_t));
+	memcpy(&config->indicator_hover_colour, &default_config->indicator_hover_colour, sizeof(colour_t));
+	memcpy(&config->indicator_active_colour, &default_config->indicator_active_colour, sizeof(colour_t));
+
+	config->condition_scale      = default_config->condition_scale;
+	config->condition_transform  = default_config->condition_transform;
+	config->condition_resolution = default_config->condition_resolution;
+
+	config->cursor_name = default_config->cursor_name == NULL ? NULL : strdup(default_config->cursor_name);
+	config->only_output = default_config->only_output == NULL ? NULL : strdup(default_config->only_output);
+	config->namespace = default_config->namespace == NULL ? NULL : strdup(default_config->namespace);
+}
+
+struct Lava_bar_configuration *pattern_get_first_config (struct Lava_bar_pattern *pattern)
+{
+	struct Lava_bar_configuration *config;
+	wl_list_for_each(config, &pattern->configs, link)
+		return config;
+	return NULL;
+}
+
+struct Lava_bar_configuration *pattern_get_last_config (struct Lava_bar_pattern *pattern)
+{
+	int len = wl_list_length(&pattern->configs) - 1, i = 0;
+	struct Lava_bar_configuration *config;
+	wl_list_for_each(config, &pattern->configs, link)
+		if ( i++ == len )
+			return config;
+	return NULL;
+}
+
+bool create_bar_config (struct Lava_bar_pattern *pattern, bool default_config)
+{
+	struct Lava_bar_configuration *config = calloc(1, sizeof(struct Lava_bar_configuration));
+	if ( config == NULL )
+	{
+		log_message(NULL, 0, "ERROR: Could not allocate.\n");
+		return false;
+	}
+
+	if (default_config)
+		bar_config_sensible_defaults(config);
+	else
+		bar_config_copy_settings(config, pattern_get_first_config(pattern));
+
+	wl_list_insert(&pattern->configs, &config->link);
+	return true;
+}
+
+static void destroy_bar_config (struct Lava_bar_configuration *config)
+{
+	free_if_set(config->cursor_name);
+	free_if_set(config->only_output);
+	free_if_set(config->namespace);
+	free(config);
+}
+
+static void destroy_all_bar_configs (struct Lava_bar_pattern *pattern)
+{
+	struct Lava_bar_configuration *config, *temp;
+	wl_list_for_each_safe(config, temp, &pattern->configs, link)
+		destroy_bar_config(config);
+}
+
+static void finalize_bar_config (struct Lava_bar_configuration *config)
+{
+	switch (config->position)
+	{
+		case POSITION_TOP:
+		case POSITION_BOTTOM:
+			config->orientation = ORIENTATION_HORIZONTAL;
+			break;
+
+		case POSITION_LEFT:
+		case POSITION_RIGHT:
+			config->orientation = ORIENTATION_VERTICAL;
+			break;
+	}
+
+	if ( config->icon_padding > config->size / 3 )
+	{
+		log_message(NULL, 0, "WARNING: Configured 'icon-padding' too large for bar size. "
+				"Automatically shrinking to a reasonable size.\n");
+		config->icon_padding = config->size / 3;
+	}
+	if ( config->indicator_padding > config->size / 3 )
+	{
+		log_message(NULL, 0, "WARNING: Configured 'indicator-padding' too large for bar size. "
+				"Automatically shrinking to a reasonable size.\n");
+		config->indicator_padding = config->size / 3;
+	}
+}
+
+static void finalize_all_bar_configs (struct Lava_bar_pattern *pattern)
+{
+	struct Lava_bar_configuration *config;
+	wl_list_for_each(config, &pattern->configs, link)
+		finalize_bar_config(config);
 }
 
 bool create_bar_pattern (struct Lava_data *data)
 {
-	log_message(data, 1, "[bar-pattern] Creating bar pattern.\n");
-
 	struct Lava_bar_pattern *pattern = calloc(1, sizeof(struct Lava_bar_pattern));
 	if ( pattern == NULL )
 	{
@@ -80,66 +203,21 @@ bool create_bar_pattern (struct Lava_data *data)
 		return false;
 	}
 
-	pattern->cursor_name = NULL;
-	pattern->only_output = NULL;
-	pattern->namespace   = NULL;
-
-	sensible_defaults(pattern);
 	pattern->data = data;
-	data->last_pattern = pattern;
+	data->last_pattern = pattern; // TODO we don't actually need this,
+	                              //  -> implement get_last_pattern()
+
 	wl_list_init(&pattern->items);
-	wl_list_insert(&data->patterns, &pattern->link);
+	wl_list_init(&pattern->configs);
 
-	return true;
-}
-
-bool copy_last_bar_pattern (struct Lava_data *data)
-{
-	log_message(data, 1, "[bar-pattern] Copying last bar pattern.\n");
-
-	if ( data->last_pattern == NULL )
+	/* Create default configuration. */
+	if (! create_bar_config(pattern, true))
 	{
-		log_message(NULL, 0, "ERROR: Can not copy bar. There is no previous bar to copy.\n");
+		free(pattern);
 		return false;
 	}
 
-	struct Lava_bar_pattern *last_pattern = data->last_pattern;
-	if (! create_bar_pattern(data))
-		return false;
-	struct Lava_bar_pattern *pattern = data->last_pattern;
-
-	/* Copy all settings. */
-	pattern->position          = last_pattern->position;
-	pattern->alignment         = last_pattern->alignment;
-	pattern->mode              = last_pattern->mode;
-	pattern->layer             = last_pattern->layer;
-	pattern->size              = last_pattern->size;
-	pattern->hidden_size       = last_pattern->hidden_size;
-	pattern->hidden_mode       = last_pattern->hidden_mode;
-	pattern->icon_padding      = last_pattern->icon_padding;
-	pattern->border            = last_pattern->border;
-	pattern->margin            = last_pattern->margin;
-	pattern->radii             = last_pattern->radii;
-	pattern->exclusive_zone    = last_pattern->exclusive_zone;
-	pattern->indicator_padding = last_pattern->indicator_padding;
-	pattern->indicator_style   = last_pattern->indicator_style;
-
-	memcpy(&pattern->bar_colour, &last_pattern->bar_colour, sizeof(colour_t));
-	memcpy(&pattern->border_colour, &last_pattern->border_colour, sizeof(colour_t));
-	memcpy(&pattern->indicator_hover_colour, &last_pattern->indicator_hover_colour, sizeof(colour_t));
-	memcpy(&pattern->indicator_active_colour, &last_pattern->indicator_active_colour, sizeof(colour_t));
-
-	if ( last_pattern->cursor_name != NULL )
-		pattern->cursor_name = string_t_reference(last_pattern->cursor_name);
-	if ( last_pattern->only_output != NULL )
-		pattern->only_output = string_t_reference(last_pattern->only_output);
-	if ( last_pattern->namespace != NULL )
-		pattern->namespace = string_t_reference(last_pattern->namespace);
-
-	struct Lava_item *item, *temp;
-	wl_list_for_each_reverse_safe(item, temp, &last_pattern->items, link)
-		if (! copy_item(pattern, item))
-				return false;
+	wl_list_insert(&data->patterns, &pattern->link);
 
 	return true;
 }
@@ -147,36 +225,9 @@ bool copy_last_bar_pattern (struct Lava_data *data)
 bool finalize_bar_pattern (struct Lava_bar_pattern *pattern)
 {
 	log_message(pattern->data, 1, "[bar-pattern] Finalize bar pattern.\n");
-
 	if (! finalize_items(pattern))
 		return false;
-
-	switch (pattern->position)
-	{
-		case POSITION_TOP:
-		case POSITION_BOTTOM:
-			pattern->orientation = ORIENTATION_HORIZONTAL;
-			break;
-
-		case POSITION_LEFT:
-		case POSITION_RIGHT:
-			pattern->orientation = ORIENTATION_VERTICAL;
-			break;
-	}
-
-	if ( pattern->icon_padding > pattern->size / 3 )
-	{
-		log_message(NULL, 0, "WARNING: Configured 'icon-padding' too large for bar size. "
-				"Automatically shrinking to a reasonable size.\n");
-		pattern->icon_padding = pattern->size / 3;
-	}
-	if ( pattern->indicator_padding > pattern->size / 3 )
-	{
-		log_message(NULL, 0, "WARNING: Configured 'indicator-padding' too large for bar size. "
-				"Automatically shrinking to a reasonable size.\n");
-		pattern->indicator_padding = pattern->size / 3;
-	}
-
+	finalize_all_bar_configs(pattern);
 	return true;
 }
 
@@ -184,12 +235,7 @@ static void destroy_bar_pattern (struct Lava_bar_pattern *pattern)
 {
 	wl_list_remove(&pattern->link);
 	destroy_all_items(pattern);
-	if ( pattern->cursor_name != NULL )
-		string_t_destroy(pattern->cursor_name);
-	if ( pattern->only_output != NULL )
-		string_t_destroy(pattern->only_output);
-	if ( pattern->namespace != NULL )
-		string_t_destroy(pattern->namespace);
+	destroy_all_bar_configs(pattern);
 	free(pattern);
 }
 
@@ -220,6 +266,23 @@ static uint32_t count_args (const char *arg)
 	}
 	return args;
 }
+
+/****************************
+ * Bar config configuration *
+ ****************************/
+#define BAR_CONFIG(A) static bool A (struct Lava_bar_configuration *config, struct Lava_data *data, const char *arg)
+#define BAR_CONFIG_COLOUR(A, B) \
+	static bool A (struct Lava_bar_configuration *config, struct Lava_data *data, const char *arg) \
+	{ \
+		return colour_t_from_string(&config->B, arg); \
+	}
+#define BAR_CONFIG_STRING(A, B) \
+	static bool A (struct Lava_bar_configuration *config, struct Lava_data *data, const char *arg) \
+	{ \
+		set_string(&config->B, (char *)arg); \
+		return true; \
+	}
+
 
 static bool directional_config (uint32_t *_a, uint32_t *_b, uint32_t *_c, uint32_t *_d,
 		const char *arg, const char *conf_name, const char *conf_name_2)
@@ -255,37 +318,46 @@ done:
 	return true;
 }
 
-static bool bar_pattern_set_border_size (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG_STRING(bar_config_set_cursor_name, cursor_name)
+BAR_CONFIG_STRING(bar_config_set_only_output, only_output)
+BAR_CONFIG_STRING(bar_config_set_namespace, namespace)
+
+BAR_CONFIG_COLOUR(bar_config_set_bar_colour, bar_colour)
+BAR_CONFIG_COLOUR(bar_config_set_border_colour, border_colour)
+BAR_CONFIG_COLOUR(bar_config_set_indicator_colour_active, indicator_active_colour)
+BAR_CONFIG_COLOUR(bar_config_set_indicator_colour_hover, indicator_hover_colour)
+
+BAR_CONFIG(bar_config_set_border_size)
 {
-	return directional_config(&pattern->border.top, &pattern->border.right,
-			&pattern->border.bottom, &pattern->border.left,
+	return directional_config(&config->border.top, &config->border.right,
+			&config->border.bottom, &config->border.left,
 			arg, "border", "Border size");
 }
 
-static bool bar_pattern_set_margin_size (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_margin_size)
 {
-	return directional_config(&pattern->margin.top, &pattern->margin.right,
-			&pattern->margin.bottom, &pattern->margin.left,
+	return directional_config(&config->margin.top, &config->margin.right,
+			&config->margin.bottom, &config->margin.left,
 			arg, "margin", "Margins");
 }
 
-static bool bar_pattern_set_radius (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_radius)
 {
-	return directional_config(&pattern->radii.top_left, &pattern->radii.top_right,
-			&pattern->radii.bottom_left, &pattern->radii.bottom_right,
+	return directional_config(&config->radii.top_left, &config->radii.top_right,
+			&config->radii.bottom_left, &config->radii.bottom_right,
 			arg, "radius", "Radii");
 }
 
-static bool bar_pattern_set_position (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_position)
 {
 	if (! strcmp(arg, "top"))
-		pattern->position = POSITION_TOP;
+		config->position = POSITION_TOP;
 	else if (! strcmp(arg, "right"))
-		pattern->position = POSITION_RIGHT;
+		config->position = POSITION_RIGHT;
 	else if (! strcmp(arg, "bottom"))
-		pattern->position = POSITION_BOTTOM;
+		config->position = POSITION_BOTTOM;
 	else if (! strcmp(arg, "left"))
-		pattern->position = POSITION_LEFT;
+		config->position = POSITION_LEFT;
 	else
 	{
 		log_message(NULL, 0, "ERROR: Unrecognized position \"%s\".\n"
@@ -296,14 +368,14 @@ static bool bar_pattern_set_position (struct Lava_bar_pattern *pattern, const ch
 	return true;
 }
 
-static bool bar_pattern_set_alignment (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_alignment)
 {
 	if (! strcmp(arg, "start"))
-		pattern->alignment = ALIGNMENT_START;
+		config->alignment = ALIGNMENT_START;
 	else if (! strcmp(arg, "center"))
-		pattern->alignment = ALIGNMENT_CENTER;
+		config->alignment = ALIGNMENT_CENTER;
 	else if (! strcmp(arg, "end"))
-		pattern->alignment = ALIGNMENT_END;
+		config->alignment = ALIGNMENT_END;
 	else
 	{
 		log_message(NULL, 0, "ERROR: Unrecognized alignment \"%s\".\n"
@@ -314,14 +386,14 @@ static bool bar_pattern_set_alignment (struct Lava_bar_pattern *pattern, const c
 	return true;
 }
 
-static bool bar_pattern_set_mode (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_mode)
 {
 	if (! strcmp(arg, "default"))
-		pattern->mode = MODE_DEFAULT;
+		config->mode = MODE_DEFAULT;
 	else if (! strcmp(arg, "full"))
-		pattern->mode = MODE_FULL;
+		config->mode = MODE_FULL;
 	else if (! strcmp(arg, "aggressive"))
-		pattern->mode = MODE_AGGRESSIVE;
+		config->mode = MODE_AGGRESSIVE;
 	else
 	{
 		log_message(NULL, 0, "ERROR: Unrecognized mode \"%s\".\n"
@@ -332,16 +404,16 @@ static bool bar_pattern_set_mode (struct Lava_bar_pattern *pattern, const char *
 	return true;
 }
 
-static bool bar_pattern_set_layer (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_layer)
 {
 	if (! strcmp(arg, "overlay"))
-		pattern->layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
+		config->layer = ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY;
 	else if (! strcmp(arg, "top"))
-		pattern->layer = ZWLR_LAYER_SHELL_V1_LAYER_TOP;
+		config->layer = ZWLR_LAYER_SHELL_V1_LAYER_TOP;
 	else if (! strcmp(arg, "bottom"))
-		pattern->layer = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
+		config->layer = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 	else if (! strcmp(arg, "background"))
-		pattern->layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
+		config->layer = ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND;
 	else
 	{
 		log_message(NULL, 0, "ERROR: Unrecognized layer \"%s\".\n"
@@ -352,7 +424,7 @@ static bool bar_pattern_set_layer (struct Lava_bar_pattern *pattern, const char 
 	return true;
 }
 
-static bool bar_pattern_set_size (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_size)
 {
 	int32_t size = atoi(arg);
 	if ( size <= 0 )
@@ -360,11 +432,11 @@ static bool bar_pattern_set_size (struct Lava_bar_pattern *pattern, const char *
 		log_message(NULL, 0, "ERROR: Size must be greater than zero.\n");
 		return false;
 	}
-	pattern->size = (uint32_t)size;
+	config->size = (uint32_t)size;
 	return true;
 }
 
-static bool bar_pattern_set_icon_padding (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_icon_padding)
 {
 	int32_t temp = atoi(arg);
 	if ( temp < 0 )
@@ -372,39 +444,18 @@ static bool bar_pattern_set_icon_padding (struct Lava_bar_pattern *pattern, cons
 		log_message(NULL, 0, "ERROR: Icon padding must be greater than or equal to zero.\n");
 		return false;
 	}
-	pattern->icon_padding = (uint32_t)temp;
+	config->icon_padding = (uint32_t)temp;
 	return true;
 }
 
-static bool bar_pattern_set_only_output (struct Lava_bar_pattern *pattern, const char *arg)
-{
-	if ( pattern->only_output != NULL )
-		string_t_destroy(pattern->only_output);
-
-	if ( strcmp(arg, "all") && *arg != '*' )
-		pattern->only_output = string_t_from(arg);
-
-	return true;
-}
-
-static bool bar_pattern_set_namespace (struct Lava_bar_pattern *pattern, const char *arg)
-{
-	if ( pattern->namespace != NULL )
-		string_t_destroy(pattern->namespace);
-
-	pattern->namespace = string_t_from(arg);
-
-	return true;
-}
-
-static bool bar_pattern_set_exclusive_zone (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_exclusive_zone)
 {
 	if (is_boolean_true(arg))
-		pattern->exclusive_zone = 1;
+		config->exclusive_zone = 1;
 	else if (is_boolean_false(arg))
-		pattern->exclusive_zone = 0;
+		config->exclusive_zone = 0;
 	else if (! strcmp(arg, "stationary"))
-		pattern->exclusive_zone = -1;
+		config->exclusive_zone = -1;
 	else
 	{
 		log_message(NULL, 0, "ERROR: Unrecognized exclusive zone option \"%s\".\n"
@@ -415,7 +466,7 @@ static bool bar_pattern_set_exclusive_zone (struct Lava_bar_pattern *pattern, co
 	return true;
 }
 
-static bool bar_pattern_set_hidden_size (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_hidden_size)
 {
 	int32_t hidden_size = atoi(arg);
 	if ( hidden_size < 1 )
@@ -423,20 +474,20 @@ static bool bar_pattern_set_hidden_size (struct Lava_bar_pattern *pattern, const
 		log_message(NULL, 0, "ERROR: Hidden size may not be smaller than 1.\n");
 		return false;
 	}
-	pattern->hidden_size = (uint32_t)hidden_size;
+	config->hidden_size = (uint32_t)hidden_size;
 	return true;
 }
 
-static bool bar_pattern_set_hidden_mode (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_hidden_mode)
 {
 	if (! strcmp(arg, "never"))
-		pattern->hidden_mode = HIDDEN_MODE_NEVER;
+		config->hidden_mode = HIDDEN_MODE_NEVER;
 	else if (! strcmp(arg, "always"))
-		pattern->hidden_mode = HIDDEN_MODE_ALWAYS;
+		config->hidden_mode = HIDDEN_MODE_ALWAYS;
 	else if (! strcmp(arg, "river-auto"))
 	{
-		pattern->hidden_mode = HIDDEN_MODE_RIVER_AUTO;
-		pattern->data->need_river_status = true;
+		config->hidden_mode = HIDDEN_MODE_RIVER_AUTO;
+		data->need_river_status = true;
 	}
 	else
 	{
@@ -447,29 +498,11 @@ static bool bar_pattern_set_hidden_mode (struct Lava_bar_pattern *pattern, const
 	return true;
 }
 
-static bool bar_pattern_set_bar_colour (struct Lava_bar_pattern *pattern, const char *arg)
-{
-	return colour_t_from_string(&pattern->bar_colour, arg);
-}
-
-static bool bar_pattern_set_border_colour (struct Lava_bar_pattern *pattern, const char *arg)
-{
-	return colour_t_from_string(&pattern->border_colour, arg);
-}
-
-static bool bar_pattern_set_cursor_name (struct Lava_bar_pattern *pattern, const char *arg)
-{
-	if ( pattern->cursor_name != NULL )
-		string_t_destroy(pattern->cursor_name);
-	pattern->cursor_name = string_t_from(arg);
-	return true;
-}
-
-static bool bar_pattern_set_condition_scale (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_condition_scale)
 {
 	if (! strcmp(arg, "all"))
 	{
-		pattern->condition_scale = 0;
+		config->condition_scale = 0;
 		return true;
 	}
 
@@ -479,18 +512,18 @@ static bool bar_pattern_set_condition_scale (struct Lava_bar_pattern *pattern, c
 		log_message(NULL, 0, "ERROR: Scale condition must be an integer greater than  zero or 'all'.\n");
 		return false;
 	}
-	pattern->condition_scale = (uint32_t)temp;
+	config->condition_scale = (uint32_t)temp;
 	return true;
 }
 
-static bool bar_pattern_set_condition_resolution (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_condition_resolution)
 {
 	if (! strcmp(arg, "all"))
-		pattern->condition_resolution = RESOLUTION_ALL;
+		config->condition_resolution = RESOLUTION_ALL;
 	else if (! strcmp(arg, "wider-than-high"))
-		pattern->condition_resolution = RESOLUTION_WIDER_THAN_HIGH;
+		config->condition_resolution = RESOLUTION_WIDER_THAN_HIGH;
 	else if (! strcmp(arg, "higher-than-wide"))
-		pattern->condition_resolution = RESOLUTION_HIGHER_THEN_WIDE;
+		config->condition_resolution = RESOLUTION_HIGHER_THEN_WIDE;
 	else
 	{
 		log_message(NULL, 0, "ERROR: Resolution condition can be 'all', 'wider-than-high' or 'higher-than-wide'.\n" );
@@ -500,16 +533,16 @@ static bool bar_pattern_set_condition_resolution (struct Lava_bar_pattern *patte
 	return true;
 }
 
-static bool bar_pattern_set_condition_transform (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_condition_transform)
 {
 	if (! strcmp(arg, "all"))
 	{
-		pattern->condition_transform = -1;
+		config->condition_transform = -1;
 		return true;
 	}
 
-	pattern->condition_transform = atoi(arg);
-	if ( pattern->condition_transform < 0 || pattern->condition_transform > 4 )
+	config->condition_transform = atoi(arg);
+	if ( config->condition_transform < 0 || config->condition_transform > 4 )
 	{
 		log_message(NULL, 0, "ERROR: Transform condition can be 0, 1, 2, 3 or 'all'.\n");
 		return false;
@@ -517,7 +550,7 @@ static bool bar_pattern_set_condition_transform (struct Lava_bar_pattern *patter
 	return true;
 }
 
-static bool bar_pattern_set_indicator_padding (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_indicator_padding)
 {
 	int32_t size = atoi(arg);
 	if ( size < 0 )
@@ -525,28 +558,18 @@ static bool bar_pattern_set_indicator_padding (struct Lava_bar_pattern *pattern,
 		log_message(NULL, 0, "ERROR: Indicator padding must be equal to or greater than zero.\n");
 		return false;
 	}
-	pattern->indicator_padding = (uint32_t)size;
+	config->indicator_padding = (uint32_t)size;
 	return true;
 }
 
-static bool bar_pattern_set_indicator_colour_active (struct Lava_bar_pattern *pattern, const char *arg)
-{
-	return colour_t_from_string(&pattern->indicator_active_colour, arg);
-}
-
-static bool bar_pattern_set_indicator_colour_hover (struct Lava_bar_pattern *pattern, const char *arg)
-{
-	return colour_t_from_string(&pattern->indicator_hover_colour, arg);
-}
-
-static bool bar_pattern_set_indicator_style (struct Lava_bar_pattern *pattern, const char *arg)
+BAR_CONFIG(bar_config_set_indicator_style)
 {
 	if (! strcmp(arg, "rectangle"))
-		pattern->indicator_style = STYLE_RECTANGLE;
+		config->indicator_style = STYLE_RECTANGLE;
 	else if (! strcmp(arg, "rounded-rectangle"))
-		pattern->indicator_style = STYLE_ROUNDED_RECTANGLE;
+		config->indicator_style = STYLE_ROUNDED_RECTANGLE;
 	else if (! strcmp(arg, "circle"))
-		pattern->indicator_style = STYLE_CIRCLE;
+		config->indicator_style = STYLE_CIRCLE;
 	else
 	{
 		log_message(NULL, 0, "ERROR: Unrecognized indicator style \"%s\".\n"
@@ -557,45 +580,49 @@ static bool bar_pattern_set_indicator_style (struct Lava_bar_pattern *pattern, c
 	return true;
 }
 
+#undef BAR_CONFIG
+#undef BAR_CONFIG_STRING
+#undef BAR_CONFIG_COLOUR
 
-bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,
-		const char *variable, const char *value, int line)
+bool bar_config_set_variable (struct Lava_bar_configuration *config,
+		struct Lava_data *data, const char *variable, const char *value,
+		int line)
 {
 	struct
 	{
 		const char *variable;
-		bool (*set)(struct Lava_bar_pattern*, const char*);
+		bool (*set)(struct Lava_bar_configuration*, struct Lava_data*, const char*);
 	} configs[] = {
-		{ .variable = "alignment",               .set = bar_pattern_set_alignment               },
-		{ .variable = "background-colour",       .set = bar_pattern_set_bar_colour              },
-		{ .variable = "border-colour",           .set = bar_pattern_set_border_colour           },
-		{ .variable = "border",                  .set = bar_pattern_set_border_size             },
-		{ .variable = "condition-resolution",    .set = bar_pattern_set_condition_resolution    },
-		{ .variable = "condition-scale",         .set = bar_pattern_set_condition_scale         },
-		{ .variable = "condition-transform",     .set = bar_pattern_set_condition_transform     },
-		{ .variable = "cursor-name",             .set = bar_pattern_set_cursor_name             },
-		{ .variable = "exclusive-zone",          .set = bar_pattern_set_exclusive_zone          },
-		{ .variable = "hidden-size",             .set = bar_pattern_set_hidden_size             },
-		{ .variable = "hidden-mode",             .set = bar_pattern_set_hidden_mode             },
-		{ .variable = "icon-padding",            .set = bar_pattern_set_icon_padding            },
-		{ .variable = "indicator-active-colour", .set = bar_pattern_set_indicator_colour_active },
-		{ .variable = "indicator-hover-colour",  .set = bar_pattern_set_indicator_colour_hover  },
-		{ .variable = "indicator-padding",       .set = bar_pattern_set_indicator_padding       },
-		{ .variable = "indicator-style",         .set = bar_pattern_set_indicator_style,        },
-		{ .variable = "layer",                   .set = bar_pattern_set_layer                   },
-		{ .variable = "margin",                  .set = bar_pattern_set_margin_size             },
-		{ .variable = "mode",                    .set = bar_pattern_set_mode                    },
-		{ .variable = "namespace",               .set = bar_pattern_set_namespace               },
-		{ .variable = "output",                  .set = bar_pattern_set_only_output             },
-		{ .variable = "position",                .set = bar_pattern_set_position                },
-		{ .variable = "radius",                  .set = bar_pattern_set_radius                  },
-		{ .variable = "size",                    .set = bar_pattern_set_size                    }
+		{ .variable = "alignment",               .set = bar_config_set_alignment               },
+		{ .variable = "background-colour",       .set = bar_config_set_bar_colour              },
+		{ .variable = "border-colour",           .set = bar_config_set_border_colour           },
+		{ .variable = "border",                  .set = bar_config_set_border_size             },
+		{ .variable = "condition-resolution",    .set = bar_config_set_condition_resolution    },
+		{ .variable = "condition-scale",         .set = bar_config_set_condition_scale         },
+		{ .variable = "condition-transform",     .set = bar_config_set_condition_transform     },
+		{ .variable = "cursor-name",             .set = bar_config_set_cursor_name             },
+		{ .variable = "exclusive-zone",          .set = bar_config_set_exclusive_zone          },
+		{ .variable = "hidden-size",             .set = bar_config_set_hidden_size             },
+		{ .variable = "hidden-mode",             .set = bar_config_set_hidden_mode             },
+		{ .variable = "icon-padding",            .set = bar_config_set_icon_padding            },
+		{ .variable = "indicator-active-colour", .set = bar_config_set_indicator_colour_active },
+		{ .variable = "indicator-hover-colour",  .set = bar_config_set_indicator_colour_hover  },
+		{ .variable = "indicator-padding",       .set = bar_config_set_indicator_padding       },
+		{ .variable = "indicator-style",         .set = bar_config_set_indicator_style,        },
+		{ .variable = "layer",                   .set = bar_config_set_layer                   },
+		{ .variable = "margin",                  .set = bar_config_set_margin_size             },
+		{ .variable = "mode",                    .set = bar_config_set_mode                    },
+		{ .variable = "namespace",               .set = bar_config_set_namespace               },
+		{ .variable = "output",                  .set = bar_config_set_only_output             },
+		{ .variable = "position",                .set = bar_config_set_position                },
+		{ .variable = "radius",                  .set = bar_config_set_radius                  },
+		{ .variable = "size",                    .set = bar_config_set_size                    }
 	};
 
 	for (size_t i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
 		if (! strcmp(configs[i].variable, variable))
 		{
-			if (configs[i].set(pattern, value))
+			if (configs[i].set(config, data, value))
 				return true;
 			goto exit;
 		}
@@ -603,7 +630,7 @@ bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,
 	log_message(NULL, 0, "ERROR: Unrecognized bar setting \"%s\".\n", variable);
 exit:
 	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",
-			line, pattern->data->config_path);
+			line, data->config_path);
 	return false;
 }
 

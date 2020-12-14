@@ -53,25 +53,37 @@ static struct Lava_bar *bar_from_pattern (struct Lava_bar_pattern *pattern,
 	return NULL;
 }
 
-static bool pattern_conditions_match_output (struct Lava_bar_pattern *pattern,
+static bool bar_config_conditions_match_output (struct Lava_bar_configuration *config,
 		struct Lava_output *output)
 {
-	if ( pattern->condition_scale != 0
-			&& pattern->condition_scale != output->scale )
+	if ( config->only_output != NULL && strcmp(output->name, config->only_output) )
 		return false;
 
-	if ( pattern->condition_resolution == RESOLUTION_WIDER_THAN_HIGH
+	if ( config->condition_scale != 0
+			&& config->condition_scale != output->scale )
+		return false;
+
+	if ( config->condition_resolution == RESOLUTION_WIDER_THAN_HIGH
 			&& output->w < output->h )
 		return false;
-	if ( pattern->condition_resolution == RESOLUTION_HIGHER_THEN_WIDE
+	if ( config->condition_resolution == RESOLUTION_HIGHER_THEN_WIDE
 			&& output->h < output->w )
 		return false;
 
-	if ( pattern->condition_transform != -1
-			&& pattern->condition_transform != (int32_t)output->transform )
+	if ( config->condition_transform != -1 && config->condition_transform != (int32_t)output->transform )
 		return false;
 
 	return true;
+}
+
+static struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_bar_pattern *pattern,
+		struct Lava_output *output)
+{
+	struct Lava_bar_configuration *config;
+	wl_list_for_each(config, &pattern->configs, link)
+		if (bar_config_conditions_match_output(config, output))
+			return config;
+	return NULL;
 }
 
 static bool update_bars_on_output (struct Lava_output *output)
@@ -83,6 +95,12 @@ static bool update_bars_on_output (struct Lava_output *output)
 	struct Lava_data *data = output->data;
 	log_message(data, 1, "[output] Updating bars: global_name=%d\n", output->global_name);
 
+	/* A lot of compositors have no-op outputs with zero size for internal
+	 * reasons. They should remain unexposed, but sometimes a buggy
+	 * compositor may advertise them nonetheless. In these cases, instead
+	 * of crashing, let's just ignore the output we clearly are not intended
+	 * to use.
+	 */
 	if ( output->w == 0 || output->h == 0 )
 	{
 		destroy_all_bars(output);
@@ -93,23 +111,23 @@ static bool update_bars_on_output (struct Lava_output *output)
 	struct Lava_bar_pattern *pattern, *temp;
 	wl_list_for_each_safe(pattern, temp, &data->patterns, link)
 	{
-		/* The name of an output can expected to remain the same. */
-		if ( pattern->only_output != NULL && strcmp(output->name, pattern->only_output->string) )
-			continue;
-
-		bool conditions = pattern_conditions_match_output(pattern, output);
+		/* Try to find a configuration set of the pattern which fits the output. */
+		struct Lava_bar_configuration *config = get_bar_config_for_output(pattern, output);
 
 		struct Lava_bar *bar;
 		if ( NULL != (bar = bar_from_pattern(pattern, output)) )
 		{
-			if (conditions)
+			if ( config != NULL )
+			{
+				bar->config = config;
 				update_bar(bar);
+			}
 			else
 				destroy_bar(bar);
 		}
-		else if (conditions)
+		else if ( config != NULL )
 		{
-			if (! create_bar(pattern, output))
+			if (! create_bar(pattern, config, output))
 			{
 				log_message(NULL, 0, "ERROR: Could not create bar.\n");
 				data->loop = false;

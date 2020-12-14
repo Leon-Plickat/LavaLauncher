@@ -283,36 +283,15 @@ bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type)
 	return true;
 }
 
-bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item)
-{
-	if (! create_item(pattern, item->type))
-		return false;
-	struct Lava_item *new_item = pattern->last_item;
-
-	/* Copy item settings. */
-	new_item->type                 = item->type;
-	new_item->index                = item->index;
-	new_item->ordinate             = item->ordinate;
-	new_item->length               = item->length;
-
-	for (int i = 0; i < TYPE_AMOUNT; i++)
-		if ( item->command[i] != NULL )
-			new_item->command[i] = string_t_reference(item->command[i]);
-
-	if ( item->img != NULL )
-		new_item->img = image_t_reference(item->img);
-
-	return true;
-}
-
 /* Return pointer to Lava_item struct from item list which includes the
  * given surface-local coordinates on the surface of the given output.
  */
 struct Lava_item *item_from_coords (struct Lava_bar *bar, uint32_t x, uint32_t y)
 {
-	struct Lava_bar_pattern *pattern = bar->pattern;
+	struct Lava_bar_pattern       *pattern = bar->pattern;
+	struct Lava_bar_configuration *config  = bar->config;
 	uint32_t ordinate;
-	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+	if ( config->orientation == ORIENTATION_HORIZONTAL )
 		ordinate = x - bar->item_area.x;
 	else
 		ordinate = y - bar->item_area.y;
@@ -348,12 +327,15 @@ bool finalize_items (struct Lava_bar_pattern *pattern)
 		return false;
 	}
 
+	// TODO XXX set size to -1, which should cause it to automatically be config->size
+	struct Lava_bar_configuration *config = pattern_get_first_config(pattern);
+
 	unsigned int index = 0, ordinate = 0;
 	struct Lava_item *it1, *it2;
 	wl_list_for_each_reverse_safe(it1, it2, &pattern->items, link)
 	{
 		if ( it1->type == TYPE_BUTTON )
-			it1->length = pattern->size;
+			it1->length = config->size;
 
 		it1->index    = index;
 		it1->ordinate = ordinate;

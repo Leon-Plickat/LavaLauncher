@@ -92,8 +92,9 @@ assignments which can be made in this context are as follows.
 	configuration file contains an error upon reload, LavaLauncher will exit.
 
 ## BAR
-Every "bar" context will add a bar. The assignments possible in this context are
-as follows.
+Every "bar" context will add a bar. The configuration changes in this context
+make up the default configuration set of the bar. The assignments possible in
+this context are as follows.
 
 *alignment*
 	Alignment of the buttons / bar. Can be "start", "center" or "end". The
@@ -230,16 +231,21 @@ as follows.
 *size*
 	Size of the bar. The default size is 60.
 
-## BAR COPY
-Every "bar-copy" context will add a bar. This new bar has the same configuration
-and items as the previous bar. You can change the configuration and define
-additional items as usual. The assignments possible in this context are the same
-as for the "bar" context.
+## CONFIG
+Every "config" context will add an additional configuration set to a bar. As
+such, this context is a nested inside the "bar" context. It copies the values
+of the default configuration set, but every setting can be overridden. This is
+useful to change bar configuration based on conditionals, as LavaLauncher will
+automatically choose the first configuration set with fitting conditions.
+Different instances of the same bar on different outputs can use different
+configuration sets, but a bar has at most one instance per output and uses
+exactly one configuration set per instance. The assignments possible in this
+context are the same as for the "bar" context.
 
 ## BUTTON
-Every "button" context will add a button to a bar. As such, this context is
-a nested inside the "bar" or "bar-copy" context. The assignments possible in
-this context are as follows.
+Every "button" context will add a button to a bar. As such, this context is a
+nested inside the "bar" context. The assignments possible in this context are
+as follows.
 
 *command*
 	Sets the shell command for left-, right-, middle-click and touch
@@ -268,9 +274,9 @@ this context are as follows.
 	The shell command executed when the user touches the button.
 
 ## SPACER
-Every "spacer" context will add a spacer to a bar. As such, this context is
-a nested inside the "bar" or "bar-copy" context. The assignments possible in
-this context are as follows.
+Every "spacer" context will add a spacer to a bar. As such, this context is a
+nested inside the "bar" context. The assignments possible in this context are
+as follows.
 
 *length*
 	Length of the spacer.
@@ -301,18 +307,16 @@ for hex code colours and "rgb(rrr,ggg,bbb)" and "rgba(rrr,ggg,bbb,aaa)" for RGB
 colours.
 
 ## CONDITIONS
-Conditions are (re-)evaluated and bars created and destroyed accordingly
-whenever an outputs parameters are updated.
-
-You can use conditions in combinations with the "bar-copy" feature to create
-multiple versions of a bar for different conditions.
+Conditions are (re-)evaluated and bars created and destroyed and their active
+configuration set chosen accordingly whenever an outputs parameters are updated.
 
 ## IMAGES
 LavaLauncher support PNG images and, if enabled at compile time, SVG images. It
 is recommended to use square images.
 
 ## EXAMPLE CONFIGURATION
-This is a simple example configuration.
+This is a simple configuration example, demonstrating a bar with two buttons
+and an additional configuration set.
 
 ```
 global-settings
@@ -325,6 +329,14 @@ bar
 	output            = eDP-1;
 	position          = bottom;
 	background-colour = "#202020";
+
+	condition-resolution = wider-than-high;
+
+	config
+	{
+		conditions-resolution = higher-than-wide;
+		position              = left;
+	}
 
 	button
 	{

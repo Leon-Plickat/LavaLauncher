@@ -27,17 +27,19 @@
 struct Lava_data;
 struct Lava_output;
 struct Lava_bar_pattern;
+struct Lava_bar_configuration;
 
 struct Lava_bar
 {
-	struct Lava_data             *data;
-	struct wl_list                link;
-	struct Lava_bar_pattern      *pattern;
-	struct Lava_output           *output;
-	struct wl_surface            *bar_surface;
-	struct wl_surface            *icon_surface;
-	struct wl_subsurface         *subsurface;
-	struct zwlr_layer_surface_v1 *layer_surface;
+	struct Lava_data              *data;
+	struct wl_list                 link;
+	struct Lava_bar_pattern       *pattern;
+	struct Lava_bar_configuration *config;
+	struct Lava_output            *output;
+	struct wl_surface             *bar_surface;
+	struct wl_surface             *icon_surface;
+	struct wl_subsurface          *subsurface;
+	struct zwlr_layer_surface_v1  *layer_surface;
 
 	ubox_t surface;
 	ubox_t surface_hidden;
@@ -58,7 +60,8 @@ struct Lava_bar
 	bool configured;
 };
 
-bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_output *output);
+bool create_bar (struct Lava_bar_pattern *pattern, struct Lava_bar_configuration *config,
+		struct Lava_output *output);
 void destroy_bar (struct Lava_bar *bar);
 void destroy_all_bars (struct Lava_output *output);
 void update_bar (struct Lava_bar *bar);

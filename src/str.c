@@ -76,6 +76,12 @@ char *get_formatted_buffer (const char *fmt, ...)
 	return buffer;
 }
 
+const char *str_orelse (const char *str, const char *orelse)
+{
+	if ( str != NULL )
+		return str;
+	return  orelse;
+}
 
 void setenvf (const char *name, const char *fmt, ...)
 {

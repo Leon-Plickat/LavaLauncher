@@ -102,6 +102,7 @@ enum Parser_context
 	CONTEXT_NONE,
 	CONTEXT_GLOBAL_SETTINGS,
 	CONTEXT_BAR,
+	CONTEXT_CONFIG,
 	CONTEXT_BUTTON,
 	CONTEXT_SPACER
 };
@@ -190,6 +191,7 @@ static bool parser_handle_bracket (struct Parser *parser, const char ch)
 				parser->context = CONTEXT_NONE;
 				break;
 
+			case CONTEXT_CONFIG:
 			case CONTEXT_BUTTON:
 			case CONTEXT_SPACER:
 				parser->context = CONTEXT_BAR;
@@ -374,15 +376,15 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 				parser->state = STATE_EXPECT_OB;
 				return create_bar_pattern(parser->data);
 			}
-			else if (! strcmp(parser->name_buffer, "bar-copy"))
-			{
-				parser->context = CONTEXT_BAR;
-				parser->state = STATE_EXPECT_OB;
-				return copy_last_bar_pattern(parser->data);
-			}
 		}
 		else if ( parser->context == CONTEXT_BAR )
 		{
+			if (! strcmp(parser->name_buffer, "config"))
+			{
+				parser->context = CONTEXT_CONFIG;
+				parser->state = STATE_EXPECT_OB;
+				return create_bar_config(parser->data->last_pattern, false);
+			}
 			if (! strcmp(parser->name_buffer, "button"))
 			{
 				parser->context = CONTEXT_BUTTON;
@@ -417,8 +419,15 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 						parser->line);
 
 			case CONTEXT_BAR:
-				return bar_pattern_set_variable(parser->data->last_pattern,
-						parser->name_buffer, parser->value_buffer,
+				/* Change settings of default configuration set. */
+				return bar_config_set_variable(pattern_get_first_config(parser->data->last_pattern),
+						parser->data, parser->name_buffer, parser->value_buffer,
+						parser->line);
+
+			case CONTEXT_CONFIG:
+				/* Change settings of latest configuration set. */
+				return bar_config_set_variable(pattern_get_last_config(parser->data->last_pattern),
+						parser->data, parser->name_buffer, parser->value_buffer,
 						parser->line);
 
 			case CONTEXT_BUTTON:

@@ -151,7 +151,7 @@ bool create_touchpoint (struct Lava_seat *seat, int32_t id,
 	if ( touchpoint->indicator != NULL )
 	{
 		touchpoint->indicator->touchpoint = touchpoint;
-		indicator_set_colour(touchpoint->indicator, &bar->pattern->indicator_active_colour);
+		indicator_set_colour(touchpoint->indicator, &bar->config->indicator_active_colour);
 		move_indicator(touchpoint->indicator, item);
 		indicator_commit(touchpoint->indicator);
 	}

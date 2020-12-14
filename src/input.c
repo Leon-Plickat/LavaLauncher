@@ -139,7 +139,7 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 		seat->pointer.indicator->seat = seat;
 
 		indicator_set_colour(seat->pointer.indicator,
-				&seat->pointer.bar->pattern->indicator_hover_colour);
+				&seat->pointer.bar->config->indicator_hover_colour);
 	}
 
 	move_indicator(seat->pointer.indicator, item);
@@ -165,7 +165,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		if ( seat->pointer.indicator != NULL )
 		{
 			indicator_set_colour(seat->pointer.indicator,
-					&seat->pointer.bar->pattern->indicator_active_colour);
+					&seat->pointer.bar->config->indicator_active_colour);
 			indicator_commit(seat->pointer.indicator);
 		}
 
@@ -179,7 +179,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		if ( seat->pointer.indicator != NULL )
 		{
 			indicator_set_colour(seat->pointer.indicator,
-					&seat->pointer.bar->pattern->indicator_hover_colour);
+					&seat->pointer.bar->config->indicator_hover_colour);
 			indicator_commit(seat->pointer.indicator);
 		}
 

@@ -109,12 +109,12 @@ error:
 
 void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colour)
 {
-	struct Lava_bar         *bar     = indicator->bar;
-	struct Lava_data        *data    = bar->data;
-	struct Lava_bar_pattern *pattern = bar->pattern;
-	uint32_t                 scale   = bar->output->scale;
+	struct Lava_bar               *bar    = indicator->bar;
+	struct Lava_data              *data   = bar->data;
+	struct Lava_bar_configuration *config = bar->config;
+	uint32_t                       scale  = bar->output->scale;
 
-	uint32_t buffer_size = pattern->size - (2 * pattern->indicator_padding);
+	uint32_t buffer_size = config->size - (2 * config->indicator_padding);
 	buffer_size *= scale;
 
 	/* Get new/next buffer. */
@@ -130,7 +130,7 @@ void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colo
 	clear_buffer(cairo);
 	cairo_set_antialias(cairo, CAIRO_ANTIALIAS_BEST);
 
-	switch (pattern->indicator_style)
+	switch (config->indicator_style)
 	{
 		case STYLE_RECTANGLE:
 			/* Cairo implicitly fills everything if no shape has been drawn. */
@@ -138,7 +138,7 @@ void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colo
 			break;
 
 		case STYLE_ROUNDED_RECTANGLE:
-			rounded_rectangle(cairo, 0, 0, buffer_size, buffer_size, &pattern->radii);
+			rounded_rectangle(cairo, 0, 0, buffer_size, buffer_size, &config->radii);
 			break;
 
 		case STYLE_CIRCLE:
@@ -157,12 +157,12 @@ void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colo
 
 void move_indicator (struct Lava_item_indicator *indicator, struct Lava_item *item)
 {
-	struct Lava_bar         *bar     = indicator->bar;
-	struct Lava_bar_pattern *pattern = bar->pattern;
+	struct Lava_bar               *bar    = indicator->bar;
+	struct Lava_bar_configuration *config = bar->config;
 
-	int32_t x = (int32_t)(bar->item_area.x + pattern->indicator_padding);
-	int32_t y = (int32_t)(bar->item_area.y + pattern->indicator_padding);
-	if ( pattern->orientation == ORIENTATION_HORIZONTAL )
+	int32_t x = (int32_t)(bar->item_area.x + config->indicator_padding);
+	int32_t y = (int32_t)(bar->item_area.y + config->indicator_padding);
+	if ( config->orientation == ORIENTATION_HORIZONTAL )
 		x += (int32_t)item->ordinate;
 	else
 		y += (int32_t)item->ordinate;

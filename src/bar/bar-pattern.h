@@ -24,7 +24,6 @@
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 
 #include"types/colour_t.h"
-#include"types/string_t.h"
 #include"types/box_t.h"
 
 struct Lava_data;
@@ -79,14 +78,9 @@ enum Hidden_mode
 	HIDDEN_MODE_RIVER_AUTO
 };
 
-struct Lava_bar_pattern
+struct Lava_bar_configuration
 {
-	struct Lava_data *data;
-	struct wl_list    link;
-
-	struct wl_list    items;
-	struct Lava_item *last_item;
-	int               item_amount;
+	struct wl_list link;
 
 	/* Mode and positioning of the bar. These are responsible for the shape
 	 * of the visual bar and the actual surface.
@@ -115,18 +109,18 @@ struct Lava_bar_pattern
 	colour_t indicator_active_colour;
 	enum Item_indicator_style indicator_style;
 
-	/* If only_output[0] is \0, a surface will be created for all outputs.
+	/* If only_output is NULL, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.
 	 * Examples of valid names are "eDP-1" or "HDMI-A-1" (likely compositor
 	 * dependant).
 	 */
-	string_t *only_output;
+	char *only_output;
 
 	/* Some compositors apparently expose different behaviours based on the
 	 * namespace of a layer surface, therefore it must be configurable.
 	 * This may be dropped once the layershell has been standardized.
 	 */
-	string_t *namespace;
+	char *namespace;
 
 	/* If exclusive_zone is 1, it will be set to the width/height of the bar
 	 * at startup, otherwise its exact value is used, which should be either
@@ -135,7 +129,7 @@ struct Lava_bar_pattern
 	int32_t exclusive_zone;
 
 	/* Name of cursor which should be attached to pointer on hover. */
-	string_t *cursor_name;
+	char *cursor_name;
 
 	/* Conditions an output must match for the pattern to generate a bar on it. */
 	uint32_t condition_scale;
@@ -143,12 +137,31 @@ struct Lava_bar_pattern
 	enum Condition_resolution condition_resolution;
 };
 
+struct Lava_bar_pattern
+{
+	struct Lava_data *data;
+	struct wl_list    link;
+
+	struct wl_list    items;
+	struct Lava_item *last_item;
+	int               item_amount;
+
+	/* The different configurations of the bar pattern. The first one is
+	 * treated as default.
+	 */
+	struct Lava_bar_configuration *current_config;
+	struct wl_list configs;
+};
+
+bool create_bar_config (struct Lava_bar_pattern *pattern, bool default_config);
+struct Lava_bar_configuration *pattern_get_first_config (struct Lava_bar_pattern *pattern);
+struct Lava_bar_configuration *pattern_get_last_config (struct Lava_bar_pattern *pattern);
 bool create_bar_pattern (struct Lava_data *data);
-bool copy_last_bar_pattern (struct Lava_data *data);
 bool finalize_bar_pattern (struct Lava_bar_pattern *pattern);
 void destroy_all_bar_patterns (struct Lava_data *data);
-bool bar_pattern_set_variable (struct Lava_bar_pattern *pattern,
-		const char *variable, const char *value, int line);
+bool bar_config_set_variable (struct Lava_bar_configuration *config,
+		struct Lava_data *data, const char *variable, const char *value,
+		int line);
 
 #endif
 

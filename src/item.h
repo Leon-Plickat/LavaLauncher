@@ -61,7 +61,6 @@ struct Lava_item
 };
 
 bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type);
-bool copy_item (struct Lava_bar_pattern *pattern, struct Lava_item *item);
 bool item_set_variable (struct Lava_data *data, struct Lava_item *item,
 		const char *variable, const char *value, int line);
 void item_interaction (struct Lava_bar *bar, struct Lava_item *item,

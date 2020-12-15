@@ -41,9 +41,7 @@
 #include"seat.h"
 #include"cursor.h"
 #include"item.h"
-#include"bar/bar.h"
-#include"bar/bar-pattern.h"
-#include"bar/indicator.h"
+#include"bar.h"
 
 const int      continuous_scroll_threshhold = 10000;
 const uint32_t continuous_scroll_timeout    = 1000;
@@ -65,15 +63,15 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 	// TODO we may need to consider touch points here
 	struct Lava_seat *st;
 	wl_list_for_each(st, &seat->data->seats, link)
-		if ( st != seat && st->pointer.bar == seat->pointer.bar )
+		if ( st != seat && st->pointer.instance == seat->pointer.instance )
 			goto skip_update_hiding;
-	seat->pointer.bar->hover = false;
-	bar_update_hidden_status(seat->pointer.bar);
+	seat->pointer.instance->hover = false;
+	bar_instance_update_hidden_status(seat->pointer.instance);
 skip_update_hiding:
 
 	seat->pointer.x        = 0;
 	seat->pointer.y        = 0;
-	seat->pointer.bar      = NULL;
+	seat->pointer.instance = NULL;
 	seat->pointer.item     = NULL;
 
 	log_message(seat->data, 1, "[input] Pointer left surface.\n");
@@ -85,13 +83,13 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 {
 	struct Lava_seat *seat = data;
 
-	if ( NULL == (seat->pointer.bar = bar_from_surface(seat->data, surface)) )
+	if ( NULL == (seat->pointer.instance = bar_instance_from_surface(seat->data, surface)) )
 		return;
 
 	attach_cursor(seat, serial);
 
-	seat->pointer.bar->hover = true;
-	bar_update_hidden_status(seat->pointer.bar);
+	seat->pointer.instance->hover = true;
+	bar_instance_update_hidden_status(seat->pointer.instance);
 
 	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
 	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);
@@ -118,7 +116,7 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 	else
 		skip = true;
 
-	struct Lava_item *item = item_from_coords(seat->pointer.bar,
+	struct Lava_item *item = item_from_coords(seat->pointer.instance,
 			seat->pointer.x, seat->pointer.y);
 
 	if ( item == NULL || item->type != TYPE_BUTTON )
@@ -130,7 +128,7 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 
 	if ( seat->pointer.indicator == NULL )
 	{
-		seat->pointer.indicator = create_indicator(seat->pointer.bar);
+		seat->pointer.indicator = create_indicator(seat->pointer.instance);
 		if ( seat->pointer.indicator == NULL )
 		{
 			log_message(NULL, 0, "ERROR: Could not create indicator.\n");
@@ -139,7 +137,7 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 		seat->pointer.indicator->seat = seat;
 
 		indicator_set_colour(seat->pointer.indicator,
-				&seat->pointer.bar->config->indicator_hover_colour);
+				&seat->pointer.instance->config->indicator_hover_colour);
 	}
 
 	move_indicator(seat->pointer.indicator, item);
@@ -150,7 +148,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		uint32_t serial, uint32_t time, uint32_t button, uint32_t button_state)
 {
 	struct Lava_seat *seat = raw_data;
-	if ( seat->pointer.bar == NULL )
+	if ( seat->pointer.instance == NULL )
 	{
 		log_message(NULL, 0, "ERROR: Button press could not be handled: "
 				"Bar could not be found.\n");
@@ -165,13 +163,13 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		if ( seat->pointer.indicator != NULL )
 		{
 			indicator_set_colour(seat->pointer.indicator,
-					&seat->pointer.bar->config->indicator_active_colour);
+					&seat->pointer.instance->config->indicator_active_colour);
 			indicator_commit(seat->pointer.indicator);
 		}
 
 		log_message(seat->data, 1, "[input] Button pressed: x=%d y=%d\n",
 					seat->pointer.x, seat->pointer.y);
-		seat->pointer.item = item_from_coords(seat->pointer.bar,
+		seat->pointer.item = item_from_coords(seat->pointer.instance,
 				seat->pointer.x, seat->pointer.y);
 	}
 	else
@@ -179,7 +177,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		if ( seat->pointer.indicator != NULL )
 		{
 			indicator_set_colour(seat->pointer.indicator,
-					&seat->pointer.bar->config->indicator_hover_colour);
+					&seat->pointer.instance->config->indicator_hover_colour);
 			indicator_commit(seat->pointer.indicator);
 		}
 
@@ -189,7 +187,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 		if ( seat->pointer.item == NULL )
 			return;
 
-		struct Lava_item *item = item_from_coords(seat->pointer.bar,
+		struct Lava_item *item = item_from_coords(seat->pointer.instance,
 				seat->pointer.x, seat->pointer.y);
 
 		if ( item != seat->pointer.item )
@@ -205,7 +203,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 			default:
 			case BTN_LEFT:   type = TYPE_LEFT_CLICK;   break;
 		}
-		item_interaction(seat->pointer.bar, item, type);
+		item_interaction(seat->pointer.instance, item, type);
 	}
 }
 
@@ -217,10 +215,10 @@ static void pointer_handle_axis (void *raw_data, struct wl_pointer *wl_pointer,
 		return;
 
 	struct Lava_seat *seat = raw_data;
-	if ( seat->pointer.bar == NULL )
+	if ( seat->pointer.instance == NULL )
 	{
 		log_message(NULL, 0, "ERROR: Scrolling could not be handled: "
-				"Bar could not be found.\n");
+				"Bar instance could not be found.\n");
 		return;
 	}
 
@@ -240,10 +238,10 @@ static void pointer_handle_axis_discrete (void *raw_data,
 		return;
 
 	struct Lava_seat *seat = raw_data;
-	if ( seat->pointer.bar == NULL )
+	if ( seat->pointer.instance == NULL )
 	{
 		log_message(NULL, 0, "ERROR: Discrete scrolling could not be handled: "
-				"Bar could not be found.\n");
+				"Bar instance could not be found.\n");
 		return;
 	}
 
@@ -253,7 +251,7 @@ static void pointer_handle_axis_discrete (void *raw_data,
 static void pointer_handle_frame (void *raw_data, struct wl_pointer *wl_pointer)
 {
 	struct Lava_seat *seat = raw_data;
-	if ( seat->pointer.bar == NULL )
+	if ( seat->pointer.instance == NULL )
 		return;
 
 
@@ -264,20 +262,20 @@ static void pointer_handle_frame (void *raw_data, struct wl_pointer *wl_pointer)
 	else
 		type = TYPE_SCROLL_UP, value_change = continuous_scroll_threshhold;
 
-	struct Lava_item *item = item_from_coords(seat->pointer.bar,
+	struct Lava_item *item = item_from_coords(seat->pointer.instance,
 			seat->pointer.x, seat->pointer.y);
 
 	if (seat->pointer.discrete_steps)
 	{
 		for (uint32_t i = 0; i < seat->pointer.discrete_steps; i++)
-			item_interaction(seat->pointer.bar, item, type);
+			item_interaction(seat->pointer.instance, item, type);
 
 		seat->pointer.discrete_steps = 0;
 		seat->pointer.value          = 0;
 	}
 	else while ( abs(seat->pointer.value) > continuous_scroll_threshhold )
 	{
-		item_interaction(seat->pointer.bar, item, type);
+		item_interaction(seat->pointer.instance, item, type);
 		seat->pointer.value += value_change;
 	}
 }
@@ -325,7 +323,7 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 
 	log_message(seat->data, 1, "[input] Touch up.\n");
 
-	item_interaction(touchpoint->bar, touchpoint->item, TYPE_TOUCH);
+	item_interaction(touchpoint->instance, touchpoint->item, TYPE_TOUCH);
 	destroy_touchpoint(touchpoint);
 }
 
@@ -339,9 +337,9 @@ static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
 
 	log_message(seat->data, 1, "[input] Touch down: x=%d y=%d\n", x, y);
 
-	struct Lava_bar  *bar  = bar_from_surface(seat->data, surface);
-	struct Lava_item *item = item_from_coords(bar, x, y);
-	if (! create_touchpoint(seat, id, bar, item))
+	struct Lava_bar_instance *instance  = bar_instance_from_surface(seat->data, surface);
+	struct Lava_item         *item = item_from_coords(instance, x, y);
+	if (! create_touchpoint(seat, id, instance, item))
 		log_message(NULL, 0, "ERROR: could not create touchpoint\n");
 }
 
@@ -359,7 +357,7 @@ static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
 	 * we simply abort the touch operation.
 	 */
 	uint32_t x = (uint32_t)wl_fixed_to_int(fx), y = (uint32_t)wl_fixed_to_int(fy);
-	if ( item_from_coords(touchpoint->bar, x, y) != touchpoint->item )
+	if ( item_from_coords(touchpoint->instance, x, y) != touchpoint->item )
 		destroy_touchpoint(touchpoint);
 }
 
@@ -392,3 +390,4 @@ const struct wl_touch_listener touch_listener = {
 	.shape       = noop,
 	.orientation = noop
 };
+

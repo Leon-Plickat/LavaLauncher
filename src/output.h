@@ -41,7 +41,7 @@ struct Lava_output
 	struct wl_list    link;
 	struct Lava_data *data;
 
-	struct wl_list bars;
+	struct wl_list bar_instances;
 
 	struct wl_output      *wl_output;
 	struct zxdg_output_v1 *xdg_output;

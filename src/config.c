@@ -27,7 +27,7 @@
 #include"lavalauncher.h"
 #include"str.h"
 #include"item.h"
-#include"bar/bar-pattern.h"
+#include"bar.h"
 
 bool is_boolean_true (const char *str)
 {
@@ -183,7 +183,7 @@ static bool parser_handle_bracket (struct Parser *parser, const char ch)
 		switch (parser->context)
 		{
 			case CONTEXT_BAR:
-				finalize_bar_pattern(parser->data->last_pattern);
+				finalize_bar(get_last_bar(parser->data));
 				parser->context = CONTEXT_NONE;
 				break;
 
@@ -374,7 +374,7 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 			{
 				parser->context = CONTEXT_BAR;
 				parser->state = STATE_EXPECT_OB;
-				return create_bar_pattern(parser->data);
+				return create_bar(parser->data);
 			}
 		}
 		else if ( parser->context == CONTEXT_BAR )
@@ -383,19 +383,19 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 			{
 				parser->context = CONTEXT_CONFIG;
 				parser->state = STATE_EXPECT_OB;
-				return create_bar_config(parser->data->last_pattern, false);
+				return create_bar_config(get_last_bar(parser->data), false);
 			}
 			if (! strcmp(parser->name_buffer, "button"))
 			{
 				parser->context = CONTEXT_BUTTON;
 				parser->state = STATE_EXPECT_OB;
-				return create_item(parser->data->last_pattern, TYPE_BUTTON);
+				return create_item(get_last_bar(parser->data), TYPE_BUTTON);
 			}
 			else if (! strcmp(parser->name_buffer, "spacer"))
 			{
 				parser->context = CONTEXT_SPACER;
 				parser->state = STATE_EXPECT_OB;
-				return create_item(parser->data->last_pattern, TYPE_SPACER);
+				return create_item(get_last_bar(parser->data), TYPE_SPACER);
 			}
 		}
 
@@ -410,6 +410,7 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 					&parser->value_buffer_length, ch, false))
 			return false;
 
+		struct Lava_bar *last_bar = get_last_bar(parser->data);
 		parser->state = STATE_EXPECT_SEMICOLON;
 		switch (parser->context)
 		{
@@ -420,20 +421,20 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 
 			case CONTEXT_BAR:
 				/* Change settings of default configuration set. */
-				return bar_config_set_variable(pattern_get_first_config(parser->data->last_pattern),
+				return bar_config_set_variable(bar_get_first_config(last_bar),
 						parser->data, parser->name_buffer, parser->value_buffer,
 						parser->line);
 
 			case CONTEXT_CONFIG:
 				/* Change settings of latest configuration set. */
-				return bar_config_set_variable(pattern_get_last_config(parser->data->last_pattern),
+				return bar_config_set_variable(bar_get_last_config(last_bar),
 						parser->data, parser->name_buffer, parser->value_buffer,
 						parser->line);
 
 			case CONTEXT_BUTTON:
 			case CONTEXT_SPACER:
 				return item_set_variable(parser->data,
-						parser->data->last_pattern->last_item,
+						last_bar->last_item,
 						parser->name_buffer, parser->value_buffer,
 						parser->line);
 

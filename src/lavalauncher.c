@@ -46,7 +46,7 @@
 #include"str.h"
 #include"registry.h"
 #include"config.h"
-#include"bar/bar-pattern.h"
+#include"bar.h"
 #include"str.h"
 
 static void main_loop (struct Lava_data *data)
@@ -297,12 +297,11 @@ static bool get_default_config_path (struct Lava_data *data)
 
 static void init_data (struct Lava_data *data)
 {
-	data->ret          = EXIT_FAILURE;
-	data->loop         = true;
-	data->reload       = false;
-	data->verbosity    = 0;
-	data->last_pattern = NULL;
-	data->config_path  = NULL;
+	data->ret         = EXIT_FAILURE;
+	data->loop        = true;
+	data->reload      = false;
+	data->verbosity   = 0;
+	data->config_path = NULL;
 
 #if WATCH_CONFIG
 	data->watch = false;
@@ -320,7 +319,7 @@ static void init_data (struct Lava_data *data)
 	data->river_status_manager = NULL;
 	data->need_river_status    = false;
 
-	wl_list_init(&data->patterns);
+	wl_list_init(&data->bars);
 	wl_list_init(&data->outputs);
 	wl_list_init(&data->seats);
 }
@@ -358,8 +357,9 @@ reload:
 exit:
 	finish_wayland(&data);
 early_exit:
-	destroy_all_bar_patterns(&data);
+	destroy_all_bars(&data);
 	if (data.reload)
 		goto reload;
 	return data.ret;
 }
+

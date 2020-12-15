@@ -31,8 +31,7 @@
 #include"lavalauncher.h"
 #include"item.h"
 #include"str.h"
-#include"bar/bar-pattern.h"
-#include"bar/bar.h"
+#include"bar.h"
 #include"output.h"
 #include"types/image_t.h"
 #include"types/string_t.h"
@@ -156,15 +155,15 @@ bool item_set_variable (struct Lava_data *data, struct Lava_item *item,
 }
 
 /* We need to fork two times for UNIXy resons. */
-static void secondary_fork (struct Lava_bar *bar, struct Lava_item *item, const char *cmd)
+static void secondary_fork (struct Lava_bar_instance *instance, struct Lava_item *item, const char *cmd)
 {
 	errno = 0;
 	int ret = fork();
 	if ( ret == 0 )
 	{
 		/* Prepare environment variables. */
-		setenvf("LAVALAUNCHER_OUTPUT_NAME",  "%s", bar->output->name);
-		setenvf("LAVALAUNCHER_OUTPUT_SCALE", "%d", bar->output->scale);
+		setenvf("LAVALAUNCHER_OUTPUT_NAME",  "%s", instance->output->name);
+		setenvf("LAVALAUNCHER_OUTPUT_SCALE", "%d", instance->output->scale);
 
 		/* execl() only returns on error; On success it replaces this process. */
 		execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);
@@ -179,7 +178,7 @@ static void secondary_fork (struct Lava_bar *bar, struct Lava_item *item, const 
 }
 
 /* We need to fork two times for UNIXy resons. */
-static void primary_fork (struct Lava_bar *bar, struct Lava_item *item, const char *cmd)
+static void primary_fork (struct Lava_bar_instance *instance, struct Lava_item *item, const char *cmd)
 {
 	errno = 0;
 	int ret = fork();
@@ -192,7 +191,7 @@ static void primary_fork (struct Lava_bar *bar, struct Lava_item *item, const ch
 		sigemptyset(&mask);
 		sigprocmask(SIG_SETMASK, &mask, NULL);
 
-		secondary_fork(bar, item, cmd);
+		secondary_fork(instance, item, cmd);
 		_exit(EXIT_SUCCESS);
 	}
 	else if ( ret < 0 )
@@ -202,7 +201,7 @@ static void primary_fork (struct Lava_bar *bar, struct Lava_item *item, const ch
 }
 
 /* Wrapper function that catches any special cases before executing the item command. */
-static bool item_command (struct Lava_bar *bar, struct Lava_item *item,
+static bool item_command (struct Lava_bar_instance *instance, struct Lava_item *item,
 		enum Interaction_type type)
 {
 	if ( item->command[type] == NULL )
@@ -210,32 +209,32 @@ static bool item_command (struct Lava_bar *bar, struct Lava_item *item,
 
 	if (! strcmp(item->command[type]->string, "exit"))
 	{
-		log_message(bar->data, 1, "[command] Exiting due to button command \"exit\".\n");
-		bar->data->loop = false;
+		log_message(instance->data, 1, "[command] Exiting due to button command \"exit\".\n");
+		instance->data->loop = false;
 	}
 	else if (! strcmp(item->command[type]->string, "reload"))
 	{
-		log_message(bar->data, 1, "[command] Reloading due to button command \"reload\".\n");
-		bar->data->loop = false;
-		bar->data->reload = true;
+		log_message(instance->data, 1, "[command] Reloading due to button command \"reload\".\n");
+		instance->data->loop = false;
+		instance->data->reload = true;
 	}
 	else
 	{
-		log_message(bar->data, 1, "[command] Executing command: %s\n",
+		log_message(instance->data, 1, "[command] Executing command: %s\n",
 				item->command[type]->string);
-		primary_fork(bar, item, item->command[type]->string);
+		primary_fork(instance, item, item->command[type]->string);
 	}
 
 	return true;
 }
 
-void item_interaction (struct Lava_bar *bar, struct Lava_item *item,
+void item_interaction (struct Lava_bar_instance *instance, struct Lava_item *item,
 		enum Interaction_type type)
 {
 	switch (item->type)
 	{
 		case TYPE_BUTTON:
-			item_command(bar, item, type);
+			item_command(instance, item, type);
 			break;
 
 		case TYPE_SPACER:
@@ -266,9 +265,9 @@ static const char *item_type_to_string (enum Item_type type)
 	return NULL;
 }
 
-bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type)
+bool create_item (struct Lava_bar *bar, enum Item_type type)
 {
-	log_message(pattern->data, 2, "[item] Creating item: type=%s\n", item_type_to_string(type));
+	log_message(bar->data, 2, "[item] Creating item: type=%s\n", item_type_to_string(type));
 	struct Lava_item *new_item = calloc(1, sizeof(struct Lava_item));
 	if ( new_item == NULL )
 	{
@@ -278,26 +277,26 @@ bool create_item (struct Lava_bar_pattern *pattern, enum Item_type type)
 
 	item_nullify(new_item);
 	new_item->type  = type;
-	pattern->last_item = new_item;
-	wl_list_insert(&pattern->items, &new_item->link);
+	bar->last_item = new_item;
+	wl_list_insert(&bar->items, &new_item->link);
 	return true;
 }
 
 /* Return pointer to Lava_item struct from item list which includes the
  * given surface-local coordinates on the surface of the given output.
  */
-struct Lava_item *item_from_coords (struct Lava_bar *bar, uint32_t x, uint32_t y)
+struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t x, uint32_t y)
 {
-	struct Lava_bar_pattern       *pattern = bar->pattern;
-	struct Lava_bar_configuration *config  = bar->config;
+	struct Lava_bar               *bar    = instance->bar;
+	struct Lava_bar_configuration *config = instance->config;
 	uint32_t ordinate;
 	if ( config->orientation == ORIENTATION_HORIZONTAL )
-		ordinate = x - bar->item_area.x;
+		ordinate = x - instance->item_area_dim.x;
 	else
-		ordinate = y - bar->item_area.y;
+		ordinate = y - instance->item_area_dim.y;
 
 	struct Lava_item *item, *temp;
-	wl_list_for_each_reverse_safe(item, temp, &pattern->items, link)
+	wl_list_for_each_reverse_safe(item, temp, &bar->items, link)
 	{
 		if ( ordinate >= item->ordinate
 				&& ordinate < item->ordinate + item->length )
@@ -306,11 +305,11 @@ struct Lava_item *item_from_coords (struct Lava_bar *bar, uint32_t x, uint32_t y
 	return NULL;
 }
 
-unsigned int get_item_length_sum (struct Lava_bar_pattern *pattern)
+unsigned int get_item_length_sum (struct Lava_bar *bar)
 {
 	unsigned int sum = 0;
 	struct Lava_item *it1, *it2;
-	wl_list_for_each_reverse_safe (it1, it2, &pattern->items, link)
+	wl_list_for_each_reverse_safe (it1, it2, &bar->items, link)
 		sum += it1->length;
 	return sum;
 }
@@ -318,21 +317,21 @@ unsigned int get_item_length_sum (struct Lava_bar_pattern *pattern)
 /* When items are created when parsing the config file, the size is not yet
  * available, so items need to be finalized later.
  */
-bool finalize_items (struct Lava_bar_pattern *pattern)
+bool finalize_items (struct Lava_bar *bar)
 {
-	pattern->item_amount = wl_list_length(&pattern->items);
-	if ( pattern->item_amount == 0 )
+	bar->item_amount = wl_list_length(&bar->items);
+	if ( bar->item_amount == 0 )
 	{
 		log_message(NULL, 0, "ERROR: Configuration defines a bar without items.\n");
 		return false;
 	}
 
 	// TODO XXX set size to -1, which should cause it to automatically be config->size
-	struct Lava_bar_configuration *config = pattern_get_first_config(pattern);
+	struct Lava_bar_configuration *config = bar_get_first_config(bar);
 
 	unsigned int index = 0, ordinate = 0;
 	struct Lava_item *it1, *it2;
-	wl_list_for_each_reverse_safe(it1, it2, &pattern->items, link)
+	wl_list_for_each_reverse_safe(it1, it2, &bar->items, link)
 	{
 		if ( it1->type == TYPE_BUTTON )
 			it1->length = config->size;
@@ -361,11 +360,11 @@ static void destroy_item (struct Lava_item *item)
 	free(item);
 }
 
-void destroy_all_items (struct Lava_bar_pattern *pattern)
+void destroy_all_items (struct Lava_bar *bar)
 {
-	log_message(pattern->data, 1, "[items] Destroying all items.\n");
-	struct Lava_item *bt_1, *bt_2;
-	wl_list_for_each_safe(bt_1, bt_2, &pattern->items, link)
-		destroy_item(bt_1);
+	log_message(bar->data, 1, "[items] Destroying all items.\n");
+	struct Lava_item *item, *temp;
+	wl_list_for_each_safe(item, temp, &bar->items, link)
+		destroy_item(item);
 }
 

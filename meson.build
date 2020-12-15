@@ -77,10 +77,7 @@ summary({
 executable(
   'lavalauncher',
   files(
-    'src/bar/bar.c',
-    'src/bar/bar-pattern.c',
-    'src/bar/draw-generics.c',
-    'src/bar/indicator.c',
+    'src/bar.c',
     'src/config.c',
     'src/cursor.c',
     'src/input.c',

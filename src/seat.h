@@ -42,8 +42,8 @@ struct Lava_seat
 		struct wl_pointer *wl_pointer;
 
 		/* Current position. */
-		uint32_t          x, y;
-		struct Lava_bar  *bar;
+		uint32_t x, y;
+		struct Lava_bar_instance *instance;
 		struct Lava_item *item;
 
 		/* Stuff needed to gracefully handle scroll events. */
@@ -73,16 +73,16 @@ void destroy_all_seats (struct Lava_data *data);
 
 struct Lava_touchpoint
 {
-	struct wl_list    link;
-	int32_t           id;
-	struct Lava_bar  *bar;
-	struct Lava_item *item;
+	struct wl_list            link;
+	int32_t                   id;
+	struct Lava_bar_instance *instance;
+	struct Lava_item         *item;
 
 	struct Lava_item_indicator *indicator;
 };
 
 bool create_touchpoint (struct Lava_seat *seat, int32_t id,
-		struct Lava_bar *bar, struct Lava_item *item);
+		struct Lava_bar_instance *instance, struct Lava_item *item);
 void destroy_touchpoint (struct Lava_touchpoint *touchpoint);
 void destroy_all_touchpoints (struct Lava_seat *seat);
 struct Lava_touchpoint *touchpoint_from_id (struct Lava_seat *seat, int32_t id);

@@ -25,7 +25,7 @@
 #include<wayland-server.h>
 
 struct Lava_item;
-struct Lava_bar_pattern;
+struct Lava_bar;
 
 struct Lava_data
 {
@@ -45,11 +45,9 @@ struct Lava_data
 
 	char *config_path;
 
-	struct wl_list patterns;
+	struct wl_list bars;
 	struct wl_list outputs;
 	struct wl_list seats;
-
-	struct Lava_bar_pattern *last_pattern;
 
 	bool loop;
 	bool reload;

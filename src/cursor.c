@@ -34,8 +34,7 @@
 #include"output.h"
 #include"cursor.h"
 #include"seat.h"
-#include"bar/bar.h"
-#include"bar/bar-pattern.h"
+#include"bar.h"
 #include"types/string_t.h"
 
 void cleanup_cursor (struct Lava_seat *seat)
@@ -51,9 +50,9 @@ void attach_cursor (struct Lava_seat *seat, uint32_t serial)
 {
 	struct Lava_data  *data        = seat->data;
 	struct wl_pointer *pointer     = seat->pointer.wl_pointer;
-	const char        *cursor_name = str_orelse(seat->pointer.bar->config->cursor_name, "pointer");
+	const char        *cursor_name = str_orelse(seat->pointer.instance->config->cursor_name, "pointer");
 
-	int32_t scale       = (int32_t)seat->pointer.bar->output->scale;
+	int32_t scale       = (int32_t)seat->pointer.instance->output->scale;
 	int32_t cursor_size = 24; // TODO ?
 
 	/* Cleanup any leftover cursor stuff. */

@@ -2,6 +2,7 @@
  * LavaLauncher - A simple launcher panel for Wayland
  *
  * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 Nicolai Dagestad
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +18,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_BAR_PATTERN_H
-#define LAVALAUNCHER_BAR_PATTERN_H
+#ifndef LAVALAUNCHER_BAR_H
+#define LAVALAUNCHER_BAR_H
 
 #include<wayland-server.h>
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 
 #include"types/colour_t.h"
 #include"types/box_t.h"
+#include"types/buffer.h"
 
 struct Lava_data;
 struct Lava_item;
@@ -78,6 +80,7 @@ enum Hidden_mode
 	HIDDEN_MODE_RIVER_AUTO
 };
 
+/* This struct holds a configuration set for a bar. */
 struct Lava_bar_configuration
 {
 	struct wl_list link;
@@ -131,13 +134,63 @@ struct Lava_bar_configuration
 	/* Name of cursor which should be attached to pointer on hover. */
 	char *cursor_name;
 
-	/* Conditions an output must match for the pattern to generate a bar on it. */
+	/* Conditions an output must match for the bar to generate an instance on it. */
 	uint32_t condition_scale;
 	int32_t  condition_transform;
 	enum Condition_resolution condition_resolution;
 };
 
-struct Lava_bar_pattern
+/* This struct corresponds to one instance of a bar. */
+struct Lava_bar_instance
+{
+	struct Lava_data *data;
+	struct wl_list    link;
+
+	struct Lava_bar               *bar;
+	struct Lava_bar_configuration *config;
+	struct Lava_output            *output;
+	struct wl_surface             *bar_surface;
+	struct wl_surface             *icon_surface;
+	struct wl_subsurface          *subsurface;
+	struct zwlr_layer_surface_v1  *layer_surface;
+
+	ubox_t surface_dim;
+	ubox_t surface_hidden_dim;
+	ubox_t bar_dim;
+	ubox_t bar_hidden_dim;
+	ubox_t item_area_dim;
+
+	bool hidden, hover;
+
+	struct Lava_buffer  bar_buffers[2];
+	struct Lava_buffer *current_bar_buffer;
+
+	struct Lava_buffer  icon_buffers[2];
+	struct Lava_buffer *current_icon_buffer;
+
+	struct wl_list indicators;
+
+	bool configured;
+};
+
+struct Lava_item_indicator
+{
+	struct wl_list link;
+
+	struct Lava_seat         *seat;
+	struct Lava_touchpoint   *touchpoint;
+	struct Lava_bar_instance *instance;
+
+	struct wl_surface    *indicator_surface;
+	struct wl_subsurface *indicator_subsurface;
+	struct Lava_buffer    indicator_buffers[2];
+	struct Lava_buffer   *current_indicator_buffer;
+};
+
+/* This struct is a logical bar, which can have multiple configuration sets and
+ * at most one instance per output.
+ */
+struct Lava_bar
 {
 	struct Lava_data *data;
 	struct wl_list    link;
@@ -146,22 +199,35 @@ struct Lava_bar_pattern
 	struct Lava_item *last_item;
 	int               item_amount;
 
-	/* The different configurations of the bar pattern. The first one is
-	 * treated as default.
-	 */
+	/* The different configurations of the bar. The first one is treated as default. */
 	struct Lava_bar_configuration *current_config;
 	struct wl_list configs;
 };
 
-bool create_bar_config (struct Lava_bar_pattern *pattern, bool default_config);
-struct Lava_bar_configuration *pattern_get_first_config (struct Lava_bar_pattern *pattern);
-struct Lava_bar_configuration *pattern_get_last_config (struct Lava_bar_pattern *pattern);
-bool create_bar_pattern (struct Lava_data *data);
-bool finalize_bar_pattern (struct Lava_bar_pattern *pattern);
-void destroy_all_bar_patterns (struct Lava_data *data);
+struct Lava_bar_configuration *bar_get_first_config (struct Lava_bar *bar);
+struct Lava_bar_configuration *bar_get_last_config (struct Lava_bar *bar);
+bool create_bar_config (struct Lava_bar *bar, bool default_config);
+
+bool create_bar (struct Lava_data *data);
+struct Lava_bar *get_last_bar (struct Lava_data *data);
+bool finalize_bar (struct Lava_bar *bar);
+void destroy_all_bars (struct Lava_data *data);
 bool bar_config_set_variable (struct Lava_bar_configuration *config,
 		struct Lava_data *data, const char *variable, const char *value,
 		int line);
+
+bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *config, struct Lava_output *output);
+void destroy_bar_instance (struct Lava_bar_instance *instance);
+void destroy_all_bar_instances (struct Lava_output *output);
+void update_bar_instance (struct Lava_bar_instance *instance);
+void bar_instance_update_hidden_status (struct Lava_bar_instance *instance);
+struct Lava_bar_instance *bar_instance_from_surface (struct Lava_data *data, struct wl_surface *surface);
+
+void destroy_indicator (struct Lava_item_indicator *indicator);
+struct Lava_item_indicator *create_indicator (struct Lava_bar_instance *instance);
+void move_indicator (struct Lava_item_indicator *indicator, struct Lava_item *item);
+void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colour);
+void indicator_commit (struct Lava_item_indicator *indicator);
 
 #endif
 

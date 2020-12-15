@@ -37,19 +37,17 @@
 #include"lavalauncher.h"
 #include"str.h"
 #include"output.h"
-#include"bar/bar.h"
-#include"bar/bar-pattern.h"
+#include"bar.h"
 
 /* No-Op function. */
 static void noop () {}
 
-static struct Lava_bar *bar_from_pattern (struct Lava_bar_pattern *pattern,
-		struct Lava_output *output)
+static struct Lava_bar_instance *bar_instance_from_bar (struct Lava_bar *bar, struct Lava_output *output)
 {
-	struct Lava_bar *bar, *temp;
-	wl_list_for_each_safe(bar, temp, &output->bars, link)
-		if ( bar->pattern == pattern )
-			return bar;
+	struct Lava_bar_instance *instance;
+	wl_list_for_each(instance, &output->bar_instances, link)
+		if ( instance->bar == bar )
+			return instance;
 	return NULL;
 }
 
@@ -76,17 +74,16 @@ static bool bar_config_conditions_match_output (struct Lava_bar_configuration *c
 	return true;
 }
 
-static struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_bar_pattern *pattern,
-		struct Lava_output *output)
+static struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_bar *bar, struct Lava_output *output)
 {
 	struct Lava_bar_configuration *config;
-	wl_list_for_each(config, &pattern->configs, link)
+	wl_list_for_each(config, &bar->configs, link)
 		if (bar_config_conditions_match_output(config, output))
 			return config;
 	return NULL;
 }
 
-static bool update_bars_on_output (struct Lava_output *output)
+static bool update_bar_instances_on_output (struct Lava_output *output)
 {
 	/* No xdg_output events have been received yet, so there is nothing todo. */
 	if ( output->status == OUTPUT_STATUS_UNCONFIGURED || output->name == NULL )
@@ -103,33 +100,33 @@ static bool update_bars_on_output (struct Lava_output *output)
 	 */
 	if ( output->w == 0 || output->h == 0 )
 	{
-		destroy_all_bars(output);
+		destroy_all_bar_instances(output);
 		output->status = OUTPUT_STATUS_UNUSED;
 		return true;
 	}
 
-	struct Lava_bar_pattern *pattern, *temp;
-	wl_list_for_each_safe(pattern, temp, &data->patterns, link)
+	struct Lava_bar *bar, *temp;
+	wl_list_for_each_safe(bar, temp, &data->bars, link)
 	{
-		/* Try to find a configuration set of the pattern which fits the output. */
-		struct Lava_bar_configuration *config = get_bar_config_for_output(pattern, output);
+		/* Try to find a configuration set of the bar which fits the output. */
+		struct Lava_bar_configuration *config = get_bar_config_for_output(bar, output);
 
-		struct Lava_bar *bar;
-		if ( NULL != (bar = bar_from_pattern(pattern, output)) )
+		struct Lava_bar_instance *instance;
+		if ( NULL != (instance = bar_instance_from_bar(bar, output)) )
 		{
 			if ( config != NULL )
 			{
-				bar->config = config;
-				update_bar(bar);
+				instance->config = config;
+				update_bar_instance(instance);
 			}
 			else
-				destroy_bar(bar);
+				destroy_bar_instance(instance);
 		}
 		else if ( config != NULL )
 		{
-			if (! create_bar(pattern, config, output))
+			if (! create_bar_instance(bar, config, output))
 			{
-				log_message(NULL, 0, "ERROR: Could not create bar.\n");
+				log_message(NULL, 0, "ERROR: Could not create bar instance.\n");
 				data->loop = false;
 				data->ret  = EXIT_FAILURE;
 				return false;
@@ -137,7 +134,7 @@ static bool update_bars_on_output (struct Lava_output *output)
 		}
 	}
 
-	if (wl_list_empty(&output->bars))
+	if (wl_list_empty(&output->bar_instances))
 		output->status = OUTPUT_STATUS_UNUSED;
 	else
 		output->status = OUTPUT_STATUS_USED;
@@ -145,8 +142,7 @@ static bool update_bars_on_output (struct Lava_output *output)
 	return true;
 }
 
-static void output_handle_scale (void *raw_data, struct wl_output *wl_output,
-		int32_t factor)
+static void output_handle_scale (void *raw_data, struct wl_output *wl_output, int32_t factor)
 {
 	struct Lava_output *output = (struct Lava_output *)raw_data;
 	output->scale              = (uint32_t)factor;
@@ -177,7 +173,7 @@ static void output_handle_done (void *raw_data, struct wl_output *wl_output)
 	log_message(output->data, 1, "[output] Atomic update complete: global_name=%d\n",
 				output->global_name);
 
-	update_bars_on_output(output);
+	update_bar_instances_on_output(output);
 }
 
 static const struct wl_output_listener output_listener = {
@@ -223,9 +219,9 @@ static void update_river_output_occupied_state (struct Lava_output *output)
 	output->river_output_occupied = output->river_focused_tags & output->river_view_tags;
 	log_message(output->data, 3, "[output] River output status: occupied=%s\n",
 			output->river_output_occupied ? "true" : "false");
-	struct Lava_bar *bar;
-	wl_list_for_each(bar, &output->bars, link)
-		bar_update_hidden_status(bar);
+	struct Lava_bar_instance *instance;
+	wl_list_for_each(instance, &output->bar_instances, link)
+		bar_instance_update_hidden_status(instance);
 }
 
 static void river_status_handle_focused_tags (void *data, struct zriver_output_status_v1 *river_status,
@@ -320,7 +316,7 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	output->river_view_tags       = 0;
 	output->river_output_occupied = false;
 
-	wl_list_init(&output->bars);
+	wl_list_init(&output->bar_instances);
 
 	wl_list_insert(&data->outputs, &output->link);
 	wl_output_set_user_data(wl_output, output);
@@ -360,7 +356,7 @@ void destroy_output (struct Lava_output *output)
 	if ( output->river_status != NULL )
 		zriver_output_status_v1_destroy(output->river_status);
 
-	destroy_all_bars(output);
+	destroy_all_bar_instances(output);
 	wl_list_remove(&output->link);
 	wl_output_destroy(output->wl_output);
 	free(output);
@@ -373,3 +369,4 @@ void destroy_all_outputs (struct Lava_data *data)
 	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
 		destroy_output(op_1);
 }
+

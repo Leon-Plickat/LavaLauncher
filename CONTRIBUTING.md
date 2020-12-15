@@ -6,6 +6,46 @@ to ask me whether I will include your commit *before* you start investing time
 into it. Also please respect the coding style, even if you do not like it.
 
 
+## How does LavaLauncher work?
+This is a rough description of how LavaLauncher works internally. This is
+however not a description of how Wayland in general or Wayland clients work.
+
+To understand LavaLauncher, you will have to understand the following objects
+and the concepts they represent.
+
+* **Context:** The global data, stored in a single struct.
+  * `struct Lava_data`
+* **Bar:** A definition of a bar. Beware: Here "bar" describes a purely logical
+  concept which does not directly correspond to the bars you see on screen. It
+  is a pattern which is used in the creation of _instances_ (see below).
+  * `struct Lava_bar`
+* **Configuration Set:** A set of configurations, attached to a bar. A bar has
+  at least one configuration set, the first of which being considered the
+  default.
+  * `struct Lava_bar_configuration`
+* **Item:** Definition of an item on a bar.
+  * `struct Lava_item`
+* **Bar Instance:** A bar instance does correspond directly to the bars you see
+  on screen. It holds the Wayland surfaces and is created from a bar.
+  * `struct Lava_bar_instance`
+
+For every `bar {...}` block in the configuration, a bar is created with a
+default configuration set. The bar is attached to the `bars` list inside the
+context. Every assignment in the `bar {...}` context changes the values of the
+default configuration set. For every `button {...}` and `spacer {...}` block
+inside the `bar {...}` block an is created, initialised to the right item type
+and attached to the `items` list in the bar. Every `config {...}` block inside
+the `bar {...}` block adds an additional configuration set, which upon creation
+copies the values of the default configuration set.
+
+When LavaLauncher is started and receives the object advertising from the
+Wayland server, then for every advertised output all defined bar objects are
+checked for a configuration set which can be used on this output, based on the
+user configured conditionals. If a fitting configuration set is found, a bar
+instance based on the bar is created on the output. Only a single instance of a
+bar per output are possible.
+
+
 ## Communication
 You can ask questions and start discussions on the [mailing list](mailto:~leon_plickat/lavalauncher@lists.sr.ht)
 or if you find me on IRC (my nick is "leon-p" and you can often find me on
@@ -41,32 +81,10 @@ sections in the man page and README. A Free Software project is proud of every
 contributor.
 
 
-## ToDo
-This is a list of both rough spots in the code that need some improvement as
-well as features I have planned for LavaLauncher. Feel free to pick up any of
-these projects.
-
-* Some widgets would be useful. With indicators for battery capacity, network
-  status, time and workspace, LavaLauncher could completely replace a status
-  bar. The sanest way to achieve this is probably to allow external applications
-  to draw to a buffer which is attached to a wl_surface which is set as a
-  subsurface of the bar surface (that way, we might not even need to do anything
-  special in the event loop to communicate with those applications). This needs
-  more investigation and thought.
-* In LavaLaunchers code, scaling is done all over the place. It would be nice
-  (and probably reduces complexity as well) if scaling was done all at once.
-* LavaLauncher should handle drawing tablet events.
-* LavaLauncher should handle touch screen swipes.
-* LavaLauncher should handle touch pad swipes.
-* A lot of code needs better documentation.
-* A lot of code could probably be simplified.
-
-
 ## Style
-This section describes the coding style of LavaLauncher. Try to follow it
-closely.
-
-Yes, it is not K&R. Cry me a river.
+This section describes the coding style of LavaLauncher. You might not need this
+section, just guess based on the surrounding code and you probably will be fine,
+but it is here anyway if you need it.
 
 Indent with tabs exclusively (looking at you, Emacs users).
 

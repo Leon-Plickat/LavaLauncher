@@ -95,3 +95,9 @@ void setenvf (const char *name, const char *fmt, ...)
 
 	setenv(name, buffer, true);
 }
+
+bool string_starts_with(const char *str, const char *prefix)
+{
+	return strncmp(prefix, str, strlen(prefix)) == 0;
+}
+

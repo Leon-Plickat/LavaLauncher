@@ -24,7 +24,6 @@
 #include<wayland-server.h>
 #include<cairo/cairo.h>
 
-#include"types/string_t.h"
 #include"types/image_t.h"
 
 struct Lava_data;
@@ -39,32 +38,40 @@ enum Item_type
 
 enum Interaction_type
 {
-	TYPE_RIGHT_CLICK = 0,
-	TYPE_MIDDLE_CLICK,
-	TYPE_LEFT_CLICK,
-	TYPE_SCROLL_UP,
-	TYPE_SCROLL_DOWN,
-	TYPE_TOUCH,
-	TYPE_AMOUNT
+	INTERACTION_MOUSE_BUTTON,
+	INTERACTION_MOUSE_SCROLL,
+	INTERACTION_TOUCH,
+	INTERACTION_UNIVERSAL
+};
+
+struct Lava_item_command
+{
+	struct wl_list link;
+
+	enum Interaction_type type;
+	char *command;
+	uint32_t modifiers;
+
+	/* For button events this is the button, for scroll events the direction. */
+	uint32_t special;
 };
 
 struct Lava_item
 {
-	struct wl_list   link;
-	enum Item_type   type;
+	struct wl_list link;
+	enum Item_type type;
 
 	image_t *img;
+	struct wl_list commands;
 
 	unsigned int index, ordinate, length;
-
-	string_t *command[TYPE_AMOUNT];
 };
 
 bool create_item (struct Lava_bar *bar, enum Item_type type);
 bool item_set_variable (struct Lava_data *data, struct Lava_item *item,
 		const char *variable, const char *value, int line);
-void item_interaction (struct Lava_bar_instance *instance, struct Lava_item *item,
-		enum Interaction_type type);
+void item_interaction (struct Lava_item *item, struct Lava_bar_instance *instance,
+		enum Interaction_type type, uint32_t modifiers, uint32_t special);
 struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t x, uint32_t y);
 unsigned int get_item_length_sum (struct Lava_bar *bar);
 bool finalize_items (struct Lava_bar *bar);

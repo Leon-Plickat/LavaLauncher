@@ -134,8 +134,8 @@ this context are as follows.
 	surface of LavaLauncher with other surfaces. If "false", the compositor
 	is informed that it can place other surfaces over or under the surface
 	of LavaLauncher. If "stationary", the compositor is informed that the
-	surface of LavaLauncher should not be moved to accommodate other layer
-	shell surfaces and that it can freely place other surfaces over or under
+	surface of LavaLauncher should not be moved to accommodate other Layer-Shell
+	surfaces and that it can freely place other surfaces over or under
 	the surface of LavaLauncher. The default is "true". The exact
 	implementation is compositor dependant; A compositor may choose to
 	ignore the requested exclusive zone of surfaces.
@@ -202,15 +202,15 @@ this context are as follows.
 
 	The "aggressive" mode is visually identical to "normal" mode, however the
 	surface of the bar is sized and anchored more aggressively. This mode is
-	intended for compositors with faulty layer shell implementations. If
+	intended for compositors with faulty Layer-Shell implementations. If
 	LavaLauncher is not placed at the desired location or the exclusive zone or
 	margins parallel to the bar are ignored, this mode may help. Beware however
 	that it allows the compositor a lot less leeway when geometrically fitting
 	the bar onto the screen.
 
 *namespace*
-	The namespace of the layershell surface of the bar. Some compositors may
-	treat layershell surfaces differently based on their namespace. The default
+	The namespace of the Layer-Shell surface of the bar. Some compositors may
+	treat Layer-Shell surfaces differently based on their namespace. The default
 	is "LavaLauncher".
 
 *output*
@@ -251,27 +251,40 @@ as follows.
 	Sets the shell command for left-, right-, middle-click and touch
 	interactions.
 
+*command[*_<bind>_*]*
+	Bind a shell command to a specific interaction plus modifier combination.
+	This combination is defined by _<bind>_, which is a string containing an
+	interaction name as well as optionally one or multiple modifier names,
+	separated by "+".
+
+	The possible interaction types are the following.
+
+	- *mouse-{left, right, middle}*
+	- *mouse-{forward, backward}*
+	- *mouse-{mouse, side, extra, task, misc}*
+	- *mouse-{1 - 9}*
+	- *scroll-{up, down}*
+	- *touch*
+
+	The possible modifiers are the following.
+
+	- *alt*
+	- *capslock*
+	- *control*
+	- *logo* (super)
+	- *numlock*
+	- *shift*
+
+	Behold: Due to the way the Layer-Shells keyboard interactivity was
+	designed, LavaLauncher may only get send an updated modifier state when it
+	gains keyboard focus. In some compositors this requires you to click on it,
+	meaning that touch and scroll interactions with modifiers may not work in
+	some compositors. This is a bug in the Layer-Shell protocol, not in
+	LavaLauncher.
+
 *image-path*
 	The path to an image file, which will be used as the icon of the
 	button.
-
-*left-click-command*
-	The shell command executed when the user left-clicks on the button.
-
-*right-click-command*
-	The shell command executed when the user right-clicks on the button.
-
-*middle-click-command*
-	The shell command executed when the user middle-clicks on the button.
-
-*scroll-down-command*
-	The shell command executed when the user scrolls down on the button.
-
-*scroll-up-command*
-	The shell command executed when the user scrolls up on the button.
-
-*touch-command*
-	The shell command executed when the user touches the button.
 
 ## SPACER
 Every "spacer" context will add a spacer to a bar. As such, this context is a
@@ -316,7 +329,8 @@ is recommended to use square images.
 
 ## EXAMPLE CONFIGURATION
 This is a simple configuration example, demonstrating a bar with two buttons
-and an additional configuration set.
+and an additional configuration set. The second button uses advanced command
+binds.
 
 ```
 global-settings
@@ -330,12 +344,17 @@ bar
 	position          = bottom;
 	background-colour = "#202020";
 
+	# Condition for the default configuration set.
 	condition-resolution = wider-than-high;
 
 	config
 	{
+		# Condition for this configuration set.
 		conditions-resolution = higher-than-wide;
-		position              = left;
+
+		# Additional configuration sets copy the default configuration set,
+		# but settings can be overwritten.
+		position = left;
 	}
 
 	button
@@ -347,7 +366,19 @@ bar
 	button
 	{
 		image-path = /path/to/another/image.png;
-		command    = another-useful-script.sh;
+
+		command[mouse-left]  = another-useful-script.sh;
+		command[mouse-right] = another-useful-script.sh;
+
+		command[shift+mouse-left]     = another-useful-script.sh;
+		command[shift+alt+mouse-left] = another-useful-script.sh;
+
+		# Binding commands to scroll events is nice to configure
+		# things like audio volume or screen brightness
+		command[scroll-up]         = volume up;
+		command[scroll-down]       = volume down;
+		command[shift+scroll-up]   = volume microphone-up;
+		command[shift+scroll-down] = volume microphone-down;
 	}
 }
 ```

@@ -52,12 +52,70 @@ static void noop () {}
  *  Keyboard  *
  *            *
  **************/
+#define CHECK_MOD(A, B) \
+	if ( 1 == xkb_state_mod_name_is_active(seat->keyboard.state, A, XKB_STATE_MODS_EFFECTIVE) ) \
+	{ \
+		seat->keyboard.modifiers |= B; \
+	}
+static void keyboard_handle_modifiers (void *data, struct wl_keyboard *keyboard,
+		uint32_t serial, uint32_t depressed, uint32_t latched, uint32_t locked,
+		uint32_t group)
+{
+	struct Lava_seat *seat = (struct Lava_seat *)data;
+	xkb_state_update_mask(seat->keyboard.state, depressed, latched, locked, 0, 0, group);
+	seat->keyboard.modifiers = 0;
+	CHECK_MOD(XKB_MOD_NAME_ALT, ALT);
+	CHECK_MOD(XKB_MOD_NAME_CAPS, CAPS);
+	CHECK_MOD(XKB_MOD_NAME_CTRL, CONTROL);
+	CHECK_MOD(XKB_MOD_NAME_LOGO, LOGO);
+	CHECK_MOD(XKB_MOD_NAME_NUM, NUM);
+	CHECK_MOD(XKB_MOD_NAME_SHIFT, SHIFT);
+}
+#undef CHECK_MOD
+
+static void keyboard_handle_keymap (void *data, struct wl_keyboard *keyboard,
+		uint32_t format, int32_t fd, uint32_t size)
+{
+	struct Lava_seat *seat = (struct Lava_seat *)data;
+
+	char *str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+	if ( str != MAP_FAILED )
+	{
+		if ( seat->keyboard.keymap != NULL )
+		{
+			xkb_keymap_unref(seat->keyboard.keymap);
+			seat->keyboard.keymap = NULL;
+		}
+		if ( seat->keyboard.state != NULL )
+		{
+			xkb_state_unref(seat->keyboard.state);
+			seat->keyboard.state = NULL;
+		}
+
+		if ( NULL == (seat->keyboard.keymap = xkb_keymap_new_from_string(
+						seat->keyboard.context, str,
+						XKB_KEYMAP_FORMAT_TEXT_V1,
+						XKB_KEYMAP_COMPILE_NO_FLAGS)) )
+			log_message(NULL, 0, "Error: Failed to get xkb keymap.\n");
+		else if ( NULL == (seat->keyboard.state = xkb_state_new(
+						seat->keyboard.keymap)) )
+			log_message(NULL, 0, "Error: Failed to get xkb state.\n");
+
+		munmap(str, size);
+	}
+
+	close(fd);
+}
+
+/* These are the handlers for keyboard events. We only need the modifier status
+ * and ignore everything else.
+ */
 static const struct wl_keyboard_listener keyboard_listener  = {
 	.enter       = noop,
-	.keymap      = noop,
+	.keymap      = keyboard_handle_keymap,
 	.key         = noop,
 	.leave       = noop,
-	.modifiers   = noop,
+	.modifiers   = keyboard_handle_modifiers,
 	.repeat_info = noop
 };
 
@@ -86,7 +144,7 @@ static void seat_release_keyboard (struct Lava_seat *seat)
 		seat->keyboard.state = NULL;
 	}
 
-	seat->keyboard.modifiers   = 0;
+	seat->keyboard.modifiers = 0;
 }
 
 static void seat_bind_keyboard (struct Lava_seat *seat)

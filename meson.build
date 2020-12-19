@@ -51,6 +51,7 @@ wayland_cursor    = dependency('wayland-cursor', include_type: 'system')
 cairo             = dependency('cairo')
 realtime          = cc.find_library('rt')
 librsvg           = dependency('librsvg-2.0', version: '>= 2.45.6', required: get_option('librsvg'))
+xkbcommon         = dependency('xkbcommon')
 
 if ['dragonfly', 'freebsd', 'netbsd', 'openbsd'].contains(host_machine.system())
   libinotify      = dependency('libinotify', required: get_option('watch-config'))
@@ -89,7 +90,6 @@ executable(
     'src/types/buffer.c',
     'src/types/colour_t.c',
     'src/types/image_t.c',
-    'src/types/string_t.c',
   ),
   dependencies: [
     cairo,
@@ -101,6 +101,7 @@ executable(
     wayland_cursor,
     wayland_protocols,
     wl_protocols,
+    xkbcommon,
   ],
   include_directories: include_directories('src'),
   install: true,

@@ -23,12 +23,23 @@
 
 #include<stdbool.h>
 #include<stdint.h>
+#include<xkbcommon/xkbcommon.h>
 
 #include"types/buffer.h"
 
 struct Lava_data;
 struct Lava_bar;
 struct Lava_item_indicator;
+
+enum Modifiers
+{
+	ALT     = 1 << 0,
+	CAPS    = 1 << 1,
+	CONTROL = 1 << 2,
+	LOGO    = 1 << 3,
+	NUM     = 1 << 4,
+	SHIFT   = 1 << 5
+};
 
 struct Lava_touchpoint
 {
@@ -46,6 +57,17 @@ struct Lava_seat
 	struct Lava_data *data;
 
 	struct wl_seat *wl_seat;
+
+	struct
+	{
+		struct wl_keyboard *wl_keyboard;
+
+		struct xkb_context *context;
+		struct xkb_keymap  *keymap;
+		struct xkb_state   *state;
+
+		enum Modifiers modifiers;
+	} keyboard;
 
 	struct
 	{

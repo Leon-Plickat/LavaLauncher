@@ -10,6 +10,7 @@ packages:
   - scdoc
   - wayland
   - wayland-protocols
+  - libxkbcommon
 sources:
   - https://git.sr.ht/~leon_plickat/lavalauncher
 tasks:

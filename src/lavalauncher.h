@@ -43,6 +43,11 @@ struct Lava_data
 	struct zriver_status_manager_v1 *river_status_manager;
 	bool need_river_status;
 
+	/* Which input devices do we need? */
+	bool need_keyboard;
+	bool need_touch;
+	bool need_pointer;
+
 	char *config_path;
 
 	struct wl_list bars;

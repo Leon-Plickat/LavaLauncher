@@ -27,135 +27,30 @@
 #include<string.h>
 #include<errno.h>
 #include<sys/wait.h>
+#include<linux/input-event-codes.h>
 
 #include"lavalauncher.h"
 #include"item.h"
+#include"seat.h"
 #include"str.h"
 #include"bar.h"
 #include"output.h"
 #include"types/image_t.h"
-#include"types/string_t.h"
 
-/************************
- * Button configuration *
- ************************/
-static bool button_set_command (struct Lava_item *button,
-		const char *command, enum Interaction_type type)
-{
-	if ( button->command[type] != NULL )
-		string_t_destroy(button->command[type]);
-	button->command[type] = string_t_from(command);
-	return true;
-}
-
-static bool button_set_all_commands (struct Lava_item *button,
-		const char *command, enum Interaction_type type)
-{
-	button_set_command(button, command, TYPE_LEFT_CLICK);
-	button_set_command(button, command, TYPE_MIDDLE_CLICK);
-	button_set_command(button, command, TYPE_RIGHT_CLICK);
-	button_set_command(button, command, TYPE_TOUCH);
-	return true;
-}
-
-static bool button_set_image_path (struct Lava_item *button, const char *path,
-		enum Interaction_type type)
-{
-	if ( button->img != NULL )
-		image_t_destroy(button->img);
-	if ( NULL == (button->img = image_t_create_from_file(path)) )
-		return false;
-	return true;
-}
-
-static bool button_set_variable (struct Lava_data *data, struct Lava_item *button,
-		const char *variable, const char *value, int line)
-{
-	struct
-	{
-		const char *variable;
-		bool (*set)(struct Lava_item*, const char*, enum Interaction_type);
-		enum Interaction_type type;
-	} configs[] = {
-		{ .variable = "command",              .set = button_set_all_commands, .type = 0                 },
-		{ .variable = "left-click-command",   .set = button_set_command,      .type = TYPE_LEFT_CLICK   },
-		{ .variable = "middle-click-command", .set = button_set_command,      .type = TYPE_MIDDLE_CLICK },
-		{ .variable = "right-click-command",  .set = button_set_command,      .type = TYPE_RIGHT_CLICK  },
-		{ .variable = "scroll-up-command",    .set = button_set_command,      .type = TYPE_SCROLL_UP    },
-		{ .variable = "scroll-down-command",  .set = button_set_command,      .type = TYPE_SCROLL_DOWN  },
-		{ .variable = "touch-command",        .set = button_set_command,      .type = TYPE_TOUCH        },
-		{ .variable = "image-path",           .set = button_set_image_path,   .type = 0                 }
-	};
-
-	for (size_t i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
-		if (! strcmp(configs[i].variable, variable))
-		{
-			if (configs[i].set(button, value, configs[i].type))
-				return true;
-			goto exit;
-		}
-
-	log_message(NULL, 0, "ERROR: Unrecognized button setting \"%s\".\n", variable);
-exit:
-	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",
-			line, data->config_path);
-	return false;
-}
-
-/************************
- * Spacer configuration *
- ************************/
-static bool spacer_set_length (struct Lava_item *spacer, const char *length)
-{
-	int len = atoi(length);
-	if ( len <= 0 )
-	{
-		log_message(NULL, 0, "ERROR: Spacer size must be greater than 0.\n");
-		return false;
+#define TRY(A) \
+	{ \
+		if (A)\
+			return true; \
+		goto error; \
 	}
-	spacer->length = (unsigned int)len;
-	return true;
-}
 
-static bool spacer_set_variable (struct Lava_data *data, struct Lava_item *spacer,
-		const char *variable, const char *value, int line)
-{
-	struct
-	{
-		const char *variable;
-		bool (*set)(struct Lava_item*, const char*);
-	} configs[] = {
-		{ .variable = "length", .set = spacer_set_length }
-	};
-
-	for (size_t i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
-		if (! strcmp(configs[i].variable, variable))
-		{
-			if (configs[i].set(spacer, value))
-				return true;
-			goto exit;
-		}
-
-	log_message(NULL, 0, "ERROR: Unrecognized spacer setting \"%s\".\n", variable);
-exit:
-	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",
-			line, data->config_path);
-	return false;
-}
-
-bool item_set_variable (struct Lava_data *data, struct Lava_item *item,
-		const char *variable, const char *value, int line)
-{
-	switch (item->type)
-	{
-		case TYPE_BUTTON: return button_set_variable(data, item, variable, value, line);
-		case TYPE_SPACER: return spacer_set_variable(data, item, variable, value, line);
-		default:          return false;
-	}
-}
-
+/*******************
+ *                 *
+ *  Item commands  *
+ *                 *
+ *******************/
 /* We need to fork two times for UNIXy resons. */
-static void secondary_fork (struct Lava_bar_instance *instance, struct Lava_item *item, const char *cmd)
+static void item_command_exec_second_fork (struct Lava_bar_instance *instance, const char *cmd)
 {
 	errno = 0;
 	int ret = fork();
@@ -178,7 +73,7 @@ static void secondary_fork (struct Lava_bar_instance *instance, struct Lava_item
 }
 
 /* We need to fork two times for UNIXy resons. */
-static void primary_fork (struct Lava_bar_instance *instance, struct Lava_item *item, const char *cmd)
+static void item_command_exec_first_fork (struct Lava_bar_instance *instance, const char *cmd)
 {
 	errno = 0;
 	int ret = fork();
@@ -191,7 +86,7 @@ static void primary_fork (struct Lava_bar_instance *instance, struct Lava_item *
 		sigemptyset(&mask);
 		sigprocmask(SIG_SETMASK, &mask, NULL);
 
-		secondary_fork(instance, item, cmd);
+		item_command_exec_second_fork(instance, cmd);
 		_exit(EXIT_SUCCESS);
 	}
 	else if ( ret < 0 )
@@ -200,85 +95,363 @@ static void primary_fork (struct Lava_bar_instance *instance, struct Lava_item *
 		waitpid(ret, NULL, 0);
 }
 
-/* Wrapper function that catches any special cases before executing the item command. */
-static bool item_command (struct Lava_bar_instance *instance, struct Lava_item *item,
-		enum Interaction_type type)
+static void execute_item_command (struct Lava_item_command *cmd, struct Lava_bar_instance *instance)
 {
-	if ( item->command[type] == NULL )
-		return false;
-
-	if (! strcmp(item->command[type]->string, "exit"))
-	{
-		log_message(instance->data, 1, "[command] Exiting due to button command \"exit\".\n");
-		instance->data->loop = false;
-	}
-	else if (! strcmp(item->command[type]->string, "reload"))
-	{
-		log_message(instance->data, 1, "[command] Reloading due to button command \"reload\".\n");
-		instance->data->loop = false;
-		instance->data->reload = true;
-	}
-	else
-	{
-		log_message(instance->data, 1, "[command] Executing command: %s\n",
-				item->command[type]->string);
-		primary_fork(instance, item, item->command[type]->string);
-	}
-
-	return true;
+	log_message(instance->data, 1, "[item] Executing command: %s\n", cmd->command);
+	item_command_exec_first_fork(instance, cmd->command);
 }
 
-void item_interaction (struct Lava_bar_instance *instance, struct Lava_item *item,
-		enum Interaction_type type)
+static struct Lava_item_command *find_item_command (struct Lava_item *item,
+		enum Interaction_type type, uint32_t modifiers, uint32_t special,
+		bool allow_universal)
 {
-	switch (item->type)
-	{
-		case TYPE_BUTTON:
-			item_command(instance, item, type);
-			break;
-
-		case TYPE_SPACER:
-		default:
-			break;
-	}
-}
-
-static void item_nullify (struct Lava_item *item)
-{
-	item->type                  = 0;
-	item->index                 = 0;
-	item->ordinate              = 0;
-	item->length                = 0;
-	item->img                   = NULL;
-
-	for (int i = 0; i < TYPE_AMOUNT; i++)
-		item->command[i] = NULL;
-}
-
-static const char *item_type_to_string (enum Item_type type)
-{
-	switch (type)
-	{
-		case TYPE_BUTTON: return "button";
-		case TYPE_SPACER: return "spacer";
-	}
+	struct Lava_item_command *cmd;
+	wl_list_for_each(cmd, &item->commands, link)
+		if ( (cmd->type == type && cmd->modifiers == modifiers && cmd->special == special)
+				|| (allow_universal && cmd->type == INTERACTION_UNIVERSAL && type != INTERACTION_MOUSE_SCROLL) )
+			return cmd;
 	return NULL;
 }
 
-bool create_item (struct Lava_bar *bar, enum Item_type type)
+static bool item_add_command (struct Lava_item *item, const char *command,
+		enum Interaction_type type, uint32_t modifiers, uint32_t special)
 {
-	log_message(bar->data, 2, "[item] Creating item: type=%s\n", item_type_to_string(type));
-	struct Lava_item *new_item = calloc(1, sizeof(struct Lava_item));
-	if ( new_item == NULL )
+	struct Lava_item_command *cmd = calloc(1, sizeof(struct Lava_item_command));
+	if ( cmd == NULL )
 	{
 		log_message(NULL, 0, "ERROR: Could not allocate.\n");
 		return false;
 	}
 
-	item_nullify(new_item);
-	new_item->type  = type;
-	bar->last_item = new_item;
-	wl_list_insert(&bar->items, &new_item->link);
+	cmd->type      = type;
+	cmd->modifiers = modifiers;
+	cmd->special   = special;
+
+	set_string(&cmd->command, (char *)command);
+
+	wl_list_insert(&item->commands, &cmd->link);
+	return true;
+}
+
+static void destroy_item_command (struct Lava_item_command *cmd)
+{
+	wl_list_remove(&cmd->link);
+	free_if_set(cmd->command);
+	free(cmd);
+}
+
+static void destroy_all_item_commands (struct Lava_item *item)
+{
+	struct Lava_item_command *cmd, *tmp;
+	wl_list_for_each_safe(cmd, tmp, &item->commands, link)
+		destroy_item_command(cmd);
+}
+
+/**************************
+ *                        *
+ *  Button configuration  *
+ *                        *
+ **************************/
+static bool button_set_image_path (struct Lava_item *button, const char *path)
+{
+	if ( button->img != NULL )
+		image_t_destroy(button->img);
+	if ( NULL == (button->img = image_t_create_from_file(path)) )
+		return false;
+	return true;
+}
+
+static bool parse_bind_token_buffer (struct Lava_data *data, char *buffer, int *index,
+		enum Interaction_type *type, uint32_t *modifiers, uint32_t *special,
+		bool *type_defined)
+{
+	buffer[*index] = '\0';
+
+	const struct
+	{
+		char *name;
+		enum Interaction_type type;
+		bool modifier;
+		uint32_t value;
+	} tokens[] = {
+		/* Mouse buttons (basically everything from linux/input-event-codes.h that a mouse-like device can emit) */
+		{ .name = "mouse-mouse",    .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_MOUSE   },
+		{ .name = "mouse-left",     .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_LEFT    },
+		{ .name = "mouse-right",    .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_RIGHT   },
+		{ .name = "mouse-middle",   .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_MIDDLE  },
+		{ .name = "mouse-side",     .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_SIDE    },
+		{ .name = "mouse-extra",    .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_EXTRA   },
+		{ .name = "mouse-forward",  .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_FORWARD },
+		{ .name = "mouse-backward", .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_BACK    },
+		{ .name = "mouse-task",     .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_TASK    },
+		{ .name = "mouse-misc",     .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_MISC    },
+		{ .name = "mouse-1",        .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_1       },
+		{ .name = "mouse-2",        .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_2       },
+		{ .name = "mouse-3",        .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_3       },
+		{ .name = "mouse-4",        .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_4       },
+		{ .name = "mouse-5",        .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_5       },
+		{ .name = "mouse-6",        .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_6       },
+		{ .name = "mouse-7",        .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_7       },
+		{ .name = "mouse-8",        .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_8       },
+		{ .name = "mouse-9",        .type = INTERACTION_MOUSE_BUTTON, .modifier = false, .value = BTN_9       },
+
+		/* Scroll */
+		{ .name = "scroll-up",   .type = INTERACTION_MOUSE_SCROLL, .modifier = false, .value = 1 },
+		{ .name = "scroll-down", .type = INTERACTION_MOUSE_SCROLL, .modifier = false, .value = 0 },
+
+		/* Touch */
+		{ .name = "touch", .type = INTERACTION_TOUCH, .modifier = false, .value = 0 },
+
+		/* Modifiers */
+		{ .name = "alt",      .type = INTERACTION_UNIVERSAL, .modifier = true, .value = ALT     },
+		{ .name = "capslock", .type = INTERACTION_UNIVERSAL, .modifier = true, .value = CAPS    },
+		{ .name = "control",  .type = INTERACTION_UNIVERSAL, .modifier = true, .value = CONTROL },
+		{ .name = "logo",     .type = INTERACTION_UNIVERSAL, .modifier = true, .value = LOGO    },
+		{ .name = "numlock",  .type = INTERACTION_UNIVERSAL, .modifier = true, .value = NUM     },
+		{ .name = "shift",    .type = INTERACTION_UNIVERSAL, .modifier = true, .value = SHIFT   }
+	};
+
+	for (size_t i = 0; i < (sizeof(tokens) / sizeof(tokens[0])); i++)
+		if (! strcmp(tokens[i].name, buffer))
+		{
+			if (tokens[i].modifier)
+			{
+				*modifiers |= tokens[i].value;
+				data->need_keyboard = true;
+			}
+			else
+			{
+				if (*type_defined)
+				{
+					log_message(NULL, 0, "ERROR: A command can only have a single interaction type.\n");
+					return false;
+				}
+				*type_defined = true;
+
+				*type = tokens[i].type;
+				*special = tokens[i].value;
+				switch (tokens[i].type)
+				{
+					case INTERACTION_MOUSE_BUTTON:
+					case INTERACTION_MOUSE_SCROLL:
+						data->need_pointer = true;
+						break;
+
+					case INTERACTION_TOUCH:
+						data->need_touch = true;
+						break;
+
+					default:
+						break;
+				}
+			}
+
+			*index = 0;
+			return true;
+		}
+
+	log_message(NULL, 0, "ERROR: Unrecognized interaction type / modifier \"%s\".\n", buffer);
+	return false;
+}
+
+static bool parse_token_buffer_add_char (char *buffer, int size, int *index, char ch)
+{
+	if ( *index > size - 2 )
+		return false;
+	buffer[*index] = ch;
+	(*index)++;
+	return true;
+}
+
+static bool button_item_command_from_string (struct Lava_data *data,
+		struct Lava_item *button, const char *_bind, const char *command)
+{
+	/* We can safely skip what we know is already there. */
+	char *bind = (char *)_bind + strlen("command");
+
+	const int buffer_size = 20;
+	char buffer[buffer_size];
+	int buffer_index = 0;
+
+	bool type_defined = false;
+	enum Interaction_type type = INTERACTION_UNIVERSAL;
+	uint32_t modifiers = 0, special = 0;
+	bool start = false, stop = false;
+	char *ch = (char *)bind;
+	for (;;)
+	{
+		if ( *ch == '\0' )
+		{
+			if ( !start || !stop )
+				goto error;
+
+			/* If the type is still universal, no bind has been specified. */
+			if ( type == INTERACTION_UNIVERSAL )
+			{
+				log_message(NULL, 0, "ERROR: No interaction type defined.\n", bind);
+				goto error;
+			}
+
+			/* Try to find a fitting command and overwrite it.
+			 * If none has been found, create a new one.
+			 */
+			struct Lava_item_command *cmd = find_item_command(button,
+					type, modifiers, special, false);
+			if ( cmd == NULL )
+				return item_add_command(button, command, type, modifiers, special);
+			set_string(&cmd->command, (char *)command);
+			return true;
+		}
+		else if ( *ch == '[' )
+		{
+			if ( start || stop )
+				goto error;
+			start = true;
+		}
+		else if ( *ch == ']' )
+		{
+			if ( !start || stop )
+				goto error;
+			if (! parse_bind_token_buffer(data, buffer, &buffer_index,
+						&type, &modifiers, &special, &type_defined))
+				goto error;
+			stop = true;
+		}
+		else if ( *ch == '+' )
+		{
+			if (! parse_bind_token_buffer(data, buffer, &buffer_index,
+						&type, &modifiers, &special, &type_defined))
+				goto error;
+		}
+		else
+		{
+			if ( !start || stop )
+				goto error;
+			if (! parse_token_buffer_add_char(buffer, buffer_size, &buffer_index, *ch))
+				goto error;
+		}
+
+		ch++;
+	}
+
+error:
+	log_message(NULL, 0, "ERROR: Unable to parse command bind string: %s\n", bind);
+	return false;
+}
+
+static bool button_item_universal_command (struct Lava_item *button, const char *command)
+{
+	/* Try to find a universal command and overwrite it. If none has been
+	 * found, create a new one.
+	 */
+	struct Lava_item_command *cmd = find_item_command(button,
+			INTERACTION_UNIVERSAL, 0, 0, false);
+	if ( cmd == NULL )
+		return item_add_command(button, command, INTERACTION_UNIVERSAL, 0, 0);
+	set_string(&cmd->command, (char *)command);
+	return true;
+}
+
+static bool button_set_variable (struct Lava_data *data, struct Lava_item *button,
+		const char *variable, const char *value, int line)
+{
+	if (! strcmp("image-path", variable))
+		TRY(button_set_image_path(button, value))
+	else if (! strcmp("command", variable)) /* Generic/universal command */
+		TRY(button_item_universal_command(button, value))
+	else if (string_starts_with(variable, "command"))  /* Command with special bind */
+		TRY(button_item_command_from_string(data, button, variable, value))
+
+	log_message(NULL, 0, "ERROR: Unrecognized button setting \"%s\".\n", variable);
+error:
+	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",
+			line, data->config_path);
+	return false;
+}
+
+/**************************
+ *                        *
+ *  Spacer configuration  *
+ *                        *
+ **************************/
+static bool spacer_set_length (struct Lava_item *spacer, const char *length)
+{
+	int len = atoi(length);
+	if ( len <= 0 )
+	{
+		log_message(NULL, 0, "ERROR: Spacer size must be greater than 0.\n");
+		return false;
+	}
+	spacer->length = (unsigned int)len;
+	return true;
+}
+
+static bool spacer_set_variable (struct Lava_data *data, struct Lava_item *spacer,
+		const char *variable, const char *value, int line)
+{
+	if (! strcmp("length", variable))
+		TRY(spacer_set_length(spacer, value))
+
+	log_message(NULL, 0, "ERROR: Unrecognized spacer setting \"%s\".\n", variable);
+error:
+	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n",
+			line, data->config_path);
+	return false;
+}
+
+bool item_set_variable (struct Lava_data *data, struct Lava_item *item,
+		const char *variable, const char *value, int line)
+{
+	switch (item->type)
+	{
+		case TYPE_BUTTON:
+			return button_set_variable(data, item, variable, value, line);
+
+		case TYPE_SPACER:
+			return spacer_set_variable(data, item, variable, value, line);
+
+		default:
+			return false;
+	}
+}
+
+/**********
+ *        *
+ *  Item  *
+ *        *
+ **********/
+void item_interaction (struct Lava_item *item, struct Lava_bar_instance *instance,
+		enum Interaction_type type, uint32_t modifiers, uint32_t special)
+{
+	if ( item->type != TYPE_BUTTON )
+		return;
+
+	log_message(instance->data, 1, "[item] Interaction: type=%d mod=%d spec=%d\n",
+			type, modifiers, special);
+
+	struct Lava_item_command *cmd;
+	if ( NULL != (cmd = find_item_command(item, type, modifiers, special, true)) )
+		execute_item_command(cmd, instance);
+}
+
+bool create_item (struct Lava_bar *bar, enum Item_type type)
+{
+	log_message(bar->data, 2, "[item] Creating item.\n");
+	struct Lava_item *item = calloc(1, sizeof(struct Lava_item));
+	if ( item == NULL )
+	{
+		log_message(NULL, 0, "ERROR: Could not allocate.\n");
+		return false;
+	}
+
+	item->index    = 0;
+	item->ordinate = 0;
+	item->length   = 0;
+	item->img      = NULL;
+	item->type     = type;
+	bar->last_item = item;
+	wl_list_init(&item->commands);
+	wl_list_insert(&bar->items, &item->link);
 	return true;
 }
 
@@ -349,14 +522,9 @@ bool finalize_items (struct Lava_bar *bar)
 static void destroy_item (struct Lava_item *item)
 {
 	wl_list_remove(&item->link);
-
-	for (int i = 0; i < TYPE_AMOUNT; i++)
-		if ( item->command[i] != NULL )
-			string_t_destroy(item->command[i]);
-
+	destroy_all_item_commands(item);
 	if ( item->img != NULL )
 		image_t_destroy(item->img);
-
 	free(item);
 }
 

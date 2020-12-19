@@ -20,6 +20,8 @@
 #ifndef LAVALAUNCHER_STR_H
 #define LAVALAUNCHER_STR_H
 
+#include<stdbool.h>
+
 struct Lava_data;
 
 void log_message (struct Lava_data *data, int level, const char *fmt, ...);
@@ -28,6 +30,7 @@ void set_string (char **ptr, char *arg);
 char *get_formatted_buffer (const char *fmt, ...);
 const char *str_orelse (const char *str, const char *orelse);
 void setenvf (const char *name, const char *fmt, ...);
+bool string_starts_with(const char *str, const char *prefix);
 
 #endif
 

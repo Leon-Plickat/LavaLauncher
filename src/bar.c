@@ -40,7 +40,6 @@
 #include"output.h"
 #include"bar.h"
 #include"types/colour_t.h"
-#include"types/string_t.h"
 #include"types/box_t.h"
 
 /*************************
@@ -1056,6 +1055,10 @@ static void bar_instance_configure_layer_surface (struct Lava_bar_instance *inst
 
 	/* Anchor the surface to the correct edge. */
 	zwlr_layer_surface_v1_set_anchor(instance->layer_surface, get_anchor(config));
+
+	/* If binds using the keyboard have been defined, request keyboard interactivity. */
+	if (instance->data->need_keyboard)
+		zwlr_layer_surface_v1_set_keyboard_interactivity(instance->layer_surface, true);
 
 	if ( config->mode == MODE_DEFAULT )
 		zwlr_layer_surface_v1_set_margin(instance->layer_surface,

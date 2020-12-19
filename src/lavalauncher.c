@@ -319,6 +319,10 @@ static void init_data (struct Lava_data *data)
 	data->river_status_manager = NULL;
 	data->need_river_status    = false;
 
+	data->need_keyboard = false;
+	data->need_pointer  = false;
+	data->need_touch    = false;
+
 	wl_list_init(&data->bars);
 	wl_list_init(&data->outputs);
 	wl_list_init(&data->seats);

@@ -30,6 +30,16 @@ struct Lava_data;
 struct Lava_bar;
 struct Lava_item_indicator;
 
+struct Lava_touchpoint
+{
+	struct wl_list            link;
+	int32_t                   id;
+	struct Lava_bar_instance *instance;
+	struct Lava_item         *item;
+
+	struct Lava_item_indicator *indicator;
+};
+
 struct Lava_seat
 {
 	struct wl_list    link;
@@ -71,20 +81,5 @@ bool create_seat (struct Lava_data *data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version);
 void destroy_all_seats (struct Lava_data *data);
 
-struct Lava_touchpoint
-{
-	struct wl_list            link;
-	int32_t                   id;
-	struct Lava_bar_instance *instance;
-	struct Lava_item         *item;
-
-	struct Lava_item_indicator *indicator;
-};
-
-bool create_touchpoint (struct Lava_seat *seat, int32_t id,
-		struct Lava_bar_instance *instance, struct Lava_item *item);
-void destroy_touchpoint (struct Lava_touchpoint *touchpoint);
-void destroy_all_touchpoints (struct Lava_seat *seat);
-struct Lava_touchpoint *touchpoint_from_id (struct Lava_seat *seat, int32_t id);
-
 #endif
+

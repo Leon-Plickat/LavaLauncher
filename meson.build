@@ -79,8 +79,6 @@ executable(
   files(
     'src/bar.c',
     'src/config.c',
-    'src/cursor.c',
-    'src/input.c',
     'src/item.c',
     'src/lavalauncher.c',
     'src/output.c',

@@ -191,19 +191,14 @@ void finish_wayland (struct Lava_data *data)
 	destroy_all_seats(data);
 
 	log_message(data, 2, "[registry] Destroying Wayland objects.\n");
-	if ( data->layer_shell != NULL )
-		zwlr_layer_shell_v1_destroy(data->layer_shell);
-	if ( data->compositor != NULL )
-		wl_compositor_destroy(data->compositor);
-	if ( data->subcompositor != NULL )
-		wl_subcompositor_destroy(data->subcompositor);
-	if ( data->shm != NULL )
-		wl_shm_destroy(data->shm);
-	if ( data->registry != NULL )
-		wl_registry_destroy(data->registry);
 
-	if ( data->river_status_manager != NULL )
-		zriver_status_manager_v1_destroy(data->river_status_manager);
+	DESTROY(data->layer_shell, zwlr_layer_shell_v1_destroy);
+	DESTROY(data->compositor, wl_compositor_destroy);
+	DESTROY(data->subcompositor, wl_subcompositor_destroy);
+	DESTROY(data->shm, wl_shm_destroy);
+	DESTROY(data->registry, wl_registry_destroy);
+
+	DESTROY(data->river_status_manager, zriver_status_manager_v1_destroy);
 
 	if ( data->display != NULL )
 	{

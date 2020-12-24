@@ -33,6 +33,7 @@
 #endif
 
 #include"str.h"
+#include"lavalauncher.h"
 #include"types/image_t.h"
 
 /* Returns: -1 On error
@@ -138,12 +139,7 @@ static bool load_image (image_t *image, const char *path)
 
 image_t *image_t_create_from_file (const char *path)
 {
-	image_t *image = calloc(1, sizeof(image_t));
-	if ( image == NULL )
-	{
-		log_message(NULL, 0, "ERROR: Failed to allocate image.\n");
-		return NULL;
-	}
+	TRY_NEW(image_t, image, NULL);
 
 	image->cairo_surface = NULL;
 	image->references    = 1;

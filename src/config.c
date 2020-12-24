@@ -74,13 +74,12 @@ bool global_set_variable (struct Lava_data *data, const char *variable,
 		{ .variable = "watch-config-file", .set = global_set_watch }
 	};
 
-	for (size_t i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
-		if (! strcmp(configs[i].variable, variable))
-		{
-			if (configs[i].set(data, value))
-				return true;
-			goto exit;
-		}
+	FOR_ARRAY(configs, i) if (! strcmp(configs[i].variable, variable))
+	{
+		if (configs[i].set(data, value))
+			return true;
+		goto exit;
+	}
 
 	log_message(NULL, 0, "ERROR: Unrecognized global setting \"%s\".\n", variable);
 exit:

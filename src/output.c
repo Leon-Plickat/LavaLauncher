@@ -295,12 +295,7 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 			&wl_output_interface, 3);
 	assert(wl_output);
 
-	struct Lava_output *output = calloc(1, sizeof(struct Lava_output));
-	if ( output == NULL )
-	{
-		log_message(NULL, 0, "ERROR: Could not allocate.\n");
-		return false;
-	}
+	TRY_NEW(struct Lava_output, output, false);
 
 	output->data          = data;
 	output->global_name   = name;
@@ -352,10 +347,7 @@ void destroy_output (struct Lava_output *output)
 {
 	if ( output == NULL )
 		return;
-
-	if ( output->river_status != NULL )
-		zriver_output_status_v1_destroy(output->river_status);
-
+	DESTROY(output->river_status, zriver_output_status_v1_destroy);
 	destroy_all_bar_instances(output);
 	wl_list_remove(&output->link);
 	wl_output_destroy(output->wl_output);

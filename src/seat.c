@@ -81,16 +81,8 @@ static void keyboard_handle_keymap (void *data, struct wl_keyboard *keyboard,
 	char *str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if ( str != MAP_FAILED )
 	{
-		if ( seat->keyboard.keymap != NULL )
-		{
-			xkb_keymap_unref(seat->keyboard.keymap);
-			seat->keyboard.keymap = NULL;
-		}
-		if ( seat->keyboard.state != NULL )
-		{
-			xkb_state_unref(seat->keyboard.state);
-			seat->keyboard.state = NULL;
-		}
+		DESTROY_NULL(seat->keyboard.keymap, xkb_keymap_unref);
+		DESTROY_NULL(seat->keyboard.state, xkb_state_unref);
 
 		if ( NULL == (seat->keyboard.keymap = xkb_keymap_new_from_string(
 						seat->keyboard.context, str,
@@ -121,29 +113,10 @@ static const struct wl_keyboard_listener keyboard_listener  = {
 
 static void seat_release_keyboard (struct Lava_seat *seat)
 {
-	if ( seat->keyboard.wl_keyboard != NULL )
-	{
-		wl_keyboard_release(seat->keyboard.wl_keyboard);
-		seat->keyboard.wl_keyboard = NULL;
-	}
-
-	if ( seat->keyboard.context != NULL )
-	{
-		xkb_context_unref(seat->keyboard.context);
-		seat->keyboard.context = NULL;
-	}
-	if ( seat->keyboard.keymap != NULL )
-	{
-		xkb_keymap_unref(seat->keyboard.keymap);
-		seat->keyboard.keymap = NULL;
-	}
-
-	if ( seat->keyboard.state != NULL )
-	{
-		xkb_state_unref(seat->keyboard.state);
-		seat->keyboard.state = NULL;
-	}
-
+	DESTROY_NULL(seat->keyboard.wl_keyboard, wl_keyboard_release);
+	DESTROY_NULL(seat->keyboard.context, xkb_context_unref);
+	DESTROY_NULL(seat->keyboard.keymap, xkb_keymap_unref);
+	DESTROY_NULL(seat->keyboard.state, xkb_state_unref);
 	seat->keyboard.modifiers = 0;
 }
 
@@ -204,12 +177,7 @@ static bool create_touchpoint (struct Lava_seat *seat, int32_t id,
 {
 	log_message(seat->data, 1, "[seat] Creating touchpoint.\n");
 
-	struct Lava_touchpoint *touchpoint = calloc(1, sizeof(struct Lava_touchpoint));
-	if ( touchpoint == NULL )
-	{
-		log_message(NULL, 0, "ERROR: Can not allocate.\n");
-		return false;
-	}
+	TRY_NEW(struct Lava_touchpoint, touchpoint, false);
 
 	touchpoint->id       = id;
 	touchpoint->instance = instance;
@@ -233,9 +201,7 @@ static bool create_touchpoint (struct Lava_seat *seat, int32_t id,
 
 static void destroy_touchpoint (struct Lava_touchpoint *touchpoint)
 {
-	if ( touchpoint->indicator != NULL )
-		destroy_indicator(touchpoint->indicator);
-
+	DESTROY(touchpoint->indicator, destroy_indicator);
 	wl_list_remove(&touchpoint->link);
 	free(touchpoint);
 }
@@ -345,12 +311,7 @@ static const struct wl_touch_listener touch_listener = {
 static void seat_release_touch (struct Lava_seat *seat)
 {
 	destroy_all_touchpoints(seat);
-
-	if ( seat->touch.wl_touch != NULL )
-	{
-		wl_touch_release(seat->touch.wl_touch);
-		seat->touch.wl_touch = NULL;
-	}
+	DESTROY_NULL(seat->touch.wl_touch, wl_touch_release);
 }
 
 static void seat_bind_touch (struct Lava_seat *seat)
@@ -373,16 +334,8 @@ static void seat_init_touch (struct Lava_seat *seat)
  ************/
 static void seat_pointer_unset_cursor (struct Lava_seat *seat)
 {
-	if ( seat->pointer.cursor_theme != NULL )
-	{
-		wl_cursor_theme_destroy(seat->pointer.cursor_theme);
-		seat->pointer.cursor_theme = NULL;
-	}
-	if ( seat->pointer.cursor_surface != NULL )
-	{
-		wl_surface_destroy(seat->pointer.cursor_surface);
-		seat->pointer.cursor_surface = NULL;
-	}
+	DESTROY_NULL(seat->pointer.cursor_theme, wl_cursor_theme_destroy);
+	DESTROY_NULL(seat->pointer.cursor_surface, wl_surface_destroy);
 
 	 /* These just points back to the theme. */
 	seat->pointer.cursor       = NULL;
@@ -457,8 +410,7 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 {
 	struct Lava_seat *seat = data;
 
-	if ( seat->pointer.indicator != NULL )
-		destroy_indicator(seat->pointer.indicator);
+	DESTROY(seat->pointer.indicator, destroy_indicator);
 
 	/* We have to check every seat before we can be sure that no pointer
 	 * hovers over the bar. Only if this is the case can we hide the bar.
@@ -525,8 +477,7 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 
 	if ( item == NULL || item->type != TYPE_BUTTON )
 	{
-		if ( seat->pointer.indicator != NULL )
-			destroy_indicator(seat->pointer.indicator);
+		DESTROY(seat->pointer.indicator, destroy_indicator);
 		return;
 	}
 
@@ -718,12 +669,7 @@ static const struct wl_pointer_listener pointer_listener = {
 static void seat_release_pointer (struct Lava_seat *seat)
 {
 	seat_pointer_unset_cursor(seat);
-
-	if ( seat->pointer.wl_pointer != NULL )
-	{
-		wl_pointer_release(seat->pointer.wl_pointer);
-		seat->pointer.wl_pointer = NULL;
-	}
+	DESTROY_NULL(seat->pointer.wl_pointer, wl_pointer_release);
 }
 
 static void seat_bind_pointer (struct Lava_seat *seat)
@@ -790,12 +736,8 @@ bool create_seat (struct Lava_data *data, struct wl_registry *registry,
 	log_message(data, 1, "[seat] Adding seat.\n");
 
 	struct wl_seat *wl_seat = wl_registry_bind(registry, name, &wl_seat_interface, 5);
-	struct Lava_seat *seat = calloc(1, sizeof(struct Lava_seat));
-	if ( seat == NULL )
-	{
-		log_message(NULL, 0, "ERROR: Can not allocate.\n");
-		return false;
-	}
+
+	TRY_NEW(struct Lava_seat, seat, false);
 
 	wl_seat_add_listener(wl_seat, &seat_listener, seat);
 

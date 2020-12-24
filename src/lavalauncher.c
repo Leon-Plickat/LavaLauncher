@@ -279,7 +279,7 @@ static bool get_default_config_path (struct Lava_data *data)
 		{ .fmt = "/etc/lavalauncher/lavalauncher.conf",           .env = NULL                      }
 	};
 
-	for (size_t i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
+	FOR_ARRAY(paths, i)
 	{
 		data->config_path = get_formatted_buffer(paths[i].fmt, paths[i].env);
 		if (! access(data->config_path, F_OK | R_OK))

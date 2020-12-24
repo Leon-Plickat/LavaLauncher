@@ -132,12 +132,7 @@ struct Lava_bar_configuration *bar_get_last_config (struct Lava_bar *bar)
 
 bool create_bar_config (struct Lava_bar *bar, bool default_config)
 {
-	struct Lava_bar_configuration *config = calloc(1, sizeof(struct Lava_bar_configuration));
-	if ( config == NULL )
-	{
-		log_message(NULL, 0, "ERROR: Could not allocate.\n");
-		return false;
-	}
+	TRY_NEW(struct Lava_bar_configuration, config, false);
 
 	if (default_config)
 		bar_config_sensible_defaults(config);
@@ -204,12 +199,7 @@ static void finalize_all_bar_configs (struct Lava_bar *bar)
  * *************/
 bool create_bar (struct Lava_data *data)
 {
-	struct Lava_bar *bar = calloc(1, sizeof(struct Lava_bar));
-	if ( bar == NULL )
-	{
-		log_message(NULL, 0, "ERROR: Could not allocate.\n");
-		return false;
-	}
+	TRY_NEW(struct Lava_bar, bar, false);
 
 	bar->data = data;
 
@@ -634,13 +624,12 @@ bool bar_config_set_variable (struct Lava_bar_configuration *config,
 		{ .variable = "size",                    .set = bar_config_set_size                    }
 	};
 
-	for (size_t i = 0; i < (sizeof(configs) / sizeof(configs[0])); i++)
-		if (! strcmp(configs[i].variable, variable))
-		{
-			if (configs[i].set(config, data, value))
-				return true;
-			goto exit;
-		}
+	FOR_ARRAY(configs, i) if (! strcmp(configs[i].variable, variable))
+	{
+		if (configs[i].set(config, data, value))
+			return true;
+		goto exit;
+	}
 
 	log_message(NULL, 0, "ERROR: Unrecognized bar setting \"%s\".\n", variable);
 exit:
@@ -681,10 +670,8 @@ static void clear_buffer (cairo_t *cairo)
  **************/
 void destroy_indicator (struct Lava_item_indicator *indicator)
 {
-	if ( indicator->indicator_subsurface != NULL )
-		wl_subsurface_destroy(indicator->indicator_subsurface);
-	if ( indicator->indicator_surface != NULL )
-		wl_surface_destroy(indicator->indicator_surface);
+	DESTROY(indicator->indicator_subsurface, wl_subsurface_destroy);
+	DESTROY(indicator->indicator_surface, wl_surface_destroy);
 
 	/* Cleanup in the parent. */
 	if ( indicator->seat != NULL )
@@ -704,12 +691,7 @@ struct Lava_item_indicator *create_indicator (struct Lava_bar_instance *instance
 {
 	struct Lava_data *data = instance->data;
 
-	struct Lava_item_indicator *indicator = calloc(1, sizeof(struct Lava_item_indicator));
-	if ( indicator == NULL )
-	{
-		log_message(NULL, 0, "ERROR: Could not allocate.\n");
-		return NULL;
-	}
+	TRY_NEW(struct Lava_item_indicator, indicator, NULL);
 
 	wl_list_insert(&instance->indicators, &indicator->link);
 
@@ -1413,12 +1395,7 @@ bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *c
 	struct Lava_data *data = bar->data;
 	log_message(data, 1, "[bar] Creating bar instance: global_name=%d\n", output->global_name);
 
-	struct Lava_bar_instance *instance = calloc(1, sizeof(struct Lava_bar_instance));
-	if ( instance == NULL )
-	{
-		log_message(NULL, 0, "ERROR: Could not allocate.\n");
-		return false;
-	}
+	TRY_NEW(struct Lava_bar_instance, instance, false);
 
 	wl_list_insert(&output->bar_instances, &instance->link);
 	instance->data          = data;
@@ -1484,14 +1461,10 @@ void destroy_bar_instance (struct Lava_bar_instance *instance)
 	wl_list_for_each_safe(indicator, temp, &instance->indicators, link)
 		destroy_indicator(indicator);
 
-	if ( instance->layer_surface != NULL )
-		zwlr_layer_surface_v1_destroy(instance->layer_surface);
-	if ( instance->subsurface != NULL )
-		wl_subsurface_destroy(instance->subsurface);
-	if ( instance->bar_surface != NULL )
-		wl_surface_destroy(instance->bar_surface);
-	if ( instance->icon_surface != NULL )
-		wl_surface_destroy(instance->icon_surface);
+	DESTROY(instance->layer_surface, zwlr_layer_surface_v1_destroy);
+	DESTROY(instance->subsurface, wl_subsurface_destroy);
+	DESTROY(instance->bar_surface, wl_surface_destroy);
+	DESTROY(instance->icon_surface, wl_surface_destroy);
 
 	finish_buffer(&instance->bar_buffers[0]);
 	finish_buffer(&instance->bar_buffers[1]);

@@ -200,16 +200,13 @@ struct Lava_bar
 	int               item_amount;
 
 	/* The different configurations of the bar. The first one is treated as default. */
-	struct Lava_bar_configuration *current_config;
+	struct Lava_bar_configuration *current_config, *default_config, *last_config;
 	struct wl_list configs;
 };
 
-struct Lava_bar_configuration *bar_get_first_config (struct Lava_bar *bar);
-struct Lava_bar_configuration *bar_get_last_config (struct Lava_bar *bar);
 bool create_bar_config (struct Lava_bar *bar, bool default_config);
 
 bool create_bar (struct Lava_data *data);
-struct Lava_bar *get_last_bar (struct Lava_data *data);
 bool finalize_bar (struct Lava_bar *bar);
 void destroy_all_bars (struct Lava_data *data);
 bool bar_config_set_variable (struct Lava_bar_configuration *config,

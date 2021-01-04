@@ -86,6 +86,8 @@ struct Lava_data
 	char *config_path;
 
 	struct wl_list bars;
+	struct Lava_bar *last_bar;
+
 	struct wl_list outputs;
 	struct wl_list seats;
 

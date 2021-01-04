@@ -481,15 +481,14 @@ bool finalize_items (struct Lava_bar *bar)
 		return false;
 	}
 
-	// TODO XXX set size to -1, which should cause it to automatically be config->size
-	struct Lava_bar_configuration *config = bar_get_first_config(bar);
 
 	unsigned int index = 0, ordinate = 0;
 	struct Lava_item *it1, *it2;
 	wl_list_for_each_reverse_safe(it1, it2, &bar->items, link)
 	{
+		// TODO XXX set size to -1, which should cause it to automatically be config->size
 		if ( it1->type == TYPE_BUTTON )
-			it1->length = config->size;
+			it1->length = bar->default_config->size;
 
 		it1->index    = index;
 		it1->ordinate = ordinate;

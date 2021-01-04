@@ -112,32 +112,19 @@ static void bar_config_copy_settings (struct Lava_bar_configuration *config,
 	config->namespace = default_config->namespace == NULL ? NULL : strdup(default_config->namespace);
 }
 
-struct Lava_bar_configuration *bar_get_first_config (struct Lava_bar *bar)
-{
-	struct Lava_bar_configuration *config;
-	wl_list_for_each(config, &bar->configs, link)
-		return config;
-	return NULL;
-}
-
-struct Lava_bar_configuration *bar_get_last_config (struct Lava_bar *bar)
-{
-	int len = wl_list_length(&bar->configs) - 1, i = 0;
-	struct Lava_bar_configuration *config;
-	wl_list_for_each(config, &bar->configs, link)
-		if ( i++ == len )
-			return config;
-	return NULL;
-}
-
 bool create_bar_config (struct Lava_bar *bar, bool default_config)
 {
 	TRY_NEW(struct Lava_bar_configuration, config, false);
 
 	if (default_config)
+	{
+		bar->default_config = config;
 		bar_config_sensible_defaults(config);
+	}
 	else
-		bar_config_copy_settings(config, bar_get_first_config(bar));
+		bar_config_copy_settings(config, bar->default_config);
+
+	bar->last_config = config;
 
 	wl_list_insert(&bar->configs, &config->link);
 	return true;
@@ -201,7 +188,10 @@ bool create_bar (struct Lava_data *data)
 {
 	TRY_NEW(struct Lava_bar, bar, false);
 
-	bar->data = data;
+	bar->data           = data;
+	bar->last_item      = NULL;
+	bar->last_config    = NULL;
+	bar->default_config = NULL;
 
 	wl_list_init(&bar->items);
 	wl_list_init(&bar->configs);
@@ -214,18 +204,9 @@ bool create_bar (struct Lava_data *data)
 	}
 
 	wl_list_insert(&data->bars, &bar->link);
+	data->last_bar = bar;
 
 	return true;
-}
-
-struct Lava_bar *get_last_bar (struct Lava_data *data)
-{
-	int len = wl_list_length(&data->bars) - 1, i = 0;
-	struct Lava_bar *bar;
-	wl_list_for_each(bar, &data->bars, link)
-		if ( i++ == len )
-			return bar;
-	return NULL;
 }
 
 bool finalize_bar (struct Lava_bar *bar)

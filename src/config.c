@@ -182,7 +182,7 @@ static bool parser_handle_bracket (struct Parser *parser, const char ch)
 		switch (parser->context)
 		{
 			case CONTEXT_BAR:
-				finalize_bar(get_last_bar(parser->data));
+				finalize_bar(parser->data->last_bar);
 				parser->context = CONTEXT_NONE;
 				break;
 
@@ -382,19 +382,19 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 			{
 				parser->context = CONTEXT_CONFIG;
 				parser->state = STATE_EXPECT_OB;
-				return create_bar_config(get_last_bar(parser->data), false);
+				return create_bar_config(parser->data->last_bar, false);
 			}
 			if (! strcmp(parser->name_buffer, "button"))
 			{
 				parser->context = CONTEXT_BUTTON;
 				parser->state = STATE_EXPECT_OB;
-				return create_item(get_last_bar(parser->data), TYPE_BUTTON);
+				return create_item(parser->data->last_bar, TYPE_BUTTON);
 			}
 			else if (! strcmp(parser->name_buffer, "spacer"))
 			{
 				parser->context = CONTEXT_SPACER;
 				parser->state = STATE_EXPECT_OB;
-				return create_item(get_last_bar(parser->data), TYPE_SPACER);
+				return create_item(parser->data->last_bar, TYPE_SPACER);
 			}
 		}
 
@@ -409,7 +409,7 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 					&parser->value_buffer_length, ch, false))
 			return false;
 
-		struct Lava_bar *last_bar = get_last_bar(parser->data);
+		struct Lava_bar *last_bar = parser->data->last_bar;
 		parser->state = STATE_EXPECT_SEMICOLON;
 		switch (parser->context)
 		{
@@ -420,13 +420,13 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 
 			case CONTEXT_BAR:
 				/* Change settings of default configuration set. */
-				return bar_config_set_variable(bar_get_first_config(last_bar),
+				return bar_config_set_variable(last_bar->default_config,
 						parser->data, parser->name_buffer, parser->value_buffer,
 						parser->line);
 
 			case CONTEXT_CONFIG:
 				/* Change settings of latest configuration set. */
-				return bar_config_set_variable(bar_get_last_config(last_bar),
+				return bar_config_set_variable(last_bar->last_config,
 						parser->data, parser->name_buffer, parser->value_buffer,
 						parser->line);
 

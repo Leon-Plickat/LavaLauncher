@@ -324,6 +324,8 @@ static void init_data (struct Lava_data *data)
 	data->need_touch    = false;
 
 	wl_list_init(&data->bars);
+	data->last_bar = NULL;
+
 	wl_list_init(&data->outputs);
 	wl_list_init(&data->seats);
 }

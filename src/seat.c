@@ -208,7 +208,6 @@ static void destroy_touchpoint (struct Lava_touchpoint *touchpoint)
 
 static void destroy_all_touchpoints (struct Lava_seat *seat)
 {
-	log_message(seat->data, 1, "[seat] Destroying all touchpoints.\n");
 	struct Lava_touchpoint *tp, *temp;
 	wl_list_for_each_safe(tp, temp, &seat->touch.touchpoints, link)
 		destroy_touchpoint(tp);

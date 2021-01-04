@@ -182,7 +182,8 @@ static bool parser_handle_bracket (struct Parser *parser, const char ch)
 		switch (parser->context)
 		{
 			case CONTEXT_BAR:
-				finalize_bar(parser->data->last_bar);
+				if (! finalize_bar(parser->data->last_bar))
+					return false;
 				parser->context = CONTEXT_NONE;
 				break;
 

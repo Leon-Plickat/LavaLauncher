@@ -1,7 +1,7 @@
 /*
  * LavaLauncher - A simple launcher panel for Wayland
  *
- * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 - 2021 Leon Henrik Plickat
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 #include<stdbool.h>
 #include<stdint.h>
-#include<wayland-server.h>
+#include<wayland-client.h>
 
 /* Helper macro to iterate over a struct array. */
 #define FOR_ARRAY(A, B) for (size_t B = 0; B < (sizeof(A) / sizeof(A[0])); B++)

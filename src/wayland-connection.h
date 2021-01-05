@@ -1,7 +1,7 @@
 /*
  * LavaLauncher - A simple launcher panel for Wayland
  *
- * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 - 2021 Leon Henrik Plickat
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,12 +17,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_REGISTRY_H
-#define LAVALAUNCHER_REGISTRY_H
+#ifndef LAVALAUNCHER_WAYLAND_CONNECTION_H
+#define LAVALAUNCHER_WAYLAND_CONNECTION_H
 
-struct Lava_data;
+struct Lava_ecent_source;
 
-bool init_wayland (struct Lava_data *data);
-void finish_wayland (struct Lava_data *data);
+extern struct Lava_event_source wayland_source;
 
 #endif
+

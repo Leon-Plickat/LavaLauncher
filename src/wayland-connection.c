@@ -1,7 +1,7 @@
 /*
  * LavaLauncher - A simple launcher panel for Wayland
  *
- * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 - 2021 Leon Henrik Plickat
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include<stdbool.h>
 #include<signal.h>
 #include<unistd.h>
+#include<poll.h>
 #include<string.h>
 #include<errno.h>
 
@@ -40,7 +41,14 @@
 #include"str.h"
 #include"seat.h"
 #include"output.h"
+#include"event-loop.h"
 
+
+/**************
+ *            *
+ *  Registry  *
+ *            *
+ **************/
 static void registry_handle_global (void *raw_data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version)
 {
@@ -134,7 +142,12 @@ static char *check_for_required_interfaces (struct Lava_data *data)
 	return NULL;
 }
 
-bool init_wayland (struct Lava_data *data)
+/****************
+ *              *
+ *  Connection  *
+ *              *
+ ****************/
+static bool init_wayland (struct Lava_data *data)
 {
 	log_message(data, 1, "[registry] Init Wayland.\n");
 
@@ -183,7 +196,7 @@ bool init_wayland (struct Lava_data *data)
 }
 
 /* Finish him! */
-void finish_wayland (struct Lava_data *data)
+static void finish_wayland (struct Lava_data *data)
 {
 	log_message(data, 1, "[registry] Finish Wayland.\n");
 
@@ -206,4 +219,74 @@ void finish_wayland (struct Lava_data *data)
 		wl_display_disconnect(data->display);
 	}
 }
+
+/**************************
+ *                        *
+ *  Wayland event source  *
+ *                        *
+ **************************/
+static bool wayland_source_init (struct pollfd *fd, struct Lava_data *data)
+{
+	log_message(data, 1, "[loop] Setting up Wayland event source.\n");
+
+	if (! init_wayland(data))
+		return false;
+
+	fd->events = POLLIN;
+	if ( -1 == (fd->fd = wl_display_get_fd(data->display)) )
+	{
+		log_message(NULL, 0, "ERROR: Unable to open Wayland display fd.\n");
+		return false;
+	}
+	return true;
+}
+
+static bool wayland_source_finish (struct pollfd *fd, struct Lava_data *data)
+{
+	if ( fd->fd != -1 )
+		close(fd->fd);
+	finish_wayland(data);
+	return true;
+}
+
+static bool wayland_source_flush (struct pollfd *fd, struct Lava_data *data)
+{
+	do {
+		if ( wl_display_flush(data->display) == 1 && errno != EAGAIN )
+		{
+			log_message(NULL, 0, "ERROR: wl_display_flush: %s\n",
+					strerror(errno));
+			break;
+		}
+	} while ( errno == EAGAIN );
+	return true;
+}
+
+static bool wayland_source_handle_in (struct pollfd *fd, struct Lava_data *data)
+{
+	if ( wl_display_dispatch(data->display) == -1 )
+	{
+		log_message(NULL, 0, "ERROR: wl_display_dispatch: %s\n", strerror(errno));
+		return false;
+	}
+	return true;
+}
+
+static bool wayland_source_handle_out (struct pollfd *fd, struct Lava_data *data)
+{
+	if ( wl_display_flush(data->display) == -1 )
+	{
+		log_message(NULL, 0, "ERROR: wl_display_flush: %s\n", strerror(errno));
+		return false;
+	}
+	return true;
+}
+
+struct Lava_event_source wayland_source = {
+	.init       = wayland_source_init,
+	.finish     = wayland_source_finish,
+	.flush      = wayland_source_flush,
+	.handle_in  = wayland_source_handle_in,
+	.handle_out = wayland_source_handle_out
+};
 

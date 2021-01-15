@@ -62,6 +62,9 @@ static void keyboard_handle_modifiers (void *data, struct wl_keyboard *keyboard,
 		uint32_t group)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)data;
+
+	log_message(seat->data, 3, "[input] Received modifiers.\n");
+
 	xkb_state_update_mask(seat->keyboard.state, depressed, latched, locked, 0, 0, group);
 	seat->keyboard.modifiers = 0;
 	CHECK_MOD(XKB_MOD_NAME_ALT, ALT);
@@ -77,6 +80,8 @@ static void keyboard_handle_keymap (void *data, struct wl_keyboard *keyboard,
 		uint32_t format, int32_t fd, uint32_t size)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)data;
+
+	log_message(seat->data, 3, "[input] Received keymap.\n");
 
 	char *str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if ( str != MAP_FAILED )
@@ -411,23 +416,14 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 
 	DESTROY(seat->pointer.indicator, destroy_indicator);
 
-	/* We have to check every seat before we can be sure that no pointer
-	 * hovers over the bar. Only if this is the case can we hide the bar.
-	 */
-	// TODO we may need to consider touch points here
-	struct Lava_seat *st;
-	wl_list_for_each(st, &seat->data->seats, link)
-		if ( st != seat && st->pointer.instance == seat->pointer.instance )
-			goto skip_update_hiding;
-	seat->pointer.instance->hover = false;
-	bar_instance_update_hidden_status(seat->pointer.instance);
-
-skip_update_hiding:
+	struct Lava_bar_instance *instance = seat->pointer.instance;
 
 	seat->pointer.x        = 0;
 	seat->pointer.y        = 0;
 	seat->pointer.instance = NULL;
 	seat->pointer.item     = NULL;
+
+	bar_instance_pointer_leave(instance);
 
 	log_message(seat->data, 1, "[input] Pointer left surface.\n");
 }
@@ -443,8 +439,7 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 
 	seat_pointer_set_cursor(seat, serial, str_orelse(seat->pointer.instance->config->cursor_name, "pointer"));
 
-	seat->pointer.instance->hover = true;
-	bar_instance_update_hidden_status(seat->pointer.instance);
+	bar_instance_pointer_enter(seat->pointer.instance);
 
 	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
 	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);

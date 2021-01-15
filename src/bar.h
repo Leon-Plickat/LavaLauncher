@@ -217,8 +217,10 @@ bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *c
 void destroy_bar_instance (struct Lava_bar_instance *instance);
 void destroy_all_bar_instances (struct Lava_output *output);
 void update_bar_instance (struct Lava_bar_instance *instance);
-void bar_instance_update_hidden_status (struct Lava_bar_instance *instance);
 struct Lava_bar_instance *bar_instance_from_surface (struct Lava_data *data, struct wl_surface *surface);
+void bar_instance_update_hidden_status (struct Lava_bar_instance *instance);
+void bar_instance_pointer_leave (struct Lava_bar_instance *instance);
+void bar_instance_pointer_enter (struct Lava_bar_instance *instance);
 
 void destroy_indicator (struct Lava_item_indicator *indicator);
 struct Lava_item_indicator *create_indicator (struct Lava_bar_instance *instance);

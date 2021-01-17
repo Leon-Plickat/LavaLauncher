@@ -321,13 +321,25 @@ done:
 }
 
 BAR_CONFIG_STRING(bar_config_set_cursor_name, cursor_name)
-BAR_CONFIG_STRING(bar_config_set_only_output, only_output)
 BAR_CONFIG_STRING(bar_config_set_namespace, namespace)
 
 BAR_CONFIG_COLOUR(bar_config_set_bar_colour, bar_colour)
 BAR_CONFIG_COLOUR(bar_config_set_border_colour, border_colour)
 BAR_CONFIG_COLOUR(bar_config_set_indicator_colour_active, indicator_active_colour)
 BAR_CONFIG_COLOUR(bar_config_set_indicator_colour_hover, indicator_hover_colour)
+
+BAR_CONFIG(bar_config_set_only_output)
+{
+	if ( ! strcmp(arg, "all") || ! strcmp(arg, "*") )
+	{
+		free_if_set(config->only_output);
+		config->only_output = NULL;
+		return true;
+	}
+
+	set_string(&config->only_output, (char *)arg);
+	return true;
+}
 
 BAR_CONFIG(bar_config_set_border_size)
 {

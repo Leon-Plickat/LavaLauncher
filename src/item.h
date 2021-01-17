@@ -36,6 +36,16 @@ enum Item_type
 	TYPE_SPACER
 };
 
+// TODO [item-rework] position of the item on the bar.
+//      -> in default mode, display as usual
+//      -> in full mode there will be gaps between the three areads
+enum Item_alignment
+{
+	ITEM_ALIGN_START,
+	ITEM_ALIGN_CENTER,
+	ITEM_ALIGN_END
+};
+
 enum Interaction_type
 {
 	INTERACTION_MOUSE_BUTTON,
@@ -60,11 +70,13 @@ struct Lava_item
 {
 	struct wl_list link;
 	enum Item_type type;
+	enum Item_alignment alignment;
 
 	image_t *img;
 	struct wl_list commands;
 
-	unsigned int index, ordinate, length;
+	// TODO [item-rework] all sizes are relational
+	float relational_size;
 };
 
 bool create_item (struct Lava_bar *bar, enum Item_type type);

@@ -42,6 +42,46 @@
 #include"types/colour_t.h"
 #include"types/box_t.h"
 
+/*************
+ *           *
+ *  Hotspot  *
+ *           *
+ *************/
+static void  bar_instance_create_hotspots (struct Lava_bar_instance *instance, struct Lava_item *item)
+{
+	free_if_set(instance->hotspots);
+
+	instance->hotspots = calloc(instance->bar->item_amount, sizeof(struct Lava_bar_instance));
+
+	for (int i = 0; i < instance->bar->item_amount; i++)
+	{
+		// TODO [item-rework] implement this
+		instance->hotspots[i].x = 0;
+		instance->hotspots[i].y = 0;
+		instance->hotspots[i].w = 0;
+		instance->hotspots[i].h = 0;
+		instance->hotspots[i].item = item;
+	}
+}
+
+struct Lava_hotspot *hotspot_from_coords (struct Lava_bar_instance *instance, int32_t x, int32_t y)
+{
+	for (int i = 0; i < instance->bar->item_type; i++)
+	{
+		if ( x < instance->hotspots[i].x )
+			continue;
+		if ( y < instance->hotspots[i].y )
+			continue;
+		if ( x >= instance->hotspots[i].x + instance->hotspots[i].w )
+			continue;
+		if ( y >= instance->hotspots[i].y + instance->hotspots[i].h )
+			continue;
+		return instance->hotspots[i].item;
+	}
+
+	return NULL;
+}
+
 /*************************
  * Bar configuration set *
  *************************/
@@ -227,8 +267,18 @@ bool create_bar (struct Lava_data *data)
 bool finalize_bar (struct Lava_bar *bar)
 {
 	log_message(bar->data, 1, "[bar] Finalize bar.\n");
+
 	if (! finalize_items(bar))
 		return false;
+
+	// TODO [item-rework] we probably don't need to keep bar->item_amount
+	bar->item_amount = wl_list_length(&bar->items);
+	if ( bar->item_amount == 0 )
+	{
+		log_message(NULL, 0, "ERROR: Configuration defines a bar without items.\n");
+		return false;
+	}
+
 	finalize_all_bar_configs(bar);
 	return true;
 }
@@ -1301,6 +1351,8 @@ void destroy_bar_instance (struct Lava_bar_instance *instance)
 	if ( instance == NULL )
 		return;
 
+	free_if_set(instance->hotspots);
+
 	struct Lava_item_indicator *indicator, *temp;
 	wl_list_for_each_safe(indicator, temp, &instance->indicators, link)
 		destroy_indicator(indicator);
@@ -1349,7 +1401,17 @@ void update_bar_instance (struct Lava_bar_instance *instance, bool need_new_dime
 	}
 
 	if (need_new_dimensions)
+	{
+		// TODO [item-rework] needs to re-compute the total item length every time now
+		//                    -> make it somehow possible to automatically hide some
+		//                       items if the bar gets to long
 		bar_instance_update_dimensions(instance);
+
+		// TODO [item-rework] use allocated array instead of wl_list for performance
+		//                    (and since hotspots are always added all at once);
+		bar_instance_destroy_hotspots(instance);
+		bar_instance_create_hotspots(instance);
+	}
 
 	const bool currently_hidden = instance->hidden;
 	instance->hidden = bar_instance_should_hide(instance);

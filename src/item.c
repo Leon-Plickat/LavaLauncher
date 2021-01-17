@@ -467,64 +467,23 @@ bool create_item (struct Lava_bar *bar, enum Item_type type)
 	return true;
 }
 
-/* Return pointer to Lava_item struct from item list which includes the
- * given surface-local coordinates on the surface of the given output.
- */
-struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t x, uint32_t y)
-{
-	struct Lava_bar               *bar    = instance->bar;
-	struct Lava_bar_configuration *config = instance->config;
-	uint32_t ordinate;
-	if ( config->orientation == ORIENTATION_HORIZONTAL )
-		ordinate = x - instance->item_area_dim.x;
-	else
-		ordinate = y - instance->item_area_dim.y;
-
-	struct Lava_item *item, *temp;
-	wl_list_for_each_reverse_safe(item, temp, &bar->items, link)
-	{
-		if ( ordinate >= item->ordinate
-				&& ordinate < item->ordinate + item->length )
-			return item;
-	}
-	return NULL;
-}
-
-unsigned int get_item_length_sum (struct Lava_bar *bar)
-{
-	unsigned int sum = 0;
-	struct Lava_item *it1, *it2;
-	wl_list_for_each_reverse_safe (it1, it2, &bar->items, link)
-		sum += it1->length;
-	return sum;
-}
-
 /* When items are created when parsing the config file, the size is not yet
  * available, so items need to be finalized later.
  */
 bool finalize_items (struct Lava_bar *bar)
 {
-	bar->item_amount = wl_list_length(&bar->items);
-	if ( bar->item_amount == 0 )
-	{
-		log_message(NULL, 0, "ERROR: Configuration defines a bar without items.\n");
-		return false;
-	}
-
-
 	unsigned int index = 0, ordinate = 0;
-	struct Lava_item *it1, *it2;
-	wl_list_for_each_reverse_safe(it1, it2, &bar->items, link)
+	struct Lava_item *item;
+	wl_list_for_each_reverse(item, &bar->items, link)
 	{
 		// TODO XXX set size to -1, which should cause it to automatically be config->size
 		if ( it1->type == TYPE_BUTTON )
 			it1->length = bar->default_config->size;
 
+		// TODO [item-rework] do we actually need the item index?
 		it1->index    = index;
-		it1->ordinate = ordinate;
 
 		index++;
-		ordinate += it1->length;
 	}
 
 	return true;

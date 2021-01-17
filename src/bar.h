@@ -178,6 +178,15 @@ struct Lava_item_indicator
 	struct Lava_buffer   *current_indicator_buffer;
 };
 
+struct Lava_hotspot
+{
+	int32_t x, y, w, h;
+	struct Lava_item **item;
+
+	// TODO this probably needs some sort of user data eventually
+	//      for items with multiple hotspots
+};
+
 /* This struct is a logical bar, which can have multiple configuration sets and
  * at most one instance per output.
  */
@@ -186,9 +195,13 @@ struct Lava_bar
 	struct Lava_data *data;
 	struct wl_list    link;
 
-	struct wl_list    items;
+	struct wl_list    start_items; // TODO [item-rework] maybe keep them all in a single list anyway?
+	struct wl_list    center_items;
+	struct wl_list    end_items;
 	struct Lava_item *last_item;
-	int               item_amount;
+	int               item_amount; // TODO [item-rework] not needed
+
+	struct Lava_bar_hotspot *hotspots;
 
 	/* The different configurations of the bar. The first one is treated as default. */
 	struct Lava_bar_configuration *current_config, *default_config, *last_config;

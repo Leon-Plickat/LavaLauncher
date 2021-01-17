@@ -258,10 +258,16 @@ static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
 
 	log_message(seat->data, 1, "[input] Touch down: x=%d y=%d\n", x, y);
 
+	// TODO [item-rework]
 	struct Lava_bar_instance *instance  = bar_instance_from_surface(seat->data, surface);
-	struct Lava_item         *item = item_from_coords(instance, x, y);
-	if (! create_touchpoint(seat, id, instance, item))
-		log_message(NULL, 0, "ERROR: could not create touchpoint\n");
+	if ( instance == NULL )
+		return;
+	struct Lava_hotspot *hotspot = hotspot_from_coords(instance, x, y);
+	if ( hotspot->item != NULL )
+	{
+		if (! create_touchpoint(seat, id, instance, item)) // TODO maybe we create touchpoints per hotspot, not per item? (think multi-hotspot item)
+			log_message(NULL, 0, "ERROR: could not create touchpoint\n");
+	}
 }
 
 static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
@@ -274,7 +280,8 @@ static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
 
 	log_message(seat->data, 2, "[input] Touch move\n");
 
-	/* If the item under the touch point is not the same we first touched,
+	// TODO [item-rework]
+	/* If the hotspot under the touch point is not the same we first touched,
 	 * we simply abort the touch operation.
 	 */
 	uint32_t x = (uint32_t)wl_fixed_to_int(fx), y = (uint32_t)wl_fixed_to_int(fy);

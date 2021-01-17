@@ -81,35 +81,18 @@ static void bar_config_sensible_defaults (struct Lava_bar_configuration *config)
 static void bar_config_copy_settings (struct Lava_bar_configuration *config,
 		struct Lava_bar_configuration *default_config)
 {
-	config->position  = default_config->position;
-	config->alignment = default_config->alignment;
-	config->mode      = default_config->mode;
-	config->layer     = default_config->layer;
+	memcpy(config, default_config, sizeof(struct Lava_bar_configuration));
 
-	config->size              = default_config->size;
-	config->hidden_size       = default_config->hidden_size;
-	config->hidden_mode       = default_config->hidden_mode;
-	config->icon_padding      = default_config->icon_padding;
-	config->exclusive_zone    = default_config->exclusive_zone;
-	config->indicator_padding = default_config->indicator_padding;
-	config->indicator_style   = default_config->indicator_style;
-
-	memcpy(&config->border, &default_config->border, sizeof(udirections_t));
-	memcpy(&config->margin, &default_config->margin, sizeof(udirections_t));
-	memcpy(&config->radii, &default_config->radii, sizeof(uradii_t));
-
-	memcpy(&config->bar_colour, &default_config->bar_colour, sizeof(colour_t));
-	memcpy(&config->border_colour, &default_config->border_colour, sizeof(colour_t));
-	memcpy(&config->indicator_hover_colour, &default_config->indicator_hover_colour, sizeof(colour_t));
-	memcpy(&config->indicator_active_colour, &default_config->indicator_active_colour, sizeof(colour_t));
-
-	config->condition_scale      = default_config->condition_scale;
-	config->condition_transform  = default_config->condition_transform;
-	config->condition_resolution = default_config->condition_resolution;
-
-	config->cursor_name = default_config->cursor_name == NULL ? NULL : strdup(default_config->cursor_name);
-	config->only_output = default_config->only_output == NULL ? NULL : strdup(default_config->only_output);
-	config->namespace = default_config->namespace == NULL ? NULL : strdup(default_config->namespace);
+	/* If the configuration set has any strings, we just copied the pointers.
+	 * To make later logic simpler, every configuration set should have their
+	 * own copy of the string.
+	 */
+	if ( config->cursor_name != NULL )
+		config->cursor_name = strdup(default_config->cursor_name);
+	if ( config->only_output != NULL )
+		config->only_output = strdup(default_config->only_output);
+	if ( config->namespace  != NULL )
+		config->namespace  = strdup(default_config->namespace);
 }
 
 bool create_bar_config (struct Lava_bar *bar, bool default_config)

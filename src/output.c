@@ -42,47 +42,7 @@
 /* No-Op function. */
 static void noop () {}
 
-static struct Lava_bar_instance *bar_instance_from_bar (struct Lava_bar *bar, struct Lava_output *output)
-{
-	struct Lava_bar_instance *instance;
-	wl_list_for_each(instance, &output->bar_instances, link)
-		if ( instance->bar == bar )
-			return instance;
-	return NULL;
-}
-
-static bool bar_config_conditions_match_output (struct Lava_bar_configuration *config,
-		struct Lava_output *output)
-{
-	if ( config->only_output != NULL && strcmp(output->name, config->only_output) )
-		return false;
-
-	if ( config->condition_scale != 0
-			&& config->condition_scale != output->scale )
-		return false;
-
-	if ( config->condition_resolution == RESOLUTION_WIDER_THAN_HIGH
-			&& output->w < output->h )
-		return false;
-	if ( config->condition_resolution == RESOLUTION_HIGHER_THEN_WIDE
-			&& output->h < output->w )
-		return false;
-
-	if ( config->condition_transform != -1 && config->condition_transform != (int32_t)output->transform )
-		return false;
-
-	return true;
-}
-
-static struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_bar *bar, struct Lava_output *output)
-{
-	struct Lava_bar_configuration *config;
-	wl_list_for_each(config, &bar->configs, link)
-		if (bar_config_conditions_match_output(config, output))
-			return config;
-	return NULL;
-}
-
+/* Loop through all bar patterns and create / destroy / update their instances on this output. */
 static bool update_bar_instances_on_output (struct Lava_output *output)
 {
 	/* No xdg_output events have been received yet, so there is nothing todo. */
@@ -108,22 +68,24 @@ static bool update_bar_instances_on_output (struct Lava_output *output)
 	struct Lava_bar *bar, *temp;
 	wl_list_for_each_safe(bar, temp, &data->bars, link)
 	{
-		/* Try to find a configuration set of the bar which fits the output. */
+		/* Try to find a configuration set of the bar which fits this output. */
 		struct Lava_bar_configuration *config = get_bar_config_for_output(bar, output);
 
-		struct Lava_bar_instance *instance;
-		if ( NULL != (instance = bar_instance_from_bar(bar, output)) )
+		/* Try to get the instance of the bar for this output, if it exists. */
+		struct Lava_bar_instance *instance = bar_instance_from_bar(bar, output);
+
+		if ( instance != NULL )
 		{
-			if ( config != NULL )
-			{
-				instance->config = config;
-				update_bar_instance(instance);
-			}
-			else
-				destroy_bar_instance(instance);
+			/* If we have an instance, apply the configuration set and update it.
+			 * If we do not have a configuration set, then config == NULL, which
+			 * will cause the destruction of the instance.
+			 */
+			instance->config = config;
+			update_bar_instance(instance);
 		}
 		else if ( config != NULL )
 		{
+			/* If we have a configuration set, but no instance, we need to create one. */
 			if (! create_bar_instance(bar, config, output))
 			{
 				log_message(NULL, 0, "ERROR: Could not create bar instance.\n");

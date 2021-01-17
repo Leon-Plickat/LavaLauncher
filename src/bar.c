@@ -164,6 +164,39 @@ static void finalize_all_bar_configs (struct Lava_bar *bar)
 		finalize_bar_config(config);
 }
 
+static bool bar_config_conditions_match_output (struct Lava_bar_configuration *config,
+		struct Lava_output *output)
+{
+	if ( config->only_output != NULL && strcmp(output->name, config->only_output) )
+		return false;
+
+	if ( config->condition_scale != 0
+			&& config->condition_scale != output->scale )
+		return false;
+
+	if ( config->condition_resolution == RESOLUTION_WIDER_THAN_HIGH
+			&& output->w < output->h )
+		return false;
+	if ( config->condition_resolution == RESOLUTION_HIGHER_THEN_WIDE
+			&& output->h < output->w )
+		return false;
+
+	if ( config->condition_transform != -1 && config->condition_transform != (int32_t)output->transform )
+		return false;
+
+	return true;
+}
+
+struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_bar *bar, struct Lava_output *output)
+{
+	struct Lava_bar_configuration *config;
+	wl_list_for_each(config, &bar->configs, link)
+		if (bar_config_conditions_match_output(config, output))
+			return config;
+	return NULL;
+}
+
+
 /***************
  * Logical bar *
  * *************/
@@ -1508,6 +1541,15 @@ void update_bar_instance (struct Lava_bar_instance *instance)
 	if ( instance == NULL || ! instance->configured )
 		return;
 
+	/* An instance with no fitting configuration must be destroyed. */
+	if ( instance->config == NULL )
+	{
+		log_message(instance->data, 2, "[bar] No configuration set, destroying bar: global-name=%d\n",
+			instance->output->global_name);
+		destroy_bar_instance(instance);
+		return;
+	}
+
 	bar_instance_update_dimensions(instance);
 
 	bar_instance_configure_subsurface(instance);
@@ -1530,6 +1572,15 @@ struct Lava_bar_instance *bar_instance_from_surface (struct Lava_data *data, str
 		wl_list_for_each(instance,  &output->bar_instances, link)
 			if ( instance->bar_surface == surface )
 				return instance;
+	return NULL;
+}
+
+struct Lava_bar_instance *bar_instance_from_bar (struct Lava_bar *bar, struct Lava_output *output)
+{
+	struct Lava_bar_instance *instance;
+	wl_list_for_each(instance, &output->bar_instances, link)
+		if ( instance->bar == bar )
+			return instance;
 	return NULL;
 }
 

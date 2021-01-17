@@ -205,6 +205,7 @@ struct Lava_bar
 };
 
 bool create_bar_config (struct Lava_bar *bar, bool default_config);
+struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_bar *bar, struct Lava_output *output);
 
 bool create_bar (struct Lava_data *data);
 bool finalize_bar (struct Lava_bar *bar);
@@ -219,6 +220,7 @@ void destroy_all_bar_instances (struct Lava_output *output);
 void update_bar_instance (struct Lava_bar_instance *instance);
 struct Lava_bar_instance *bar_instance_from_surface (struct Lava_data *data, struct wl_surface *surface);
 void bar_instance_update_hidden_status (struct Lava_bar_instance *instance);
+struct Lava_bar_instance *bar_instance_from_bar (struct Lava_bar *bar, struct Lava_output *output);
 void bar_instance_pointer_leave (struct Lava_bar_instance *instance);
 void bar_instance_pointer_enter (struct Lava_bar_instance *instance);
 

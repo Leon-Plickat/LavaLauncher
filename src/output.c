@@ -81,7 +81,7 @@ static bool update_bar_instances_on_output (struct Lava_output *output)
 			 * will cause the destruction of the instance.
 			 */
 			instance->config = config;
-			update_bar_instance(instance);
+			update_bar_instance(instance, true, false);
 		}
 		else if ( config != NULL )
 		{
@@ -183,7 +183,7 @@ static void update_river_output_occupied_state (struct Lava_output *output)
 			output->river_output_occupied ? "true" : "false");
 	struct Lava_bar_instance *instance;
 	wl_list_for_each(instance, &output->bar_instances, link)
-		bar_instance_update_hidden_status(instance);
+		update_bar_instance(instance, false, true);
 }
 
 static void river_status_handle_focused_tags (void *data, struct zriver_output_status_v1 *river_status,

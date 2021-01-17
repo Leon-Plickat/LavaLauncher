@@ -1087,9 +1087,10 @@ static void layer_surface_handle_configure (void *raw_data,
 	log_message(data, 1, "[bar] Layer surface configure request: global_name=%d w=%d h=%d serial=%d\n",
 			instance->output->global_name, w, h, serial);
 
+	// TODO respect new size
 	instance->configured = true;
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
-	update_bar_instance(instance);
+	update_bar_instance(instance, true, false);
 }
 
 static void layer_surface_handle_closed (void *data, struct zwlr_layer_surface_v1 *surface)
@@ -1368,74 +1369,6 @@ static bool bar_instance_should_hide (struct Lava_bar_instance *instance)
 	}
 }
 
-void bar_instance_update_hidden_status (struct Lava_bar_instance *instance)
-{
-	bool current     = instance->hidden;
-	instance->hidden = bar_instance_should_hide(instance);
-
-	/* No need to do something if nothing changed. */
-	if ( current == instance->hidden )
-		return;
-
-	update_bar_instance(instance);
-}
-
-/* Call this to handle all changes to a bar instance when it is entered by a pointer. */
-void bar_instance_pointer_enter (struct Lava_bar_instance *instance)
-{
-	/* If binds using the keyboard have been defined, request keyboard interactivity.
-         *
-	 * Yes this is a ugly hack, because layer shell keyboard interactivity is seriously
-	 * messed up. A bar on the top layer would /always/ have keyboard focus if we
-	 * do not dynamically request and un-request it. Utter pain and does not work
-	 * correctly with multiple seats, but its the only way to get this somewhat
-	 * working, at least when the layer is either top or overlay. For bottom or
-	 * background layer, keyboard focus requires an explicit focus, which for most
-	 * compositors means clicking on the bar, so forget about scroll binds with
-	 * modifiers on those layers. Basically forget about any sane keyboard interactivity.
-	 * I have the feeling this part of the layer shell has not been thought through
-	 * very thoroughly...
-	 *
-	 * Yes, I am annoyed. Because this sucks.
-	 *
-	 * Improvements or, better yet, a layer-shell replacement highly welcome.
-	 */
-	if (instance->data->need_keyboard)
-	{
-		zwlr_layer_surface_v1_set_keyboard_interactivity(instance->layer_surface, true);
-		wl_surface_commit(instance->bar_surface);
-	}
-
-	instance->hover = true;
-	bar_instance_update_hidden_status(instance);
-}
-
-/* Call this to handle all changes to a bar instance when it is left by a pointer. */
-void bar_instance_pointer_leave (struct Lava_bar_instance *instance)
-{
-	/* We have to check every seat before we can be sure that no pointer
-	 * hovers over the bar. Only then can we hide the bar.
-	 */
-	struct Lava_seat *seat;
-	wl_list_for_each(seat, &instance->data->seats, link)
-		if ( seat->pointer.instance == instance )
-			return;
-
-	/* If binds using the keyboard have been defined, unset keyboard interactivity.
-	 *
-	 * See comment in bar_instance_pointer_enter() to learn why this is a hack and
-	 * then weep in agony and dispair.
-	 */
-	if (instance->data->need_keyboard)
-	{
-		zwlr_layer_surface_v1_set_keyboard_interactivity(instance->layer_surface, false);
-		wl_surface_commit(instance->bar_surface);
-	}
-
-	instance->hover = false;
-	bar_instance_update_hidden_status(instance);
-}
-
 bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *config,
 		struct Lava_output *output)
 {
@@ -1530,7 +1463,8 @@ void destroy_all_bar_instances (struct Lava_output *output)
 		destroy_bar_instance(instance);
 }
 
-void update_bar_instance (struct Lava_bar_instance *instance)
+void update_bar_instance (struct Lava_bar_instance *instance, bool need_new_dimensions,
+		bool only_update_on_hide_change)
 {
 	/* It is possible that this function is called by output events before
 	 * the bar instance has been created. This function will return and
@@ -1550,7 +1484,13 @@ void update_bar_instance (struct Lava_bar_instance *instance)
 		return;
 	}
 
-	bar_instance_update_dimensions(instance);
+	if (need_new_dimensions)
+		bar_instance_update_dimensions(instance);
+
+	const bool currently_hidden = instance->hidden;
+	instance->hidden = bar_instance_should_hide(instance);
+	if ( only_update_on_hide_change && ( currently_hidden == instance->hidden ) )
+		return;
 
 	bar_instance_configure_subsurface(instance);
 	bar_instance_configure_layer_surface(instance);
@@ -1560,6 +1500,62 @@ void update_bar_instance (struct Lava_bar_instance *instance)
 
 	wl_surface_commit(instance->icon_surface);
 	wl_surface_commit(instance->bar_surface);
+}
+
+/* Call this to handle all changes to a bar instance when it is entered by a pointer. */
+void bar_instance_pointer_enter (struct Lava_bar_instance *instance)
+{
+	/* If binds using the keyboard have been defined, request keyboard interactivity.
+         *
+	 * Yes this is a ugly hack, because layer shell keyboard interactivity is seriously
+	 * messed up. A bar on the top layer would /always/ have keyboard focus if we
+	 * do not dynamically request and un-request it. Utter pain and does not work
+	 * correctly with multiple seats, but its the only way to get this somewhat
+	 * working, at least when the layer is either top or overlay. For bottom or
+	 * background layer, keyboard focus requires an explicit focus, which for most
+	 * compositors means clicking on the bar, so forget about scroll binds with
+	 * modifiers on those layers. Basically forget about any sane keyboard interactivity.
+	 * I have the feeling this part of the layer shell has not been thought through
+	 * very thoroughly...
+	 *
+	 * Yes, I am annoyed. Because this sucks.
+	 *
+	 * Improvements or, better yet, a layer-shell replacement highly welcome.
+	 */
+	if (instance->data->need_keyboard)
+	{
+		zwlr_layer_surface_v1_set_keyboard_interactivity(instance->layer_surface, true);
+		wl_surface_commit(instance->bar_surface);
+	}
+
+	instance->hover = true;
+	update_bar_instance(instance, false, true);
+}
+
+/* Call this to handle all changes to a bar instance when it is left by a pointer. */
+void bar_instance_pointer_leave (struct Lava_bar_instance *instance)
+{
+	/* We have to check every seat before we can be sure that no pointer
+	 * hovers over the bar. Only then can we hide the bar.
+	 */
+	struct Lava_seat *seat;
+	wl_list_for_each(seat, &instance->data->seats, link)
+		if ( seat->pointer.instance == instance )
+			return;
+
+	/* If binds using the keyboard have been defined, unset keyboard interactivity.
+	 *
+	 * See comment in bar_instance_pointer_enter() to learn why this is a hack and
+	 * then weep in agony and dispair.
+	 */
+	if (instance->data->need_keyboard)
+	{
+		zwlr_layer_surface_v1_set_keyboard_interactivity(instance->layer_surface, false);
+		wl_surface_commit(instance->bar_surface);
+	}
+
+	instance->hover = false;
+	update_bar_instance(instance, false, true);
 }
 
 struct Lava_bar_instance *bar_instance_from_surface (struct Lava_data *data, struct wl_surface *surface)

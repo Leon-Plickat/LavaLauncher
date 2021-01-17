@@ -217,9 +217,9 @@ bool bar_config_set_variable (struct Lava_bar_configuration *config,
 bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *config, struct Lava_output *output);
 void destroy_bar_instance (struct Lava_bar_instance *instance);
 void destroy_all_bar_instances (struct Lava_output *output);
-void update_bar_instance (struct Lava_bar_instance *instance);
+void update_bar_instance (struct Lava_bar_instance *instance, bool need_new_dimensions,
+		bool only_update_on_hide_change);
 struct Lava_bar_instance *bar_instance_from_surface (struct Lava_data *data, struct wl_surface *surface);
-void bar_instance_update_hidden_status (struct Lava_bar_instance *instance);
 struct Lava_bar_instance *bar_instance_from_bar (struct Lava_bar *bar, struct Lava_output *output);
 void bar_instance_pointer_leave (struct Lava_bar_instance *instance);
 void bar_instance_pointer_enter (struct Lava_bar_instance *instance);

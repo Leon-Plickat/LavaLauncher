@@ -325,7 +325,8 @@ error:
 	return false;
 }
 
-static bool button_item_universal_command (struct Lava_item *button, const char *command)
+static bool button_item_universal_command (struct Lava_item *button,
+		struct Lava_data *data, const char *command)
 {
 	/* Try to find a universal command and overwrite it. If none has been
 	 * found, create a new one.
@@ -334,6 +335,13 @@ static bool button_item_universal_command (struct Lava_item *button, const char 
 			INTERACTION_UNIVERSAL, 0, 0, false);
 	if ( cmd == NULL )
 		return item_add_command(button, command, INTERACTION_UNIVERSAL, 0, 0);
+
+	/* Interaction type is universal, meaning the button can be activated
+	 * by both the pointer and touch.
+	 */
+	data->need_pointer = true;
+	data->need_touch = true;
+
 	set_string(&cmd->command, (char *)command);
 	return true;
 }
@@ -344,7 +352,7 @@ static bool button_set_variable (struct Lava_data *data, struct Lava_item *butto
 	if (! strcmp("image-path", variable))
 		TRY(button_set_image_path(button, value))
 	else if (! strcmp("command", variable)) /* Generic/universal command */
-		TRY(button_item_universal_command(button, value))
+		TRY(button_item_universal_command(button, data, value))
 	else if (string_starts_with(variable, "command"))  /* Command with special bind */
 		TRY(button_item_command_from_string(data, button, variable, value))
 

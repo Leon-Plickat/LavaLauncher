@@ -74,7 +74,7 @@ static void registry_handle_global (void *data, struct wl_registry *registry,
 	{
 		log_message(2, "[registry] Get zwlr_layer_shell_v1.\n");
 		context.layer_shell = wl_registry_bind(registry, name,
-				&zwlr_layer_shell_v1_interface, 1);
+				&zwlr_layer_shell_v1_interface, 4);
 	}
 	else if (! strcmp(interface, zxdg_output_manager_v1_interface.name))
 	{

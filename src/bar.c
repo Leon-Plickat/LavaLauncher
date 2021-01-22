@@ -32,6 +32,8 @@
 #include<wayland-client.h>
 #include<wayland-client-protocol.h>
 
+#include"wlr-layer-shell-unstable-v1-protocol.h"
+
 #include"lavalauncher.h"
 #include"str.h"
 #include"config.h"
@@ -1026,6 +1028,10 @@ static void bar_instance_configure_layer_surface (struct Lava_bar_instance *inst
 	zwlr_layer_surface_v1_set_exclusive_zone(instance->layer_surface,
 			exclusive_zone);
 
+	if ( context.need_keyboard == true )
+		zwlr_layer_surface_v1_set_keyboard_interactivity(instance->layer_surface,
+				ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_ON_DEMAND);
+
 	/* Create a region of the visible part of the surface.
 	 * Behold: In MODE_FULL the actual surface can be larger than the
 	 * visible bar if margins are used.
@@ -1356,29 +1362,6 @@ void update_bar_instance (struct Lava_bar_instance *instance, bool need_new_dime
 /* Call this to handle all changes to a bar instance when it is entered by a pointer. */
 void bar_instance_pointer_enter (struct Lava_bar_instance *instance)
 {
-	/* If binds using the keyboard have been defined, request keyboard interactivity.
-         *
-	 * Yes this is a ugly hack, because layer shell keyboard interactivity is seriously
-	 * messed up. A bar on the top layer would /always/ have keyboard focus if we
-	 * do not dynamically request and un-request it. Utter pain and does not work
-	 * correctly with multiple seats, but its the only way to get this somewhat
-	 * working, at least when the layer is either top or overlay. For bottom or
-	 * background layer, keyboard focus requires an explicit focus, which for most
-	 * compositors means clicking on the bar, so forget about scroll binds with
-	 * modifiers on those layers. Basically forget about any sane keyboard interactivity.
-	 * I have the feeling this part of the layer shell has not been thought through
-	 * very thoroughly...
-	 *
-	 * Yes, I am annoyed. Because this sucks.
-	 *
-	 * Improvements or, better yet, a layer-shell replacement highly welcome.
-	 */
-	if (context.need_keyboard)
-	{
-		zwlr_layer_surface_v1_set_keyboard_interactivity(instance->layer_surface, true);
-		wl_surface_commit(instance->bar_surface);
-	}
-
 	instance->hover = true;
 	update_bar_instance(instance, false, true);
 }
@@ -1394,16 +1377,6 @@ void bar_instance_pointer_leave (struct Lava_bar_instance *instance)
 		if ( seat->pointer.instance == instance )
 			return;
 
-	/* If binds using the keyboard have been defined, unset keyboard interactivity.
-	 *
-	 * See comment in bar_instance_pointer_enter() to learn why this is a hack and
-	 * then weep in agony and dispair.
-	 */
-	if (context.need_keyboard)
-	{
-		zwlr_layer_surface_v1_set_keyboard_interactivity(instance->layer_surface, false);
-		wl_surface_commit(instance->bar_surface);
-	}
 
 	instance->hover = false;
 	update_bar_instance(instance, false, true);

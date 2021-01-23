@@ -310,6 +310,7 @@ void destroy_output (struct Lava_output *output)
 	if ( output == NULL )
 		return;
 	DESTROY(output->river_status, zriver_output_status_v1_destroy);
+	free_if_set(output->name);
 	destroy_all_bar_instances(output);
 	wl_list_remove(&output->link);
 	wl_output_destroy(output->wl_output);

@@ -191,6 +191,8 @@ reload:
 		data.ret = EXIT_FAILURE;
 
 exit:
+	free(data.config_path);
+
 	/* Clean up objects created when parsing the configuration file. */
 	destroy_all_bars(&data);
 

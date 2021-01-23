@@ -90,8 +90,30 @@ static void item_command_exec_first_fork (struct Lava_bar_instance *instance, co
 
 static void execute_item_command (struct Lava_item_command *cmd, struct Lava_bar_instance *instance)
 {
-	log_message(instance->data, 1, "[item] Executing command: %s\n", cmd->command);
-	item_command_exec_first_fork(instance, cmd->command);
+	struct Lava_data *data = instance->data;
+	const char *command = cmd->command;
+
+	log_message(data, 1, "[item] Executing command: %s\n", command);
+
+	/* Developer options meant for testing. Intentionally not documented. */
+	if (! strcmp(command, "exit"))
+	{
+		log_message(data, 1, "[item] Triggering exit. "
+			"This is a developer option not intended for actual usage.\n");
+		data->loop   = false;
+		data->reload = false;
+		return;
+	}
+	else if (! strcmp(command, "reload"))
+	{
+		log_message(data, 1, "[item] Triggering reload. "
+			"This is a developer option not intended for actual usage.\n");
+		data->loop   = false;
+		data->reload = true;
+		return;
+	}
+
+	item_command_exec_first_fork(instance, command);
 }
 
 static struct Lava_item_command *find_item_command (struct Lava_item *item,

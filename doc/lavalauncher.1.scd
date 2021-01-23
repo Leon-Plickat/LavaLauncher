@@ -103,6 +103,9 @@ this context are as follows.
 *background-colour*
 	The background colour of the bar. The default is "#000000".
 
+*border-colour*
+	The border colour of the bar. The default is "#ffffff".
+
 *border*
 	The border size. Expects either one integer, to set the size of all borders,
 	or four integers, to set the individual sizes for the top, left, right and
@@ -299,9 +302,6 @@ as follows.
 Commands are executed using *sh(1)*.
 
 LavaLauncher understands typical backslash escape sequences.
-
-If the command is "exit", LavaLauncher will exit, if it is "reload",
-LavaLauncher will reload.
 
 LavaLauncher sets some environmental variables for the processes it launches.
 Since all commands are executed via a shell, they can be used as arguments for

@@ -48,7 +48,6 @@
 static void bar_config_sensible_defaults (struct Lava_bar_configuration *config)
 {
 	config->position  = POSITION_BOTTOM;
-	config->alignment = ALIGNMENT_CENTER;
 	config->mode      = MODE_DEFAULT;
 	config->layer     = ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM;
 
@@ -382,37 +381,16 @@ BAR_CONFIG(bar_config_set_position)
 	return true;
 }
 
-BAR_CONFIG(bar_config_set_alignment)
-{
-	if (! strcmp(arg, "start"))
-		config->alignment = ALIGNMENT_START;
-	else if (! strcmp(arg, "center"))
-		config->alignment = ALIGNMENT_CENTER;
-	else if (! strcmp(arg, "end"))
-		config->alignment = ALIGNMENT_END;
-	else
-	{
-		log_message(NULL, 0, "ERROR: Unrecognized alignment \"%s\".\n"
-				"INFO: Possible alignments are 'start', "
-				"'center' and 'end'.\n", arg);
-		return false;
-	}
-	return true;
-}
-
 BAR_CONFIG(bar_config_set_mode)
 {
 	if (! strcmp(arg, "default"))
 		config->mode = MODE_DEFAULT;
 	else if (! strcmp(arg, "full"))
 		config->mode = MODE_FULL;
-	else if (! strcmp(arg, "aggressive"))
-		config->mode = MODE_AGGRESSIVE;
 	else
 	{
 		log_message(NULL, 0, "ERROR: Unrecognized mode \"%s\".\n"
-				"INFO: Possible alignments are 'default', "
-				"'full' and 'simple'.\n", arg);
+				"INFO: Possible modes are 'default' and 'full'.\n", arg);
 		return false;
 	}
 	return true;
@@ -607,7 +585,6 @@ bool bar_config_set_variable (struct Lava_bar_configuration *config,
 		const char *variable;
 		bool (*set)(struct Lava_bar_configuration*, struct Lava_data*, const char*);
 	} configs[] = {
-		{ .variable = "alignment",               .set = bar_config_set_alignment               },
 		{ .variable = "background-colour",       .set = bar_config_set_bar_colour              },
 		{ .variable = "border-colour",           .set = bar_config_set_border_colour           },
 		{ .variable = "border",                  .set = bar_config_set_border_size             },
@@ -981,50 +958,33 @@ static void bar_instance_render_background_frame (struct Lava_bar_instance *inst
 
 static uint32_t get_anchor (struct Lava_bar_configuration *config)
 {
-	/* Look-Up-Table; Not fancy but still the best solution for this. */
-	struct
-	{
-		uint32_t triplet; /* Used for MODE_FULL and MODE_AGGRESSIVE. */
-		uint32_t mode_default[3];
-	} anchors[4] = {
+	const uint32_t anchors[4][2] = {
 		[POSITION_TOP] = {
-			.triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
-			.mode_default = {
-				[ALIGNMENT_START]  = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
-				[ALIGNMENT_CENTER] = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
-				[ALIGNMENT_END]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-			}
+			[MODE_DEFAULT] = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
+			[MODE_FULL]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 		},
 		[POSITION_RIGHT] = {
-			.triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
-			.mode_default = {
-				[ALIGNMENT_START]  = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
-				[ALIGNMENT_CENTER] = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
-				[ALIGNMENT_END]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-			}
+			[MODE_DEFAULT] = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
+			[MODE_FULL]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 		},
 		[POSITION_BOTTOM] = {
-			.triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT,
-			.mode_default = {
-				[ALIGNMENT_START]  = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
-				[ALIGNMENT_CENTER] = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
-				[ALIGNMENT_END]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
-			}
+			[MODE_DEFAULT] = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
+			[MODE_FULL]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
 		},
 		[POSITION_LEFT] = {
-			.triplet  = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM,
-			.mode_default = {
-				[ALIGNMENT_START]  = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
-				[ALIGNMENT_CENTER] = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
-				[ALIGNMENT_END]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
-			}
+			[MODE_DEFAULT] = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT,
+			[MODE_FULL]    = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+				| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM
 		},
 	};
-
-	if ( config->mode == MODE_DEFAULT )
-		return anchors[config->position].mode_default[config->alignment];
-	else
-		return anchors[config->position].triplet;
+	return anchors[config->position][config->mode];
 }
 
 static void bar_instance_configure_layer_surface (struct Lava_bar_instance *instance)
@@ -1074,7 +1034,8 @@ static void bar_instance_configure_layer_surface (struct Lava_bar_instance *inst
 			exclusive_zone);
 
 	/* Create a region of the visible part of the surface.
-	 * Behold: In MODE_AGGRESSIVE, the actual surface is larger than the visible bar.
+	 * Behold: In MODE_FULL the actual surface can be larger than the
+	 * visible bar if margins are used.
 	 */
 	struct wl_region *region = wl_compositor_create_region(data->compositor);
 	wl_region_add(region, (int32_t)instance->bar_dim.x, (int32_t)instance->bar_dim.y,
@@ -1136,87 +1097,6 @@ static void bar_instance_configure_subsurface (struct Lava_bar_instance *instanc
 	wl_region_destroy(region);
 }
 
-/* Positions and dimensions for MODE_AGGRESSIVE. */
-static void bar_instance_mode_aggressive_dimensions (struct Lava_bar_instance *instance)
-{
-	struct Lava_bar_configuration *config = instance->config;
-	struct Lava_output           *output  = instance->output;
-
-	/* Position of item area. */
-	if ( config->orientation == ORIENTATION_HORIZONTAL ) switch (config->alignment)
-	{
-		case ALIGNMENT_START:
-			instance->item_area_dim.x = config->border.left + (uint32_t)config->margin.left;
-			instance->item_area_dim.y = config->border.top;
-			break;
-
-		case ALIGNMENT_CENTER:
-			instance->item_area_dim.x = (output->w / 2) - (instance->item_area_dim.w / 2)
-				+ (uint32_t)(config->margin.left - config->margin.right);
-			instance->item_area_dim.y = config->border.top;
-			break;
-
-		case ALIGNMENT_END:
-			instance->item_area_dim.x = output->w - instance->item_area_dim.w
-				- config->border.right - (uint32_t)config->margin.right;
-			instance->item_area_dim.y = config->border.top;
-			break;
-	}
-	else switch (config->alignment)
-	{
-		case ALIGNMENT_START:
-			instance->item_area_dim.x = config->border.left;
-			instance->item_area_dim.y = config->border.top + (uint32_t)config->margin.top;
-			break;
-
-		case ALIGNMENT_CENTER:
-			instance->item_area_dim.x = config->border.left;
-			instance->item_area_dim.y = (output->h / 2) - (instance->item_area_dim.h / 2)
-				+ (uint32_t)(config->margin.top - config->margin.bottom);
-			break;
-
-		case ALIGNMENT_END:
-			instance->item_area_dim.x = config->border.left;
-			instance->item_area_dim.y = output->h - instance->item_area_dim.h
-				- config->border.bottom - (uint32_t)config->margin.bottom;
-			break;
-	}
-
-	/* Position of bar. */
-	instance->bar_dim.x = instance->item_area_dim.x - config->border.left;
-	instance->bar_dim.y = instance->item_area_dim.y - config->border.top;
-
-	/* Size of bar. */
-	instance->bar_dim.w = instance->item_area_dim.w + config->border.left + config->border.right;
-	instance->bar_dim.h = instance->item_area_dim.h + config->border.top  + config->border.bottom;
-
-	/* Size of buffer / surface and hidden dimensions. */
-	if ( config->orientation == ORIENTATION_HORIZONTAL )
-	{
-		instance->surface_dim.w = instance->output->w;
-		instance->surface_dim.h = config->size + config->border.top + config->border.bottom;
-
-		instance->surface_hidden_dim.w = instance->surface_dim.w;
-		instance->surface_hidden_dim.h = config->hidden_size;
-
-		instance->bar_hidden_dim.w = instance->bar_dim.w;
-		instance->bar_hidden_dim.h = config->hidden_size;
-	}
-	else
-	{
-		instance->surface_dim.w = config->size + config->border.left + config->border.right;
-		instance->surface_dim.h = instance->output->h;
-
-		instance->surface_hidden_dim.w = config->hidden_size;
-		instance->surface_hidden_dim.h = instance->surface_dim.h;
-
-		instance->bar_hidden_dim.w = config->hidden_size;
-		instance->bar_hidden_dim.h = instance->bar_dim.h;
-	}
-	instance->bar_hidden_dim.x = instance->bar_dim.x;
-	instance->bar_hidden_dim.y = instance->bar_dim.y;
-}
-
 /* Positions and dimensions for MODE_FULL. */
 static void bar_instance_mode_full_dimensions (struct Lava_bar_instance *instance)
 {
@@ -1224,43 +1104,17 @@ static void bar_instance_mode_full_dimensions (struct Lava_bar_instance *instanc
 	struct Lava_output           *output  = instance->output;
 
 	/* Position of item area. */
-	if ( config->orientation == ORIENTATION_HORIZONTAL ) switch (config->alignment)
+	if ( config->orientation == ORIENTATION_HORIZONTAL )
 	{
-		case ALIGNMENT_START:
-			instance->item_area_dim.x = config->border.left + (uint32_t)config->margin.left;
-			instance->item_area_dim.y = config->border.top;
-			break;
-
-		case ALIGNMENT_CENTER:
-			instance->item_area_dim.x = (output->w / 2) - (instance->item_area_dim.w / 2)
-				+ (uint32_t)(config->margin.left - config->margin.right);
-			instance->item_area_dim.y = config->border.top;
-			break;
-
-		case ALIGNMENT_END:
-			instance->item_area_dim.x = output->w - instance->item_area_dim.w
-				- config->border.right - (uint32_t)config->margin.right;
-			instance->item_area_dim.y = config->border.top;
-			break;
+		instance->item_area_dim.x = (output->w / 2) - (instance->item_area_dim.w / 2)
+			+ (uint32_t)(config->margin.left - config->margin.right);
+		instance->item_area_dim.y = config->border.top;
 	}
-	else switch (config->alignment)
+	else
 	{
-		case ALIGNMENT_START:
-			instance->item_area_dim.x = config->border.left;
-			instance->item_area_dim.y = config->border.top + (uint32_t)config->margin.top;
-			break;
-
-		case ALIGNMENT_CENTER:
-			instance->item_area_dim.x = config->border.left;
-			instance->item_area_dim.y = (output->h / 2) - (instance->item_area_dim.h / 2)
-				+ (uint32_t)(config->margin.top - config->margin.bottom);
-			break;
-
-		case ALIGNMENT_END:
-			instance->item_area_dim.x = config->border.left;
-			instance->item_area_dim.y = output->h - instance->item_area_dim.h
-				- config->border.bottom - (uint32_t)config->margin.bottom;
-			break;
+		instance->item_area_dim.x = config->border.left;
+		instance->item_area_dim.y = (output->h / 2) - (instance->item_area_dim.h / 2)
+			+ (uint32_t)(config->margin.top - config->margin.bottom);
 	}
 
 	/* Position and size of bar and size of buffer / surface and hidden dimensions. */
@@ -1356,12 +1210,10 @@ static void bar_instance_update_dimensions (struct Lava_bar_instance *instance)
 	}
 
 	/* Other dimensions. */
-	switch (instance->config->mode)
-	{
-		case MODE_DEFAULT:    bar_instance_mode_default_dimensions(instance);    break;
-		case MODE_FULL:       bar_instance_mode_full_dimensions(instance);       break;
-		case MODE_AGGRESSIVE: bar_instance_mode_aggressive_dimensions(instance); break;
-	}
+	if ( instance->config->mode == MODE_DEFAULT )
+		bar_instance_mode_default_dimensions(instance);
+	else if ( instance->config->mode == MODE_FULL )
+		bar_instance_mode_full_dimensions(instance);
 }
 
 /* Return a bool indicating if the bar instance should currently be hidden or not. */

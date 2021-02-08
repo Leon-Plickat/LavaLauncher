@@ -48,15 +48,7 @@ enum Bar_orientation
 enum Bar_mode
 {
 	MODE_DEFAULT,
-	MODE_FULL,
-	MODE_AGGRESSIVE
-};
-
-enum Bar_alignment
-{
-	ALIGNMENT_START,
-	ALIGNMENT_CENTER,
-	ALIGNMENT_END
+	MODE_FULL
 };
 
 enum Condition_resolution
@@ -89,7 +81,6 @@ struct Lava_bar_configuration
 	 * of the visual bar and the actual surface.
 	 */
 	enum Bar_position    position;
-	enum Bar_alignment   alignment;
 	enum Bar_mode        mode;
 	enum Bar_orientation orientation;
 

@@ -91,7 +91,7 @@ static bool get_shm_fd (int *fd, size_t size)
 		 */
 		if ( errno != EEXIST )
 		{
-			log_message(NULL, 0, "ERROR: shm_open: %s\n", strerror(errno));
+			log_message(0, "ERROR: shm_open: %s\n", strerror(errno));
 			return false;
 		}
 	}
@@ -142,7 +142,7 @@ static bool create_buffer (struct wl_shm *shm, struct Lava_buffer *buffer,
 					fd, 0)) )
 	{
 		close(fd);
-		log_message(NULL, 0, "ERROR: mmap: %s\n", strerror(errno));
+		log_message(0, "ERROR: mmap: %s\n", strerror(errno));
 		return false;
 	}
 
@@ -186,7 +186,7 @@ bool next_buffer (struct Lava_buffer **buffer, struct wl_shm *shm,
 		*buffer = &buffers[1];
 	else
 	{
-		log_message(NULL, 0, "ERROR: All buffers are busy.\n");
+		log_message(0, "ERROR: All buffers are busy.\n");
 		*buffer = NULL;
 		return false;
 	}

@@ -28,7 +28,6 @@
 #include"types/box_t.h"
 #include"types/buffer.h"
 
-struct Lava_data;
 struct Lava_item;
 
 enum Bar_position
@@ -134,8 +133,7 @@ struct Lava_bar_configuration
 /* This struct corresponds to one instance of a bar. */
 struct Lava_bar_instance
 {
-	struct Lava_data *data;
-	struct wl_list    link;
+	struct wl_list link;
 
 	struct Lava_bar               *bar;
 	struct Lava_bar_configuration *config;
@@ -183,8 +181,7 @@ struct Lava_item_indicator
  */
 struct Lava_bar
 {
-	struct Lava_data *data;
-	struct wl_list    link;
+	struct wl_list link;
 
 	struct wl_list    items;
 	struct Lava_item *last_item;
@@ -198,19 +195,18 @@ struct Lava_bar
 bool create_bar_config (struct Lava_bar *bar, bool default_config);
 struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_bar *bar, struct Lava_output *output);
 
-bool create_bar (struct Lava_data *data);
+bool create_bar (void);
 bool finalize_bar (struct Lava_bar *bar);
-void destroy_all_bars (struct Lava_data *data);
+void destroy_all_bars (void);
 bool bar_config_set_variable (struct Lava_bar_configuration *config,
-		struct Lava_data *data, const char *variable, const char *value,
-		int line);
+		const char *variable, const char *value, int line);
 
 bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *config, struct Lava_output *output);
 void destroy_bar_instance (struct Lava_bar_instance *instance);
 void destroy_all_bar_instances (struct Lava_output *output);
 void update_bar_instance (struct Lava_bar_instance *instance, bool need_new_dimensions,
 		bool only_update_on_hide_change);
-struct Lava_bar_instance *bar_instance_from_surface (struct Lava_data *data, struct wl_surface *surface);
+struct Lava_bar_instance *bar_instance_from_surface (struct wl_surface *surface);
 struct Lava_bar_instance *bar_instance_from_bar (struct Lava_bar *bar, struct Lava_output *output);
 void bar_instance_pointer_leave (struct Lava_bar_instance *instance);
 void bar_instance_pointer_enter (struct Lava_bar_instance *instance);

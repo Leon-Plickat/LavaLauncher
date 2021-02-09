@@ -47,7 +47,7 @@ static int is_png_file (const char *path)
 	FILE *file;
 	if ( NULL == (file = fopen(path, "r")) )
 	{
-		log_message(NULL, 0, "ERROR: Can not open file: %s\n"
+		log_message(0, "ERROR: Can not open file: %s\n"
 				"ERROR: fopen: %s\n", path, strerror(errno));
 		return -1;
 	}
@@ -58,7 +58,7 @@ static int is_png_file (const char *path)
 
 	if ( ret == 0 )
 	{
-		log_message(NULL, 0, "ERROR: fread() failed when trying to fetch file magic.\n");
+		log_message(0, "ERROR: fread() failed when trying to fetch file magic.\n");
 		return -1;
 	}
 
@@ -73,19 +73,19 @@ static bool load_image (image_t *image, const char *path)
 {
 	if (access(path, F_OK))
 	{
-		log_message(NULL, 0, "ERROR: File does not exist: %s\n", path);
+		log_message(0, "ERROR: File does not exist: %s\n", path);
 		return false;
 	}
 	if (access(path, R_OK))
 	{
-		log_message(NULL, 0, "ERROR: File can not be read: %s\n"
+		log_message(0, "ERROR: File can not be read: %s\n"
 				"INFO: Check the files permissions, owner and group.\n",
 				path);
 		return false;
 	}
 	if ( errno != 0 )
 	{
-		log_message(NULL, 0, "ERROR: access: %s\n", strerror(errno));
+		log_message(0, "ERROR: access: %s\n", strerror(errno));
 		return false;
 	}
 
@@ -96,7 +96,7 @@ static bool load_image (image_t *image, const char *path)
 	{
 		if ( NULL == (image->cairo_surface = cairo_image_surface_create_from_png(path)) )
 		{
-			log_message(NULL, 0, "ERROR: Failed loading image: %s\n"
+			log_message(0, "ERROR: Failed loading image: %s\n"
 					"ERROR: cairo_image_surface_create_from_png: %s\n",
 					path, strerror(errno));
 			return false;
@@ -118,14 +118,14 @@ static bool load_image (image_t *image, const char *path)
 		 * the file is likely not an SVG image, a case which must be
 		 * handled differently than other errors.
 		 */
-		log_message(NULL, 0, "ERROR: Failed to load image: %s\n"
+		log_message(0, "ERROR: Failed to load image: %s\n"
 				"ERROR: rsvg_handle_new_from_file: %d: %s\n",
 				path, gerror->domain, gerror->message);
 		return false;
 	}
 #endif
 
-	log_message(NULL, 0, "ERROR: Unsupported file type: %s\n"
+	log_message(0, "ERROR: Unsupported file type: %s\n"
 #if SVG_SUPPORT
 			"INFO: LavaLauncher supports PNG and SVG images.\n",
 #else
@@ -202,11 +202,11 @@ void image_t_draw_to_cairo (cairo_t *cairo, image_t *image,
 				&has_width, &rsvg_width, &has_height, &rsvg_height,
 				&has_viewbox, &viewbox);
 		if ( ! has_width || ! has_height )
-			log_message(NULL, 0, "ERROR: Can not render SVG image without width or height.\n");
+			log_message(0, "ERROR: Can not render SVG image without width or height.\n");
 		else if ( rsvg_width.length == 0 || rsvg_height.length == 0 )
-			log_message(NULL, 0, "ERROR: Can not render SVG image with width or height of 0.\n");
+			log_message(0, "ERROR: Can not render SVG image with width or height of 0.\n");
 		else if ( rsvg_width.unit != RSVG_UNIT_PX || rsvg_height.unit != RSVG_UNIT_PX )
-			log_message(NULL, 0, "ERROR: Can not render SVG image whichs width or height are not defined in pixels.\n");
+			log_message(0, "ERROR: Can not render SVG image whichs width or height are not defined in pixels.\n");
 		else
 		{
 			cairo_scale(cairo, (float)width / rsvg_width.length,

@@ -91,7 +91,7 @@ bool colour_t_from_string (colour_t *colour, const char *str)
 	return true;
 
 error:
-	log_message(NULL, 0, "ERROR: \"%s\" is not a valid colour.\n"
+	log_message(0, "ERROR: \"%s\" is not a valid colour.\n"
 			"INFO: Read lavalauncher(1) to find out what colour formats are supported.\n", str);
 	return false;
 }

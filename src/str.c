@@ -28,9 +28,9 @@
 
 #include"lavalauncher.h"
 
-void log_message (struct Lava_data *data, int level, const char *fmt, ...)
+void log_message (int level, const char *fmt, ...)
 {
-	if ( data != NULL && level > data->verbosity )
+	if ( level > context.verbosity )
 		return;
 
 	va_list args;
@@ -64,7 +64,7 @@ char *get_formatted_buffer (const char *fmt, ...)
 	char *buffer = calloc(1, length);
 	if ( buffer == NULL )
 	{
-		log_message(NULL, 0, "ERROR: Could not allocate text buffer.\n");
+		log_message(0, "ERROR: Could not allocate text buffer.\n");
 		return NULL;
 	}
 

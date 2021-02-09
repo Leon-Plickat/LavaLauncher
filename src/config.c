@@ -47,43 +47,42 @@ bool set_boolean (bool *b, const char *value)
 		*b = false;
 	else
 	{
-		log_message(NULL, 0, "ERROR: Not a boolean: %s\n", value);
+		log_message(0, "ERROR: Not a boolean: %s\n", value);
 		return false;
 	}
 	return true;
 }
 
-static bool global_set_watch (struct Lava_data *data, const char *arg)
+static bool global_set_watch (const char *arg)
 {
 #ifdef WATCH_CONFIG
-	return set_boolean(&data->watch, arg);
+	return set_boolean(&context.watch, arg);
 #else
-	log_message(NULL, 0, "WARNING: LavaLauncher has been compiled without the ability to watch the configuration file for changes.\n");
+	log_message(0, "WARNING: LavaLauncher has been compiled without the ability to watch the configuration file for changes.\n");
 	return true;
 #endif
 }
 
-bool global_set_variable (struct Lava_data *data, const char *variable,
-		const char *value, int line)
+bool global_set_variable (const char *variable, const char *value, int line)
 {
 	struct
 	{
 		const char *variable;
-		bool (*set)(struct Lava_data*, const char*);
+		bool (*set)(const char*);
 	} configs[] = {
 		{ .variable = "watch-config-file", .set = global_set_watch }
 	};
 
 	FOR_ARRAY(configs, i) if (! strcmp(configs[i].variable, variable))
 	{
-		if (configs[i].set(data, value))
+		if (configs[i].set(value))
 			return true;
 		goto exit;
 	}
 
-	log_message(NULL, 0, "ERROR: Unrecognized global setting \"%s\".\n", variable);
+	log_message(0, "ERROR: Unrecognized global setting \"%s\".\n", variable);
 exit:
-	log_message(NULL, 0, "INFO: The error is on line %d in \"%s\".\n", line, data->config_path);
+	log_message(0, "INFO: The error is on line %d in \"%s\".\n", line, context.config_path);
 	return false;
 }
 
@@ -108,7 +107,6 @@ enum Parser_context
 
 struct Parser
 {
-	struct Lava_data *data;
 	FILE *file;
 	int line;
 
@@ -131,7 +129,7 @@ static bool parser_get_char (struct Parser *parser, char *ch)
 		case EOF:
 			if ( errno != 0 )
 			{
-				log_message(NULL, 0, "ERROR: fgetc: %s\n", strerror(errno));
+				log_message(0, "ERROR: fgetc: %s\n", strerror(errno));
 				return false;
 			}
 			*ch = '\0';
@@ -152,7 +150,7 @@ static bool parser_handle_eof (struct Parser *parser)
 {
 	if ( parser->state == STATE_EXPECT_NAME_OR_CB && parser->context == CONTEXT_NONE )
 		return true;
-	log_message(NULL, 0, "ERROR: Unexpectedly reached end of config file.\n");
+	log_message(0, "ERROR: Unexpectedly reached end of config file.\n");
 	return false;
 }
 
@@ -182,7 +180,7 @@ static bool parser_handle_bracket (struct Parser *parser, const char ch)
 		switch (parser->context)
 		{
 			case CONTEXT_BAR:
-				if (! finalize_bar(parser->data->last_bar))
+				if (! finalize_bar(context.last_bar))
 					return false;
 				parser->context = CONTEXT_NONE;
 				break;
@@ -207,7 +205,7 @@ static bool parser_handle_bracket (struct Parser *parser, const char ch)
 	return true;
 
 error:
-	log_message(NULL, 0, "ERROR: Unexpected '%c' in config file on line %d.\n", ch, parser->line);
+	log_message(0, "ERROR: Unexpected '%c' in config file on line %d.\n", ch, parser->line);
 	return false;
 }
 
@@ -215,7 +213,7 @@ static bool parser_handle_equals (struct Parser *parser, const char ch)
 {
 	if ( parser->state != STATE_EXPECT_EQUALS )
 	{
-		log_message(NULL, 0, "ERROR: Unexpected '=' in config file on line %d.\n", parser->line);
+		log_message(0, "ERROR: Unexpected '=' in config file on line %d.\n", parser->line);
 		return false;
 	}
 	parser->state = STATE_EXPECT_VALUE;
@@ -226,7 +224,7 @@ static bool parser_handle_semicolon (struct Parser *parser, const char ch)
 {
 	if ( parser->state != STATE_EXPECT_SEMICOLON )
 	{
-		log_message(NULL, 0, "ERROR: Unexpected ';' in config file on line %d.\n", parser->line);
+		log_message(0, "ERROR: Unexpected ';' in config file on line %d.\n", parser->line);
 		return false;
 	}
 	parser->state = STATE_EXPECT_NAME_OR_CB;
@@ -341,15 +339,15 @@ done:
 	return true;
 
 unterm:
-	log_message(NULL, 0, "ERROR: Unterminated string on line %d.\n", parser->line);
+	log_message(0, "ERROR: Unterminated string on line %d.\n", parser->line);
 	return false;
 
 overflow:
-	log_message(NULL, 0, "ERROR: Buffer overflow due to too long string on line %d.\n", parser->line);
+	log_message(0, "ERROR: Buffer overflow due to too long string on line %d.\n", parser->line);
 	return false;
 
 unexpected_quote:
-	log_message(NULL, 0, "ERROR: Unexpected quotes on line %d.\n", parser->line);
+	log_message(0, "ERROR: Unexpected quotes on line %d.\n", parser->line);
 	return false;
 }
 
@@ -374,7 +372,7 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 			{
 				parser->context = CONTEXT_BAR;
 				parser->state = STATE_EXPECT_OB;
-				return create_bar(parser->data);
+				return create_bar();
 			}
 		}
 		else if ( parser->context == CONTEXT_BAR )
@@ -383,19 +381,19 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 			{
 				parser->context = CONTEXT_CONFIG;
 				parser->state = STATE_EXPECT_OB;
-				return create_bar_config(parser->data->last_bar, false);
+				return create_bar_config(context.last_bar, false);
 			}
 			if (! strcmp(parser->name_buffer, "button"))
 			{
 				parser->context = CONTEXT_BUTTON;
 				parser->state = STATE_EXPECT_OB;
-				return create_item(parser->data->last_bar, TYPE_BUTTON);
+				return create_item(context.last_bar, TYPE_BUTTON);
 			}
 			else if (! strcmp(parser->name_buffer, "spacer"))
 			{
 				parser->context = CONTEXT_SPACER;
 				parser->state = STATE_EXPECT_OB;
-				return create_item(parser->data->last_bar, TYPE_SPACER);
+				return create_item(context.last_bar, TYPE_SPACER);
 			}
 		}
 
@@ -410,31 +408,29 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 					&parser->value_buffer_length, ch, false))
 			return false;
 
-		struct Lava_bar *last_bar = parser->data->last_bar;
+		struct Lava_bar *last_bar = context.last_bar;
 		parser->state = STATE_EXPECT_SEMICOLON;
 		switch (parser->context)
 		{
 			case CONTEXT_GLOBAL_SETTINGS:
-				return global_set_variable(parser->data,
-						parser->name_buffer, parser->value_buffer,
-						parser->line);
+				return global_set_variable(parser->name_buffer,
+						parser->value_buffer, parser->line);
 
 			case CONTEXT_BAR:
 				/* Change settings of default configuration set. */
 				return bar_config_set_variable(last_bar->default_config,
-						parser->data, parser->name_buffer, parser->value_buffer,
+						parser->name_buffer, parser->value_buffer,
 						parser->line);
 
 			case CONTEXT_CONFIG:
 				/* Change settings of latest configuration set. */
 				return bar_config_set_variable(last_bar->last_config,
-						parser->data, parser->name_buffer, parser->value_buffer,
+						parser->name_buffer, parser->value_buffer,
 						parser->line);
 
 			case CONTEXT_BUTTON:
 			case CONTEXT_SPACER:
-				return item_set_variable(parser->data,
-						last_bar->last_item,
+				return item_set_variable(last_bar->last_item,
 						parser->name_buffer, parser->value_buffer,
 						parser->line);
 
@@ -443,25 +439,24 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 		}
 	}
 
-	log_message(NULL, 0, "ERROR: Incorrect assignment on line %d.\n", parser->line);
+	log_message(0, "ERROR: Incorrect assignment on line %d.\n", parser->line);
 	return false;
 }
 
-bool parse_config_file (struct Lava_data *data)
+bool parse_config_file (void)
 {
 	errno = 0;
 	struct Parser parser = {
-		.data    = data,
 		.file    = NULL,
 		.line    = 1,
 		.context = CONTEXT_NONE,
 		.state   = STATE_EXPECT_NAME_OR_CB
 	};
-	if ( NULL == (parser.file = fopen(data->config_path, "r")) )
+	if ( NULL == (parser.file = fopen(context.config_path, "r")) )
 	{
-		log_message(NULL, 0, "ERROR: Can not open config file \"%s\".\n"
+		log_message(0, "ERROR: Can not open config file \"%s\".\n"
 				"ERROR: fopen: %s\n",
-				data->config_path, strerror(errno));
+				context.config_path, strerror(errno));
 		return false;
 	}
 

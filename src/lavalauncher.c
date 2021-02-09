@@ -34,7 +34,12 @@
 #include"wayland-connection.h"
 #include"misc-event-sources.h"
 
-static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[])
+/* The context is used basically everywhere. So instead of passing pointers
+ * around, just have it global.
+ */
+struct Lava_context context = {0};
+
+static bool handle_command_flags (int argc, char *argv[])
 {
 	const char usage[] =
 		"Usage: lavalauncher [options...]\n"
@@ -59,21 +64,21 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 	for (int c; (c = getopt_long(argc, argv, "c:hvV", opts, &optind)) != -1 ;) switch (c)
 	{
 		case 'c':
-			set_string(&data->config_path, optarg);
+			set_string(&context.config_path, optarg);
 			break;
 
 		case 'h':
 			fputs(usage, stderr);
-			data->ret = EXIT_SUCCESS;
+			context.ret = EXIT_SUCCESS;
 			return false;
 
 		case 'v':
-			data->verbosity++;
+			context.verbosity++;
 			break;
 
 		case 'V':
 			fputs("LavaLauncher version " LAVALAUNCHER_VERSION"\n", stderr);
-			data->ret = EXIT_SUCCESS;
+			context.ret = EXIT_SUCCESS;
 			return false;
 
 		default:
@@ -83,7 +88,7 @@ static bool handle_command_flags (struct Lava_data *data, int argc, char *argv[]
 	return true;
 }
 
-static bool get_default_config_path (struct Lava_data *data)
+static bool get_default_config_path (void)
 {
 	struct
 	{
@@ -99,87 +104,86 @@ static bool get_default_config_path (struct Lava_data *data)
 
 	FOR_ARRAY(paths, i)
 	{
-		data->config_path = get_formatted_buffer(paths[i].fmt, paths[i].env);
-		if (! access(data->config_path, F_OK | R_OK))
+		context.config_path = get_formatted_buffer(paths[i].fmt, paths[i].env);
+		if (! access(context.config_path, F_OK | R_OK))
 		{
-			log_message(data, 1, "[main] Using default configuration file path: %s\n", data->config_path);
+			log_message(1, "[main] Using default configuration file path: %s\n", context.config_path);
 			return true;
 		}
-		free_if_set(data->config_path);
+		free_if_set(context.config_path);
 	}
 
-	log_message(NULL, 0, "ERROR: Can not find configuration file.\n"
+	log_message(0, "ERROR: Can not find configuration file.\n"
 			"INFO: You can provide a path manually with '-c'.\n");
 	return false;
 }
 
-static void init_data (struct Lava_data *data)
+static void init_context (void)
 {
-	data->ret         = EXIT_FAILURE;
-	data->loop        = true;
-	data->reload      = false;
-	data->verbosity   = 0;
-	data->config_path = NULL;
+	context.ret         = EXIT_FAILURE;
+	context.loop        = true;
+	context.reload      = false;
+	context.verbosity   = 0;
+	context.config_path = NULL;
 
 #if WATCH_CONFIG
-	data->watch = false;
+	context.watch = false;
 #endif
 
-	data->display            = NULL;
-	data->registry           = NULL;
+	context.display            = NULL;
+	context.registry           = NULL;
 
-	data->compositor         = NULL;
-	data->subcompositor      = NULL;
-	data->shm                = NULL;
-	data->layer_shell        = NULL;
-	data->xdg_output_manager = NULL;
+	context.compositor         = NULL;
+	context.subcompositor      = NULL;
+	context.shm                = NULL;
+	context.layer_shell        = NULL;
+	context.xdg_output_manager = NULL;
 
-	data->river_status_manager = NULL;
-	data->need_river_status    = false;
+	context.river_status_manager = NULL;
+	context.need_river_status    = false;
 
-	data->need_keyboard = false;
-	data->need_pointer  = false;
-	data->need_touch    = false;
+	context.need_keyboard = false;
+	context.need_pointer  = false;
+	context.need_touch    = false;
 
-	wl_list_init(&data->bars);
-	data->last_bar = NULL;
+	wl_list_init(&context.bars);
+	context.last_bar = NULL;
 
-	wl_list_init(&data->outputs);
-	wl_list_init(&data->seats);
+	wl_list_init(&context.outputs);
+	wl_list_init(&context.seats);
 }
 
 int main (int argc, char *argv[])
 {
-	struct Lava_data data;
 reload:
-	init_data(&data);
+	init_context();
 
-	if (! handle_command_flags(&data, argc, argv))
-		return data.ret;
+	if (! handle_command_flags(argc, argv))
+		return context.ret;
 
-	log_message(&data, 1, "[main] LavaLauncher: version=%s\n", LAVALAUNCHER_VERSION);
+	log_message(1, "[main] LavaLauncher: version=%s\n", LAVALAUNCHER_VERSION);
 
 	/* If the user did not provide the path to a configuration file, try
 	 * the default location.
 	 */
-	if ( data.config_path == NULL )
-		if (! get_default_config_path(&data))
+	if ( context.config_path == NULL )
+		if (! get_default_config_path())
 			return EXIT_FAILURE;
 
 	/* Try to parse the configuration file. If this fails, there might
 	 * already be heap objects, so some cleanup is needed.
 	 */
-	if (! parse_config_file(&data))
+	if (! parse_config_file())
 		goto exit;
 
-	data.ret = EXIT_SUCCESS;
+	context.ret = EXIT_SUCCESS;
 
 	/* Set up the event loop and attach all event sources. */
 	struct Lava_event_loop loop;
 	event_loop_init(&loop);
 	event_loop_add_event_source(&loop, &wayland_source);
 #if WATCH_CONFIG
-	if (data.watch)
+	if (context.watch)
 		event_loop_add_event_source(&loop, &inotify_source);
 #endif
 #if HANDLE_SIGNALS
@@ -187,17 +191,17 @@ reload:
 #endif
 
 	/* Run the event loop. */
-	if (! event_loop_run(&loop, &data))
-		data.ret = EXIT_FAILURE;
+	if (! event_loop_run(&loop))
+		context.ret = EXIT_FAILURE;
 
 exit:
-	free(data.config_path);
+	free(context.config_path);
 
 	/* Clean up objects created when parsing the configuration file. */
-	destroy_all_bars(&data);
+	destroy_all_bars();
 
-	if (data.reload)
+	if (context.reload)
 		goto reload;
-	return data.ret;
+	return context.ret;
 }
 

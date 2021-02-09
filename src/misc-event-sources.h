@@ -26,3 +26,4 @@ extern struct Lava_event_source inotify_source;
 extern struct Lava_event_source signal_source;
 
 #endif
+

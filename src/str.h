@@ -22,9 +22,7 @@
 
 #include<stdbool.h>
 
-struct Lava_data;
-
-void log_message (struct Lava_data *data, int level, const char *fmt, ...);
+void log_message (int level, const char *fmt, ...);
 void free_if_set (void *ptr);
 void set_string (char **ptr, char *arg);
 char *get_formatted_buffer (const char *fmt, ...);

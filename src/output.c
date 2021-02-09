@@ -49,8 +49,7 @@ static bool update_bar_instances_on_output (struct Lava_output *output)
 	if ( output->status == OUTPUT_STATUS_UNCONFIGURED || output->name == NULL )
 		return true;
 
-	struct Lava_data *data = output->data;
-	log_message(data, 1, "[output] Updating bars: global_name=%d\n", output->global_name);
+	log_message(1, "[output] Updating bars: global_name=%d\n", output->global_name);
 
 	/* A lot of compositors have no-op outputs with zero size for internal
 	 * reasons. They should remain unexposed, but sometimes a buggy
@@ -66,7 +65,7 @@ static bool update_bar_instances_on_output (struct Lava_output *output)
 	}
 
 	struct Lava_bar *bar, *temp;
-	wl_list_for_each_safe(bar, temp, &data->bars, link)
+	wl_list_for_each_safe(bar, temp, &context.bars, link)
 	{
 		/* Try to find a configuration set of the bar which fits this output. */
 		struct Lava_bar_configuration *config = get_bar_config_for_output(bar, output);
@@ -88,9 +87,9 @@ static bool update_bar_instances_on_output (struct Lava_output *output)
 			/* If we have a configuration set, but no instance, we need to create one. */
 			if (! create_bar_instance(bar, config, output))
 			{
-				log_message(NULL, 0, "ERROR: Could not create bar instance.\n");
-				data->loop = false;
-				data->ret  = EXIT_FAILURE;
+				log_message(0, "ERROR: Could not create bar instance.\n");
+				context.loop = false;
+				context.ret  = EXIT_FAILURE;
 				return false;
 			}
 		}
@@ -104,35 +103,35 @@ static bool update_bar_instances_on_output (struct Lava_output *output)
 	return true;
 }
 
-static void output_handle_scale (void *raw_data, struct wl_output *wl_output, int32_t factor)
+static void output_handle_scale (void *data, struct wl_output *wl_output, int32_t factor)
 {
-	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_output *output = (struct Lava_output *)data;
 	output->scale              = (uint32_t)factor;
 
-	log_message(output->data, 1, "[output] Property update: global_name=%d scale=%d\n",
+	log_message(1, "[output] Property update: global_name=%d scale=%d\n",
 				output->global_name, output->scale);
 }
 
-static void output_handle_geometry(void *raw_data, struct wl_output *wl_output,
+static void output_handle_geometry(void *data, struct wl_output *wl_output,
 		int32_t x, int32_t y, int32_t phy_width, int32_t phy_height,
 		int32_t subpixel, const char *make, const char *model,
 		int32_t transform)
 {
-	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_output *output = (struct Lava_output *)data;
 	output->transform          = (uint32_t)transform;
 
-	log_message(output->data, 1, "[output] Property update: global_name=%d transform=%d\n",
+	log_message(1, "[output] Property update: global_name=%d transform=%d\n",
 				output->global_name, output->transform);
 }
 
-static void output_handle_done (void *raw_data, struct wl_output *wl_output)
+static void output_handle_done (void *data, struct wl_output *wl_output)
 {
 	/* This event is sent after all output property changes (by wl_output
 	 * and by xdg_output) have been advertised by preceding events.
 	 */
-	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_output *output = (struct Lava_output *)data;
 
-	log_message(output->data, 1, "[output] Atomic update complete: global_name=%d\n",
+	log_message(1, "[output] Atomic update complete: global_name=%d\n",
 				output->global_name);
 
 	update_bar_instances_on_output(output);
@@ -145,24 +144,24 @@ static const struct wl_output_listener output_listener = {
 	.done     = output_handle_done
 };
 
-static void xdg_output_handle_name (void *raw_data,
-		struct zxdg_output_v1 *xdg_output, const char *name)
+static void xdg_output_handle_name (void *data, struct zxdg_output_v1 *xdg_output,
+		const char *name)
 {
-	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_output *output = (struct Lava_output *)data;
 	set_string(&output->name, (char *)name);
 
-	log_message(output->data, 1, "[output] Property update: global_name=%d name=%s\n",
+	log_message(1, "[output] Property update: global_name=%d name=%s\n",
 				output->global_name, name);
 }
 
-static void xdg_output_handle_logical_size (void *raw_data,
-		struct zxdg_output_v1 *xdg_output, int32_t w, int32_t h)
+static void xdg_output_handle_logical_size (void *data, struct zxdg_output_v1 *xdg_output,
+		int32_t w, int32_t h)
 {
-	struct Lava_output *output = (struct Lava_output *)raw_data;
+	struct Lava_output *output = (struct Lava_output *)data;
 	output->w                  = (uint32_t)w;
 	output->h                  = (uint32_t)h;
 
-	log_message(output->data, 1, "[output] Property update: global_name=%d width=%d height=%d\n",
+	log_message(1, "[output] Property update: global_name=%d width=%d height=%d\n",
 				output->global_name, w, h);
 }
 
@@ -179,7 +178,7 @@ static const struct zxdg_output_v1_listener xdg_output_listener = {
 static void update_river_output_occupied_state (struct Lava_output *output)
 {
 	output->river_output_occupied = output->river_focused_tags & output->river_view_tags;
-	log_message(output->data, 3, "[output] River output status: occupied=%s\n",
+	log_message(3, "[output] River output status: occupied=%s\n",
 			output->river_output_occupied ? "true" : "false");
 	struct Lava_bar_instance *instance;
 	wl_list_for_each(instance, &output->bar_instances, link)
@@ -212,27 +211,25 @@ static const struct zriver_output_status_v1_listener river_status_listener = {
 
 bool configure_output (struct Lava_output *output)
 {
-	struct Lava_data *data = output->data;
-
-	log_message(data, 1, "[output] Configuring: global_name=%d\n", output->global_name);
+	log_message(1, "[output] Configuring: global_name=%d\n", output->global_name);
 
 	/* Create xdg_output and attach listeners. */
 	if ( NULL == (output->xdg_output = zxdg_output_manager_v1_get_xdg_output(
-					data->xdg_output_manager, output->wl_output)) )
+					context.xdg_output_manager, output->wl_output)) )
 	{
-		log_message(NULL, 0, "ERROR: Could not get XDG output.\n");
+		log_message(0, "ERROR: Could not get XDG output.\n");
 		return false;
 	}
 	zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener,
 			output);
 
 	/* Create river_output_status and attach listener, but only if we need it. */
-	if (output->data->need_river_status)
+	if (context.need_river_status)
 	{
 		if ( NULL == (output->river_status = zriver_status_manager_v1_get_river_output_status(
-						output->data->river_status_manager, output->wl_output)) )
+						context.river_status_manager, output->wl_output)) )
 		{
-			log_message(NULL, 0, "ERROR: Could not get river output status.\n");
+			log_message(0, "ERROR: Could not get river output status.\n");
 			return false;
 		}
 		zriver_output_status_v1_add_listener(output->river_status, &river_status_listener, output);
@@ -248,10 +245,10 @@ bool configure_output (struct Lava_output *output)
 	return true;
 }
 
-bool create_output (struct Lava_data *data, struct wl_registry *registry,
-		uint32_t name, const char *interface, uint32_t version)
+bool create_output (struct wl_registry *registry, uint32_t name,
+		const char *interface, uint32_t version)
 {
-	log_message(data, 1, "[output] Creating: global_name=%d\n", name);
+	log_message(1, "[output] Creating: global_name=%d\n", name);
 
 	struct wl_output *wl_output = wl_registry_bind(registry, name,
 			&wl_output_interface, 3);
@@ -259,7 +256,6 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 
 	TRY_NEW(struct Lava_output, output, false);
 
-	output->data          = data;
 	output->global_name   = name;
 	output->name          = NULL;
 	output->scale         = 1;
@@ -275,7 +271,7 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 
 	wl_list_init(&output->bar_instances);
 
-	wl_list_insert(&data->outputs, &output->link);
+	wl_list_insert(&context.outputs, &output->link);
 	wl_output_set_user_data(wl_output, output);
 	wl_output_add_listener(wl_output, &output_listener, output);
 
@@ -284,22 +280,22 @@ bool create_output (struct Lava_data *data, struct wl_registry *registry,
 	 * one is not available yet, we have to configure the output later (see
 	 * init_wayland()).
 	 */
-	if ( data->xdg_output_manager != NULL && data->layer_shell != NULL
-			&& ( !data->need_river_status || data->river_status_manager != NULL ) )
+	if ( context.xdg_output_manager != NULL && context.layer_shell != NULL
+			&& ( !context.need_river_status || context.river_status_manager != NULL ) )
 	{
 		if (! configure_output(output))
 			return false;
 	}
 	else
-		log_message(data, 2, "[output] Not yet configureable.\n");
+		log_message(2, "[output] Not yet configureable.\n");
 
 	return true;
 }
 
-struct Lava_output *get_output_from_global_name (struct Lava_data *data, uint32_t name)
+struct Lava_output *get_output_from_global_name (uint32_t name)
 {
 	struct Lava_output *op, *temp;
-	wl_list_for_each_safe(op, temp, &data->outputs, link)
+	wl_list_for_each_safe(op, temp, &context.outputs, link)
 		if ( op->global_name == name )
 			return op;
 	return NULL;
@@ -317,11 +313,11 @@ void destroy_output (struct Lava_output *output)
 	free(output);
 }
 
-void destroy_all_outputs (struct Lava_data *data)
+void destroy_all_outputs (void)
 {
-	log_message(data, 1, "[output] Destroying all outputs.\n");
-	struct Lava_output *op_1, *op_2;
-	wl_list_for_each_safe(op_1, op_2, &data->outputs, link)
-		destroy_output(op_1);
+	log_message(1, "[output] Destroying all outputs.\n");
+	struct Lava_output *output, *temp;
+	wl_list_for_each_safe(output, temp, &context.outputs, link)
+		destroy_output(output);
 }
 

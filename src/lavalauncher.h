@@ -40,7 +40,7 @@
 	A *B = calloc(1, sizeof(A)); \
 	if ( B == NULL ) \
 	{ \
-		log_message(NULL, 0, "ERROR: Can not allocate.\n"); \
+		log_message(0, "ERROR: Can not allocate.\n"); \
 		return C; \
 	}
 
@@ -62,7 +62,7 @@
 struct Lava_item;
 struct Lava_bar;
 
-struct Lava_data
+struct Lava_context
 {
 	struct wl_display             *display;
 	struct wl_registry            *registry;
@@ -100,5 +100,7 @@ struct Lava_data
 	bool watch;
 #endif
 };
+
+extern struct Lava_context context;
 
 #endif

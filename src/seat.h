@@ -27,7 +27,6 @@
 
 #include"types/buffer.h"
 
-struct Lava_data;
 struct Lava_bar;
 struct Lava_item_indicator;
 
@@ -53,8 +52,7 @@ struct Lava_touchpoint
 
 struct Lava_seat
 {
-	struct wl_list    link;
-	struct Lava_data *data;
+	struct wl_list link;
 
 	struct wl_seat *wl_seat;
 
@@ -99,9 +97,9 @@ struct Lava_seat
 	} touch;
 };
 
-bool create_seat (struct Lava_data *data, struct wl_registry *registry,
-		uint32_t name, const char *interface, uint32_t version);
-void destroy_all_seats (struct Lava_data *data);
+bool create_seat (struct wl_registry *registry, uint32_t name,
+		const char *interface, uint32_t version);
+void destroy_all_seats (void);
 
 #endif
 

@@ -46,49 +46,49 @@
  *                        *
  **************************/
 #if WATCH_CONFIG
-static bool inotify_source_init (struct pollfd *fd, struct Lava_data *data)
+static bool inotify_source_init (struct pollfd *fd)
 {
-	log_message(data, 1, "[loop] Setting up inotify event source.\n");
+	log_message(1, "[loop] Setting up inotify event source.\n");
 
 	fd->events = POLLIN;
 	if ( -1 == (fd->fd = inotify_init1(IN_NONBLOCK)) )
 	{
-		log_message(NULL, 0, "ERROR: Unable to open inotify fd.\n"
+		log_message(0, "ERROR: Unable to open inotify fd.\n"
 				"ERROR: inotify_init1: %s\n", strerror(errno));
 		return false;
 	}
 
 	/* Add config file to inotify watch list. */
-	if ( -1 == inotify_add_watch(fd->fd, data->config_path, IN_MODIFY) )
+	if ( -1 == inotify_add_watch(fd->fd, context.config_path, IN_MODIFY) )
 	{
-		log_message(NULL, 0, "ERROR: Unable to add config path to inotify watchlist.\n");
+		log_message(0, "ERROR: Unable to add config path to inotify watchlist.\n");
 		return false;
 	}
 
 	return true;
 }
 
-static bool inotify_source_finish (struct pollfd *fd, struct Lava_data *data)
+static bool inotify_source_finish (struct pollfd *fd)
 {
 	if ( fd->fd != -1 )
 		close(fd->fd);
 	return true;
 }
 
-static bool inotify_source_flush (struct pollfd *fd, struct Lava_data *data)
+static bool inotify_source_flush (struct pollfd *fd)
 {
 	return true;
 }
 
-static bool inotify_source_handle_in (struct pollfd *fd, struct Lava_data *data)
+static bool inotify_source_handle_in (struct pollfd *fd)
 {
-	log_message(data, 1, "[main] Config file modified; Triggering reload.\n");
-	data->loop = false;
-	data->reload = true;
+	log_message(1, "[main] Config file modified; Triggering reload.\n");
+	context.loop = false;
+	context.reload = true;
 	return true;
 }
 
-static bool inotify_source_handle_out (struct pollfd *fd, struct Lava_data *data)
+static bool inotify_source_handle_out (struct pollfd *fd)
 {
 	return true;
 }
@@ -108,9 +108,9 @@ struct Lava_event_source inotify_source = {
  *                       *
  *************************/
 #if WATCH_CONFIG
-static bool signal_source_init (struct pollfd *fd, struct Lava_data *data)
+static bool signal_source_init (struct pollfd *fd)
 {
-	log_message(data, 1, "[loop] Setting up signalfd event source.\n");
+	log_message(1, "[loop] Setting up signalfd event source.\n");
 
 	sigset_t mask;
 	sigemptyset(&mask);
@@ -122,14 +122,14 @@ static bool signal_source_init (struct pollfd *fd, struct Lava_data *data)
 
 	if ( sigprocmask(SIG_BLOCK, &mask, NULL) == -1 )
 	{
-		log_message(NULL, 0, "ERROR: sigprocmask() failed.\n");
+		log_message(0, "ERROR: sigprocmask() failed.\n");
 		return false;
 	}
 
 	fd->events = POLLIN;
 	if ( -1 == (fd->fd = signalfd(-1, &mask, 0)) )
 	{
-		log_message(NULL, 0, "ERROR: Unable to open signal fd.\n"
+		log_message(0, "ERROR: Unable to open signal fd.\n"
 				"ERROR: signalfd: %s\n", strerror(errno));
 		return false;
 	}
@@ -137,45 +137,45 @@ static bool signal_source_init (struct pollfd *fd, struct Lava_data *data)
 	return true;
 }
 
-static bool signal_source_finish (struct pollfd *fd, struct Lava_data *data)
+static bool signal_source_finish (struct pollfd *fd)
 {
 	if ( fd->fd != -1 )
 		close(fd->fd);
 	return true;
 }
 
-static bool signal_source_flush (struct pollfd *fd, struct Lava_data *data)
+static bool signal_source_flush (struct pollfd *fd)
 {
 	return true;
 }
 
-static bool signal_source_handle_in (struct pollfd *fd, struct Lava_data *data)
+static bool signal_source_handle_in (struct pollfd *fd)
 {
 	struct signalfd_siginfo fdsi;
 	if ( read(fd->fd, &fdsi, sizeof(struct signalfd_siginfo))
 			!= sizeof(struct signalfd_siginfo) )
 	{
-		log_message(NULL, 0, "ERROR: Can not read signal info.\n");
+		log_message(0, "ERROR: Can not read signal info.\n");
 		return false;
 	}
 
 	if ( fdsi.ssi_signo == SIGINT || fdsi.ssi_signo == SIGQUIT )
 	{
-		log_message(data, 1, "[loop] Received SIGTERM or SIGQUIT; Exiting.\n");
+		log_message(1, "[loop] Received SIGTERM or SIGQUIT; Exiting.\n");
 		return false;
 	}
 	else if ( fdsi.ssi_signo == SIGUSR1 || fdsi.ssi_signo == SIGUSR2 )
 	{
-		log_message(data, 1, "[loop] Received SIGUSR; Triggering reload.\n");
-		data->loop = false;
-		data->reload = true;
+		log_message(1, "[loop] Received SIGUSR; Triggering reload.\n");
+		context.loop = false;
+		context.reload = true;
 		return false;
 	}
 
 	return true;
 }
 
-static bool signal_source_handle_out (struct pollfd *fd, struct Lava_data *data)
+static bool signal_source_handle_out (struct pollfd *fd)
 {
 	return true;
 }

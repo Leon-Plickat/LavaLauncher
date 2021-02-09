@@ -25,8 +25,8 @@
 #include<string.h>
 #include<wayland-client.h>
 
-#include"event-loop.h"
 #include"lavalauncher.h"
+#include"event-loop.h"
 #include"str.h"
 
 void event_loop_init (struct Lava_event_loop *loop)
@@ -42,14 +42,14 @@ void event_loop_add_event_source (struct Lava_event_loop *loop, struct Lava_even
 	wl_list_insert(&loop->sources, &source->link);
 }
 
-bool event_loop_run (struct  Lava_event_loop *loop, struct Lava_data *data)
+bool event_loop_run (struct  Lava_event_loop *loop)
 {
-	log_message(data, 1, "[loop] Starting main loop.\n");
+	log_message(1, "[loop] Starting main loop.\n");
 
 	struct pollfd *fds = calloc(loop->fd_count, sizeof(struct pollfd));
 	if ( fds == NULL )
 	{
-		log_message(NULL, 0, "ERROR: Can not allocate.\n");
+		log_message(0, "ERROR: Can not allocate.\n");
 		return NULL;
 	}
 	bool ret = true;
@@ -57,19 +57,19 @@ bool event_loop_run (struct  Lava_event_loop *loop, struct Lava_data *data)
 	/* Call init functions */
 	struct Lava_event_source *source;
 	wl_list_for_each(source, &loop->sources, link)
-		if (! (source->init(&fds[source->index], data)))
+		if (! (source->init(&fds[source->index])))
 		{
 			ret = false;
 			goto exit;
 		}
 
-	while (data->loop)
+	while (context.loop)
 	{
 		errno = 0;
 
 		/* Call flush functions */
 		wl_list_for_each(source, &loop->sources, link)
-			if (! (source->flush(&fds[source->index], data)))
+			if (! (source->flush(&fds[source->index])))
 			{
 				ret = false;
 				goto exit;
@@ -80,7 +80,7 @@ bool event_loop_run (struct  Lava_event_loop *loop, struct Lava_data *data)
 			if ( errno == EINTR )
 				continue;
 
-			log_message(NULL, 0, "poll: %s\n", strerror(errno));
+			log_message(0, "poll: %s\n", strerror(errno));
 			ret = false;
 			goto exit;
 		}
@@ -90,7 +90,7 @@ bool event_loop_run (struct  Lava_event_loop *loop, struct Lava_data *data)
 		{
 			if ( fds[source->index].revents & POLLIN )
 			{
-				if (! (source->handle_in(&fds[source->index], data)))
+				if (! (source->handle_in(&fds[source->index])))
 				{
 					ret = false;
 					goto exit;
@@ -99,7 +99,7 @@ bool event_loop_run (struct  Lava_event_loop *loop, struct Lava_data *data)
 
 			if ( fds[source->index].revents & POLLOUT )
 			{
-				if (! (source->handle_out(&fds[source->index], data)))
+				if (! (source->handle_out(&fds[source->index])))
 				{
 					ret = false;
 					goto exit;
@@ -111,7 +111,7 @@ bool event_loop_run (struct  Lava_event_loop *loop, struct Lava_data *data)
 exit:
 	/* Call finish functions */
 	wl_list_for_each(source, &loop->sources, link)
-		if (! (source->finish(&fds[source->index], data)))
+		if (! (source->finish(&fds[source->index])))
 				ret = false;
 
 	free(fds);

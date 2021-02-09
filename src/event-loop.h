@@ -25,27 +25,26 @@
 #include<poll.h>
 #include<wayland-client.h>
 
-struct Lava_data;
-
 struct Lava_event_loop
 {
 	nfds_t fd_count;
 	struct wl_list sources;
 };
 
+// TODO maybe use wl_signal and wl_listener instead?
 struct Lava_event_source
 {
 	struct wl_list link;
-	bool (*init)(struct pollfd *, struct Lava_data *);
-	bool (*finish)(struct pollfd *, struct Lava_data *);
-	bool (*flush)(struct pollfd *, struct Lava_data *);
-	bool (*handle_in)(struct pollfd *, struct Lava_data *);
-	bool (*handle_out)(struct pollfd *, struct Lava_data *);
+	bool (*init)(struct pollfd *);
+	bool (*finish)(struct pollfd *);
+	bool (*flush)(struct pollfd *);
+	bool (*handle_in)(struct pollfd *);
+	bool (*handle_out)(struct pollfd *);
 	nfds_t index;
 };
 
 void event_loop_init (struct Lava_event_loop *loop);
 void event_loop_add_event_source (struct Lava_event_loop *loop, struct Lava_event_source *source);
-bool event_loop_run (struct  Lava_event_loop *loop, struct Lava_data *data);
+bool event_loop_run (struct  Lava_event_loop *loop);
 
 #endif

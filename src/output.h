@@ -22,8 +22,6 @@
 
 #include<wayland-server.h>
 
-struct Lava_data;
-
 enum Lava_output_status
 {
 	/* Output has been created, but does not yet have an xdg_output or any bars. */
@@ -38,8 +36,7 @@ enum Lava_output_status
 
 struct Lava_output
 {
-	struct wl_list    link;
-	struct Lava_data *data;
+	struct wl_list link;
 
 	struct wl_list bar_instances;
 
@@ -60,12 +57,12 @@ struct Lava_output
 	enum Lava_output_status status;
 };
 
-bool create_output (struct Lava_data *data, struct wl_registry *registry,
-		uint32_t name, const char *interface, uint32_t version);
+bool create_output (struct wl_registry *registry, uint32_t name,
+		const char *interface, uint32_t version);
 bool configure_output (struct Lava_output *output);
-struct Lava_output *get_output_from_global_name (struct Lava_data *data,
-		uint32_t name);
+struct Lava_output *get_output_from_global_name (uint32_t name);
 void destroy_output (struct Lava_output *output);
-void destroy_all_outputs (struct Lava_data *data);
+void destroy_all_outputs (void);
 
 #endif
+

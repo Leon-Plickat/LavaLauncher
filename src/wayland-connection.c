@@ -49,70 +49,66 @@
  *  Registry  *
  *            *
  **************/
-static void registry_handle_global (void *raw_data, struct wl_registry *registry,
+static void registry_handle_global (void *data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version)
 {
-	struct Lava_data *data = (struct Lava_data *)raw_data;
-
 	if (! strcmp(interface, wl_compositor_interface.name))
 	{
-		log_message(data, 2, "[registry] Get wl_compositor.\n");
-		data->compositor = wl_registry_bind(registry, name,
+		log_message(2, "[registry] Get wl_compositor.\n");
+		context.compositor = wl_registry_bind(registry, name,
 				&wl_compositor_interface, 4);
 	}
 	if (! strcmp(interface, wl_subcompositor_interface.name))
 	{
-		log_message(data, 2, "[registry] Get wl_subcompositor.\n");
-		data->subcompositor = wl_registry_bind(registry, name,
+		log_message(2, "[registry] Get wl_subcompositor.\n");
+		context.subcompositor = wl_registry_bind(registry, name,
 				&wl_subcompositor_interface, 1);
 	}
 	else if (! strcmp(interface, wl_shm_interface.name))
 	{
-		log_message(data, 2, "[registry] Get wl_shm.\n");
-		data->shm = wl_registry_bind(registry, name,
+		log_message(2, "[registry] Get wl_shm.\n");
+		context.shm = wl_registry_bind(registry, name,
 				&wl_shm_interface, 1);
 	}
 	else if (! strcmp(interface, zwlr_layer_shell_v1_interface.name))
 	{
-		log_message(data, 2, "[registry] Get zwlr_layer_shell_v1.\n");
-		data->layer_shell = wl_registry_bind(registry, name,
+		log_message(2, "[registry] Get zwlr_layer_shell_v1.\n");
+		context.layer_shell = wl_registry_bind(registry, name,
 				&zwlr_layer_shell_v1_interface, 1);
 	}
 	else if (! strcmp(interface, zxdg_output_manager_v1_interface.name))
 	{
-		log_message(data, 2, "[registry] Get zxdg_output_manager_v1.\n");
-		data->xdg_output_manager = wl_registry_bind(registry, name,
+		log_message(2, "[registry] Get zxdg_output_manager_v1.\n");
+		context.xdg_output_manager = wl_registry_bind(registry, name,
 				&zxdg_output_manager_v1_interface, 3);
 	}
 	else if (! strcmp(interface, wl_seat_interface.name))
 	{
-		if (! create_seat(data, registry, name, interface, version))
+		if (! create_seat( registry, name, interface, version))
 			goto error;
 	}
 	else if (! strcmp(interface, wl_output_interface.name))
 	{
-		if (! create_output(data, registry, name, interface, version))
+		if (! create_output(registry, name, interface, version))
 			goto error;
 	}
 	else if (! strcmp(interface, zriver_status_manager_v1_interface.name))
 	{
-		if (data->need_river_status)
-			data->river_status_manager = wl_registry_bind(registry, name,
+		if (context.need_river_status)
+			context.river_status_manager = wl_registry_bind(registry, name,
 				&zriver_status_manager_v1_interface, 1);
 	}
 
 	return;
 error:
-	data->loop = false;
-	data->ret  = EXIT_FAILURE;
+	context.loop = false;
+	context.ret  = EXIT_FAILURE;
 }
 
-static void registry_handle_global_remove (void *raw_data,
-		struct wl_registry *registry, uint32_t name)
+static void registry_handle_global_remove (void *data, struct wl_registry *registry, uint32_t name)
 {
-	struct Lava_data *data = (struct Lava_data *)raw_data;
-	log_message(data, 1, "[registry] Global remove.\n");
-	destroy_output(get_output_from_global_name(data, name));
+	log_message(1, "[registry] Global remove.\n");
+	destroy_output(get_output_from_global_name(name));
 }
 
 static const struct wl_registry_listener registry_listener = {
@@ -123,20 +119,20 @@ static const struct wl_registry_listener registry_listener = {
 /* Test if all required interfaces are available. If not, return the name of the
  * missing interface.
  */
-static char *check_for_required_interfaces (struct Lava_data *data)
+static char *check_for_required_interfaces (void)
 {
-	if ( data->compositor == NULL )
+	if ( context.compositor == NULL )
 		return "wl_compositor";
-	if ( data->subcompositor == NULL )
+	if ( context.subcompositor == NULL )
 		return "wl_subcompositor";
-	if ( data->shm == NULL )
+	if ( context.shm == NULL )
 		return "wl_shm";
-	if ( data->layer_shell == NULL )
+	if ( context.layer_shell == NULL )
 		return "zwlr_layershell_v1";
-	if ( data->xdg_output_manager == NULL )
+	if ( context.xdg_output_manager == NULL )
 		return "zxdg_output_manager";
 
-	if ( data->need_river_status && data->river_status_manager == NULL )
+	if ( context.need_river_status && context.river_status_manager == NULL )
 		return "zriver_status_v1";
 
 	return NULL;
@@ -147,47 +143,47 @@ static char *check_for_required_interfaces (struct Lava_data *data)
  *  Connection  *
  *              *
  ****************/
-static bool init_wayland (struct Lava_data *data)
+static bool init_wayland (void)
 {
-	log_message(data, 1, "[registry] Init Wayland.\n");
+	log_message(1, "[registry] Init Wayland.\n");
 
-	/* Connect to Wayland server. */
-	log_message(data, 2, "[registry] Connecting to server.\n");
-	if ( NULL == (data->display = wl_display_connect(NULL)) )
+	/* Connect to Wayland server. */ // TODO does the display really need to be global?
+	log_message(2, "[registry] Connecting to server.\n");
+	if ( NULL == (context.display = wl_display_connect(NULL)) )
 	{
-		log_message(NULL, 0, "ERROR: Can not connect to a Wayland server.\n");
+		log_message(0, "ERROR: Can not connect to a Wayland server.\n");
 		return false;
 	}
 
-	/* Get registry and add listeners. */
-	log_message(data, 2, "[registry] Get wl_registry.\n");
-	if ( NULL == (data->registry = wl_display_get_registry(data->display)) )
+	/* Get registry and add listeners. */ // TODO does registry really need to be global?
+	log_message(2, "[registry] Get wl_registry.\n");
+	if ( NULL == (context.registry = wl_display_get_registry(context.display)) )
 	{
-		log_message(NULL, 0, "ERROR: Can not get registry.\n");
+		log_message(0, "ERROR: Can not get registry.\n");
 		return false;
 	}
-	wl_registry_add_listener(data->registry, &registry_listener, data);
+	wl_registry_add_listener(context.registry, &registry_listener, NULL);
 
 	/* Allow registry listeners to catch up. */
-	if ( wl_display_roundtrip(data->display) == -1 )
+	if ( wl_display_roundtrip(context.display) == -1 )
 	{
-		log_message(NULL, 0, "ERROR: Roundtrip failed.\n");
+		log_message(0, "ERROR: Roundtrip failed.\n");
 		return false;
 	}
 
-	const char *missing = check_for_required_interfaces(data);
+	const char *missing = check_for_required_interfaces();
 	if ( missing != NULL )
 	{
-		log_message(NULL, 0, "ERROR: Wayland compositor does not support %s.\n", missing);
+		log_message(0, "ERROR: Wayland compositor does not support %s.\n", missing);
 		return false;
 	}
 
 	/* Configure all outputs that were created before xdg_output_manager or
 	 * the layer_shell were available.
 	 */
-	log_message(data, 2, "[registry] Catching up on output configuration.\n");
+	log_message(2, "[registry] Catching up on output configuration.\n");
 	struct Lava_output *op, *temp;
-	wl_list_for_each_safe(op, temp, &data->outputs, link)
+	wl_list_for_each_safe(op, temp, &context.outputs, link)
 		if ( op->status == OUTPUT_STATUS_UNCONFIGURED )
 			if (! configure_output(op))
 				return false;
@@ -196,27 +192,27 @@ static bool init_wayland (struct Lava_data *data)
 }
 
 /* Finish him! */
-static void finish_wayland (struct Lava_data *data)
+static void finish_wayland (void)
 {
-	log_message(data, 1, "[registry] Finish Wayland.\n");
+	log_message(1, "[registry] Finish Wayland.\n");
 
-	destroy_all_outputs(data);
-	destroy_all_seats(data);
+	destroy_all_outputs();
+	destroy_all_seats();
 
-	log_message(data, 2, "[registry] Destroying Wayland objects.\n");
+	log_message(2, "[registry] Destroying Wayland objects.\n");
 
-	DESTROY(data->layer_shell, zwlr_layer_shell_v1_destroy);
-	DESTROY(data->compositor, wl_compositor_destroy);
-	DESTROY(data->subcompositor, wl_subcompositor_destroy);
-	DESTROY(data->shm, wl_shm_destroy);
-	DESTROY(data->registry, wl_registry_destroy);
+	DESTROY(context.layer_shell, zwlr_layer_shell_v1_destroy);
+	DESTROY(context.compositor, wl_compositor_destroy);
+	DESTROY(context.subcompositor, wl_subcompositor_destroy);
+	DESTROY(context.shm, wl_shm_destroy);
+	DESTROY(context.registry, wl_registry_destroy);
 
-	DESTROY(data->river_status_manager, zriver_status_manager_v1_destroy);
+	DESTROY(context.river_status_manager, zriver_status_manager_v1_destroy);
 
-	if ( data->display != NULL )
+	if ( context.display != NULL )
 	{
-		log_message(data, 2, "[registry] Diconnecting from server.\n");
-		wl_display_disconnect(data->display);
+		log_message(2, "[registry] Diconnecting from server.\n");
+		wl_display_disconnect(context.display);
 	}
 }
 
@@ -225,36 +221,36 @@ static void finish_wayland (struct Lava_data *data)
  *  Wayland event source  *
  *                        *
  **************************/
-static bool wayland_source_init (struct pollfd *fd, struct Lava_data *data)
+static bool wayland_source_init (struct pollfd *fd)
 {
-	log_message(data, 1, "[loop] Setting up Wayland event source.\n");
+	log_message(1, "[loop] Setting up Wayland event source.\n");
 
-	if (! init_wayland(data))
+	if (! init_wayland())
 		return false;
 
 	fd->events = POLLIN;
-	if ( -1 == (fd->fd = wl_display_get_fd(data->display)) )
+	if ( -1 == (fd->fd = wl_display_get_fd(context.display)) )
 	{
-		log_message(NULL, 0, "ERROR: Unable to open Wayland display fd.\n");
+		log_message(0, "ERROR: Unable to open Wayland display fd.\n");
 		return false;
 	}
 	return true;
 }
 
-static bool wayland_source_finish (struct pollfd *fd, struct Lava_data *data)
+static bool wayland_source_finish (struct pollfd *fd)
 {
 	if ( fd->fd != -1 )
 		close(fd->fd);
-	finish_wayland(data);
+	finish_wayland();
 	return true;
 }
 
-static bool wayland_source_flush (struct pollfd *fd, struct Lava_data *data)
+static bool wayland_source_flush (struct pollfd *fd)
 {
 	do {
-		if ( wl_display_flush(data->display) == 1 && errno != EAGAIN )
+		if ( wl_display_flush(context.display) == 1 && errno != EAGAIN )
 		{
-			log_message(NULL, 0, "ERROR: wl_display_flush: %s\n",
+			log_message(0, "ERROR: wl_display_flush: %s\n",
 					strerror(errno));
 			break;
 		}
@@ -262,21 +258,21 @@ static bool wayland_source_flush (struct pollfd *fd, struct Lava_data *data)
 	return true;
 }
 
-static bool wayland_source_handle_in (struct pollfd *fd, struct Lava_data *data)
+static bool wayland_source_handle_in (struct pollfd *fd)
 {
-	if ( wl_display_dispatch(data->display) == -1 )
+	if ( wl_display_dispatch(context.display) == -1 )
 	{
-		log_message(NULL, 0, "ERROR: wl_display_dispatch: %s\n", strerror(errno));
+		log_message(0, "ERROR: wl_display_dispatch: %s\n", strerror(errno));
 		return false;
 	}
 	return true;
 }
 
-static bool wayland_source_handle_out (struct pollfd *fd, struct Lava_data *data)
+static bool wayland_source_handle_out (struct pollfd *fd)
 {
-	if ( wl_display_flush(data->display) == -1 )
+	if ( wl_display_flush(context.display) == -1 )
 	{
-		log_message(NULL, 0, "ERROR: wl_display_flush: %s\n", strerror(errno));
+		log_message(0, "ERROR: wl_display_flush: %s\n", strerror(errno));
 		return false;
 	}
 	return true;

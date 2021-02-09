@@ -63,7 +63,7 @@ static void keyboard_handle_modifiers (void *data, struct wl_keyboard *keyboard,
 {
 	struct Lava_seat *seat = (struct Lava_seat *)data;
 
-	log_message(seat->data, 3, "[input] Received modifiers.\n");
+	log_message(3, "[input] Received modifiers.\n");
 
 	xkb_state_update_mask(seat->keyboard.state, depressed, latched, locked, 0, 0, group);
 	seat->keyboard.modifiers = 0;
@@ -81,7 +81,7 @@ static void keyboard_handle_keymap (void *data, struct wl_keyboard *keyboard,
 {
 	struct Lava_seat *seat = (struct Lava_seat *)data;
 
-	log_message(seat->data, 3, "[input] Received keymap.\n");
+	log_message(3, "[input] Received keymap.\n");
 
 	char *str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if ( str != MAP_FAILED )
@@ -93,10 +93,10 @@ static void keyboard_handle_keymap (void *data, struct wl_keyboard *keyboard,
 						seat->keyboard.context, str,
 						XKB_KEYMAP_FORMAT_TEXT_V1,
 						XKB_KEYMAP_COMPILE_NO_FLAGS)) )
-			log_message(NULL, 0, "Error: Failed to get xkb keymap.\n");
+			log_message(0, "Error: Failed to get xkb keymap.\n");
 		else if ( NULL == (seat->keyboard.state = xkb_state_new(
 						seat->keyboard.keymap)) )
-			log_message(NULL, 0, "Error: Failed to get xkb state.\n");
+			log_message(0, "Error: Failed to get xkb state.\n");
 
 		munmap(str, size);
 	}
@@ -127,7 +127,7 @@ static void seat_release_keyboard (struct Lava_seat *seat)
 
 static void seat_bind_keyboard (struct Lava_seat *seat)
 {
-	log_message(seat->data, 2, "[seat] Binding keyboard.\n");
+	log_message(2, "[seat] Binding keyboard.\n");
 
 	seat->keyboard.wl_keyboard = wl_seat_get_keyboard(seat->wl_seat);
 	wl_keyboard_add_listener(seat->keyboard.wl_keyboard, &keyboard_listener, seat);
@@ -135,7 +135,7 @@ static void seat_bind_keyboard (struct Lava_seat *seat)
 	/* Set up xkbcommon stuff. */
 	if ( NULL == (seat->keyboard.context = xkb_context_new(0)) )
 	{
-		log_message(NULL, 0, "Error: Failed to setup xkb context.\n");
+		log_message(0, "Error: Failed to setup xkb context.\n");
 		seat_release_keyboard(seat);
 		return;
 	}
@@ -150,14 +150,14 @@ static void seat_bind_keyboard (struct Lava_seat *seat)
 	if ( NULL == (seat->keyboard.keymap = xkb_keymap_new_from_names(
 					seat->keyboard.context, &rules, 0)) )
 	{
-		log_message(NULL, 0, "Error: Failed to setup xkb keymap.\n");
+		log_message(0, "Error: Failed to setup xkb keymap.\n");
 		seat_release_keyboard(seat);
 		return;
 	}
 
 	if ( NULL == (seat->keyboard.state = xkb_state_new(seat->keyboard.keymap)) )
 	{
-		log_message(NULL, 0, "Error: Failed to setup xkb state.\n");
+		log_message(0, "Error: Failed to setup xkb state.\n");
 		seat_release_keyboard(seat);
 		return;
 	}
@@ -180,7 +180,7 @@ static void seat_init_keyboard (struct Lava_seat *seat)
 static bool create_touchpoint (struct Lava_seat *seat, int32_t id,
           struct Lava_bar_instance *instance, struct Lava_item *item)
 {
-	log_message(seat->data, 1, "[seat] Creating touchpoint.\n");
+	log_message(1, "[seat] Creating touchpoint.\n");
 
 	TRY_NEW(struct Lava_touchpoint, touchpoint, false);
 
@@ -197,7 +197,7 @@ static bool create_touchpoint (struct Lava_seat *seat, int32_t id,
 		indicator_commit(touchpoint->indicator);
 	}
 	else
-		log_message(NULL, 0, "ERROR: Could not create indicator.\n");
+		log_message(0, "ERROR: Could not create indicator.\n");
 
 	wl_list_insert(&seat->touch.touchpoints, &touchpoint->link);
 
@@ -232,15 +232,15 @@ static struct Lava_touchpoint *touchpoint_from_id (struct Lava_seat *seat, int32
  *  Touch  *
  *         *
  ***********/
-static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
+static void touch_handle_up (void *data, struct wl_touch *wl_touch,
 		uint32_t serial, uint32_t time, int32_t id)
 {
-	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
+	struct Lava_seat *seat = (struct Lava_seat *)data;
 	struct Lava_touchpoint *touchpoint = touchpoint_from_id(seat, id);
 	if ( touchpoint == NULL )
 		return;
 
-	log_message(seat->data, 1, "[input] Touch up.\n");
+	log_message(1, "[input] Touch up.\n");
 
 	item_interaction(touchpoint->item, touchpoint->instance,
 			INTERACTION_TOUCH,
@@ -248,31 +248,31 @@ static void touch_handle_up (void *raw_data, struct wl_touch *wl_touch,
 	destroy_touchpoint(touchpoint);
 }
 
-static void touch_handle_down (void *raw_data, struct wl_touch *wl_touch,
+static void touch_handle_down (void *data, struct wl_touch *wl_touch,
 		uint32_t serial, uint32_t time,
 		struct wl_surface *surface, int32_t id,
 		wl_fixed_t fx, wl_fixed_t fy)
 {
-	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
+	struct Lava_seat *seat = (struct Lava_seat *)data;
 	uint32_t x = (uint32_t)wl_fixed_to_int(fx), y = (uint32_t)wl_fixed_to_int(fy);
 
-	log_message(seat->data, 1, "[input] Touch down: x=%d y=%d\n", x, y);
+	log_message(1, "[input] Touch down: x=%d y=%d\n", x, y);
 
-	struct Lava_bar_instance *instance  = bar_instance_from_surface(seat->data, surface);
+	struct Lava_bar_instance *instance  = bar_instance_from_surface(surface);
 	struct Lava_item         *item = item_from_coords(instance, x, y);
 	if (! create_touchpoint(seat, id, instance, item))
-		log_message(NULL, 0, "ERROR: could not create touchpoint\n");
+		log_message(0, "ERROR: could not create touchpoint\n");
 }
 
-static void touch_handle_motion (void *raw_data, struct wl_touch *wl_touch,
+static void touch_handle_motion (void *data, struct wl_touch *wl_touch,
 		uint32_t time, int32_t id, wl_fixed_t fx, wl_fixed_t fy)
 {
-	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
+	struct Lava_seat *seat = (struct Lava_seat *)data;
 	struct Lava_touchpoint *touchpoint = touchpoint_from_id(seat, id);
 	if ( touchpoint == NULL )
 		return;
 
-	log_message(seat->data, 2, "[input] Touch move\n");
+	log_message(2, "[input] Touch move\n");
 
 	/* If the item under the touch point is not the same we first touched,
 	 * we simply abort the touch operation.
@@ -320,7 +320,7 @@ static void seat_release_touch (struct Lava_seat *seat)
 
 static void seat_bind_touch (struct Lava_seat *seat)
 {
-	log_message(seat->data, 2, "[seat] Binding touch.\n");
+	log_message(2, "[seat] Binding touch.\n");
 	seat->touch.wl_touch = wl_seat_get_touch(seat->wl_seat);
 	wl_touch_add_listener(seat->touch.wl_touch, &touch_listener, seat);
 }
@@ -348,7 +348,6 @@ static void seat_pointer_unset_cursor (struct Lava_seat *seat)
 
 static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial, const char *name)
 {
-	struct Lava_data  *data    = seat->data;
 	struct wl_pointer *pointer = seat->pointer.wl_pointer;
 
 	int32_t scale       = (int32_t)seat->pointer.instance->output->scale;
@@ -357,16 +356,16 @@ static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial, co
 	/* Cleanup any leftover cursor stuff. */
 	seat_pointer_unset_cursor(seat);
 
-	if ( NULL == (seat->pointer.cursor_theme = wl_cursor_theme_load(NULL, cursor_size * scale, data->shm)) )
+	if ( NULL == (seat->pointer.cursor_theme = wl_cursor_theme_load(NULL, cursor_size * scale, context.shm)) )
 	{
-		log_message(NULL, 0, "ERROR: Could not load cursor theme.\n");
+		log_message(0, "ERROR: Could not load cursor theme.\n");
 		return;
 	}
 
 	if ( NULL == (seat->pointer.cursor = wl_cursor_theme_get_cursor(
 					seat->pointer.cursor_theme, name)) )
 	{
-		log_message(NULL, 0, "WARNING: Could not get cursor \"%s\".\n"
+		log_message(0, "WARNING: Could not get cursor \"%s\".\n"
 				"         This cursor is likely missing from your cursor theme.\n",
 				name);
 		seat_pointer_unset_cursor(seat);
@@ -376,9 +375,9 @@ static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial, co
 	seat->pointer.cursor_image = seat->pointer.cursor->images[0];
 	assert(seat->pointer.cursor_image); // TODO Propably not needed; A non-fatal fail would be better here anyway
 
-	if ( NULL == (seat->pointer.cursor_surface = wl_compositor_create_surface(data->compositor)) )
+	if ( NULL == (seat->pointer.cursor_surface = wl_compositor_create_surface(context.compositor)) )
 	{
-		log_message(NULL, 0, "ERROR: Could not create cursor surface.\n");
+		log_message(0, "ERROR: Could not create cursor surface.\n");
 		seat_pointer_unset_cursor(seat);
 		return;
 	}
@@ -412,7 +411,7 @@ static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial, co
 static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 		uint32_t serial, struct wl_surface *surface)
 {
-	struct Lava_seat *seat = data;
+	struct Lava_seat *seat = (struct Lava_seat *)data;
 
 	DESTROY(seat->pointer.indicator, destroy_indicator);
 
@@ -425,16 +424,16 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 
 	bar_instance_pointer_leave(instance);
 
-	log_message(seat->data, 1, "[input] Pointer left surface.\n");
+	log_message(1, "[input] Pointer left surface.\n");
 }
 
 static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 		uint32_t serial, struct wl_surface *surface,
 		wl_fixed_t x, wl_fixed_t y)
 {
-	struct Lava_seat *seat = data;
+	struct Lava_seat *seat = (struct Lava_seat *)data;
 
-	if ( NULL == (seat->pointer.instance = bar_instance_from_surface(seat->data, surface)) )
+	if ( NULL == (seat->pointer.instance = bar_instance_from_surface(surface)) )
 		return;
 
 	seat_pointer_set_cursor(seat, serial, str_orelse(seat->pointer.instance->config->cursor_name, "pointer"));
@@ -444,14 +443,14 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
 	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);
 
-	log_message(seat->data, 1, "[input] Pointer entered surface: x=%d y=%d\n",
+	log_message(1, "[input] Pointer entered surface: x=%d y=%d\n",
 				seat->pointer.x, seat->pointer.y);
 }
 
 static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 		uint32_t time, wl_fixed_t x, wl_fixed_t y)
 {
-	struct Lava_seat *seat = data;
+	struct Lava_seat *seat = (struct Lava_seat *)data;
 
 	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
 	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);
@@ -480,7 +479,7 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 		seat->pointer.indicator = create_indicator(seat->pointer.instance);
 		if ( seat->pointer.indicator == NULL )
 		{
-			log_message(NULL, 0, "ERROR: Could not create indicator.\n");
+			log_message(0, "ERROR: Could not create indicator.\n");
 			return;
 		}
 		seat->pointer.indicator->seat = seat;
@@ -493,13 +492,13 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 	indicator_commit(seat->pointer.indicator);
 }
 
-static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer,
+static void pointer_handle_button (void *data, struct wl_pointer *wl_pointer,
 		uint32_t serial, uint32_t time, uint32_t button, uint32_t button_state)
 {
-	struct Lava_seat *seat = raw_data;
+	struct Lava_seat *seat = data;
 	if ( seat->pointer.instance == NULL )
 	{
-		log_message(NULL, 0, "ERROR: Button press could not be handled: "
+		log_message(0, "ERROR: Button press could not be handled: "
 				"Bar could not be found.\n");
 		return;
 	}
@@ -516,7 +515,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 			indicator_commit(seat->pointer.indicator);
 		}
 
-		log_message(seat->data, 1, "[input] Button pressed: x=%d y=%d\n",
+		log_message(1, "[input] Button pressed: x=%d y=%d\n",
 					seat->pointer.x, seat->pointer.y);
 		seat->pointer.item = item_from_coords(seat->pointer.instance,
 				seat->pointer.x, seat->pointer.y);
@@ -530,7 +529,7 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 			indicator_commit(seat->pointer.indicator);
 		}
 
-		log_message(seat->data, 1, "[input] Button released: x=%d y=%d\n",
+		log_message(1, "[input] Button released: x=%d y=%d\n",
 					seat->pointer.x, seat->pointer.y);
 
 		if ( seat->pointer.item == NULL )
@@ -550,17 +549,17 @@ static void pointer_handle_button (void *raw_data, struct wl_pointer *wl_pointer
 	}
 }
 
-static void pointer_handle_axis (void *raw_data, struct wl_pointer *wl_pointer,
+static void pointer_handle_axis (void *data, struct wl_pointer *wl_pointer,
 		uint32_t time, uint32_t axis, wl_fixed_t value)
 {
 	/* We only handle up and down scrolling. */
 	if ( axis != WL_POINTER_AXIS_VERTICAL_SCROLL )
 		return;
 
-	struct Lava_seat *seat = raw_data;
+	struct Lava_seat *seat = data;
 	if ( seat->pointer.instance == NULL )
 	{
-		log_message(NULL, 0, "ERROR: Scrolling could not be handled: "
+		log_message(0, "ERROR: Scrolling could not be handled: "
 				"Bar instance could not be found.\n");
 		return;
 	}
@@ -573,17 +572,17 @@ static void pointer_handle_axis (void *raw_data, struct wl_pointer *wl_pointer,
 	seat->pointer.last_update_time  = time;
 }
 
-static void pointer_handle_axis_discrete (void *raw_data,
+static void pointer_handle_axis_discrete (void *data,
 		struct wl_pointer *wl_pointer, uint32_t axis, int32_t steps)
 {
 	/* We only handle up and down scrolling. */
 	if ( axis != WL_POINTER_AXIS_VERTICAL_SCROLL )
 		return;
 
-	struct Lava_seat *seat = raw_data;
+	struct Lava_seat *seat = data;
 	if ( seat->pointer.instance == NULL )
 	{
-		log_message(NULL, 0, "ERROR: Discrete scrolling could not be handled: "
+		log_message(0, "ERROR: Discrete scrolling could not be handled: "
 				"Bar instance could not be found.\n");
 		return;
 	}
@@ -591,9 +590,9 @@ static void pointer_handle_axis_discrete (void *raw_data,
 	seat->pointer.discrete_steps += (uint32_t)abs(steps);
 }
 
-static void pointer_handle_frame (void *raw_data, struct wl_pointer *wl_pointer)
+static void pointer_handle_frame (void *data, struct wl_pointer *wl_pointer)
 {
-	struct Lava_seat *seat = raw_data;
+	struct Lava_seat *seat = data;
 	if ( seat->pointer.instance == NULL )
 		return;
 
@@ -668,7 +667,7 @@ static void seat_release_pointer (struct Lava_seat *seat)
 
 static void seat_bind_pointer (struct Lava_seat *seat)
 {
-	log_message(seat->data, 2, "[seat] Binding pointer.\n");
+	log_message(2, "[seat] Binding pointer.\n");
 	seat->pointer.wl_pointer = wl_seat_get_pointer(seat->wl_seat);
 	wl_pointer_add_listener(seat->pointer.wl_pointer, &pointer_listener, seat);
 }
@@ -695,25 +694,24 @@ static void seat_init_pointer (struct Lava_seat *seat)
  *  Seat  *
  *        *
  **********/
-static void seat_handle_capabilities (void *raw_data, struct wl_seat *wl_seat,
+static void seat_handle_capabilities (void *data, struct wl_seat *wl_seat,
 		uint32_t capabilities)
 {
-	struct Lava_seat *seat = (struct Lava_seat *)raw_data;
-	struct Lava_data *data = seat->data;
+	struct Lava_seat *seat = (struct Lava_seat *)data;
 
-	log_message(data, 1, "[seat] Handling seat capabilities.\n");
+	log_message(1, "[seat] Handling seat capabilities.\n");
 
-	if ( capabilities & WL_SEAT_CAPABILITY_KEYBOARD && data->need_keyboard )
+	if ( capabilities & WL_SEAT_CAPABILITY_KEYBOARD && context.need_keyboard )
 		seat_bind_keyboard(seat);
 	else
 		seat_release_keyboard(seat);
 
-	if ( capabilities & WL_SEAT_CAPABILITY_POINTER && data->need_pointer )
+	if ( capabilities & WL_SEAT_CAPABILITY_POINTER && context.need_pointer )
 		seat_bind_pointer(seat);
 	else
 		seat_release_pointer(seat);
 
-	if ( capabilities & WL_SEAT_CAPABILITY_TOUCH && data->need_touch )
+	if ( capabilities & WL_SEAT_CAPABILITY_TOUCH && context.need_touch )
 		seat_bind_touch(seat);
 	else
 		seat_release_touch(seat);
@@ -724,10 +722,10 @@ static const struct wl_seat_listener seat_listener = {
 	.name         = noop
 };
 
-bool create_seat (struct Lava_data *data, struct wl_registry *registry,
-		uint32_t name, const char *interface, uint32_t version)
+bool create_seat (struct wl_registry *registry, uint32_t name,
+		const char *interface, uint32_t version)
 {
-	log_message(data, 1, "[seat] Adding seat.\n");
+	log_message(1, "[seat] Adding seat.\n");
 
 	struct wl_seat *wl_seat = wl_registry_bind(registry, name, &wl_seat_interface, 5);
 
@@ -735,14 +733,13 @@ bool create_seat (struct Lava_data *data, struct wl_registry *registry,
 
 	wl_seat_add_listener(wl_seat, &seat_listener, seat);
 
-	seat->data    = data;
 	seat->wl_seat = wl_seat;
 
 	seat_init_touch(seat);
 	seat_init_keyboard(seat);
 	seat_init_pointer(seat);
 
-	wl_list_insert(&data->seats, &seat->link);
+	wl_list_insert(&context.seats, &seat->link);
 
 	return true;
 }
@@ -757,11 +754,11 @@ static void destroy_seat (struct Lava_seat *seat)
 	free(seat);
 }
 
-void destroy_all_seats (struct Lava_data *data)
+void destroy_all_seats (void)
 {
-	log_message(data, 1, "[seat] Destroying all seats.\n");
-	struct Lava_seat *st_1, *st_2;
-	wl_list_for_each_safe(st_1, st_2, &data->seats, link)
-		destroy_seat(st_1);
+	log_message(1, "[seat] Destroying all seats.\n");
+	struct Lava_seat *seat, *temp;
+	wl_list_for_each_safe(seat, temp, &context.seats, link)
+		destroy_seat(seat);
 }
 

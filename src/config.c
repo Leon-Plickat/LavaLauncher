@@ -374,6 +374,11 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 				parser->state = STATE_EXPECT_OB;
 				return create_bar();
 			}
+			else
+			{
+				log_message(0, "ERROR: Unexpected '%s' on line %d.\n", parser->name_buffer, parser->line);
+				return false;
+			}
 		}
 		else if ( parser->context == CONTEXT_BAR )
 		{

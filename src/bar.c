@@ -28,9 +28,7 @@
 #include<assert.h>
 #include<ctype.h>
 
-#include<wayland-server.h>
 #include<wayland-client.h>
-#include<wayland-client-protocol.h>
 
 #include"lavalauncher.h"
 #include"str.h"
@@ -42,9 +40,11 @@
 #include"types/colour_t.h"
 #include"types/box_t.h"
 
-/*************************
- * Bar configuration set *
- *************************/
+/***************************
+ *                         *
+ *  Bar configuration set  *
+ *                         *
+ ***************************/
 static void bar_config_sensible_defaults (struct Lava_bar_configuration *config)
 {
 	config->position  = POSITION_BOTTOM;
@@ -94,21 +94,22 @@ static void bar_config_copy_settings (struct Lava_bar_configuration *config,
 		config->namespace  = strdup(default_config->namespace);
 }
 
-bool create_bar_config (struct Lava_bar *bar, bool default_config)
+bool create_bar_config (void)
 {
 	TRY_NEW(struct Lava_bar_configuration, config, false);
 
-	if (default_config)
+	/* First config will automatically be the default one. */
+	if ( context.default_config == NULL )
 	{
-		bar->default_config = config;
+		context.default_config = config;
 		bar_config_sensible_defaults(config);
 	}
 	else
-		bar_config_copy_settings(config, bar->default_config);
+		bar_config_copy_settings(config, context.default_config);
 
-	bar->last_config = config;
+	context.last_config = config;
 
-	wl_list_insert(&bar->configs, &config->link);
+	wl_list_insert(&context.configs, &config->link);
 	return true;
 }
 
@@ -120,10 +121,10 @@ static void destroy_bar_config (struct Lava_bar_configuration *config)
 	free(config);
 }
 
-static void destroy_all_bar_configs (struct Lava_bar *bar)
+void destroy_all_bar_configs (void)
 {
 	struct Lava_bar_configuration *config, *temp;
-	wl_list_for_each_safe(config, temp, &bar->configs, link)
+	wl_list_for_each_safe(config, temp, &context.configs, link)
 		destroy_bar_config(config);
 }
 
@@ -156,11 +157,20 @@ static void finalize_bar_config (struct Lava_bar_configuration *config)
 	}
 }
 
-static void finalize_all_bar_configs (struct Lava_bar *bar)
+bool finalize_all_bar_configs (void)
 {
+	/* No bar configuration? Then add a default one. */
+	if ( wl_list_length(&context.configs) == 0 )
+	{
+		log_message(1, "[bar] No bar configuration, creating default.\n");
+		if (! create_bar_config())
+			return false;
+	}
+
 	struct Lava_bar_configuration *config;
-	wl_list_for_each(config, &bar->configs, link)
+	wl_list_for_each(config, &context.configs, link)
 		finalize_bar_config(config);
+	return true;
 }
 
 static bool bar_config_conditions_match_output (struct Lava_bar_configuration *config,
@@ -186,66 +196,13 @@ static bool bar_config_conditions_match_output (struct Lava_bar_configuration *c
 	return true;
 }
 
-struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_bar *bar, struct Lava_output *output)
+struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_output *output)
 {
 	struct Lava_bar_configuration *config;
-	wl_list_for_each(config, &bar->configs, link)
+	wl_list_for_each(config, &context.configs, link)
 		if (bar_config_conditions_match_output(config, output))
 			return config;
 	return NULL;
-}
-
-
-/***************
- * Logical bar *
- * *************/
-bool create_bar (void)
-{
-	TRY_NEW(struct Lava_bar, bar, false);
-
-	bar->last_item      = NULL;
-	bar->last_config    = NULL;
-	bar->default_config = NULL;
-
-	wl_list_init(&bar->items);
-	wl_list_init(&bar->configs);
-
-	/* Create default configuration. */
-	if (! create_bar_config(bar, true))
-	{
-		free(bar);
-		return false;
-	}
-
-	wl_list_insert(&context.bars, &bar->link);
-	context.last_bar = bar;
-
-	return true;
-}
-
-bool finalize_bar (struct Lava_bar *bar)
-{
-	log_message(1, "[bar] Finalize bar.\n");
-	if (! finalize_items(bar))
-		return false;
-	finalize_all_bar_configs(bar);
-	return true;
-}
-
-static void destroy_bar (struct Lava_bar *bar)
-{
-	wl_list_remove(&bar->link);
-	destroy_all_items(bar);
-	destroy_all_bar_configs(bar);
-	free(bar);
-}
-
-void destroy_all_bars (void)
-{
-	log_message(1, "[bar] Destroying all bars.\n");
-	struct Lava_bar *bar, *temp;
-	wl_list_for_each_safe(bar, temp, &context.bars, link)
-		destroy_bar(bar);
 }
 
 /***********************
@@ -784,7 +741,6 @@ void indicator_commit (struct Lava_item_indicator *indicator)
 static void draw_items (struct Lava_bar_instance *instance, cairo_t *cairo)
 {
 	struct Lava_bar_configuration *config = instance->config;
-	struct Lava_bar               *bar    = instance->bar;
 
 	uint32_t scale = instance->output->scale;
 	uint32_t size = config->size * scale;
@@ -796,7 +752,7 @@ static void draw_items (struct Lava_bar_instance *instance, cairo_t *cairo)
 		increment = &y, increment_offset = y;
 
 	struct Lava_item *item;
-	wl_list_for_each_reverse(item, &bar->items, link) if ( item->type == TYPE_BUTTON )
+	wl_list_for_each_reverse(item, &context.items, link) if ( item->type == TYPE_BUTTON )
 	{
 		*increment = (item->ordinate * scale) + increment_offset;
 		if ( item->img != NULL )
@@ -1180,7 +1136,6 @@ static void bar_instance_mode_default_dimensions (struct Lava_bar_instance *inst
 static void bar_instance_update_dimensions (struct Lava_bar_instance *instance)
 {
 	struct Lava_bar_configuration *config  = instance->config;
-	struct Lava_bar               *bar     = instance->bar;
 	struct Lava_output            *output  = instance->output;
 
 	if ( output->w == 0 || output->h == 0 )
@@ -1189,13 +1144,13 @@ static void bar_instance_update_dimensions (struct Lava_bar_instance *instance)
 	/* Size of item area. */
 	if ( config->orientation == ORIENTATION_HORIZONTAL )
 	{
-		instance->item_area_dim.w = get_item_length_sum(bar);
+		instance->item_area_dim.w = get_item_length_sum();
 		instance->item_area_dim.h = config->size;
 	}
 	else
 	{
 		instance->item_area_dim.w = config->size;
-		instance->item_area_dim.h = get_item_length_sum(bar);
+		instance->item_area_dim.h = get_item_length_sum();
 	}
 
 	/* Other dimensions. */
@@ -1222,15 +1177,13 @@ static bool bar_instance_should_hide (struct Lava_bar_instance *instance)
 	}
 }
 
-bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *config,
-		struct Lava_output *output)
+struct Lava_bar_instance *create_bar_instance (struct Lava_output *output,
+		struct Lava_bar_configuration *config)
 {
 	log_message(1, "[bar] Creating bar instance: global_name=%d\n", output->global_name);
 
-	TRY_NEW(struct Lava_bar_instance, instance, false);
+	TRY_NEW(struct Lava_bar_instance, instance, NULL);
 
-	wl_list_insert(&output->bar_instances, &instance->link);
-	instance->bar           = bar;
 	instance->config        = config;
 	instance->output        = output;
 	instance->bar_surface   = NULL;
@@ -1280,7 +1233,7 @@ bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *c
 	wl_surface_commit(instance->icon_surface);
 	wl_surface_commit(instance->bar_surface);
 
-	return true;
+	return instance;
 }
 
 void destroy_bar_instance (struct Lava_bar_instance *instance)
@@ -1302,16 +1255,7 @@ void destroy_bar_instance (struct Lava_bar_instance *instance)
 	finish_buffer(&instance->icon_buffers[0]);
 	finish_buffer(&instance->icon_buffers[1]);
 
-	wl_list_remove(&instance->link);
 	free(instance);
-}
-
-void destroy_all_bar_instances (struct Lava_output *output)
-{
-	log_message(1, "[bar] Destroying bar instances: global-name=%d\n", output->global_name);
-	struct Lava_bar_instance *instance, *temp;
-	wl_list_for_each_safe(instance, temp, &output->bar_instances, link)
-		destroy_bar_instance(instance);
 }
 
 void update_bar_instance (struct Lava_bar_instance *instance, bool need_new_dimensions,
@@ -1414,20 +1358,9 @@ struct Lava_bar_instance *bar_instance_from_surface (struct wl_surface *surface)
 	if ( surface == NULL )
 		return NULL;
 	struct Lava_output *output;
-	struct Lava_bar_instance *instance;
 	wl_list_for_each(output, &context.outputs, link)
-		wl_list_for_each(instance,  &output->bar_instances, link)
-			if ( instance->bar_surface == surface )
-				return instance;
-	return NULL;
-}
-
-struct Lava_bar_instance *bar_instance_from_bar (struct Lava_bar *bar, struct Lava_output *output)
-{
-	struct Lava_bar_instance *instance;
-	wl_list_for_each(instance, &output->bar_instances, link)
-		if ( instance->bar == bar )
-			return instance;
+		if ( output->bar_instance != NULL && output->bar_instance->bar_surface == surface )
+			return output->bar_instance;
 	return NULL;
 }
 

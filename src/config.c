@@ -99,7 +99,6 @@ enum Parser_context
 {
 	CONTEXT_NONE,
 	CONTEXT_GLOBAL_SETTINGS,
-	CONTEXT_BAR,
 	CONTEXT_CONFIG,
 	CONTEXT_BUTTON,
 	CONTEXT_SPACER
@@ -177,27 +176,9 @@ static bool parser_handle_bracket (struct Parser *parser, const char ch)
 		parser->state = STATE_EXPECT_NAME_OR_CB;
 	else if ( ch == '}' && parser->state == STATE_EXPECT_NAME_OR_CB )
 	{
-		switch (parser->context)
-		{
-			case CONTEXT_BAR:
-				if (! finalize_bar(context.last_bar))
-					return false;
-				parser->context = CONTEXT_NONE;
-				break;
-
-			case CONTEXT_GLOBAL_SETTINGS:
-				parser->context = CONTEXT_NONE;
-				break;
-
-			case CONTEXT_CONFIG:
-			case CONTEXT_BUTTON:
-			case CONTEXT_SPACER:
-				parser->context = CONTEXT_BAR;
-				break;
-
-			default:
-				goto error;
-		}
+		if ( parser->context == CONTEXT_NONE )
+			goto error;
+		parser->context = CONTEXT_NONE;
 	}
 	else
 		goto error;
@@ -359,7 +340,6 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 					&parser->name_buffer_length, ch, true))
 			return false;
 
-		/* Check if name is that of a context, which then should be entered. */
 		if ( parser->context == CONTEXT_NONE )
 		{
 			if (! strcmp(parser->name_buffer, "global-settings"))
@@ -368,11 +348,25 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 				parser->state = STATE_EXPECT_OB;
 				return true;
 			}
-			else if (! strcmp(parser->name_buffer, "bar"))
+			if (! strcmp(parser->name_buffer, "config"))
 			{
-				parser->context = CONTEXT_BAR;
+				parser->context = CONTEXT_CONFIG;
 				parser->state = STATE_EXPECT_OB;
-				return create_bar();
+				return create_bar_config();
+			}
+			// TODO eventually just have a list for all item types
+			//      and maybe CONTEXT_ITEM instead of individual contexts
+			if (! strcmp(parser->name_buffer, "button"))
+			{
+				parser->context = CONTEXT_BUTTON;
+				parser->state = STATE_EXPECT_OB;
+				return create_item(TYPE_BUTTON);
+			}
+			else if (! strcmp(parser->name_buffer, "spacer"))
+			{
+				parser->context = CONTEXT_SPACER;
+				parser->state = STATE_EXPECT_OB;
+				return create_item(TYPE_SPACER);
 			}
 			else
 			{
@@ -380,32 +374,11 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 				return false;
 			}
 		}
-		else if ( parser->context == CONTEXT_BAR )
+		else
 		{
-			if (! strcmp(parser->name_buffer, "config"))
-			{
-				parser->context = CONTEXT_CONFIG;
-				parser->state = STATE_EXPECT_OB;
-				return create_bar_config(context.last_bar, false);
-			}
-			if (! strcmp(parser->name_buffer, "button"))
-			{
-				parser->context = CONTEXT_BUTTON;
-				parser->state = STATE_EXPECT_OB;
-				return create_item(context.last_bar, TYPE_BUTTON);
-			}
-			else if (! strcmp(parser->name_buffer, "spacer"))
-			{
-				parser->context = CONTEXT_SPACER;
-				parser->state = STATE_EXPECT_OB;
-				return create_item(context.last_bar, TYPE_SPACER);
-			}
+			parser->state = STATE_EXPECT_EQUALS;
+			return true;
 		}
-
-		/* If no context was entered, the name was that of a variable, so now we excpect '='. */
-		parser->state = STATE_EXPECT_EQUALS;
-
-		return true;
 	}
 	else if ( parser->state == STATE_EXPECT_VALUE )
 	{
@@ -413,7 +386,6 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 					&parser->value_buffer_length, ch, false))
 			return false;
 
-		struct Lava_bar *last_bar = context.last_bar;
 		parser->state = STATE_EXPECT_SEMICOLON;
 		switch (parser->context)
 		{
@@ -421,21 +393,15 @@ static bool parser_handle_string (struct Parser *parser, const char ch)
 				return global_set_variable(parser->name_buffer,
 						parser->value_buffer, parser->line);
 
-			case CONTEXT_BAR:
-				/* Change settings of default configuration set. */
-				return bar_config_set_variable(last_bar->default_config,
-						parser->name_buffer, parser->value_buffer,
-						parser->line);
-
 			case CONTEXT_CONFIG:
 				/* Change settings of latest configuration set. */
-				return bar_config_set_variable(last_bar->last_config,
+				return bar_config_set_variable(context.last_config,
 						parser->name_buffer, parser->value_buffer,
 						parser->line);
 
 			case CONTEXT_BUTTON:
 			case CONTEXT_SPACER:
-				return item_set_variable(last_bar->last_item,
+				return item_set_variable(context.last_item,
 						parser->name_buffer, parser->value_buffer,
 						parser->line);
 

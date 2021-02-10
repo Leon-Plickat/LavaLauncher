@@ -27,6 +27,7 @@
 #include<getopt.h>
 
 #include"bar.h"
+#include"item.h"
 #include"config.h"
 #include"event-loop.h"
 #include"lavalauncher.h"
@@ -146,11 +147,14 @@ static void init_context (void)
 	context.need_pointer  = false;
 	context.need_touch    = false;
 
-	wl_list_init(&context.bars);
-	context.last_bar = NULL;
+	context.last_config    = NULL;
+	context.default_config = NULL;
+	context.last_item      = NULL;
 
 	wl_list_init(&context.outputs);
 	wl_list_init(&context.seats);
+	wl_list_init(&context.items);
+	wl_list_init(&context.configs);
 }
 
 int main (int argc, char *argv[])
@@ -175,10 +179,13 @@ reload:
 	 */
 	if (! parse_config_file())
 		goto exit;
+	if (! finalize_all_bar_configs())
+		goto exit;
+	if (! finalize_all_items())
+		goto exit;
 
 	context.ret = EXIT_SUCCESS;
 
-	/* Set up the event loop and attach all event sources. */
 	struct Lava_event_loop loop;
 	event_loop_init(&loop);
 	event_loop_add_event_source(&loop, &wayland_source);
@@ -190,18 +197,18 @@ reload:
 	event_loop_add_event_source(&loop, &signal_source);
 #endif
 
-	/* Run the event loop. */
 	if (! event_loop_run(&loop))
 		context.ret = EXIT_FAILURE;
 
 exit:
 	free(context.config_path);
 
-	/* Clean up objects created when parsing the configuration file. */
-	destroy_all_bars();
+	destroy_all_items();
+	destroy_all_bar_configs();
 
 	if (context.reload)
 		goto reload;
+
 	return context.ret;
 }
 

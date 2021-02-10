@@ -71,7 +71,7 @@ enum Hidden_mode
 	HIDDEN_MODE_RIVER_AUTO
 };
 
-/* This struct holds a configuration set for a bar. */
+/* This struct holds a configuration set. */
 struct Lava_bar_configuration
 {
 	struct wl_list link;
@@ -130,12 +130,8 @@ struct Lava_bar_configuration
 	enum Condition_resolution condition_resolution;
 };
 
-/* This struct corresponds to one instance of a bar. */
 struct Lava_bar_instance
 {
-	struct wl_list link;
-
-	struct Lava_bar               *bar;
 	struct Lava_bar_configuration *config;
 	struct Lava_output            *output;
 	struct wl_surface             *bar_surface;
@@ -176,38 +172,19 @@ struct Lava_item_indicator
 	struct Lava_buffer   *current_indicator_buffer;
 };
 
-/* This struct is a logical bar, which can have multiple configuration sets and
- * at most one instance per output.
- */
-struct Lava_bar
-{
-	struct wl_list link;
-
-	struct wl_list    items;
-	struct Lava_item *last_item;
-	int               item_amount;
-
-	/* The different configurations of the bar. The first one is treated as default. */
-	struct Lava_bar_configuration *current_config, *default_config, *last_config;
-	struct wl_list configs;
-};
-
-bool create_bar_config (struct Lava_bar *bar, bool default_config);
-struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_bar *bar, struct Lava_output *output);
-
-bool create_bar (void);
-bool finalize_bar (struct Lava_bar *bar);
-void destroy_all_bars (void);
+bool create_bar_config (void);
+void destroy_all_bar_configs (void);
+bool finalize_all_bar_configs (void);
+struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_output *output);
 bool bar_config_set_variable (struct Lava_bar_configuration *config,
 		const char *variable, const char *value, int line);
 
-bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *config, struct Lava_output *output);
+struct Lava_bar_instance *create_bar_instance (struct Lava_output *output,
+		struct Lava_bar_configuration *config);
 void destroy_bar_instance (struct Lava_bar_instance *instance);
-void destroy_all_bar_instances (struct Lava_output *output);
 void update_bar_instance (struct Lava_bar_instance *instance, bool need_new_dimensions,
 		bool only_update_on_hide_change);
 struct Lava_bar_instance *bar_instance_from_surface (struct wl_surface *surface);
-struct Lava_bar_instance *bar_instance_from_bar (struct Lava_bar *bar, struct Lava_output *output);
 void bar_instance_pointer_leave (struct Lava_bar_instance *instance);
 void bar_instance_pointer_enter (struct Lava_bar_instance *instance);
 

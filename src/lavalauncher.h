@@ -85,11 +85,15 @@ struct Lava_context
 
 	char *config_path;
 
-	struct wl_list bars;
-	struct Lava_bar *last_bar;
-
 	struct wl_list outputs;
 	struct wl_list seats;
+
+	struct wl_list items;
+	struct Lava_item *last_item;
+	int item_amount;
+
+	struct wl_list configs;
+	struct Lava_bar_configuration *default_config, *last_config;
 
 	bool loop;
 	bool reload;
@@ -104,3 +108,4 @@ struct Lava_context
 extern struct Lava_context context;
 
 #endif
+

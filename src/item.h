@@ -26,7 +26,6 @@
 
 #include"types/image_t.h"
 
-struct Lava_bar;
 struct Lava_bar_instance;
 
 enum Item_type
@@ -66,15 +65,15 @@ struct Lava_item
 	unsigned int index, ordinate, length;
 };
 
-bool create_item (struct Lava_bar *bar, enum Item_type type);
+bool create_item (enum Item_type type);
 bool item_set_variable (struct Lava_item *item, const char *variable,
 		const char *value, int line);
 void item_interaction (struct Lava_item *item, struct Lava_bar_instance *instance,
 		enum Interaction_type type, uint32_t modifiers, uint32_t special);
 struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t x, uint32_t y);
-unsigned int get_item_length_sum (struct Lava_bar *bar);
-bool finalize_items (struct Lava_bar *bar);
-void destroy_all_items (struct Lava_bar *bar);
+unsigned int get_item_length_sum (void);
+bool finalize_all_items (void);
+void destroy_all_items (void);
 
 #endif
 

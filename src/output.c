@@ -42,14 +42,13 @@
 /* No-Op function. */
 static void noop () {}
 
-/* Loop through all bar patterns and create / destroy / update their instances on this output. */
-static bool update_bar_instances_on_output (struct Lava_output *output)
+static bool output_configure_bar_instance (struct Lava_output *output)
 {
 	/* No xdg_output events have been received yet, so there is nothing todo. */
 	if ( output->status == OUTPUT_STATUS_UNCONFIGURED || output->name == NULL )
 		return true;
 
-	log_message(1, "[output] Updating bars: global_name=%d\n", output->global_name);
+	log_message(1, "[output] Updating bar: global_name=%d\n", output->global_name);
 
 	/* A lot of compositors have no-op outputs with zero size for internal
 	 * reasons. They should remain unexposed, but sometimes a buggy
@@ -59,46 +58,43 @@ static bool update_bar_instances_on_output (struct Lava_output *output)
 	 */
 	if ( output->w == 0 || output->h == 0 )
 	{
-		destroy_all_bar_instances(output);
+		destroy_bar_instance(output->bar_instance);
+		output->bar_instance = NULL;
 		output->status = OUTPUT_STATUS_UNUSED;
 		return true;
 	}
 
-	struct Lava_bar *bar, *temp;
-	wl_list_for_each_safe(bar, temp, &context.bars, link)
+	/* Try to find a configuration set of the bar which fits this output. */
+	struct Lava_bar_configuration *config = get_bar_config_for_output(output);
+
+	if ( output->bar_instance != NULL )
 	{
-		/* Try to find a configuration set of the bar which fits this output. */
-		struct Lava_bar_configuration *config = get_bar_config_for_output(bar, output);
+		/* If we have an instance, apply the configuration set and update it.
+		 * If we do not have a configuration set, then config == NULL, which
+		 * will cause the destruction of the instance.
+		 */
+		output->bar_instance->config = config;
+		update_bar_instance(output->bar_instance, true, false);
 
-		/* Try to get the instance of the bar for this output, if it exists. */
-		struct Lava_bar_instance *instance = bar_instance_from_bar(bar, output);
-
-		if ( instance != NULL )
-		{
-			/* If we have an instance, apply the configuration set and update it.
-			 * If we do not have a configuration set, then config == NULL, which
-			 * will cause the destruction of the instance.
-			 */
-			instance->config = config;
-			update_bar_instance(instance, true, false);
-		}
-		else if ( config != NULL )
-		{
-			/* If we have a configuration set, but no instance, we need to create one. */
-			if (! create_bar_instance(bar, config, output))
-			{
-				log_message(0, "ERROR: Could not create bar instance.\n");
-				context.loop = false;
-				context.ret  = EXIT_FAILURE;
-				return false;
-			}
-		}
+		if ( output->bar_instance == NULL )
+			output->status = OUTPUT_STATUS_UNUSED;
+		else
+			output->status = OUTPUT_STATUS_USED;
 	}
-
-	if (wl_list_empty(&output->bar_instances))
-		output->status = OUTPUT_STATUS_UNUSED;
-	else
+	else if ( config != NULL )
+	{
+		/* If we have a configuration set, but no instance, we need to create one. */
+		output->bar_instance = create_bar_instance(output, config);
+		if ( output->bar_instance == NULL )
+		{
+			output->status = OUTPUT_STATUS_UNUSED;
+			log_message(0, "ERROR: Could not create bar instance.\n");
+			context.loop = false;
+			context.ret  = EXIT_FAILURE;
+			return false;
+		}
 		output->status = OUTPUT_STATUS_USED;
+	}
 
 	return true;
 }
@@ -130,11 +126,9 @@ static void output_handle_done (void *data, struct wl_output *wl_output)
 	 * and by xdg_output) have been advertised by preceding events.
 	 */
 	struct Lava_output *output = (struct Lava_output *)data;
-
 	log_message(1, "[output] Atomic update complete: global_name=%d\n",
 				output->global_name);
-
-	update_bar_instances_on_output(output);
+	output_configure_bar_instance(output);
 }
 
 static const struct wl_output_listener output_listener = {
@@ -180,9 +174,7 @@ static void update_river_output_occupied_state (struct Lava_output *output)
 	output->river_output_occupied = output->river_focused_tags & output->river_view_tags;
 	log_message(3, "[output] River output status: occupied=%s\n",
 			output->river_output_occupied ? "true" : "false");
-	struct Lava_bar_instance *instance;
-	wl_list_for_each(instance, &output->bar_instances, link)
-		update_bar_instance(instance, false, true);
+	update_bar_instance(output->bar_instance, false, true);
 }
 
 static void river_status_handle_focused_tags (void *data, struct zriver_output_status_v1 *river_status,
@@ -261,6 +253,7 @@ bool create_output (struct wl_registry *registry, uint32_t name,
 	output->scale         = 1;
 	output->wl_output     = wl_output;
 	output->status        = OUTPUT_STATUS_UNCONFIGURED;
+	output->bar_instance  = NULL;
 	output->w = output->h = 0;
 
 	/* River output status stuff. */
@@ -268,8 +261,6 @@ bool create_output (struct wl_registry *registry, uint32_t name,
 	output->river_focused_tags    = 0;
 	output->river_view_tags       = 0;
 	output->river_output_occupied = false;
-
-	wl_list_init(&output->bar_instances);
 
 	wl_list_insert(&context.outputs, &output->link);
 	wl_output_set_user_data(wl_output, output);
@@ -306,8 +297,8 @@ void destroy_output (struct Lava_output *output)
 	if ( output == NULL )
 		return;
 	DESTROY(output->river_status, zriver_output_status_v1_destroy);
+	DESTROY(output->bar_instance, destroy_bar_instance);
 	free_if_set(output->name);
-	destroy_all_bar_instances(output);
 	wl_list_remove(&output->link);
 	wl_output_destroy(output->wl_output);
 	free(output);

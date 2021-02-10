@@ -447,20 +447,20 @@ void item_interaction (struct Lava_item *item, struct Lava_bar_instance *instanc
 		execute_item_command(cmd, instance);
 }
 
-bool create_item (struct Lava_bar *bar, enum Item_type type)
+bool create_item (enum Item_type type)
 {
 	log_message(2, "[item] Creating item.\n");
 
 	TRY_NEW(struct Lava_item, item, false);
 
+	context.last_item = item;
 	item->index    = 0;
 	item->ordinate = 0;
 	item->length   = 0;
 	item->img      = NULL;
 	item->type     = type;
-	bar->last_item = item;
 	wl_list_init(&item->commands);
-	wl_list_insert(&bar->items, &item->link);
+	wl_list_insert(&context.items, &item->link);
 	return true;
 }
 
@@ -469,7 +469,6 @@ bool create_item (struct Lava_bar *bar, enum Item_type type)
  */
 struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t x, uint32_t y)
 {
-	struct Lava_bar               *bar    = instance->bar;
 	struct Lava_bar_configuration *config = instance->config;
 	uint32_t ordinate;
 	if ( config->orientation == ORIENTATION_HORIZONTAL )
@@ -477,8 +476,8 @@ struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t
 	else
 		ordinate = y - instance->item_area_dim.y;
 
-	struct Lava_item *item, *temp;
-	wl_list_for_each_reverse_safe(item, temp, &bar->items, link)
+	struct Lava_item *item;
+	wl_list_for_each_reverse(item, &context.items, link)
 	{
 		if ( ordinate >= item->ordinate
 				&& ordinate < item->ordinate + item->length )
@@ -487,41 +486,38 @@ struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t
 	return NULL;
 }
 
-unsigned int get_item_length_sum (struct Lava_bar *bar)
+unsigned int get_item_length_sum (void)
 {
 	unsigned int sum = 0;
-	struct Lava_item *it1, *it2;
-	wl_list_for_each_reverse_safe (it1, it2, &bar->items, link)
-		sum += it1->length;
+	struct Lava_item *item;
+	wl_list_for_each_reverse(item, &context.items, link)
+		sum += item->length;
 	return sum;
 }
 
-/* When items are created when parsing the config file, the size is not yet
- * available, so items need to be finalized later.
- */
-bool finalize_items (struct Lava_bar *bar)
+bool finalize_all_items (void)
 {
-	bar->item_amount = wl_list_length(&bar->items);
-	if ( bar->item_amount == 0 )
+	// TODO do we need item_amount to be globally available in context?
+	context.item_amount = wl_list_length(&context.items);
+	if ( context.item_amount == 0 )
 	{
-		log_message(0, "ERROR: Configuration defines a bar without items.\n");
+		log_message(0, "ERROR: No items configured.\n");
 		return false;
 	}
 
-
 	unsigned int index = 0, ordinate = 0;
-	struct Lava_item *it1, *it2;
-	wl_list_for_each_reverse_safe(it1, it2, &bar->items, link)
+	struct Lava_item *item;
+	wl_list_for_each_reverse(item, &context.items, link)
 	{
 		// TODO XXX set size to -1, which should cause it to automatically be config->size
-		if ( it1->type == TYPE_BUTTON )
-			it1->length = bar->default_config->size;
+		if ( item->type == TYPE_BUTTON )
+			item->length = context.default_config->size;
 
-		it1->index    = index;
-		it1->ordinate = ordinate;
+		item->index    = index;
+		item->ordinate = ordinate;
 
 		index++;
-		ordinate += it1->length;
+		ordinate += item->length;
 	}
 
 	return true;
@@ -535,11 +531,11 @@ static void destroy_item (struct Lava_item *item)
 	free(item);
 }
 
-void destroy_all_items (struct Lava_bar *bar)
+void destroy_all_items (void)
 {
 	log_message(1, "[items] Destroying all items.\n");
 	struct Lava_item *item, *temp;
-	wl_list_for_each_safe(item, temp, &bar->items, link)
+	wl_list_for_each_safe(item, temp, &context.items, link)
 		destroy_item(item);
 }
 

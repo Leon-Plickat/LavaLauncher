@@ -97,10 +97,10 @@ make up the default configuration set of the bar. The assignments possible in
 this context are as follows.
 
 *background-colour*
-	The background colour of the bar. The default is "#000000".
+	The background colour of the bar. The default is "0x000000".
 
 *border-colour*
-	The border colour of the bar. The default is "#ffffff".
+	The border colour of the bar. The default is "0xffffff".
 
 *border*
 	The border size. Expects either one integer, to set the size of all borders,
@@ -162,11 +162,11 @@ this context are as follows.
 
 *indicator-active-colour*
 	The colour of the indicator for icons being activated. The default is
-	"#606060".
+	"0x606060".
 
 *indicator-hover-colour*
 	The colour of the indicator for icons over which the cursor hovers. The
-	default is "#404040".
+	default is "0x404040".
 
 *indicator-padding*
 	Padding around the icon indicator. The default 0.
@@ -304,11 +304,13 @@ the commands. These variables are as follows.
 	The scale of the output the button has been clicked on.
 
 ## COLOURS
-LavaLauncher can parse hex code colours and read RGB values directly.
+LavaLauncher can parse hex code colours and read RGB values directly, supporting
+the following formats
 
-The supported formats are "#RRGGBB", "#RRGGBBAA", "0xRRGGBB" and "0xRRGGBBAA"
-for hex code colours and "rgb(rrr,ggg,bbb)" and "rgba(rrr,ggg,bbb,aaa)" for RGB
-colours.
+- *0xRRGGBB*
+- *0xRRGGBBAA*
+- *rgb(RRR,GGG,BBB)*
+- *rgba(RRR,GGG,BBB,AAA)*
 
 ## CONDITIONS
 Conditions are (re-)evaluated and bars created and destroyed and their active

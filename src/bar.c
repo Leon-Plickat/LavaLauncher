@@ -63,10 +63,10 @@ static void bar_config_sensible_defaults (struct Lava_bar_configuration *config)
 	udirections_t_set_all(&config->margin, 0);
 	uradii_t_set_all(&config->radii, 5);
 
-	colour_t_from_string(&config->bar_colour, "#000000");
-	colour_t_from_string(&config->border_colour, "#ffffff");
-	colour_t_from_string(&config->indicator_hover_colour, "#404040");
-	colour_t_from_string(&config->indicator_active_colour, "#606060");
+	colour_t_from_string(&config->bar_colour, "0x000000");
+	colour_t_from_string(&config->border_colour, "0xffffff");
+	colour_t_from_string(&config->indicator_hover_colour, "0x404040");
+	colour_t_from_string(&config->indicator_active_colour, "0x606060");
 
 	config->condition_scale      = 0;
 	config->condition_transform  = -1;

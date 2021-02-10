@@ -27,14 +27,6 @@
 /* Helper macro to iterate over a struct array. */
 #define FOR_ARRAY(A, B) for (size_t B = 0; B < (sizeof(A) / sizeof(A[0])); B++)
 
-/* Helper macro to reduce error handling boiler plate code. */
-#define TRY(A) \
-	{ \
-		if (A)\
-			return true; \
-		goto error; \
-	}
-
 /* Helper macro to try allocate something. */
 #define TRY_NEW(A, B, C) \
 	A *B = calloc(1, sizeof(A)); \

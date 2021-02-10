@@ -25,6 +25,7 @@
 bool is_boolean_true (const char *str);
 bool is_boolean_false (const char *str);
 bool set_boolean (bool *b, const char *value);
+
 bool parse_config_file (void);
 
 #endif

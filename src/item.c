@@ -37,6 +37,14 @@
 #include"output.h"
 #include"types/image_t.h"
 
+/* Helper macro to reduce error handling boiler plate code. */
+#define TRY(A) \
+	{ \
+		if (A)\
+			return true; \
+		goto error; \
+	}
+
 /*******************
  *                 *
  *  Item commands  *

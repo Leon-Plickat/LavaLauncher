@@ -17,6 +17,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* Various string helpers. */
+
 #ifndef LAVALAUNCHER_STR_H
 #define LAVALAUNCHER_STR_H
 

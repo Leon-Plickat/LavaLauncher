@@ -79,7 +79,7 @@ executable(
   'lavalauncher',
   files(
     'src/bar.c',
-    'src/config.c',
+    'src/config-parser.c',
     'src/event-loop.c',
     'src/item.c',
     'src/lavalauncher.c',

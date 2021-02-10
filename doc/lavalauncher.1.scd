@@ -13,20 +13,8 @@ least one shell command, which is executed when the user activates the button.
 
 Buttons can be activated with pointer and touch events.
 
-A single LavaLauncher instance can provide multiple such bars, across multiple
-outputs.
-
 The Wayland compositor must implement the Layer-Shell and XDG-Output for
 LavaLauncher to work.
-
-Beware: Unlike applications launchers which are similar in visual design to
-LavaLauncher, which are often called "docks", LavaLauncher does not care about
-.desktop files or icon themes nor does it keep track running applications.
-Instead, LavaLaunchers approach of manually defined buttons is considerably more
-flexible: You could have buttons not just for launching applications, but for
-practically anything you could do in your shell, like for ejecting your optical
-drive, rotating your screen, sending your cat an email, playing a funny sound,
-muting all audio, toggling your lamps and a lot more. Be creative!
 
 
 # OPTIONS
@@ -47,216 +35,206 @@ muting all audio, toggling your lamps and a lot more. Be creative!
 LavaLauncher is configured with a configuration file.
 
 Unless the path to a configuration file has been specified, LavaLauncher tries
-to find a configuration file at, in descending priority, "./lavalauncher.conf",
-"$XDG_CONFIG_HOME/lavalauncher/lavalauncher.conf",
-"$HOME/.config/lavalauncher/lavalauncher.conf"
-"/usr/local/etc/lavalauncher/lavalauncher.conf" and
-"/etc/lavalauncher/lavalauncher.conf"
+to find a configuration file at the following paths, in descending priority.
 
-You can find an example configuration at the end of this section.
+- ./lavalauncher.conf
+- $XDG_CONFIG_HOME/lavalauncher/lavalauncher.conf
+- $HOME/.config/lavalauncher/lavalauncher.conf
+- /usr/local/etc/lavalauncher/lavalauncher.conf
+- /etc/lavalauncher/lavalauncher.conf
 
-## STRUCTURE
-The configuration file has a simple structure. It consists of *contexts* and
-*assignments*.
-
-Assignments are always inside context and have the following form.
-
-```
-<variable> = <value>;
-```
-
-Note that the value may be quoted, causing LavaLauncher to use it as is,
-including all whitespace that would otherwise be stripped from the final
-string.
-
-Contexts have the following form.
+The configuration syntax is similar to the common INI format, consisiting of
+*sections* and *assignments*. Assignments are always inside sections and on a
+single line, unless the newline is escaped, and set a *variable* to a *value*.
+Comments start with an octothorpe ('#'). If you want to use the octothorpe
+symbol in an assignment, you have to escape it ('\#'). Backslashes in
+assignments need to be escaped as well ('\\'). All trailing and leading
+whitespace is ignored.
 
 ```
-<context name>
-{
-	<context content>
-}
+# Comment
+[section]
+variable = value
 ```
 
-Some Contexts must be nested as contents of other contexts.
+You can find explanation of all existing sections and variables following this
+introduction as well as an example configuration at the end of this section.
 
-Comments start with an octothorpe ('#').
+## [global-settings]
+In this section global settings can be configured.
 
-## GLOBAL  SETTINGS
-Global settings can be configured in the "global-settings" context. The
-assignments which can be made in this context are as follows.
-
-*watch-config-file*
+*watch-config-file* = true|false
 	Automatically reload when a change in the configuration file is detected.
-	Can be "true" or "false". The default is "false". Behold: If the
-	configuration file contains an error upon reload, LavaLauncher will exit.
+	Defaults to _false_.
 
-## BAR
-Every "bar" context will add a bar. The configuration changes in this context
-make up the default configuration set of the bar. The assignments possible in
-this context are as follows.
+	Behold: If the configuration file contains an error upon reload,
+	LavaLauncher will exit.
 
-*background-colour*
-	The background colour of the bar. The default is "0x000000".
+## [config]
+Every instance of this section will add a configurattion set.
 
-*border-colour*
-	The border colour of the bar. The default is "0xffffff".
+*background-colour* = <colour>
+	The background colour of the bar. Defaults to _0x000000_.
 
-*border*
-	The border size. Expects either one integer, to set the size of all borders,
-	or four integers, to set the individual sizes for the top, left, right and
-	bottom border. The default border size is 1.
+*border-colour* = <colour>
+	The border colour of the bar. Defaults to _0xffffff_.
 
-*condition-resolution*
-	The resolution proportions an output must have for the bar to be displayed
-	on it. Can be either "all", "wider-than-high" or "higher-than-wide". The
-	default is "all".
+*border* = <size>
+	Set the size of all four borders at once. Defaults to _1_.
 
-*condition-scale*
-	The scale an output must have for the bar to be displayed on it. Can be
-	either an integer greater than zero or "all". The default is "all".
+*border* = <top size> <right size> <bottom size> <left size>
+	Set the size of all four borders individually.
 
-*condition-transform*
-	The rotation an output must have for the bar to be displayed on it. Can be
-	"all", 0, 1, 2 or 3. The numerical values represent rotations of 0, 90,
-	180 and 270 degrees, with the exact correspondence depending on the
-	compositor. The default is "all".
+*condition-resolution* = all|wider-than-high|higher-than-wide
+	The resolution proportions an output must have for this configuration
+	set to be valid. Defaults to _all_.
 
-*cursor-name*
-	Name of the cursor displayed when hovering the pointer over the bar. The
-	default cursor is "pointer". Behold: What cursors are available depends
-	on your cursor theme.
+*condition-scale* = all|<scale>
+	The scale an output must have for this configuration set to be valid.
+	Defaults to _all_.
 
-*exclusive-zone*
-	Exclusive zone of the surface. Can be "true", "false" or "stationary".
-	If "true", the compositor is informed that it should not obstruct the
-	surface of LavaLauncher with other surfaces. If "false", the compositor
-	is informed that it can place other surfaces over or under the surface
-	of LavaLauncher. If "stationary", the compositor is informed that the
-	surface of LavaLauncher should not be moved to accommodate other Layer-Shell
+*condition-transform* = all|1|2|3|4
+	The rotation an output must have for this configuration set to be valid.
+	Defaults to _all_.
+
+	Behold: The numbers 1 to 4 represent rotations of 0, 90, 180 and 270
+	degrees, with the exact correspondence depending on the compositor.
+
+*cursor-name* = <string>
+	Name of the cursor displayed when hovering the pointer over the bar.
+	Defaults to _pointer_.
+
+	Behold: What cursors are available depends on your active cursor theme.
+
+*exclusive-zone* = true|false|stationary.
+	Exclusive zone of the surface. Defaults to _true_.
+
+	If *true*, the compositor is informed that it should not obstruct the
+	surface of LavaLauncher with other surfaces.
+
+	If *false*, the compositor is informed that it can place other surfaces
+	over or under the surface of LavaLauncher.
+
+	If *stationary*, the compositor is informed that the surface of
+	LavaLauncher should not be moved to accommodate other Layer-Shell
 	surfaces and that it can freely place other surfaces over or under
-	the surface of LavaLauncher. The default is "true". The exact
-	implementation is compositor dependant; A compositor may choose to
-	ignore the requested exclusive zone of surfaces.
+	the surface of LavaLauncher.
 
-*hidden-mode*
-	Hidden mode of the bar. Can be "never", "always" and "river-auto". Defaults
-	to "never".
+	Behold: A compositor may choose to ignore the requested exclusive zone
+	of surfaces.
 
-	In "never" mode, the bar is never hidden.
+*hidden-mode* = never|always|river-auto
+	Hidden mode of the bar. Defaults to _never_.
 
-	In "always" mode, the bar is always hidden.
+	In *never* mode, the bar is never hidden.
 
-	The "river-auto" mode works only in the river Wayland compositor. In this
-	mode, the bar is only hidden if the output is currently occupied.
+	In *always* mode, the bar is always hidden.
 
-	Behold: If you want a hidden bar which sits above windows on hover, you need
-	to set the layer to "top" and the exclusive zone to "off" or "stationary".
+	The *river-auto* mode works only with the river Wayland compositor. In
+	this mode, the bar is only hidden if the output is currently occupied.
 
-*hidden-size*
-	Size of the invisible area where hovering with a pointer will unhide the bar
-	if it is hidden. Defaults to 10.
+	Behold: If you want the common use case of a hidden bar which sits above
+	windows on hover, you need to set the *layer* to _top_ and the
+	*exclusive zone* to _off_ or _stationary_.
 
-*icon-padding*
-	Padding around the icons. The default 4.
+*hidden-size* = <size>
+	Size of the invisible area where hovering with a pointer will unhide the
+	bar if it is hidden. Defaults to _10_.
 
-*indicator-active-colour*
-	The colour of the indicator for icons being activated. The default is
-	"0x606060".
+*icon-padding* = <size>
+	Padding around the icons. Defaults to _4_.
 
-*indicator-hover-colour*
-	The colour of the indicator for icons over which the cursor hovers. The
-	default is "0x404040".
+*indicator-active-colour* = <colour>
+	The colour of the indicator for icons being activated. Defaults to
+	_0x606060_.
 
-*indicator-padding*
-	Padding around the icon indicator. The default 0.
+*indicator-hover-colour* = <colour>
+	The colour of the indicator for icons over which the cursor hovers.
+	Defaults to _0x404040_.
 
-*indicator-style*
-	Style of the icon indicator. Can be "rectangle", "rounded-rectangle" and
-	"circle". The default is "rounded-rectangle". The corner radii for
-	"rounded-rectangle" are the same as the ones of the bar itself.
+*indicator-padding* = <size>
+	Padding around the icon indicator. Defaults to _0_.
 
-*layer*
-	Layer of the bar surface. Can be "overlay", "top", "bottom" or
-	"background". Typically, "bottom" and "background" will be underneath
-	regular windows, while "top" and "overlay" will be above them, however
-	the exact placement on the z axis depends on the implementation of the
-	compositor. The default layer is "bottom".
+*indicator-style* = rectangle|circle|rounded-rectangle
+	Style of the icon indicator. Defaults to _rounded-rectangle_.
 
-*margin*
-	The margin of the surface. Expects either one integer, to set the margin in
-	all directions, or four integers, to set the individual top-, left-, right-
-	and bottom-margins. The default margin is 0.
+*layer* = orverlay|top|bottom|background
+	Layer of the bar surface. Defaults to _bottom_.
+
+	Behold: Typically, *bottom* and *background* will be underneath regular
+	windows, while *top* and *overlay* will be above them, however the exact
+	placement on the z axis depends on the compositor.
+
+*margin* = <size>
+	Set the size of all four margins at once. Defaults to _0_.
 
 	Behold: Some compositors may not respect margins parallel to the bars
-	orientation in "default" mode. This is not a bug in LavaLauncher but a
-	(possible intentional) limitation of the compositor.
+	orientation if the *mode* is _default_. This is not a bug in
+	LavaLauncher but a (possibly intentional) limitation of the compositor.
 
-*mode*
-	The display mode of the bar. Can be "default" or "full".
+*margin* = <top size> <right size> <bottom size> <left size>
+	Set the size of all four margins individually.
 
-	In "default" mode, the bar is sized just large enough to house all the
-	buttons.
+*mode* = default|full
+	The display mode of the bar. Defaults to _default_.
 
-	In "full" mode, the bar spans the entire length of the edge it is docked
+	In *default* mode, the bar is sized just large enough to house all the
+	buttons and placed in the center of the output edge it is docked to.
+
+	In *full* mode, the bar spans the entire length of the edge it is docked
 	to.
 
-*namespace*
-	The namespace of the Layer-Shell surface of the bar. Some compositors may
-	treat Layer-Shell surfaces differently based on their namespace. The default
-	is "LavaLauncher". Note that this option only takes effect once on bar
-	createion.
+*namespace* = <string>
+	The namespace of the Layer-Shell surface of the bar. Defaults to
+	_LavaLauncher_.
 
-*output*
-	Name of the output on which the bar should be displayed. Output names
-	are compositor dependant. If set to "all" or "\*", LavaLauncher will
-	display the bar on all outputs, which is the default behaviour.
+	Some compositors may treat Layer-Shell surfaces differently based on
+	their namespace. 
 
-*position*
-	Position of the bar. Can be "top", "right", "bottom", "left". The bar
-	will dock to that edge of the output(s). The default position is "bottom".
+	Behold: This option only takes effect once on the initial bar creation.
+	If the active configuration set changes, this value will stay the same.
 
-*radius*
-	The radius of the corners. Expects either one integer, to set the radius of
-	all corners, or four integers, to set the individual radii for the top-left,
-	top-right, bottom-left and bottom-right corner. The default radius is 5. Set
-	to 0 to disable corner roundness.
+*output* = all|\*|<string>
+	Name of the output on which this configuration set is valid. Defaults to
+	_all_.
 
-*size*
-	Size of the bar. The default size is 60.
+	If set to *all* or *\**, this configuration set is valid on all outputs.
 
-## CONFIG
-Every "config" context will add an additional configuration set to a bar. As
-such, this context is a nested inside the "bar" context. It copies the values
-of the default configuration set, but every setting can be overridden. This is
-useful to change bar configuration based on conditionals, as LavaLauncher will
-automatically choose the first configuration set with fitting conditions.
-Different instances of the same bar on different outputs can use different
-configuration sets, but a bar has at most one instance per output and uses
-exactly one configuration set per instance. The assignments possible in this
-context are the same as for the "bar" context.
+	Behold: Output names are compositor dependant.
 
-## BUTTON
-Every "button" context will add a button to a bar. As such, this context is a
-nested inside the "bar" context. The assignments possible in this context are
-as follows.
+*position* = top|right|bottom|left
+	Position of the bar. Defaults to _bottom_.
 
-*command*
-	Sets the shell command for left-, right-, middle-click and touch
+*radius* = <size>
+	Set the radius of all four corners at once. Defaults to _5_.
+
+	If set to *0*, corner roundness is disabled.
+
+*radius* = <top-left size> <top-right size> <bottom-left size> <bottom-right size>
+	Set the radii of all four corners individually.
+
+*size* = <size>
+	Size of the bar (without borders). Defaults to _60_.
+
+## [item:button]
+Every instance of this section will add a button to the bar.
+
+*command* = <string>
+	Set the shell command for left-, right-, middle-click and touch
 	interactions.
 
-*command[*_<bind>_*]*
+*command[*<bind>*]* = <string>
 	Bind a shell command to a specific interaction plus modifier combination.
-	This combination is defined by _<bind>_, which is a string containing an
+	This combination is defined by *<bind>*, which is a string containing an
 	interaction name as well as optionally one or multiple modifier names,
-	separated by "+".
+	separated by *+*.
 
 	The possible interaction types are the following.
 
 	- *mouse-{left, right, middle}*
 	- *mouse-{forward, backward}*
 	- *mouse-{mouse, side, extra, task, misc}*
-	- *mouse-{1 - 9}*
+	- *mouse-{1-9}*
 	- *scroll-{up, down}*
 	- *touch*
 
@@ -270,32 +248,28 @@ as follows.
 	- *shift*
 
 	Behold: Due to the way the Layer-Shells keyboard interactivity was
-	designed, LavaLauncher may only get send an updated modifier state when it
-	gains keyboard focus. In some compositors this requires you to click on it,
-	meaning that touch and scroll interactions with modifiers may not work in
-	some compositors. This is a bug in the Layer-Shell protocol, not in
-	LavaLauncher.
+	designed, LavaLauncher may only get send an updated modifier state when
+	it gains keyboard focus. In some compositors this requires you to click
+	on it, meaning that touch and scroll interactions with modifiers may not
+	work in some compositors. This is a bug in the Layer-Shell protocol, not
+	in LavaLauncher.
 
-*image-path*
+*image-path* = <path>
 	The path to an image file, which will be used as the icon of the
 	button.
 
-## SPACER
-Every "spacer" context will add a spacer to a bar. As such, this context is a
-nested inside the "bar" context. The assignments possible in this context are
-as follows.
+## [item:spacer]
+Every instance of this section will add a spacer to the bar.
 
-*length*
+*length* = <size>
 	Length of the spacer.
 
 ## COMMANDS
 Commands are executed using *sh(1)*.
 
-LavaLauncher understands typical backslash escape sequences.
-
 LavaLauncher sets some environmental variables for the processes it launches.
 Since all commands are executed via a shell, they can be used as arguments for
-the commands. These variables are as follows.
+the commands.
 
 *$LAVALAUNCHER_OUTPUT_NAME*
 	The name of the output the button has been clicked on.
@@ -305,16 +279,29 @@ the commands. These variables are as follows.
 
 ## COLOURS
 LavaLauncher can parse hex code colours and read RGB values directly, supporting
-the following formats
+the following formats.
 
 - *0xRRGGBB*
 - *0xRRGGBBAA*
 - *rgb(RRR,GGG,BBB)*
 - *rgba(RRR,GGG,BBB,AAA)*
 
-## CONDITIONS
-Conditions are (re-)evaluated and bars created and destroyed and their active
-configuration set chosen accordingly whenever an outputs parameters are updated.
+## CONFIGURATION SETS AND CONDITIONS
+Configuration sets define the current configuration of the bar. Multiple
+configuration sets can be defined. The first configuration set to be defined is
+considered to be the default one and all following sets will copy the defaults
+values unless overwritten.
+
+For every output, LavaLauncher tries to find a valid configuration set, based
+on the defined conditions. Only outputs for which a valid configuration set has
+been found will have a bar. The sets are evaluated in the same order they have
+been defined in. Whenever an outputs parameters are updated, configuration sets
+are re-evaluated and the outputs bar created, destroyed or modified accordingly.
+
+By default the condititions of a configuration set match every output. To make
+use of multiple configuration sets, you have to explicitly set the conditions
+of the default configuration set so it is not valid in the cases you want
+LavaLauncher to use another configuration set for.
 
 ## IMAGES
 LavaLauncher support PNG images and, if enabled at compile time, SVG images. It
@@ -326,54 +313,31 @@ and an additional configuration set. The second button uses advanced command
 binds.
 
 ```
-global-settings
-{
-	watch-config-file = true;
-}
+[global-settings]
+watch-config-file = true
 
-bar
-{
-	output            = eDP-1;
-	position          = bottom;
-	background-colour = "#202020";
+[config]
+output = eDP-1
+position = bottom
+background-colour = 0x202020
+condition-resolution = wider-than-high
+border = 1 1 0 1
 
-	# Condition for the default configuration set.
-	condition-resolution = wider-than-high;
+[config]
+conditions-resolution = higher-than-wide
+position = left
+border = 5
 
-	config
-	{
-		# Condition for this configuration set.
-		conditions-resolution = higher-than-wide;
+[item:button]
+image-path = /path/to/image.png
+command = useful-script.sh
 
-		# Additional configuration sets copy the default configuration set,
-		# but settings can be overwritten.
-		position = left;
-	}
-
-	button
-	{
-		image-path = /path/to/image.png;
-		command    = useful-script.sh;
-	}
-
-	button
-	{
-		image-path = /path/to/another/image.png;
-
-		command[mouse-left]  = another-useful-script.sh;
-		command[mouse-right] = another-useful-script.sh;
-
-		command[shift+mouse-left]     = another-useful-script.sh;
-		command[shift+alt+mouse-left] = another-useful-script.sh;
-
-		# Binding commands to scroll events is nice to configure
-		# things like audio volume or screen brightness
-		command[scroll-up]         = volume up;
-		command[scroll-down]       = volume down;
-		command[shift+scroll-up]   = volume microphone-up;
-		command[shift+scroll-down] = volume microphone-down;
-	}
-}
+[item:button]
+image-path           = /path/to/another/image.png
+command[mouse-left]  = another-useful-script.sh
+command[mouse-right] = another-useful-script.sh
+command[scroll-up]   = volume up;
+command[scroll-down] = volume down;
 ```
 
 

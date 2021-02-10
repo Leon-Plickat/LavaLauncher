@@ -28,7 +28,7 @@
 
 #include"bar.h"
 #include"item.h"
-#include"config.h"
+#include"config-parser.h"
 #include"event-loop.h"
 #include"lavalauncher.h"
 #include"str.h"

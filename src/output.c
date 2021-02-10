@@ -58,8 +58,7 @@ static bool output_configure_bar_instance (struct Lava_output *output)
 	 */
 	if ( output->w == 0 || output->h == 0 )
 	{
-		destroy_bar_instance(output->bar_instance);
-		output->bar_instance = NULL;
+		DESTROY_NULL(output->bar_instance, destroy_bar_instance);
 		output->status = OUTPUT_STATUS_UNUSED;
 		return true;
 	}

@@ -32,7 +32,7 @@
 
 #include"lavalauncher.h"
 #include"str.h"
-#include"config.h"
+#include"config-parser.h"
 #include"seat.h"
 #include"item.h"
 #include"output.h"
@@ -199,7 +199,7 @@ static bool bar_config_conditions_match_output (struct Lava_bar_configuration *c
 struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_output *output)
 {
 	struct Lava_bar_configuration *config;
-	wl_list_for_each(config, &context.configs, link)
+	wl_list_for_each_reverse(config, &context.configs, link)
 		if (bar_config_conditions_match_output(config, output))
 			return config;
 	return NULL;

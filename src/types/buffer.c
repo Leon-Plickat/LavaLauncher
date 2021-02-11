@@ -30,7 +30,7 @@
 #include <cairo/cairo.h>
 
 #include"buffer.h"
-#include"str.h"
+#include"util.h"
 
 static void randomize_string (char *str, size_t len)
 {

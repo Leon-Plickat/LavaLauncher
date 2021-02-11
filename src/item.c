@@ -32,7 +32,7 @@
 #include"lavalauncher.h"
 #include"item.h"
 #include"seat.h"
-#include"str.h"
+#include"util.h"
 #include"bar.h"
 #include"output.h"
 #include"types/image_t.h"

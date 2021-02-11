@@ -25,6 +25,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<unistd.h>
+#include<ctype.h>
 
 #include"lavalauncher.h"
 
@@ -99,5 +100,53 @@ void setenvf (const char *name, const char *fmt, ...)
 bool string_starts_with(const char *str, const char *prefix)
 {
 	return strncmp(prefix, str, strlen(prefix)) == 0;
+}
+
+bool is_boolean_true (const char *str)
+{
+	return ( ! strcmp(str, "true") || ! strcmp(str, "yes") || ! strcmp(str, "on") || ! strcmp(str, "1") );
+}
+
+bool is_boolean_false (const char *str)
+{
+	return ( ! strcmp(str, "false") || ! strcmp(str, "no") || ! strcmp(str, "off") || ! strcmp(str, "0") );
+}
+
+bool set_boolean (bool *b, const char *value)
+{
+	if (is_boolean_true(value))
+		*b = true;
+	else if (is_boolean_false(value))
+		*b = false;
+	else
+	{
+		log_message(0, "ERROR: Not a boolean: %s\n", value);
+		return false;
+	}
+	return true;
+}
+
+/* Return amount of whitespace separated tokens.
+ * Example: "hello"  => 1
+ *          "hell o" => 2
+ */
+uint32_t count_tokens (const char *arg)
+{
+	uint32_t args = 0;
+	bool on_arg = false;
+	for (const char *i = arg; *i != '\0'; i++)
+	{
+		if (isspace(*i))
+		{
+			if (on_arg)
+				on_arg = false;
+		}
+		else if (! on_arg)
+		{
+			on_arg = true;
+			args++;
+		}
+	}
+	return args;
 }
 

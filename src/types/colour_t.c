@@ -26,7 +26,7 @@
 #include<string.h>
 #include<cairo/cairo.h>
 
-#include"str.h"
+#include"util.h"
 #include"types/colour_t.h"
 
 static bool colour_t_from_hex_string (colour_t *colour, const char *hex)

@@ -25,40 +25,11 @@
 #include<ctype.h>
 
 #include"lavalauncher.h"
-#include"str.h"
+#include"util.h"
 #include"item.h"
 #include"bar.h"
 
 #define BUFFER_SIZE 1024
-
-/*************
- *           *
- *  Helpers  *
- *           *
- *************/
-bool is_boolean_true (const char *str)
-{
-	return ( ! strcmp(str, "true") || ! strcmp(str, "yes") || ! strcmp(str, "on") || ! strcmp(str, "1") );
-}
-
-bool is_boolean_false (const char *str)
-{
-	return ( ! strcmp(str, "false") || ! strcmp(str, "no") || ! strcmp(str, "off") || ! strcmp(str, "0") );
-}
-
-bool set_boolean (bool *b, const char *value)
-{
-	if (is_boolean_true(value))
-		*b = true;
-	else if (is_boolean_false(value))
-		*b = false;
-	else
-	{
-		log_message(0, "ERROR: Not a boolean: %s\n", value);
-		return false;
-	}
-	return true;
-}
 
 /*********************
  *                   *

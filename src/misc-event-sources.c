@@ -38,7 +38,7 @@
 
 #include"lavalauncher.h"
 #include"event-loop.h"
-#include"str.h"
+#include"util.h"
 
 /**************************
  *                        *

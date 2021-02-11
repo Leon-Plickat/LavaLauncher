@@ -32,7 +32,7 @@
 #include<librsvg-2.0/librsvg/rsvg.h>
 #endif
 
-#include"str.h"
+#include"util.h"
 #include"lavalauncher.h"
 #include"types/image_t.h"
 

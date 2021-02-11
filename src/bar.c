@@ -31,7 +31,7 @@
 #include<wayland-client.h>
 
 #include"lavalauncher.h"
-#include"str.h"
+#include"util.h"
 #include"config-parser.h"
 #include"seat.h"
 #include"item.h"
@@ -223,35 +223,15 @@ struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_output *ou
 		return true; \
 	}
 
-static uint32_t bar_config_count_args (const char *arg)
-{
-	uint32_t args = 0;
-	bool on_arg = false;
-	for (const char *i = arg; *i != '\0'; i++)
-	{
-		if (isspace(*i))
-		{
-			if (on_arg)
-				on_arg = false;
-		}
-		else if (! on_arg)
-		{
-			on_arg = true;
-			args++;
-		}
-	}
-	return args;
-}
-
 static bool bar_config_directional_config (uint32_t *_a, uint32_t *_b, uint32_t *_c, uint32_t *_d,
 		const char *arg, const char *conf_name, const char *conf_name_2)
 {
 	int32_t a, b, c, d;
 
-	if ( 4 == bar_config_count_args(arg) && 4 == sscanf(arg, "%d %d %d %d", &a, &b, &c, &d) )
+	if ( 4 == count_tokens(arg) && 4 == sscanf(arg, "%d %d %d %d", &a, &b, &c, &d) )
 		goto done;
 
-	if ( 1 == bar_config_count_args(arg) && 1 == sscanf(arg, "%d", &d) )
+	if ( 1 == count_tokens(arg) && 1 == sscanf(arg, "%d", &d) )
 	{
 		a = b = c = d;
 		goto done;

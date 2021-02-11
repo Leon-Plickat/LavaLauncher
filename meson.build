@@ -86,7 +86,7 @@ executable(
     'src/misc-event-sources.c',
     'src/output.c',
     'src/seat.c',
-    'src/str.c',
+    'src/util.c',
     'src/types/box_t.c',
     'src/types/buffer.c',
     'src/types/colour_t.c',

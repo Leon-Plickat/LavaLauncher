@@ -27,7 +27,7 @@
 
 #include"lavalauncher.h"
 #include"event-loop.h"
-#include"str.h"
+#include"util.h"
 
 void event_loop_init (struct Lava_event_loop *loop)
 {

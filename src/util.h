@@ -17,12 +17,40 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* Various string helpers. */
+/* Various generic little helper things that don't really fit anywhere else. */
 
-#ifndef LAVALAUNCHER_STR_H
-#define LAVALAUNCHER_STR_H
+#ifndef LAVALAUNCHER_UTIL_H
+#define LAVALAUNCHER_UTIL_H
 
 #include<stdbool.h>
+
+/* Helper macro to iterate over a struct array. */
+#define FOR_ARRAY(A, B) \
+	for (size_t B = 0; B < (sizeof(A) / sizeof(A[0])); B++)
+
+/* Helper macro to try allocate something. */
+#define TRY_NEW(A, B, C) \
+	A *B = calloc(1, sizeof(A)); \
+	if ( B == NULL ) \
+	{ \
+		log_message(0, "ERROR: Can not allocate.\n"); \
+		return C; \
+	}
+
+/* Helper macro to destroy something if it is not NULL. */
+#define DESTROY(A, B) \
+	if ( A != NULL ) \
+	{ \
+		B(A); \
+	}
+
+/* Helper macro to destroy something and set it to NULL if it is not NULL. */
+#define DESTROY_NULL(A, B) \
+	if ( A != NULL ) \
+	{ \
+		B(A); \
+		A = NULL; \
+	}
 
 void log_message (int level, const char *fmt, ...);
 void free_if_set (void *ptr);
@@ -31,6 +59,10 @@ char *get_formatted_buffer (const char *fmt, ...);
 const char *str_orelse (const char *str, const char *orelse);
 void setenvf (const char *name, const char *fmt, ...);
 bool string_starts_with(const char *str, const char *prefix);
+bool is_boolean_true (const char *str);
+bool is_boolean_false (const char *str);
+bool set_boolean (bool *b, const char *value);
+uint32_t count_tokens (const char *arg);
 
 #endif
 

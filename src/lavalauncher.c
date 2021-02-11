@@ -31,7 +31,7 @@
 #include"config-parser.h"
 #include"event-loop.h"
 #include"lavalauncher.h"
-#include"str.h"
+#include"util.h"
 #include"wayland-connection.h"
 #include"misc-event-sources.h"
 

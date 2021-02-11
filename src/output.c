@@ -35,7 +35,7 @@
 #include"xdg-shell-protocol.h"
 
 #include"lavalauncher.h"
-#include"str.h"
+#include"util.h"
 #include"output.h"
 #include"bar.h"
 

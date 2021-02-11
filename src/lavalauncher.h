@@ -24,33 +24,6 @@
 #include<stdint.h>
 #include<wayland-client.h>
 
-/* Helper macro to iterate over a struct array. */
-#define FOR_ARRAY(A, B) for (size_t B = 0; B < (sizeof(A) / sizeof(A[0])); B++)
-
-/* Helper macro to try allocate something. */
-#define TRY_NEW(A, B, C) \
-	A *B = calloc(1, sizeof(A)); \
-	if ( B == NULL ) \
-	{ \
-		log_message(0, "ERROR: Can not allocate.\n"); \
-		return C; \
-	}
-
-/* Helper macro to destroy something if it is not NULL. */
-#define DESTROY(A, B) \
-	if ( A != NULL ) \
-	{ \
-		B(A); \
-	}
-
-/* Helper macro to destroy something and set it to NULL if it is not NULL. */
-#define DESTROY_NULL(A, B) \
-	if ( A != NULL ) \
-	{ \
-		B(A); \
-		A = NULL; \
-	}
-
 struct Lava_item;
 struct Lava_bar;
 

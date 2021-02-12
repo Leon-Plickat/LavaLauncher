@@ -67,7 +67,7 @@ struct Lava_item
 
 bool create_item (enum Item_type type);
 bool item_set_variable (struct Lava_item *item, const char *variable,
-		const char *value, int line);
+		const char *value, uint32_t line);
 void item_interaction (struct Lava_item *item, struct Lava_bar_instance *instance,
 		enum Interaction_type type, uint32_t modifiers, uint32_t special);
 struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t x, uint32_t y);

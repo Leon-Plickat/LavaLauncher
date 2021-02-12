@@ -48,6 +48,7 @@ add_project_arguments('-DLAVALAUNCHER_VERSION=@0@'.format(version), language: 'c
 wayland_protocols = dependency('wayland-protocols')
 wayland_client    = dependency('wayland-client', include_type: 'system')
 wayland_cursor    = dependency('wayland-cursor', include_type: 'system')
+lib_infinitesimal = dependency('lib-infinitesimal')
 cairo             = dependency('cairo')
 realtime          = cc.find_library('rt')
 librsvg           = dependency('librsvg-2.0', version: '>= 2.45.6', required: get_option('librsvg'))
@@ -95,6 +96,7 @@ executable(
   ),
   dependencies: [
     cairo,
+    lib_infinitesimal,
     libepoll,
     libinotify,
     librsvg,

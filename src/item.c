@@ -374,7 +374,7 @@ static bool button_item_universal_command (struct Lava_item *button, const char 
 }
 
 static bool button_set_variable (struct Lava_item *button, const char *variable,
-		const char *value, int line)
+		const char *value, uint32_t line)
 {
 	if (! strcmp("image-path", variable))
 		TRY(button_set_image_path(button, value))
@@ -408,7 +408,7 @@ static bool spacer_set_length (struct Lava_item *spacer, const char *length)
 }
 
 static bool spacer_set_variable (struct Lava_item *spacer,
-		const char *variable, const char *value, int line)
+		const char *variable, const char *value, uint32_t line)
 {
 	if (! strcmp("length", variable))
 		TRY(spacer_set_length(spacer, value))
@@ -421,7 +421,7 @@ error:
 }
 
 bool item_set_variable (struct Lava_item *item, const char *variable,
-		const char *value, int line)
+		const char *value, uint32_t line)
 {
 	switch (item->type)
 	{

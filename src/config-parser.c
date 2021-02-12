@@ -23,6 +23,7 @@
 #include<errno.h>
 #include<string.h>
 #include<ctype.h>
+#include<lib-infinitesimal.h>
 
 #include"lavalauncher.h"
 #include"util.h"
@@ -46,7 +47,7 @@ static bool global_set_watch (const char *arg)
 #endif
 }
 
-bool global_set_variable (const char *variable, const char *value, int line)
+bool global_set_variable (const char *variable, const char *value, uint32_t line)
 {
 	struct
 	{
@@ -74,7 +75,7 @@ exit:
  *  Parser  *
  *          *
  ************/
-enum Parser_section
+enum Config_section
 {
 	SECTION_NONE,
 	SECTION_GLOBAL_SETTINGS,
@@ -82,275 +83,65 @@ enum Parser_section
 	SECTION_ITEM
 };
 
-struct Parser
+static bool section_callback (void *user_data, uint32_t line, const char *section_name)
 {
-	FILE *file;
-	int line;
-	enum Parser_section section;
-	char buffer[BUFFER_SIZE];
-	size_t length;
-};
-
-static bool enter_section (struct Parser *parser)
-{
-	if (! strcmp(parser->buffer, "[global-settings]"))
+	enum Config_section *section = (enum Config_section *)user_data;
+	if (! strcmp(section_name, "[global-settings]"))
 	{
-		parser->section = SECTION_GLOBAL_SETTINGS;
+		*section = SECTION_GLOBAL_SETTINGS;
 		return true;
 	}
-	if (! strcmp(parser->buffer, "[config]"))
+	else if (! strcmp(section_name, "[config]"))
 	{
-		parser->section = SECTION_CONFIG;
+		*section = SECTION_CONFIG;
 		return create_bar_config();
 	}
-	if (! strcmp(parser->buffer, "[item:button]"))
+	else if (! strcmp(section_name, "[item:button]"))
 	{
-		parser->section = SECTION_ITEM;
+		*section = SECTION_ITEM;
 		return create_item(TYPE_BUTTON);
 	}
-	else if (! strcmp(parser->buffer, "[item:spacer]"))
+	else if (! strcmp(section_name, "[item:spacer]"))
 	{
-		parser->section = SECTION_ITEM;
+		*section = SECTION_ITEM;
 		return create_item(TYPE_SPACER);
 	}
 
 	log_message(0, "ERROR: Invalid section '%s' on line %d in \"%s\".\n",
-		parser->buffer, parser->line, context.config_path);
+		section_name, line, context.config_path);
 	return false;
 }
 
-static bool assignment (struct Parser *parser)
+static bool assign_callback (void *user_data, uint32_t line, const char *variable, const char *value)
 {
-	/* Find '='. Careful: It may not exist. */
-	size_t equals = 0;
-	while (true)
-	{
-		if ( parser->buffer[equals] == '=' )
-			break;
-		if ( parser->buffer[equals] == '\0' )
-			goto error;
-		if ( equals >= BUFFER_SIZE - 2 )
-			goto error;
-		else
-			equals++;
-	}
-
-	/* Is there a variable name? Remember: In parse_line() we ignore
-	 * preceding whitespace, so if there are no non-whitespace characters
-	 * on the line before '=' it will be at beginning of the buffer.
-	 */
-	if ( equals == 0 )
-		goto error;
-
-	/* Is there a variable vallue? Remember: In parse_line() we trim trailing
-	 * whitespace, so if there are no non-whitespace characters on the line
-	 * after '=' it will be at the end of the buffer.
-	 */
-	 if ( equals == parser->length - 1 )
-		 goto error;
-
-	/* When this point is reached, we know for sure there are non-whitespace
-	 * characters between the beginning of the buffer and '='. Let's trim
-	 * the whitespace between them and '='.
-	 */
-	size_t i = equals;
-	for (; isspace(parser->buffer[i-1]); i--);
-	parser->buffer[i] = '\0';
-
-	/* If this point if reached, we know for sure there are non-whitespace
-	 * characters between '=' and the end of the buffer. Let's find them.
-	 */
-	size_t value = equals + 1;
-	for (; isspace(parser->buffer[value]); value++);
-
-	/* Now finally we have confirmed that both variable namd and variable
-	 * value exist, know where they are and have cleaned them from any pesky
-	 * whitespace. Let's use 'em!
-	 */
-	if ( parser->section == SECTION_NONE )
+	enum Config_section *section = (enum Config_section *)user_data;
+	if ( *section == SECTION_NONE )
 	{
 		log_message(0, "ERROR: Assignment outside of a section on line %d in \"%s\".\n",
-				parser->line, context.config_path);
+				line, context.config_path);
 		return false;
 	}
-	else if ( parser->section == SECTION_GLOBAL_SETTINGS )
-		return global_set_variable(parser->buffer, &parser->buffer[value], parser->line);
-	else if ( parser->section == SECTION_CONFIG )
-		return bar_config_set_variable(context.last_config,
-				parser->buffer, &parser->buffer[value], parser->line);
-	else if ( parser->section == SECTION_ITEM )
-		return item_set_variable(context.last_item,
-				parser->buffer, &parser->buffer[value], parser->line);
+	else if ( *section == SECTION_GLOBAL_SETTINGS )
+		return global_set_variable(variable, value, line);
+	else if ( *section == SECTION_CONFIG )
+		return bar_config_set_variable(context.last_config, variable, value, line);
+	else if ( *section == SECTION_ITEM )
+		return item_set_variable(context.last_item, variable, value, line);
 
-error:
-	/* We can not output parser->buffer, because when this error message is
-	 * displayed, we may already have modified it.
-	 */
-	log_message(0, "ERROR: Malformed assignment on line %d in \"%s\".\n",
-			parser->line, context.config_path);
+	/* Unreachable. */
 	return false;
 }
 
-static bool get_char (struct Parser *parser, char *ch)
+static void error_callback (void *user_data, uint32_t line, const char *msg)
 {
-	errno = 0;
-	*ch = (char)fgetc(parser->file);
-
-	if ( *ch == EOF )
-	{
-		if ( errno != 0 )
-		{
-			log_message(0, "ERROR: fgetc: %s\n", strerror(errno));
-			return false;
-		}
-		*ch = '\0';
-	}
-	return true;
-}
-
-static bool buffer_add_char (struct Parser *parser, char ch)
-{
-	if ( parser->length >= BUFFER_SIZE - 2 )
-	{
-		log_message(0, "ERROR: Buffer overflow due to too long string on line %d "
-				"in \"%s\"\n", parser->line, context.config_path);
-		return false;
-	}
-
-	parser->buffer[parser->length] = ch;
-	parser->length++;
-	parser->buffer[parser->length] = '\0';
-
-	return true;
-}
-
-/* Helper macro to reduce error handling boiler plate code. */
-#define TRY(A) \
-	{ \
-		if (! A) \
-		{ \
-			*ret = false; \
-			return false; \
-		} \
-	}
-
-/* These macros deduplicate code and make following the control flow a bit simpler. */
-#define HANDLE_NEWLINE \
-	{ \
-		if (line_has_started) \
-			break; \
-		else \
-		{ \
-			parser->line++; \
-			return true; \
-		} \
-	}
-#define HANDLE_EOF \
-	{ \
-		if (line_has_started) \
-		{ \
-			no_eof = false; \
-			break; \
-		} \
-		else \
-			return false; \
-	}
-
-/* Read a single line and parse it. Returns false when last line has been parsed
- * or error was encountered.
- */
-static bool parse_line (struct Parser *parser, bool *ret)
-{
-	/* First we get the line. */
-	parser->buffer[0] = '\0';
-	parser->length = 0;
-	bool no_eof = true;
-	bool line_has_started = false;
-	for (char ch;;)
-	{
-		TRY(get_char(parser, &ch))
-
-		if ( ch == '\n' )
-			HANDLE_NEWLINE
-		else if ( ch == '\0' )
-			HANDLE_EOF
-		if (isspace(ch))
-		{
-			/* Ignore any preceding white space. */
-			if (line_has_started)
-				TRY(buffer_add_char(parser, ch))
-		}
-		else if ( ch == '#' )
-		{
-			/* Comment, so let's ignore the rest of the line. */
-			while (true)
-			{
-				TRY(get_char(parser, &ch))
-				if ( ch == '\n' )
-					HANDLE_NEWLINE
-				else if ( ch == '\0' )
-					HANDLE_EOF
-			}
-			break;
-		}
-		else if ( ch == '\\' )
-		{
-			/* Ah, an escape sequence, how quaint. Note that we only
-			 * care about the escape sequences that are relevant to
-			 * parsing the configuration, meaning escaping a comment
-			 * or newline.
-			 */
-			TRY(get_char(parser, &ch))
-			if ( ch == '\\' )
-				TRY(buffer_add_char(parser, '\\'))
-			else if ( ch == '\n' )
-			{
-				TRY(buffer_add_char(parser, ' '))
-				parser->line++;
-			}
-			else if ( ch == '#' )
-				TRY(buffer_add_char(parser, '#'))
-			else
-			{
-				log_message(0, "ERROR: Unknown escape sequence '\\%c' "
-						"on line %d in \"%s\"\n",
-						ch, parser->line, context.config_path);
-				*ret = false;
-				return false;
-			}
-			line_has_started = true;
-		}
-		else
-		{
-			TRY(buffer_add_char(parser, ch))
-			line_has_started = true;
-		}
-	}
-
-	/* Trim trailing whitespace. */
-	for (; isspace(parser->buffer[parser->length-1]); parser->length--);
-	parser->buffer[parser->length] = '\0';
-
-	/* Then we parse the line. */
-	if ( parser->buffer[0] == '[' )
-		TRY(enter_section(parser))
-	else
-		TRY(assignment(parser))
-
-	parser->line++;
-	return no_eof;
+	log_message(0, "ERROR: Failed to parse line %d in \"%s\": %s.\n",
+			line, context.config_path, msg);
 }
 
 bool parse_config_file (void)
 {
-	errno = 0;
-	struct Parser parser = {
-		.file    = NULL,
-		.line    = 1,
-		.section = SECTION_NONE,
-	};
-
-	if ( NULL == (parser.file = fopen(context.config_path, "r")) )
+	FILE *file = fopen(context.config_path, "r");
+	if ( file == NULL )
 	{
 		log_message(0, "ERROR: Can not open config file \"%s\".\n"
 				"ERROR: fopen: %s\n",
@@ -358,14 +149,17 @@ bool parse_config_file (void)
 		return false;
 	}
 
-	bool ret = true;
-	while (parse_line(&parser, &ret));
-	if ( ret == true && parser.section == SECTION_NONE )
+	enum Config_section section = SECTION_NONE;
+	bool ret = infinitesimal_parse_file(file, (void *)&section,
+		&section_callback, &assign_callback, &error_callback);
+
+	if ( ret == true && section == SECTION_NONE )
 	{
 		log_message(0, "ERROR: Configuration file is void of any meaningful content.\n");
 		ret = false;
 	}
-	fclose(parser.file);
+
+	fclose(file);
 	return ret;
 }
 

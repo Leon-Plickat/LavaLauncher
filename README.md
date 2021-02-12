@@ -52,7 +52,8 @@ Many thanks to the maintainers of these packages!
 
 ### Building
 
-LavaLauncher depends on Wayland, Wayland protocols, xkbcommon and Cairo. To
+LavaLauncher depends on Wayland, Wayland protocols, xkbcommon, cairo and
+[lib-infinitesimal](https://git.sr.ht/~leon_plickat/lib-infinitesimal). To
 compile LavaLauncher with SVG image support, it additionally depends on librsvg.
 
 To build this program you will need a C compiler, the meson & ninja build system

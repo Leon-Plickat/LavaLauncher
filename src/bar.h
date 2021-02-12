@@ -177,7 +177,7 @@ void destroy_all_bar_configs (void);
 bool finalize_all_bar_configs (void);
 struct Lava_bar_configuration *get_bar_config_for_output (struct Lava_output *output);
 bool bar_config_set_variable (struct Lava_bar_configuration *config,
-		const char *variable, const char *value, int line);
+		const char *variable, const char *value, uint32_t line);
 
 struct Lava_bar_instance *create_bar_instance (struct Lava_output *output,
 		struct Lava_bar_configuration *config);

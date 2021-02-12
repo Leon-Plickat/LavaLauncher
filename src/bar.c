@@ -515,7 +515,7 @@ BAR_CONFIG(bar_config_set_indicator_style)
 #undef BAR_CONFIG_COLOUR
 
 bool bar_config_set_variable (struct Lava_bar_configuration *config,
-		const char *variable, const char *value, int line)
+		const char *variable, const char *value, uint32_t line)
 {
 	struct
 	{

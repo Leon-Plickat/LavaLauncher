@@ -23,6 +23,7 @@
 #include<errno.h>
 #include<string.h>
 #include<ctype.h>
+#include<unistd.h>
 #include<lib-infinitesimal.h>
 
 #include"lavalauncher.h"
@@ -75,6 +76,36 @@ exit:
  *  Parser  *
  *          *
  ************/
+static bool get_default_config_path (void)
+{
+	struct
+	{
+		const char *fmt;
+		const char *env;
+	} paths[] = {
+		{ .fmt = "./lavalauncher.conf",                           .env = NULL                      },
+		{ .fmt = "%s/lavalauncher/lavalauncher.conf",             .env = getenv("XDG_CONFIG_HOME") },
+		{ .fmt = "%s/.config/lavalauncher/lavalauncher.conf",     .env = getenv("HOME")            },
+		{ .fmt = "/usr/local/etc/lavalauncher/lavalauncher.conf", .env = NULL                      },
+		{ .fmt = "/etc/lavalauncher/lavalauncher.conf",           .env = NULL                      }
+	};
+
+	FOR_ARRAY(paths, i)
+	{
+		context.config_path = get_formatted_buffer(paths[i].fmt, paths[i].env);
+		if (! access(context.config_path, F_OK | R_OK))
+		{
+			log_message(1, "[config] Using default configuration file path: %s\n", context.config_path);
+			return true;
+		}
+		free_if_set(context.config_path);
+	}
+
+	log_message(0, "ERROR: Can not find configuration file.\n"
+			"INFO: You can provide a path manually with '-c'.\n");
+	return false;
+}
+
 enum Config_section
 {
 	SECTION_NONE,
@@ -140,12 +171,14 @@ static void error_callback (void *user_data, uint32_t line, const char *msg)
 
 bool parse_config_file (void)
 {
+	if ( context.config_path == NULL && !get_default_config_path() )
+		return false;
+
 	FILE *file = fopen(context.config_path, "r");
 	if ( file == NULL )
 	{
 		log_message(0, "ERROR: Can not open config file \"%s\".\n"
-				"ERROR: fopen: %s\n",
-				context.config_path, strerror(errno));
+				"ERROR: fopen: %s\n", context.config_path, strerror(errno));
 		return false;
 	}
 

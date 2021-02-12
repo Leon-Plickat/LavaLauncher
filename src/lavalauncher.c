@@ -89,36 +89,6 @@ static bool handle_command_flags (int argc, char *argv[])
 	return true;
 }
 
-static bool get_default_config_path (void)
-{
-	struct
-	{
-		const char *fmt;
-		const char *env;
-	} paths[] = {
-		{ .fmt = "./lavalauncher.conf",                           .env = NULL                      },
-		{ .fmt = "%s/lavalauncher/lavalauncher.conf",             .env = getenv("XDG_CONFIG_HOME") },
-		{ .fmt = "%s/.config/lavalauncher/lavalauncher.conf",     .env = getenv("HOME")            },
-		{ .fmt = "/usr/local/etc/lavalauncher/lavalauncher.conf", .env = NULL                      },
-		{ .fmt = "/etc/lavalauncher/lavalauncher.conf",           .env = NULL                      }
-	};
-
-	FOR_ARRAY(paths, i)
-	{
-		context.config_path = get_formatted_buffer(paths[i].fmt, paths[i].env);
-		if (! access(context.config_path, F_OK | R_OK))
-		{
-			log_message(1, "[main] Using default configuration file path: %s\n", context.config_path);
-			return true;
-		}
-		free_if_set(context.config_path);
-	}
-
-	log_message(0, "ERROR: Can not find configuration file.\n"
-			"INFO: You can provide a path manually with '-c'.\n");
-	return false;
-}
-
 static void init_context (void)
 {
 	context.ret         = EXIT_FAILURE;
@@ -166,13 +136,6 @@ reload:
 		return context.ret;
 
 	log_message(1, "[main] LavaLauncher: version=%s\n", LAVALAUNCHER_VERSION);
-
-	/* If the user did not provide the path to a configuration file, try
-	 * the default location.
-	 */
-	if ( context.config_path == NULL )
-		if (! get_default_config_path())
-			return EXIT_FAILURE;
 
 	/* Try to parse the configuration file. If this fails, there might
 	 * already be heap objects, so some cleanup is needed.

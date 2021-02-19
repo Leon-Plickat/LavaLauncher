@@ -53,8 +53,8 @@ struct Lava_touchpoint
 struct Lava_seat
 {
 	struct wl_list link;
-
 	struct wl_seat *wl_seat;
+	uint32_t global_name;
 
 	struct
 	{
@@ -99,6 +99,8 @@ struct Lava_seat
 
 bool create_seat (struct wl_registry *registry, uint32_t name,
 		const char *interface, uint32_t version);
+struct Lava_seat *get_seat_from_global_name (uint32_t name);
+void destroy_seat (struct Lava_seat *seat);
 void destroy_all_seats (void);
 
 #endif

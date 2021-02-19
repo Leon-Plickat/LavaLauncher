@@ -108,7 +108,25 @@ error:
 static void registry_handle_global_remove (void *data, struct wl_registry *registry, uint32_t name)
 {
 	log_message(1, "[registry] Global remove.\n");
-	destroy_output(get_output_from_global_name(name));
+
+	/* Wayland allows binding multiple objects to the same name, but since
+	 * we do not do that in LavaLauncher, we can safely return after
+	 * destroying the first object we find.
+	 */
+
+	struct Lava_output *output = get_output_from_global_name(name);
+	if ( output != NULL )
+	{
+		destroy_output(output);
+		return;
+	}
+
+	struct Lava_seat *seat = get_seat_from_global_name(name);
+	if ( seat != NULL )
+	{
+		destroy_seat(seat);
+		return;
+	}
 }
 
 static const struct wl_registry_listener registry_listener = {

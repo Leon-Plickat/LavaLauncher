@@ -734,6 +734,7 @@ bool create_seat (struct wl_registry *registry, uint32_t name,
 	wl_seat_add_listener(wl_seat, &seat_listener, seat);
 
 	seat->wl_seat = wl_seat;
+	seat->global_name = name;
 
 	seat_init_touch(seat);
 	seat_init_keyboard(seat);
@@ -744,7 +745,16 @@ bool create_seat (struct wl_registry *registry, uint32_t name,
 	return true;
 }
 
-static void destroy_seat (struct Lava_seat *seat)
+struct Lava_seat *get_seat_from_global_name (uint32_t name)
+{
+	struct Lava_seat *seat, *temp;
+	wl_list_for_each_safe(seat, temp, &context.seats, link)
+		if ( seat->global_name == name )
+			return seat;
+	return NULL;
+}
+
+void destroy_seat (struct Lava_seat *seat)
 {
 	seat_release_keyboard(seat);
 	seat_release_touch(seat);

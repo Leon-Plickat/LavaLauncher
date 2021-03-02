@@ -44,10 +44,9 @@ struct Lava_touchpoint
 {
 	struct wl_list            link;
 	int32_t                   id;
-	struct Lava_bar_instance *instance;
-	struct Lava_item         *item;
 
-	struct Lava_item_indicator *indicator;
+	struct Lava_bar_instance  *instance;
+	struct Lava_item_instance *item_instance;
 };
 
 struct Lava_seat
@@ -71,10 +70,15 @@ struct Lava_seat
 	{
 		struct wl_pointer *wl_pointer;
 
+		int click;
+
+		/** Serial of enter event, used for setting the cursor. */
+		uint32_t serial;
+
 		/* Current position. */
 		uint32_t x, y;
-		struct Lava_bar_instance *instance;
-		struct Lava_item *item;
+		struct Lava_bar_instance  *instance;
+		struct Lava_item_instance *item_instance;
 
 		/* Stuff needed to gracefully handle scroll events. */
 		uint32_t   discrete_steps, last_update_time;

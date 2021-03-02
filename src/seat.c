@@ -178,36 +178,30 @@ static void seat_init_keyboard (struct Lava_seat *seat)
  *               *
  *****************/
 static bool create_touchpoint (struct Lava_seat *seat, int32_t id,
-          struct Lava_bar_instance *instance, struct Lava_item *item)
+          struct Lava_bar_instance *instance, struct Lava_item_instance *item_instance)
 {
 	log_message(1, "[seat] Creating touchpoint.\n");
 
 	TRY_NEW(struct Lava_touchpoint, touchpoint, false);
 
-	touchpoint->id       = id;
-	touchpoint->instance = instance;
-	touchpoint->item     = item;
+	touchpoint->id            = id;
+	touchpoint->instance      = instance;
+	touchpoint->item_instance = item_instance;
 
-	touchpoint->indicator = create_indicator(instance);
-	if ( touchpoint->indicator != NULL )
-	{
-		touchpoint->indicator->touchpoint = touchpoint;
-		indicator_set_colour(touchpoint->indicator, &instance->config->indicator_active_colour);
-		move_indicator(touchpoint->indicator, item);
-		indicator_commit(touchpoint->indicator);
-	}
-	else
-		log_message(0, "ERROR: Could not create indicator.\n");
+	item_instance->active_indicator++;
+	item_instance->dirty = true;
 
-	wl_list_insert(&seat->touch.touchpoints, &touchpoint->link);
+	bar_instance_schedule_frame(instance);
 
 	return true;
 }
 
 static void destroy_touchpoint (struct Lava_touchpoint *touchpoint)
 {
-	DESTROY(touchpoint->indicator, destroy_indicator);
+	touchpoint->item_instance->active_indicator--;
+	touchpoint->item_instance->dirty = true;
 	wl_list_remove(&touchpoint->link);
+	bar_instance_schedule_frame(touchpoint->instance);
 	free(touchpoint);
 }
 
@@ -242,7 +236,8 @@ static void touch_handle_up (void *data, struct wl_touch *wl_touch,
 
 	log_message(1, "[input] Touch up.\n");
 
-	item_interaction(touchpoint->item, touchpoint->instance,
+	item_interaction(touchpoint->item_instance->item,
+			touchpoint->instance,
 			INTERACTION_TOUCH,
 			seat->keyboard.modifiers, 0);
 	destroy_touchpoint(touchpoint);
@@ -254,13 +249,15 @@ static void touch_handle_down (void *data, struct wl_touch *wl_touch,
 		wl_fixed_t fx, wl_fixed_t fy)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)data;
-	uint32_t x = (uint32_t)wl_fixed_to_int(fx), y = (uint32_t)wl_fixed_to_int(fy);
+	int32_t x = wl_fixed_to_int(fx), y = wl_fixed_to_int(fy);
 
 	log_message(1, "[input] Touch down: x=%d y=%d\n", x, y);
 
-	struct Lava_bar_instance *instance  = bar_instance_from_surface(surface);
-	struct Lava_item         *item = item_from_coords(instance, x, y);
-	if (! create_touchpoint(seat, id, instance, item))
+	struct Lava_bar_instance  *instance      = bar_instance_from_surface(surface);
+	struct Lava_item_instance *item_instance = bar_instance_get_item_instance_from_coords(instance, x, y);
+	if ( item_instance == NULL )
+		return;
+	if (! create_touchpoint(seat, id, instance, item_instance))
 		log_message(0, "ERROR: could not create touchpoint\n");
 }
 
@@ -277,9 +274,15 @@ static void touch_handle_motion (void *data, struct wl_touch *wl_touch,
 	/* If the item under the touch point is not the same we first touched,
 	 * we simply abort the touch operation.
 	 */
-	uint32_t x = (uint32_t)wl_fixed_to_int(fx), y = (uint32_t)wl_fixed_to_int(fy);
-	if ( item_from_coords(touchpoint->instance, x, y) != touchpoint->item )
+	struct Lava_item_instance *item_instance = bar_instance_get_item_instance_from_coords(
+		touchpoint->instance, wl_fixed_to_int(fx), wl_fixed_to_int(fy));
+	if ( item_instance == NULL )
+	{
 		destroy_touchpoint(touchpoint);
+		return;
+	}
+	if ( item_instance != touchpoint->item_instance )
+		destroy_touchpoint(touchpoint); // TODO [item-rework] move touchpoint instead of killing it
 }
 
 static void touch_handle_cancel (void *raw, struct wl_touch *touch)
@@ -287,10 +290,6 @@ static void touch_handle_cancel (void *raw, struct wl_touch *touch)
 	/* The cancel event means that the compositor has decided to take over
 	 * the touch-input, possibly for gestures, and that therefore we should
 	 * stop caring about all active touchpoints.
-	 *
-	 * The vast majority of such compositor guestures will already be caught
-	 * by touch_handle_motion(), but nothing stops a compositor from having
-	 * "hold for X seconds" as a valid gesture.
 	 */
 
 	struct Lava_seat *seat = (struct Lava_seat *)raw;
@@ -411,20 +410,75 @@ static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial, co
 static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 		uint32_t serial, struct wl_surface *surface)
 {
+	log_message(1, "[input] Pointer left surface.\n");
+
 	struct Lava_seat *seat = (struct Lava_seat *)data;
 
-	DESTROY(seat->pointer.indicator, destroy_indicator);
+	/* Clean up indicators. */
+	if ( seat->pointer.item_instance != NULL )
+	{
+		seat->pointer.item_instance->indicator--;
+		seat->pointer.item_instance->active_indicator -= seat->pointer.click;
+		seat->pointer.item_instance->dirty = true;
+	}
 
 	struct Lava_bar_instance *instance = seat->pointer.instance;
 
-	seat->pointer.x        = 0;
-	seat->pointer.y        = 0;
-	seat->pointer.instance = NULL;
-	seat->pointer.item     = NULL;
+	seat->pointer.x             = 0;
+	seat->pointer.y             = 0;
+	seat->pointer.instance      = NULL;
+	seat->pointer.item_instance = NULL;
+	seat->pointer.click         = 0;
 
-	bar_instance_pointer_leave(instance);
+	bar_instance_pointer_leave(instance); // TODO [item-rework] instance->hover will be an int instead of bool
+	bar_instance_schedule_frame(instance);
+}
 
-	log_message(1, "[input] Pointer left surface.\n");
+static void pointer_process_motion (struct Lava_seat *seat)
+{
+	struct Lava_item_instance *item_instance = bar_instance_get_item_instance_from_coords(
+			seat->pointer.instance, (int32_t)seat->pointer.x, (int32_t)seat->pointer.y);
+
+	/* Remove indicator from previous item_instance, if exists. */
+	bool need_frame = false;
+	if ( seat->pointer.item_instance != NULL )
+	{
+		if ( item_instance == seat->pointer.item_instance )
+			return;
+
+		seat->pointer.item_instance->indicator--;
+		seat->pointer.item_instance->active_indicator -= seat->pointer.click;
+		seat->pointer.item_instance->dirty = true;
+
+		need_frame = true;
+	}
+
+	seat->pointer.item_instance = item_instance;
+
+	/* Add pointer to new item_instance, if exists. */
+	if ( item_instance == NULL )
+	{
+		seat_pointer_set_cursor(seat, seat->pointer.serial,
+				str_orelse(seat->pointer.instance->config->cursor_name, "default")); // TODO [item-rework] we need a default cursor config option
+	}
+	else
+	{
+		if ( item_instance->item->type == TYPE_BUTTON )
+				seat_pointer_set_cursor(seat, seat->pointer.serial,
+						str_orelse(seat->pointer.instance->config->cursor_name, "pointer"));
+		else
+			seat_pointer_set_cursor(seat, seat->pointer.serial,
+						str_orelse(seat->pointer.instance->config->cursor_name, "default"));
+
+		seat->pointer.item_instance->indicator++;
+		seat->pointer.item_instance->active_indicator += seat->pointer.click;
+		seat->pointer.item_instance->dirty = true;
+
+		need_frame = true;
+	}
+
+	if (need_frame)
+		bar_instance_schedule_frame(seat->pointer.instance);
 }
 
 static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
@@ -432,64 +486,26 @@ static void pointer_handle_enter (void *data, struct wl_pointer *wl_pointer,
 		wl_fixed_t x, wl_fixed_t y)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)data;
-
+	seat->pointer.serial = serial;
 	if ( NULL == (seat->pointer.instance = bar_instance_from_surface(surface)) )
+	{
+		log_message(0, "ERROR: Pointer entered unexpected surface.\n");
 		return;
-
-	seat_pointer_set_cursor(seat, serial, str_orelse(seat->pointer.instance->config->cursor_name, "pointer"));
-
-	bar_instance_pointer_enter(seat->pointer.instance);
-
+	}
 	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
 	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);
-
 	log_message(1, "[input] Pointer entered surface: x=%d y=%d\n",
 				seat->pointer.x, seat->pointer.y);
+	pointer_process_motion(seat);
 }
 
 static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
 		uint32_t time, wl_fixed_t x, wl_fixed_t y)
 {
 	struct Lava_seat *seat = (struct Lava_seat *)data;
-
 	seat->pointer.x = (uint32_t)wl_fixed_to_int(x);
 	seat->pointer.y = (uint32_t)wl_fixed_to_int(y);
-
-	/* It is enough to only update the indicator every other motion event. */
-	static bool skip = false;
-	if (skip)
-	{
-		skip = false;
-		return;
-	}
-	else
-		skip = true;
-
-	struct Lava_item *item = item_from_coords(seat->pointer.instance,
-			seat->pointer.x, seat->pointer.y);
-
-	if ( item == NULL || item->type != TYPE_BUTTON )
-	{
-		DESTROY(seat->pointer.indicator, destroy_indicator);
-		return;
-	}
-
-	if ( seat->pointer.indicator == NULL )
-	{
-		seat->pointer.indicator = create_indicator(seat->pointer.instance);
-		if ( seat->pointer.indicator == NULL )
-		{
-			log_message(0, "ERROR: Could not create indicator.\n");
-			return;
-		}
-		seat->pointer.indicator->seat = seat;
-
-		indicator_set_colour(seat->pointer.indicator,
-				&seat->pointer.instance->config->indicator_hover_colour);
-	}
-
-	move_indicator(seat->pointer.indicator, item);
-	indicator_commit(seat->pointer.indicator);
+	pointer_process_motion(seat);
 }
 
 static void pointer_handle_button (void *data, struct wl_pointer *wl_pointer,
@@ -498,55 +514,45 @@ static void pointer_handle_button (void *data, struct wl_pointer *wl_pointer,
 	struct Lava_seat *seat = data;
 	if ( seat->pointer.instance == NULL )
 	{
-		log_message(0, "ERROR: Button press could not be handled: "
-				"Bar could not be found.\n");
+		log_message(0, "ERROR: Button press on unexpected surface.\n");
 		return;
 	}
 
-	/* Only interact with the item if the pointer button was pressed and
-	 * released over the same item on the bar.
-	 */
 	if ( button_state == WL_POINTER_BUTTON_STATE_PRESSED )
 	{
-		if ( seat->pointer.indicator != NULL )
-		{
-			indicator_set_colour(seat->pointer.indicator,
-					&seat->pointer.instance->config->indicator_active_colour);
-			indicator_commit(seat->pointer.indicator);
-		}
+		seat->pointer.click++;
 
-		log_message(1, "[input] Button pressed: x=%d y=%d\n",
-					seat->pointer.x, seat->pointer.y);
-		seat->pointer.item = item_from_coords(seat->pointer.instance,
-				seat->pointer.x, seat->pointer.y);
+		log_message(1, "[input] Button pressed: x=%d y=%d click=%d\n",
+					seat->pointer.x, seat->pointer.y,
+					seat->pointer.click);
+
+		if ( seat->pointer.item_instance == NULL )
+			return;
+
+		seat->pointer.item_instance->active_indicator++;
+		seat->pointer.item_instance->dirty = true;
 	}
 	else
 	{
-		if ( seat->pointer.indicator != NULL )
-		{
-			indicator_set_colour(seat->pointer.indicator,
-					&seat->pointer.instance->config->indicator_hover_colour);
-			indicator_commit(seat->pointer.indicator);
-		}
+		seat->pointer.click--;
 
-		log_message(1, "[input] Button released: x=%d y=%d\n",
-					seat->pointer.x, seat->pointer.y);
+		log_message(1, "[input] Button released: x=%d y=%d click=%d\n",
+					seat->pointer.x, seat->pointer.y,
+					seat->pointer.click);
 
-		if ( seat->pointer.item == NULL )
+		if ( seat->pointer.item_instance == NULL )
 			return;
 
-		struct Lava_item *item = item_from_coords(seat->pointer.instance,
-				seat->pointer.x, seat->pointer.y);
+		seat->pointer.item_instance->active_indicator--;
+		seat->pointer.item_instance->dirty = true;
 
-		if ( item != seat->pointer.item )
-			return;
-
-		seat->pointer.item = NULL;
-
-		item_interaction(item, seat->pointer.instance,
+		item_interaction(seat->pointer.item_instance->item,
+				seat->pointer.instance,
 				INTERACTION_MOUSE_BUTTON,
 				seat->keyboard.modifiers, button);
 	}
+
+	bar_instance_schedule_frame(seat->pointer.instance);
 }
 
 static void pointer_handle_axis (void *data, struct wl_pointer *wl_pointer,
@@ -559,8 +565,7 @@ static void pointer_handle_axis (void *data, struct wl_pointer *wl_pointer,
 	struct Lava_seat *seat = data;
 	if ( seat->pointer.instance == NULL )
 	{
-		log_message(0, "ERROR: Scrolling could not be handled: "
-				"Bar instance could not be found.\n");
+		log_message(0, "ERROR: Scrolling on unexpected surface.\n");
 		return;
 	}
 
@@ -582,8 +587,7 @@ static void pointer_handle_axis_discrete (void *data,
 	struct Lava_seat *seat = data;
 	if ( seat->pointer.instance == NULL )
 	{
-		log_message(0, "ERROR: Discrete scrolling could not be handled: "
-				"Bar instance could not be found.\n");
+		log_message(0, "ERROR: Scrolling on unexpected surface.\n");
 		return;
 	}
 
@@ -596,6 +600,8 @@ static void pointer_handle_frame (void *data, struct wl_pointer *wl_pointer)
 	if ( seat->pointer.instance == NULL )
 		return;
 
+	if ( seat->pointer.item_instance == NULL )
+		return;
 
 	int value_change;
 	uint32_t direction; /* 0 == down, 1 == up */
@@ -604,13 +610,11 @@ static void pointer_handle_frame (void *data, struct wl_pointer *wl_pointer)
 	else
 		direction = 1, value_change = CONTINUOUS_SCROLL_THRESHHOLD;
 
-	struct Lava_item *item = item_from_coords(seat->pointer.instance,
-			seat->pointer.x, seat->pointer.y);
-
 	if (seat->pointer.discrete_steps)
 	{
 		for (uint32_t i = 0; i < seat->pointer.discrete_steps; i++)
-			item_interaction(item, seat->pointer.instance,
+			item_interaction(seat->pointer.item_instance->item,
+					seat->pointer.instance,
 					INTERACTION_MOUSE_SCROLL,
 					seat->keyboard.modifiers, direction);
 
@@ -619,7 +623,8 @@ static void pointer_handle_frame (void *data, struct wl_pointer *wl_pointer)
 	}
 	else while ( abs(seat->pointer.value) > CONTINUOUS_SCROLL_THRESHHOLD )
 	{
-		item_interaction(item, seat->pointer.instance,
+		item_interaction(seat->pointer.item_instance->item,
+				seat->pointer.instance,
 				INTERACTION_MOUSE_SCROLL,
 				seat->keyboard.modifiers, direction);
 		seat->pointer.value += value_change;
@@ -661,6 +666,15 @@ static const struct wl_pointer_listener pointer_listener = {
 
 static void seat_release_pointer (struct Lava_seat *seat)
 {
+	if ( seat->pointer.item_instance != NULL )
+	{
+		seat->pointer.item_instance->indicator--;
+		seat->pointer.item_instance->active_indicator -= seat->pointer.click;
+		seat->pointer.item_instance->dirty = true;
+		bar_instance_schedule_frame(seat->pointer.instance);
+		seat->pointer.item_instance = NULL;
+		seat->pointer.click = 0;
+	}
 	seat_pointer_unset_cursor(seat);
 	DESTROY_NULL(seat->pointer.wl_pointer, wl_pointer_release);
 }
@@ -678,15 +692,15 @@ static void seat_init_pointer (struct Lava_seat *seat)
 	seat->pointer.x                = 0;
 	seat->pointer.y                = 0;
 	seat->pointer.instance         = NULL;
-	seat->pointer.item             = NULL;
+	seat->pointer.item_instance    = NULL;
 	seat->pointer.discrete_steps   = 0;
 	seat->pointer.last_update_time = 0;
 	seat->pointer.value            = wl_fixed_from_int(0);
-	seat->pointer.indicator        = NULL;
 	seat->pointer.cursor_surface   = NULL;
 	seat->pointer.cursor_theme     = NULL;
 	seat->pointer.cursor_image     = NULL;
 	seat->pointer.cursor           = NULL;
+	seat->pointer.click            = 0;
 }
 
 /**********

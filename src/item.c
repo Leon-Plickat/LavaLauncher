@@ -403,7 +403,7 @@ static bool spacer_set_length (struct Lava_item *spacer, const char *length)
 		log_message(0, "ERROR: Spacer size must be greater than 0.\n");
 		return false;
 	}
-	spacer->length = (unsigned int)len;
+	spacer->spacer_length = (uint32_t)len;
 	return true;
 }
 
@@ -462,72 +462,10 @@ bool create_item (enum Item_type type)
 	TRY_NEW(struct Lava_item, item, false);
 
 	context.last_item = item;
-	item->index    = 0;
-	item->ordinate = 0;
-	item->length   = 0;
 	item->img      = NULL;
 	item->type     = type;
 	wl_list_init(&item->commands);
 	wl_list_insert(&context.items, &item->link);
-	return true;
-}
-
-/* Return pointer to Lava_item struct from item list which includes the
- * given surface-local coordinates on the surface of the given output.
- */
-struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t x, uint32_t y)
-{
-	struct Lava_bar_configuration *config = instance->config;
-	uint32_t ordinate;
-	if ( config->orientation == ORIENTATION_HORIZONTAL )
-		ordinate = x - instance->item_area_dim.x;
-	else
-		ordinate = y - instance->item_area_dim.y;
-
-	struct Lava_item *item;
-	wl_list_for_each_reverse(item, &context.items, link)
-	{
-		if ( ordinate >= item->ordinate
-				&& ordinate < item->ordinate + item->length )
-			return item;
-	}
-	return NULL;
-}
-
-unsigned int get_item_length_sum (void)
-{
-	unsigned int sum = 0;
-	struct Lava_item *item;
-	wl_list_for_each_reverse(item, &context.items, link)
-		sum += item->length;
-	return sum;
-}
-
-bool finalize_all_items (void)
-{
-	// TODO do we need item_amount to be globally available in context?
-	context.item_amount = wl_list_length(&context.items);
-	if ( context.item_amount == 0 )
-	{
-		log_message(0, "ERROR: No items configured.\n");
-		return false;
-	}
-
-	unsigned int index = 0, ordinate = 0;
-	struct Lava_item *item;
-	wl_list_for_each_reverse(item, &context.items, link)
-	{
-		// TODO XXX set size to -1, which should cause it to automatically be config->size
-		if ( item->type == TYPE_BUTTON )
-			item->length = context.default_config->size;
-
-		item->index    = index;
-		item->ordinate = ordinate;
-
-		index++;
-		ordinate += item->length;
-	}
-
 	return true;
 }
 

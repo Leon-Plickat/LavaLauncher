@@ -1,7 +1,7 @@
 /*
  * LavaLauncher - A simple launcher panel for Wayland
  *
- * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 - 2021 Leon Henrik Plickat
  * Copyright (C) 2020 Nicolai Dagestad
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@
 #include"types/buffer.h"
 
 struct Lava_item;
+struct Lava_item_instance;
 
 enum Bar_position
 {
@@ -55,13 +56,6 @@ enum Condition_resolution
 	RESOLUTION_WIDER_THAN_HIGH,
 	RESOLUTION_HIGHER_THEN_WIDE,
 	RESOLUTION_ALL
-};
-
-enum Item_indicator_style
-{
-	STYLE_RECTANGLE,
-	STYLE_ROUNDED_RECTANGLE,
-	STYLE_CIRCLE
 };
 
 enum Hidden_mode
@@ -100,7 +94,6 @@ struct Lava_bar_configuration
 	uint32_t indicator_padding;
 	colour_t indicator_hover_colour;
 	colour_t indicator_active_colour;
-	enum Item_indicator_style indicator_style;
 
 	/* If only_output is NULL, a surface will be created for all outputs.
 	 * Otherwise only on the output which name is equal to *only_output.
@@ -134,10 +127,13 @@ struct Lava_bar_instance
 {
 	struct Lava_bar_configuration *config;
 	struct Lava_output            *output;
-	struct wl_surface             *bar_surface;
-	struct wl_surface             *icon_surface;
-	struct wl_subsurface          *subsurface;
+	struct wl_surface             *wl_surface;
 	struct zwlr_layer_surface_v1  *layer_surface;
+
+	struct wl_callback *frame_callback;
+
+	struct Lava_item_instance *item_instances;
+	int active_items;
 
 	ubox_t surface_dim;
 	ubox_t surface_hidden_dim;
@@ -147,29 +143,14 @@ struct Lava_bar_instance
 
 	bool hidden, hover;
 
-	struct Lava_buffer  bar_buffers[2];
-	struct Lava_buffer *current_bar_buffer;
-
-	struct Lava_buffer  icon_buffers[2];
-	struct Lava_buffer *current_icon_buffer;
+	struct Lava_buffer  buffers[2];
+	struct Lava_buffer *current_buffer;
 
 	struct wl_list indicators;
 
+	bool dirty;
+
 	bool configured;
-};
-
-struct Lava_item_indicator
-{
-	struct wl_list link;
-
-	struct Lava_seat         *seat;
-	struct Lava_touchpoint   *touchpoint;
-	struct Lava_bar_instance *instance;
-
-	struct wl_surface    *indicator_surface;
-	struct wl_subsurface *indicator_subsurface;
-	struct Lava_buffer    indicator_buffers[2];
-	struct Lava_buffer   *current_indicator_buffer;
 };
 
 bool create_bar_config (void);
@@ -187,12 +168,9 @@ void update_bar_instance (struct Lava_bar_instance *instance, bool need_new_dime
 struct Lava_bar_instance *bar_instance_from_surface (struct wl_surface *surface);
 void bar_instance_pointer_leave (struct Lava_bar_instance *instance);
 void bar_instance_pointer_enter (struct Lava_bar_instance *instance);
-
-void destroy_indicator (struct Lava_item_indicator *indicator);
-struct Lava_item_indicator *create_indicator (struct Lava_bar_instance *instance);
-void move_indicator (struct Lava_item_indicator *indicator, struct Lava_item *item);
-void indicator_set_colour (struct Lava_item_indicator *indicator, colour_t *colour);
-void indicator_commit (struct Lava_item_indicator *indicator);
+struct Lava_item_instance *bar_instance_get_item_instance_from_coords (
+		struct Lava_bar_instance *instance, int32_t x, int32_t y);
+void bar_instance_schedule_frame (struct Lava_bar_instance *instance);
 
 #endif
 

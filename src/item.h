@@ -59,10 +59,26 @@ struct Lava_item
 	struct wl_list link;
 	enum Item_type type;
 
+	uint32_t spacer_length;
+
 	image_t *img;
 	struct wl_list commands;
+};
 
-	unsigned int index, ordinate, length;
+struct Lava_item_instance
+{
+	struct Lava_item *item;
+	int32_t x, y;
+	uint32_t w, h;
+
+	int indicator;
+	int active_indicator;
+
+	/** Is the item displayed on this bar instance? */
+	bool active;
+
+	/** Does the item need to be redrawn? */
+	bool dirty;
 };
 
 bool create_item (enum Item_type type);
@@ -70,9 +86,6 @@ bool item_set_variable (struct Lava_item *item, const char *variable,
 		const char *value, uint32_t line);
 void item_interaction (struct Lava_item *item, struct Lava_bar_instance *instance,
 		enum Interaction_type type, uint32_t modifiers, uint32_t special);
-struct Lava_item *item_from_coords (struct Lava_bar_instance *instance, uint32_t x, uint32_t y);
-unsigned int get_item_length_sum (void);
-bool finalize_all_items (void);
 void destroy_all_items (void);
 
 #endif

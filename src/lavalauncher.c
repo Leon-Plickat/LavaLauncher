@@ -105,7 +105,6 @@ static void init_context (void)
 	context.registry           = NULL;
 
 	context.compositor         = NULL;
-	context.subcompositor      = NULL;
 	context.shm                = NULL;
 	context.layer_shell        = NULL;
 	context.xdg_output_manager = NULL;
@@ -144,8 +143,12 @@ reload:
 		goto exit;
 	if (! finalize_all_bar_configs())
 		goto exit;
-	if (! finalize_all_items())
+	context.item_amount = wl_list_length(&context.items);
+	if ( context.item_amount == 0 )
+	{
+		log_message(0, "ERROR: No items configured.\n");
 		goto exit;
+	}
 
 	context.ret = EXIT_SUCCESS;
 

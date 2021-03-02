@@ -155,9 +155,6 @@ Every instance of this section will add a configurattion set.
 *indicator-padding* = <size>
 	Padding around the icon indicator. Defaults to _0_.
 
-*indicator-style* = rectangle|circle|rounded-rectangle
-	Style of the icon indicator. Defaults to _rounded-rectangle_.
-
 *layer* = orverlay|top|bottom|background
 	Layer of the bar surface. Defaults to _bottom_.
 

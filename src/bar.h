@@ -21,7 +21,7 @@
 #ifndef LAVALAUNCHER_BAR_H
 #define LAVALAUNCHER_BAR_H
 
-#include<wayland-server.h>
+#include<wayland-client.h>
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 
 #include"types/colour_t.h"

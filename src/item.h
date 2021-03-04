@@ -21,7 +21,7 @@
 #define LAVALAUNCHER_ITEM_H
 
 #include<stdbool.h>
-#include<wayland-server.h>
+#include<wayland-client.h>
 #include<cairo/cairo.h>
 
 #include"types/image_t.h"

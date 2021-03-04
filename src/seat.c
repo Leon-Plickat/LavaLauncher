@@ -30,7 +30,6 @@
 #include<assert.h>
 
 #include<wayland-client.h>
-#include<wayland-client-protocol.h>
 #include<wayland-cursor.h>
 
 #include"wlr-layer-shell-unstable-v1-protocol.h"
@@ -335,6 +334,8 @@ static void seat_init_touch (struct Lava_seat *seat)
  *  Cursor  *
  *          *
  ************/
+// TODO listen for wl_buffer release event?
+
 static void seat_pointer_unset_cursor (struct Lava_seat *seat)
 {
 	DESTROY_NULL(seat->pointer.cursor_theme, wl_cursor_theme_destroy);

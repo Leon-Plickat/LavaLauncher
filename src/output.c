@@ -26,9 +26,7 @@
 #include<string.h>
 #include<assert.h>
 
-#include<wayland-server.h>
 #include<wayland-client.h>
-#include<wayland-client-protocol.h>
 
 #include"river-status-unstable-v1-protocol.h"
 #include"xdg-output-unstable-v1-protocol.h"
@@ -320,7 +318,7 @@ void destroy_output (struct Lava_output *output)
 	DESTROY(output->bar_instance, destroy_bar_instance);
 	free_if_set(output->name);
 	wl_list_remove(&output->link);
-	wl_output_destroy(output->wl_output);
+	wl_output_destroy(output->wl_output); // TODO should thos be wl_output_release()?
 	free(output);
 }
 

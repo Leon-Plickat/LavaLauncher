@@ -20,7 +20,7 @@
 #ifndef LAVALAUNCHER_OUTPUT_H
 #define LAVALAUNCHER_OUTPUT_H
 
-#include<wayland-server.h>
+#include<wayland-client.h>
 
 enum Lava_output_status
 {

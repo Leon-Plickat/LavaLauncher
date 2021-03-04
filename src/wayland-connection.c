@@ -28,9 +28,7 @@
 #include<string.h>
 #include<errno.h>
 
-#include<wayland-server.h>
 #include<wayland-client.h>
-#include<wayland-client-protocol.h>
 
 #include"wlr-layer-shell-unstable-v1-protocol.h"
 #include"river-status-unstable-v1-protocol.h"
@@ -175,6 +173,8 @@ static bool init_wayland (void)
 	wl_registry_add_listener(context.registry, &registry_listener, NULL);
 
 	/* Allow registry listeners to catch up. */
+	// TODO maybe instead of a roundtrip, use wl_display.sync immediately after wl_display.get_registry,
+	//      to get an event when the first wave of registry stuff is done. Less roundtrips are always great
 	if ( wl_display_roundtrip(context.display) == -1 )
 	{
 		log_message(0, "ERROR: Roundtrip failed.\n");

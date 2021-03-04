@@ -738,7 +738,7 @@ attach:
 	wl_surface_attach(instance->wl_surface, instance->current_buffer->buffer, 0, 0);
 }
 
-static void frame_callback_handle_done(void *data, struct wl_callback *wl_callback, uint32_t time)
+static void frame_callback_handle_done (void *data, struct wl_callback *wl_callback, uint32_t time)
 {
 	struct Lava_bar_instance *instance = (struct Lava_bar_instance *)data;
 	wl_callback_destroy(wl_callback);

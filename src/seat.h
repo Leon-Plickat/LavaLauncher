@@ -107,5 +107,7 @@ struct Lava_seat *get_seat_from_global_name (uint32_t name);
 void destroy_seat (struct Lava_seat *seat);
 void destroy_all_seats (void);
 
+void destroy_touchpoint (struct Lava_touchpoint *touchpoint);
+
 #endif
 

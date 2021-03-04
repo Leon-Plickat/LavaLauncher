@@ -38,6 +38,7 @@
 #include"util.h"
 #include"output.h"
 #include"bar.h"
+#include"seat.h"
 
 /* No-Op function. */
 static void noop () {}
@@ -295,6 +296,26 @@ void destroy_output (struct Lava_output *output)
 {
 	if ( output == NULL )
 		return;
+
+	/* A seat might still be interacting with this outputs bar instance.
+	 * We clean it up to avoid the use-after-free we'd otherwise get when
+	 * the seat gets destroyed.
+	 */
+	struct Lava_seat *seat;
+	struct Lava_touchpoint *tp, *tmp;
+	wl_list_for_each(seat, &context.seats, link)
+	{
+		if ( seat->pointer.instance == output->bar_instance )
+		{
+			seat->pointer.instance      = NULL;
+			seat->pointer.item_instance = NULL;
+		}
+
+		wl_list_for_each_safe(tp, tmp, &seat->touch.touchpoints, link)
+			if ( tp->instance == output->bar_instance )
+				destroy_touchpoint(tp);
+	}
+
 	DESTROY(output->river_status, zriver_output_status_v1_destroy);
 	DESTROY(output->bar_instance, destroy_bar_instance);
 	free_if_set(output->name);

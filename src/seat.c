@@ -196,7 +196,7 @@ static bool create_touchpoint (struct Lava_seat *seat, int32_t id,
 	return true;
 }
 
-static void destroy_touchpoint (struct Lava_touchpoint *touchpoint)
+void destroy_touchpoint (struct Lava_touchpoint *touchpoint)
 {
 	touchpoint->item_instance->active_indicator--;
 	touchpoint->item_instance->dirty = true;

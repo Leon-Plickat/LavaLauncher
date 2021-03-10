@@ -150,24 +150,26 @@ reload:
 		goto exit;
 	}
 
-	context.ret = EXIT_SUCCESS;
-
 	struct Lava_event_loop loop;
-	event_loop_init(&loop);
+	if (! event_loop_init(&loop, 3))
+		goto exit;
 	event_loop_add_event_source(&loop, &wayland_source);
+
 #if WATCH_CONFIG
 	if (context.watch)
 		event_loop_add_event_source(&loop, &inotify_source);
 #endif
+
 #if HANDLE_SIGNALS
 	event_loop_add_event_source(&loop, &signal_source);
 #endif
 
-	if (! event_loop_run(&loop))
-		context.ret = EXIT_FAILURE;
+	context.ret = event_loop_run(&loop) ? EXIT_SUCCESS : EXIT_FAILURE;
 
 exit:
 	free(context.config_path);
+
+	event_loop_finish(&loop);
 
 	destroy_all_items();
 	destroy_all_bar_configs();

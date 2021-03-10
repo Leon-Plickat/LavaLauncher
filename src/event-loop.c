@@ -29,17 +29,37 @@
 #include"event-loop.h"
 #include"util.h"
 
-void event_loop_init (struct Lava_event_loop *loop)
+bool event_loop_init (struct Lava_event_loop *loop, nfds_t capacity)
 {
 	loop->fd_count = 0;
-	wl_list_init(&loop->sources);
+	loop->capacity = capacity;
+	loop->sources = malloc(sizeof(struct Lava_event_source) * capacity);
+	if ( loop->sources == NULL )
+	{
+		log_message(0, "ERROR: Failed to allocate.\n");
+		return false;
+	}
+	return true;
+}
+
+void event_loop_finish (struct Lava_event_loop *loop)
+{
+	if ( loop->sources != NULL )
+		free(loop->sources);
 }
 
 void event_loop_add_event_source (struct Lava_event_loop *loop, struct Lava_event_source *source)
 {
-	source->index = loop->fd_count;
+	/* We don't check for overflow because the maximum amount of event
+	 * sources is known at compile time. As long as we are careful with the
+	 * capacity we pass event_loop_init() we'll be fine.
+	 */
+	loop->sources[loop->fd_count].init       = source->init;
+	loop->sources[loop->fd_count].finish     = source->finish;
+	loop->sources[loop->fd_count].flush      = source->flush;
+	loop->sources[loop->fd_count].handle_in  = source->handle_in;
+	loop->sources[loop->fd_count].handle_out = source->handle_out;
 	loop->fd_count++;
-	wl_list_insert(&loop->sources, &source->link);
 }
 
 bool event_loop_run (struct  Lava_event_loop *loop)
@@ -50,14 +70,13 @@ bool event_loop_run (struct  Lava_event_loop *loop)
 	if ( fds == NULL )
 	{
 		log_message(0, "ERROR: Can not allocate.\n");
-		return NULL;
+		return false;
 	}
 	bool ret = true;
 
 	/* Call init functions */
-	struct Lava_event_source *source;
-	wl_list_for_each(source, &loop->sources, link)
-		if (! (source->init(&fds[source->index])))
+	for (nfds_t i = 0; i < loop->fd_count; i++)
+		if (! (loop->sources[i].init(&fds[i])))
 		{
 			ret = false;
 			goto exit;
@@ -68,8 +87,8 @@ bool event_loop_run (struct  Lava_event_loop *loop)
 		errno = 0;
 
 		/* Call flush functions */
-		wl_list_for_each(source, &loop->sources, link)
-			if (! (source->flush(&fds[source->index])))
+		for (nfds_t i = 0; i < loop->fd_count; i++)
+			if (! (loop->sources[i].flush(&fds[i])))
 			{
 				ret = false;
 				goto exit;
@@ -86,20 +105,20 @@ bool event_loop_run (struct  Lava_event_loop *loop)
 		}
 
 		/* Check for events and call handlers */
-		wl_list_for_each(source, &loop->sources, link)
+		for (nfds_t i = 0; i < loop->fd_count; i++)
 		{
-			if ( fds[source->index].revents & POLLIN )
+			if ( fds[i].revents & POLLIN )
 			{
-				if (! (source->handle_in(&fds[source->index])))
+				if (! (loop->sources[i].handle_in(&fds[i])))
 				{
 					ret = false;
 					goto exit;
 				}
 			}
 
-			if ( fds[source->index].revents & POLLOUT )
+			if ( fds[i].revents & POLLOUT )
 			{
-				if (! (source->handle_out(&fds[source->index])))
+				if (! (loop->sources[i].handle_out(&fds[i])))
 				{
 					ret = false;
 					goto exit;
@@ -110,9 +129,9 @@ bool event_loop_run (struct  Lava_event_loop *loop)
 
 exit:
 	/* Call finish functions */
-	wl_list_for_each(source, &loop->sources, link)
-		if (! (source->finish(&fds[source->index])))
-				ret = false;
+	for (nfds_t i = 0; i < loop->fd_count; i++)
+		if (! (loop->sources[i].finish(&fds[i])))
+			ret = false;
 
 	free(fds);
 	return ret;

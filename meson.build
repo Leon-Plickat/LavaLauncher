@@ -14,8 +14,8 @@ cc = meson.get_compiler('c')
 
 add_project_arguments(cc.get_supported_arguments([
   '-fsigned-char',
+  '-Wno-pointer-arith',
   '-Wno-unused-parameter',
-  '-Wpointer-arith',
   '-Wformat-security',
   '-Wunreachable-code',
   '-Wformat',

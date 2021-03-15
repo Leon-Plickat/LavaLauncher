@@ -81,7 +81,9 @@ static void registry_handle_global (void *data, struct wl_registry *registry,
 	}
 	else if (! strcmp(interface, wl_output_interface.name))
 	{
-		if (! create_output(registry, name, interface, version))
+		struct wl_output *wl_output = wl_registry_bind(registry, name,
+			&wl_output_interface, version);
+		if (! create_output(registry, name, wl_output))
 			goto error;
 	}
 	else if (! strcmp(interface, zriver_status_manager_v1_interface.name))
@@ -146,6 +148,38 @@ static char *check_for_required_interfaces (void)
 	return NULL;
 }
 
+static void sync_handle_done (void *data, struct wl_callback *wl_callback, uint32_t other_data)
+{
+	log_message(1, "[registry:sync] Initial registry advertising is done.\n");
+	wl_callback_destroy(wl_callback);
+	context.sync = NULL;
+
+	/* Initial burst of registry advertising is done, check if everything we
+	 * need is available.
+	 */
+	const char *missing = check_for_required_interfaces();
+	if ( missing != NULL )
+	{
+		log_message(0, "ERROR: Wayland compositor does not support %s.\n", missing);
+		context.loop = false;
+		context.ret  = EXIT_FAILURE;
+		return;
+	}
+
+	/* Configure all outputs that were created before xdg_output_manager or
+	 * the layer_shell were available.
+	 */
+	log_message(2, "[registry:sync] Catching up on output configuration.\n");
+	struct Lava_output *op;
+	wl_list_for_each(op, &context.outputs, link)
+		if ( op->status == OUTPUT_STATUS_UNCONFIGURED )
+			configure_output(op);
+}
+
+static const struct wl_callback_listener sync_callback_listener = {
+	.done = sync_handle_done,
+};
+
 /****************
  *              *
  *  Connection  *
@@ -155,48 +189,34 @@ static bool init_wayland (void)
 {
 	log_message(1, "[registry] Init Wayland.\n");
 
-	/* Connect to Wayland server. */ // TODO does the display really need to be global?
+	/* We query the display name here instead of letting wl_display_connect()
+	 * figure it out itself, because libwayland (for legacy reasons) falls
+	 * back to using "wayland-0" when $WAYLAND_DISPLAY is not set, which is
+	 * generally not desirable.
+	 */
+	const char *display_name = getenv("WAYLAND_DISPLAY");
+	if ( display_name == NULL )
+	{
+		log_message(0, "ERROR: WAYLAND_DISPLAY is not set.\n");
+		return false;
+	}
+
+	/* Connect to Wayland server. */
 	log_message(2, "[registry] Connecting to server.\n");
-	if ( NULL == (context.display = wl_display_connect(NULL)) )
+	context.display = wl_display_connect(display_name);
+	if ( context.display == NULL )
 	{
 		log_message(0, "ERROR: Can not connect to a Wayland server.\n");
 		return false;
 	}
 
-	/* Get registry and add listeners. */ // TODO does registry really need to be global?
+	/* Get registry and add listeners. */
 	log_message(2, "[registry] Get wl_registry.\n");
-	if ( NULL == (context.registry = wl_display_get_registry(context.display)) )
-	{
-		log_message(0, "ERROR: Can not get registry.\n");
-		return false;
-	}
+	context.registry = wl_display_get_registry(context.display);
 	wl_registry_add_listener(context.registry, &registry_listener, NULL);
 
-	/* Allow registry listeners to catch up. */
-	// TODO maybe instead of a roundtrip, use wl_display.sync immediately after wl_display.get_registry,
-	//      to get an event when the first wave of registry stuff is done. Less roundtrips are always great
-	if ( wl_display_roundtrip(context.display) == -1 )
-	{
-		log_message(0, "ERROR: Roundtrip failed.\n");
-		return false;
-	}
-
-	const char *missing = check_for_required_interfaces();
-	if ( missing != NULL )
-	{
-		log_message(0, "ERROR: Wayland compositor does not support %s.\n", missing);
-		return false;
-	}
-
-	/* Configure all outputs that were created before xdg_output_manager or
-	 * the layer_shell were available.
-	 */
-	log_message(2, "[registry] Catching up on output configuration.\n");
-	struct Lava_output *op, *temp;
-	wl_list_for_each_safe(op, temp, &context.outputs, link)
-		if ( op->status == OUTPUT_STATUS_UNCONFIGURED )
-			if (! configure_output(op))
-				return false;
+	context.sync = wl_display_sync(context.display);
+	wl_callback_add_listener(context.sync, &sync_callback_listener, NULL);
 
 	return true;
 }
@@ -204,10 +224,18 @@ static bool init_wayland (void)
 /* Finish him! */
 static void finish_wayland (void)
 {
+	if ( context.display == NULL )
+		return;
+
 	log_message(1, "[registry] Finish Wayland.\n");
 
-	destroy_all_outputs();
-	destroy_all_seats();
+	struct Lava_seat *seat, *stemp;
+	wl_list_for_each_safe(seat, stemp, &context.seats, link)
+		destroy_seat(seat);
+
+	struct Lava_output *output, *otemp;
+	wl_list_for_each_safe(output, otemp, &context.outputs, link)
+		destroy_output(output);
 
 	log_message(2, "[registry] Destroying Wayland objects.\n");
 
@@ -215,14 +243,13 @@ static void finish_wayland (void)
 	DESTROY(context.compositor, wl_compositor_destroy);
 	DESTROY(context.shm, wl_shm_destroy);
 	DESTROY(context.registry, wl_registry_destroy);
+	DESTROY(context.sync, wl_callback_destroy);
+	DESTROY(context.xdg_output_manager, zxdg_output_manager_v1_destroy);
 
 	DESTROY(context.river_status_manager, zriver_status_manager_v1_destroy);
 
-	if ( context.display != NULL )
-	{
-		log_message(2, "[registry] Diconnecting from server.\n");
-		wl_display_disconnect(context.display);
-	}
+	log_message(2, "[registry] Diconnecting from server.\n");
+	wl_display_disconnect(context.display);
 }
 
 /**************************

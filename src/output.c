@@ -1,7 +1,7 @@
 /*
  * LavaLauncher - A simple launcher panel for Wayland
  *
- * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 - 2021 Leon Henrik Plickat
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -199,30 +199,23 @@ static const struct zriver_output_status_v1_listener river_status_listener = {
 	.view_tags    = river_status_handle_view_tags
 };
 
-bool configure_output (struct Lava_output *output)
+void configure_output (struct Lava_output *output)
 {
 	log_message(1, "[output] Configuring: global_name=%d\n", output->global_name);
 
 	/* Create xdg_output and attach listeners. */
-	if ( NULL == (output->xdg_output = zxdg_output_manager_v1_get_xdg_output(
-					context.xdg_output_manager, output->wl_output)) )
-	{
-		log_message(0, "ERROR: Could not get XDG output.\n");
-		return false;
-	}
+	output->xdg_output = zxdg_output_manager_v1_get_xdg_output(
+			context.xdg_output_manager, output->wl_output);
 	zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener,
 			output);
 
 	/* Create river_output_status and attach listener, but only if we need it. */
 	if (context.need_river_status)
 	{
-		if ( NULL == (output->river_status = zriver_status_manager_v1_get_river_output_status(
-						context.river_status_manager, output->wl_output)) )
-		{
-			log_message(0, "ERROR: Could not get river output status.\n");
-			return false;
-		}
-		zriver_output_status_v1_add_listener(output->river_status, &river_status_listener, output);
+		output->river_status = zriver_status_manager_v1_get_river_output_status(
+				context.river_status_manager, output->wl_output);
+		zriver_output_status_v1_add_listener(output->river_status,
+				&river_status_listener, output);
 	}
 
 	output->status = OUTPUT_STATUS_UNUSED;
@@ -231,18 +224,12 @@ bool configure_output (struct Lava_output *output)
 	 * This event is guaranteed to be send, since the name and logical
 	 * size are guaranteed to be advertised.
 	 */
-
-	return true;
 }
 
 bool create_output (struct wl_registry *registry, uint32_t name,
-		const char *interface, uint32_t version)
+				struct wl_output *wl_output)
 {
 	log_message(1, "[output] Creating: global_name=%d\n", name);
-
-	struct wl_output *wl_output = wl_registry_bind(registry, name,
-			&wl_output_interface, 3);
-	assert(wl_output);
 
 	TRY_NEW(struct Lava_output, output, false);
 
@@ -271,10 +258,7 @@ bool create_output (struct wl_registry *registry, uint32_t name,
 	 */
 	if ( context.xdg_output_manager != NULL && context.layer_shell != NULL
 			&& ( !context.need_river_status || context.river_status_manager != NULL ) )
-	{
-		if (! configure_output(output))
-			return false;
-	}
+		configure_output(output);
 	else
 		log_message(2, "[output] Not yet configureable.\n");
 
@@ -294,6 +278,8 @@ void destroy_output (struct Lava_output *output)
 {
 	if ( output == NULL )
 		return;
+
+	log_message(1, "[output] Destroying output: global-name=%d\n", output->global_name);
 
 	/* A seat might still be interacting with this outputs bar instance.
 	 * We clean it up to avoid the use-after-free we'd otherwise get when
@@ -316,17 +302,10 @@ void destroy_output (struct Lava_output *output)
 
 	DESTROY(output->river_status, zriver_output_status_v1_destroy);
 	DESTROY(output->bar_instance, destroy_bar_instance);
+	DESTROY(output->xdg_output, zxdg_output_v1_destroy);
 	free_if_set(output->name);
 	wl_list_remove(&output->link);
 	wl_output_destroy(output->wl_output); // TODO should thos be wl_output_release()?
 	free(output);
-}
-
-void destroy_all_outputs (void)
-{
-	log_message(1, "[output] Destroying all outputs.\n");
-	struct Lava_output *output, *temp;
-	wl_list_for_each_safe(output, temp, &context.outputs, link)
-		destroy_output(output);
 }
 

@@ -1092,7 +1092,8 @@ struct Lava_bar_instance *create_bar_instance (struct Lava_output *output,
 
 	{
 		instance->active_items   = context.item_amount;
-		instance->item_instances = calloc((size_t)context.item_amount, sizeof(struct Lava_item_instance));
+		instance->item_instances = calloc((size_t)context.item_amount,
+				sizeof(struct Lava_item_instance));
 
 		/* Dimensions and active state get filled in when bar dimensions
 		 * are calculated. Here we just assign item instances to their items.
@@ -1108,19 +1109,11 @@ struct Lava_bar_instance *create_bar_instance (struct Lava_output *output,
 		}
 	}
 
-	if ( NULL == (instance->wl_surface = wl_compositor_create_surface(context.compositor)) )
-	{
-		log_message(0, "ERROR: Compositor did not create wl_surface.\n");
-		return false;
-	}
-	if ( NULL == (instance->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-					context.layer_shell, instance->wl_surface,
-					output->wl_output, config->layer,
-					str_orelse(config->namespace, "LavaLauncher"))) )
-	{
-		log_message(0, "ERROR: Compositor did not create layer_surface.\n");
-		return false;
-	}
+	instance->wl_surface = wl_compositor_create_surface(context.compositor);
+	instance->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
+			context.layer_shell, instance->wl_surface,
+			output->wl_output, config->layer,
+			str_orelse(config->namespace, "LavaLauncher"));
 
 
 	/* We draw when this surface gets a configure event. */

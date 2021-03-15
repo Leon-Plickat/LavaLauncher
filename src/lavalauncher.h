@@ -29,8 +29,9 @@ struct Lava_bar;
 
 struct Lava_context
 {
-	struct wl_display             *display;
-	struct wl_registry            *registry;
+	struct wl_display  *display;
+	struct wl_registry *registry;
+	struct wl_callback *sync;
 
 	/* Wayland interfaces */
 	struct wl_compositor          *compositor;

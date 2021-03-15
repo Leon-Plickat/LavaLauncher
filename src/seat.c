@@ -1,7 +1,7 @@
 /*
  * LavaLauncher - A simple launcher panel for Wayland
  *
- * Copyright (C) 2020 Leon Henrik Plickat
+ * Copyright (C) 2020 - 2021 Leon Henrik Plickat
  * Copyright (C) 2020 Nicolai Dagestad
  *
  * This program is free software: you can redistribute it and/or modify
@@ -375,12 +375,7 @@ static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial, co
 	seat->pointer.cursor_image = seat->pointer.cursor->images[0];
 	assert(seat->pointer.cursor_image); // TODO Propably not needed; A non-fatal fail would be better here anyway
 
-	if ( NULL == (seat->pointer.cursor_surface = wl_compositor_create_surface(context.compositor)) )
-	{
-		log_message(0, "ERROR: Could not create cursor surface.\n");
-		seat_pointer_unset_cursor(seat);
-		return;
-	}
+	seat->pointer.cursor_surface = wl_compositor_create_surface(context.compositor);
 
 	/* The entire dance of getting cursor image and surface and damaging
 	 * the latter is indeed necessary every time a seats pointer enters the
@@ -771,19 +766,12 @@ struct Lava_seat *get_seat_from_global_name (uint32_t name)
 
 void destroy_seat (struct Lava_seat *seat)
 {
+	log_message(1, "[seat] Destroying seat.\n");
 	seat_release_keyboard(seat);
 	seat_release_touch(seat);
 	seat_release_pointer(seat);
 	wl_seat_release(seat->wl_seat);
 	wl_list_remove(&seat->link);
 	free(seat);
-}
-
-void destroy_all_seats (void)
-{
-	log_message(1, "[seat] Destroying all seats.\n");
-	struct Lava_seat *seat, *temp;
-	wl_list_for_each_safe(seat, temp, &context.seats, link)
-		destroy_seat(seat);
 }
 

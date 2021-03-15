@@ -103,6 +103,7 @@ static void init_context (void)
 
 	context.display            = NULL;
 	context.registry           = NULL;
+	context.sync               = NULL;
 
 	context.compositor         = NULL;
 	context.shm                = NULL;

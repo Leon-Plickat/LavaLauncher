@@ -58,11 +58,10 @@ struct Lava_output
 };
 
 bool create_output (struct wl_registry *registry, uint32_t name,
-		const char *interface, uint32_t version);
-bool configure_output (struct Lava_output *output);
+				struct wl_output *wl_output);
+void configure_output (struct Lava_output *output);
 struct Lava_output *get_output_from_global_name (uint32_t name);
 void destroy_output (struct Lava_output *output);
-void destroy_all_outputs (void);
 
 #endif
 

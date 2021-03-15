@@ -40,6 +40,13 @@ enum Modifiers
 	SHIFT   = 1 << 5
 };
 
+enum Lava_cursor_type
+{
+	CURSOR_NONE,
+	CURSOR_DEFAULT,
+	CURSOR_POINTER
+};
+
 struct Lava_touchpoint
 {
 	struct wl_list            link;
@@ -72,7 +79,7 @@ struct Lava_seat
 
 		int click;
 
-		/** Serial of enter event, used for setting the cursor. */
+		/* Serial of enter event, used for setting the cursor. */
 		uint32_t serial;
 
 		/* Current position. */
@@ -87,11 +94,14 @@ struct Lava_seat
 		/* Hover indicator. */
 		struct Lava_item_indicator *indicator;
 
-		/* Stuff needed to change the cursor image. */
-		struct wl_surface      *cursor_surface;
-		struct wl_cursor_theme *cursor_theme;
-		struct wl_cursor_image *cursor_image;
-		struct wl_cursor       *cursor;
+		struct
+		{
+			enum Lava_cursor_type   type;
+			struct wl_surface      *surface;
+			struct wl_cursor_theme *theme;
+			struct wl_cursor_image *image;
+			struct wl_cursor       *wl_cursor;
+		} cursor;
 	} pointer;
 
 	struct

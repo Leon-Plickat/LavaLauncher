@@ -334,36 +334,48 @@ static void seat_init_touch (struct Lava_seat *seat)
  *  Cursor  *
  *          *
  ************/
-// TODO listen for wl_buffer release event?
-
 static void seat_pointer_unset_cursor (struct Lava_seat *seat)
 {
-	DESTROY_NULL(seat->pointer.cursor_theme, wl_cursor_theme_destroy);
-	DESTROY_NULL(seat->pointer.cursor_surface, wl_surface_destroy);
+	DESTROY_NULL(seat->pointer.cursor.theme, wl_cursor_theme_destroy);
+	DESTROY_NULL(seat->pointer.cursor.surface, wl_surface_destroy);
 
 	 /* These just points back to the theme. */
-	seat->pointer.cursor       = NULL;
-	seat->pointer.cursor_image = NULL;
+	seat->pointer.cursor.wl_cursor = NULL;
+	seat->pointer.cursor.image = NULL;
+
+	seat->pointer.cursor.type = CURSOR_NONE;
 }
 
-static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial, const char *name)
+static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial,
+		enum Lava_cursor_type type)
 {
+	if ( type == seat->pointer.cursor.type )
+		return;
+	seat_pointer_unset_cursor(seat);
+	if ( type == CURSOR_NONE )
+		return;
+
+	seat->pointer.cursor.type = type;
+
 	struct wl_pointer *pointer = seat->pointer.wl_pointer;
 
 	int32_t scale       = (int32_t)seat->pointer.instance->output->scale;
 	int32_t cursor_size = 24; // TODO ?
 
-	/* Cleanup any leftover cursor stuff. */
-	seat_pointer_unset_cursor(seat);
-
-	if ( NULL == (seat->pointer.cursor_theme = wl_cursor_theme_load(NULL, cursor_size * scale, context.shm)) )
+	seat->pointer.cursor.theme = wl_cursor_theme_load(NULL, cursor_size * scale, context.shm);
+	if ( seat->pointer.cursor.theme == NULL )
 	{
 		log_message(0, "ERROR: Could not load cursor theme.\n");
 		return;
 	}
 
-	if ( NULL == (seat->pointer.cursor = wl_cursor_theme_get_cursor(
-					seat->pointer.cursor_theme, name)) )
+	// TODO we need a config option for a default pointer name
+	const char *name = type == CURSOR_DEFAULT
+			? str_orelse(seat->pointer.instance->config->cursor_name, "default")
+			: str_orelse(seat->pointer.instance->config->cursor_name, "pointer");
+
+	seat->pointer.cursor.wl_cursor = wl_cursor_theme_get_cursor(seat->pointer.cursor.theme, name);
+	if ( seat->pointer.cursor.wl_cursor == NULL )
 	{
 		log_message(0, "WARNING: Could not get cursor \"%s\".\n"
 				"         This cursor is likely missing from your cursor theme.\n",
@@ -372,27 +384,21 @@ static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial, co
 		return;
 	}
 
-	seat->pointer.cursor_image = seat->pointer.cursor->images[0];
-	assert(seat->pointer.cursor_image); // TODO Propably not needed; A non-fatal fail would be better here anyway
+	seat->pointer.cursor.image = seat->pointer.cursor.wl_cursor->images[0];
+	assert(seat->pointer.cursor.image); // TODO Propably not needed; A non-fatal fail would be better here anyway
 
-	seat->pointer.cursor_surface = wl_compositor_create_surface(context.compositor);
-
-	/* The entire dance of getting cursor image and surface and damaging
-	 * the latter is indeed necessary every time a seats pointer enters the
-	 * surface and we want to change its cursor image, because we need to
-	 * apply the scale of the current output to the cursor.
-	 */
-
-	wl_surface_set_buffer_scale(seat->pointer.cursor_surface, scale);
-	wl_surface_attach(seat->pointer.cursor_surface,
-			wl_cursor_image_get_buffer(seat->pointer.cursor_image),
+	seat->pointer.cursor.surface = wl_compositor_create_surface(context.compositor);
+	wl_surface_set_buffer_scale(seat->pointer.cursor.surface, scale);
+	wl_surface_attach(seat->pointer.cursor.surface,
+			wl_cursor_image_get_buffer(seat->pointer.cursor.image),
 			0, 0);
-	wl_surface_damage_buffer(seat->pointer.cursor_surface, 0, 0, INT32_MAX, INT32_MAX);
-	wl_surface_commit(seat->pointer.cursor_surface);
+	wl_surface_damage_buffer(seat->pointer.cursor.surface, 0, 0, INT32_MAX, INT32_MAX);
+	wl_surface_commit(seat->pointer.cursor.surface);
+	// TODO how is the thee buffer cleaned up? Investigate wayland-cursor.h
 
-	wl_pointer_set_cursor(pointer, serial, seat->pointer.cursor_surface,
-			(int32_t)seat->pointer.cursor_image->hotspot_x / scale,
-			(int32_t)seat->pointer.cursor_image->hotspot_y / scale);
+	wl_pointer_set_cursor(pointer, serial, seat->pointer.cursor.surface,
+			(int32_t)seat->pointer.cursor.image->hotspot_x / scale,
+			(int32_t)seat->pointer.cursor.image->hotspot_y / scale);
 }
 
 /*************
@@ -409,6 +415,8 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 	log_message(1, "[input] Pointer left surface.\n");
 
 	struct Lava_seat *seat = (struct Lava_seat *)data;
+
+	seat_pointer_unset_cursor(seat);
 
 	/* Clean up indicators. */
 	if ( seat->pointer.item_instance != NULL )
@@ -432,43 +440,35 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 
 static void pointer_process_motion (struct Lava_seat *seat)
 {
-	struct Lava_item_instance *item_instance = bar_instance_get_item_instance_from_coords(
+	struct Lava_item_instance *old_instance = seat->pointer.item_instance;
+	struct Lava_item_instance *new_instance = bar_instance_get_item_instance_from_coords(
 			seat->pointer.instance, (int32_t)seat->pointer.x, (int32_t)seat->pointer.y);
+	seat->pointer.item_instance = new_instance;
 
 	/* Remove indicator from previous item_instance, if exists. */
 	bool need_frame = false;
-	if ( seat->pointer.item_instance != NULL )
+	if ( old_instance != NULL )
 	{
-		if ( item_instance == seat->pointer.item_instance )
+		if ( new_instance == old_instance )
 			return;
 
-		seat->pointer.item_instance->indicator--;
-		seat->pointer.item_instance->active_indicator -= seat->pointer.click;
-		seat->pointer.item_instance->dirty = true;
+		old_instance->indicator--;
+		old_instance->active_indicator -= seat->pointer.click;
+		old_instance->dirty = true;
 
 		need_frame = true;
 	}
 
-	seat->pointer.item_instance = item_instance;
-
-	/* Add pointer to new item_instance, if exists. */
-	if ( item_instance == NULL )
-	{
-		seat_pointer_set_cursor(seat, seat->pointer.serial,
-				str_orelse(seat->pointer.instance->config->cursor_name, "default")); // TODO [item-rework] we need a default cursor config option
-	}
+	if ( new_instance == NULL )
+		seat_pointer_set_cursor(seat, seat->pointer.serial, CURSOR_DEFAULT);
 	else
 	{
-		if ( item_instance->item->type == TYPE_BUTTON )
-				seat_pointer_set_cursor(seat, seat->pointer.serial,
-						str_orelse(seat->pointer.instance->config->cursor_name, "pointer"));
-		else
-			seat_pointer_set_cursor(seat, seat->pointer.serial,
-						str_orelse(seat->pointer.instance->config->cursor_name, "default"));
+		seat_pointer_set_cursor(seat, seat->pointer.serial,
+				new_instance->item->type == TYPE_BUTTON ? CURSOR_POINTER : CURSOR_DEFAULT);
 
-		seat->pointer.item_instance->indicator++;
-		seat->pointer.item_instance->active_indicator += seat->pointer.click;
-		seat->pointer.item_instance->dirty = true;
+		new_instance->indicator++;
+		new_instance->active_indicator += seat->pointer.click;
+		new_instance->dirty = true;
 
 		need_frame = true;
 	}
@@ -692,11 +692,13 @@ static void seat_init_pointer (struct Lava_seat *seat)
 	seat->pointer.discrete_steps   = 0;
 	seat->pointer.last_update_time = 0;
 	seat->pointer.value            = wl_fixed_from_int(0);
-	seat->pointer.cursor_surface   = NULL;
-	seat->pointer.cursor_theme     = NULL;
-	seat->pointer.cursor_image     = NULL;
-	seat->pointer.cursor           = NULL;
 	seat->pointer.click            = 0;
+
+	seat->pointer.cursor.type      = CURSOR_NONE;
+	seat->pointer.cursor.surface   = NULL;
+	seat->pointer.cursor.theme     = NULL;
+	seat->pointer.cursor.image     = NULL;
+	seat->pointer.cursor.wl_cursor = NULL;
 }
 
 /**********

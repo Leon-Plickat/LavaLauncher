@@ -177,8 +177,9 @@ void image_t_destroy (image_t *image)
 }
 
 void image_t_draw_to_cairo (cairo_t *cairo, image_t *image,
-		uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+		uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t scale)
 {
+	x *= scale, y *= scale, width *= scale, height *= scale;
 	cairo_save(cairo);
 	cairo_translate(cairo, x, y);
 

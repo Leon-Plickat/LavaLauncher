@@ -359,8 +359,8 @@ static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial,
 
 	struct wl_pointer *pointer = seat->pointer.wl_pointer;
 
-	int32_t scale       = (int32_t)seat->pointer.instance->output->scale;
-	int32_t cursor_size = 24; // TODO ?
+	const int32_t scale = (int32_t)seat->pointer.instance->output->scale;
+	const int32_t cursor_size = seat->pointer.instance->config->cursor_size;
 
 	seat->pointer.cursor.theme = wl_cursor_theme_load(NULL, cursor_size * scale, context.shm);
 	if ( seat->pointer.cursor.theme == NULL )
@@ -369,10 +369,9 @@ static void seat_pointer_set_cursor (struct Lava_seat *seat, uint32_t serial,
 		return;
 	}
 
-	// TODO we need a config option for a default pointer name
 	const char *name = type == CURSOR_DEFAULT
-			? str_orelse(seat->pointer.instance->config->cursor_name, "default")
-			: str_orelse(seat->pointer.instance->config->cursor_name, "pointer");
+			? str_orelse(seat->pointer.instance->config->cursor_name_default, "default")
+			: str_orelse(seat->pointer.instance->config->cursor_name_hover, "pointer");
 
 	seat->pointer.cursor.wl_cursor = wl_cursor_theme_get_cursor(seat->pointer.cursor.theme, name);
 	if ( seat->pointer.cursor.wl_cursor == NULL )

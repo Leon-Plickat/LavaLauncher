@@ -71,7 +71,23 @@ static void bar_config_sensible_defaults (struct Lava_bar_configuration *config)
 	config->condition_transform  = -1;
 	config->condition_resolution = RESOLUTION_ALL;
 
-	config->cursor_name = NULL;
+	config->cursor_name_default = NULL;
+	config->cursor_name_hover = NULL;
+
+	/* Use XCURSOR_SIZE if it exists. */
+	const char *cursor_size = getenv("XCURSOR_SIZE");
+	if ( cursor_size == NULL )
+		config->cursor_size = 24;
+	else
+	{
+		config->cursor_size = atoi(cursor_size);
+		if ( config->cursor_size < 24 )
+		{
+			log_message(0, "WARNING: Invalid $XCURSOR_SIZE. Defaulting to 24.\n");
+			config->cursor_size = 24;
+		}
+	}
+
 	config->only_output = NULL;
 	config->namespace   = NULL;
 }
@@ -85,8 +101,10 @@ static void bar_config_copy_settings (struct Lava_bar_configuration *config,
 	 * To make later logic simpler, every configuration set should have their
 	 * own copy of the string.
 	 */
-	if ( config->cursor_name != NULL )
-		config->cursor_name = strdup(default_config->cursor_name);
+	if ( config->cursor_name_default != NULL )
+		config->cursor_name_default = strdup(default_config->cursor_name_default);
+	if ( config->cursor_name_hover != NULL )
+		config->cursor_name_hover = strdup(default_config->cursor_name_hover);
 	if ( config->only_output != NULL )
 		config->only_output = strdup(default_config->only_output);
 	if ( config->namespace  != NULL )
@@ -114,7 +132,8 @@ bool create_bar_config (void)
 
 static void destroy_bar_config (struct Lava_bar_configuration *config)
 {
-	free_if_set(config->cursor_name);
+	free_if_set(config->cursor_name_default);
+	free_if_set(config->cursor_name_hover);
 	free_if_set(config->only_output);
 	free_if_set(config->namespace);
 	free(config);
@@ -256,13 +275,25 @@ done:
 	return true;
 }
 
-BAR_CONFIG_STRING(bar_config_set_cursor_name, cursor_name)
+BAR_CONFIG_STRING(bar_config_set_cursor_name_default, cursor_name_default)
+BAR_CONFIG_STRING(bar_config_set_cursor_name_hover, cursor_name_hover)
 BAR_CONFIG_STRING(bar_config_set_namespace, namespace)
 
 BAR_CONFIG_COLOUR(bar_config_set_bar_colour, bar_colour)
 BAR_CONFIG_COLOUR(bar_config_set_border_colour, border_colour)
 BAR_CONFIG_COLOUR(bar_config_set_indicator_colour_active, indicator_active_colour)
 BAR_CONFIG_COLOUR(bar_config_set_indicator_colour_hover, indicator_hover_colour)
+
+BAR_CONFIG(bar_config_set_cursor_size)
+{
+	config->cursor_size = atoi(arg);
+	if ( config->cursor_size < 24 )
+	{
+		log_message(0, "ERROR: Cursor size must be at least 24.\n");
+		return false;
+	}
+	return true;
+}
 
 BAR_CONFIG(bar_config_set_only_output)
 {
@@ -509,7 +540,9 @@ bool bar_config_set_variable (struct Lava_bar_configuration *config,
 		{ .variable = "condition-resolution",    .set = bar_config_set_condition_resolution    },
 		{ .variable = "condition-scale",         .set = bar_config_set_condition_scale         },
 		{ .variable = "condition-transform",     .set = bar_config_set_condition_transform     },
-		{ .variable = "cursor-name",             .set = bar_config_set_cursor_name             },
+		{ .variable = "cursor-default",          .set = bar_config_set_cursor_name_default     },
+		{ .variable = "cursor-hover",            .set = bar_config_set_cursor_name_hover       },
+		{ .variable = "cursor-size",             .set = bar_config_set_cursor_size             },
 		{ .variable = "exclusive-zone",          .set = bar_config_set_exclusive_zone          },
 		{ .variable = "hidden-size",             .set = bar_config_set_hidden_size             },
 		{ .variable = "hidden-mode",             .set = bar_config_set_hidden_mode             },

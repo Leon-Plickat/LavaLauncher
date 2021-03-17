@@ -114,8 +114,10 @@ struct Lava_bar_configuration
 	 */
 	int32_t exclusive_zone;
 
-	/* Name of cursor which should be attached to pointer on hover. */
-	char *cursor_name;
+	/* Name of cursors. */
+	char *cursor_name_default;
+	char *cursor_name_hover;
+	int32_t cursor_size;
 
 	/* Conditions an output must match for the bar to generate an instance on it. */
 	uint32_t condition_scale;

@@ -100,11 +100,19 @@ Every instance of this section will add a configurattion set.
 	Behold: The numbers 1 to 4 represent rotations of 0, 90, 180 and 270
 	degrees, with the exact correspondence depending on the compositor.
 
-*cursor-name* = <string>
-	Name of the cursor displayed when hovering the pointer over the bar.
-	Defaults to _pointer_.
+*cursor-default* = <string>
+	Name of the default cursor. Defaults to _default_.
 
 	Behold: What cursors are available depends on your active cursor theme.
+
+*cursor-hover* = <string>
+	Name of the default cursor displayed when hovering the pointer over the
+	bar. Defaults to _pointer_.
+
+*cursor-size* = <size>
+	Set the size of the cursor. Must be at least 24. Defaults to the value
+	of the *$XCURSOR_SIZE* environmental variable, or, if that is not set,
+	to _24_.
 
 *exclusive-zone* = true|false|stationary.
 	Exclusive zone of the surface. Defaults to _true_.

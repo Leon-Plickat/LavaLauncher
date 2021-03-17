@@ -167,10 +167,14 @@ reload:
 
 	context.ret = event_loop_run(&loop) ? EXIT_SUCCESS : EXIT_FAILURE;
 
+	/* We only need to finish the event loop if it was successfully
+	 * initialized, which is why we do that here instead of like the other
+	 * cleanup code after the exit: label.
+	 */
+	event_loop_finish(&loop);
+
 exit:
 	free(context.config_path);
-
-	event_loop_finish(&loop);
 
 	destroy_all_items();
 	destroy_all_bar_configs();

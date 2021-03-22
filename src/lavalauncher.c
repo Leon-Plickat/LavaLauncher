@@ -112,6 +112,8 @@ static void init_context (void)
 
 	context.river_status_manager = NULL;
 	context.need_river_status    = false;
+	context.foreign_toplevel_manager = NULL;
+	context.need_foreign_toplevel    = false;
 
 	context.need_keyboard = false;
 	context.need_pointer  = false;
@@ -125,6 +127,7 @@ static void init_context (void)
 	wl_list_init(&context.seats);
 	wl_list_init(&context.items);
 	wl_list_init(&context.configs);
+	wl_list_init(&context.toplevels);
 }
 
 int main (int argc, char *argv[])

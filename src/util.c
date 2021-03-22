@@ -150,3 +150,11 @@ uint32_t count_tokens (const char *arg)
 	return args;
 }
 
+void counter_safe_subtract (uint32_t *counter, uint32_t subtract)
+{
+	if ( subtract > *counter )
+		*counter = 0;
+	else
+		*counter -= subtract;
+}
+

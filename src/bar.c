@@ -37,6 +37,7 @@
 #include"item.h"
 #include"output.h"
 #include"bar.h"
+#include"foreign-toplevel-management.h"
 #include"types/colour_t.h"
 #include"types/box_t.h"
 
@@ -759,6 +760,16 @@ static void bar_instance_next_frame (struct Lava_bar_instance *instance)
 			cairo_fill(cairo);
 		}
 
+		/* Draw toplevel indicators. */
+		if ( instance->item_instances[i].toplevel_activated_indicator > 0 )
+		{
+			// TODO
+		}
+		if ( instance->item_instances[i].toplevel_exists_indicator > 0 )
+		{
+			// TODO
+		}
+
 		/* Draw icon. */
 		if ( instance->item_instances[i].item->img != NULL )
 			image_t_draw_to_cairo(cairo, instance->item_instances[i].item->img,
@@ -1123,6 +1134,7 @@ struct Lava_bar_instance *create_bar_instance (struct Lava_output *output,
 	instance->hidden        = bar_instance_should_hide(instance);
 	instance->frame_callback = NULL;
 
+	/* Set up item_instances. */
 	{
 		instance->active_items   = context.item_amount;
 		instance->item_instances = calloc((size_t)context.item_amount,
@@ -1138,6 +1150,24 @@ struct Lava_bar_instance *create_bar_instance (struct Lava_output *output,
 			instance->item_instances[i].item = item;
 			instance->item_instances[i].indicator = 0;
 			instance->item_instances[i].active_indicator = 0;
+			instance->item_instances[i].toplevel_exists_indicator = 0;
+			instance->item_instances[i].toplevel_activated_indicator = 0;
+
+			/* If a toplevel with a matching app_id exist, apply indicators. */
+			if ( item->associated_app_id != NULL )
+			{
+				struct Lava_toplevel *toplevel;
+				wl_list_for_each(toplevel, &context.toplevels, link)
+				{
+					if ( toplevel->current.app_id != NULL && strcmp(item->associated_app_id, toplevel->current.app_id) == 0 )
+					{
+						instance->item_instances[i].toplevel_exists_indicator++;
+						if (toplevel->current.activated) 
+							instance->item_instances[i].toplevel_activated_indicator++;
+					}
+				}
+			}
+
 			i++;
 		}
 	}

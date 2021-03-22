@@ -263,6 +263,10 @@ Every instance of this section will add a button to the bar.
 	The path to an image file, which will be used as the icon of the
 	button.
 
+*toplevel-app-id* = none|<string>
+	Toplevel app-id associated with this button. If set, this button will
+	have toplevel indicators. Defaults to _none_.
+
 ## [item:spacer]
 Every instance of this section will add a spacer to the bar.
 

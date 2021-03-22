@@ -10,6 +10,7 @@ protocols = [
   [ wp_dir, 'stable/xdg-shell/xdg-shell.xml' ],
   [ wp_dir, 'unstable/xdg-output/xdg-output-unstable-v1.xml' ],
   [ 'wlr-layer-shell-unstable-v1.xml' ],
+  [ 'wlr-foreign-toplevel-management-unstable-v1.xml' ],
   [ 'river-status-unstable-v1.xml' ],
 ]
 

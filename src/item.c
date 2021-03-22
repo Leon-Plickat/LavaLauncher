@@ -177,6 +177,16 @@ static bool button_set_image_path (struct Lava_item *button, const char *path)
 	return true;
 }
 
+static bool button_set_toplevel_app_id (struct Lava_item *button, const char *app_id)
+{
+	free_if_set(button->associated_app_id);
+	if ( strcmp(app_id, "none") == 0 )
+		return true;
+	button->associated_app_id = strdup(app_id);
+	context.need_foreign_toplevel = true;
+	return true;
+}
+
 static bool parse_bind_token_buffer (char *buffer, int *index,enum Interaction_type *type,
 		uint32_t *modifiers, uint32_t *special, bool *type_defined)
 {
@@ -376,9 +386,11 @@ static bool button_item_universal_command (struct Lava_item *button, const char 
 static bool button_set_variable (struct Lava_item *button, const char *variable,
 		const char *value, uint32_t line)
 {
-	if (! strcmp("image-path", variable))
+	if ( strcmp("image-path", variable) == 0 )
 		TRY(button_set_image_path(button, value))
-	else if (! strcmp("command", variable)) /* Generic/universal command */
+	else if ( strcmp("toplevel-app-id", variable) == 0 )
+		TRY(button_set_toplevel_app_id(button, value))
+	else if ( strcmp("command", variable) == 0 ) /* Generic/universal command */
 		TRY(button_item_universal_command(button, value))
 	else if (string_starts_with(variable, "command"))  /* Command with special bind */
 		TRY(button_item_command_from_string(button, variable, value))
@@ -462,10 +474,14 @@ bool create_item (enum Item_type type)
 	TRY_NEW(struct Lava_item, item, false);
 
 	context.last_item = item;
-	item->img      = NULL;
-	item->type     = type;
+
+	item->img               = NULL;
+	item->type              = type;
+	item->associated_app_id = NULL;
+
 	wl_list_init(&item->commands);
 	wl_list_insert(&context.items, &item->link);
+
 	return true;
 }
 
@@ -474,6 +490,7 @@ static void destroy_item (struct Lava_item *item)
 	wl_list_remove(&item->link);
 	destroy_all_item_commands(item);
 	DESTROY(item->img, image_t_destroy);
+	free_if_set(item->associated_app_id);
 	free(item);
 }
 

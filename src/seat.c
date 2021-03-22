@@ -197,7 +197,7 @@ static bool create_touchpoint (struct Lava_seat *seat, int32_t id,
 
 void destroy_touchpoint (struct Lava_touchpoint *touchpoint)
 {
-	touchpoint->item_instance->active_indicator--;
+	counter_safe_subtract(&(touchpoint->item_instance->active_indicator), 1);
 	touchpoint->item_instance->dirty = true;
 	wl_list_remove(&touchpoint->link);
 	bar_instance_schedule_frame(touchpoint->instance);
@@ -420,8 +420,8 @@ static void pointer_handle_leave (void *data, struct wl_pointer *wl_pointer,
 	/* Clean up indicators. */
 	if ( seat->pointer.item_instance != NULL )
 	{
-		seat->pointer.item_instance->indicator--;
-		seat->pointer.item_instance->active_indicator -= seat->pointer.click;
+		counter_safe_subtract(&(seat->pointer.item_instance->indicator), 1);
+		counter_safe_subtract(&(seat->pointer.item_instance->active_indicator), (uint32_t)seat->pointer.click);
 		seat->pointer.item_instance->dirty = true;
 	}
 
@@ -451,8 +451,8 @@ static void pointer_process_motion (struct Lava_seat *seat)
 		if ( new_instance == old_instance )
 			return;
 
-		old_instance->indicator--;
-		old_instance->active_indicator -= seat->pointer.click;
+		counter_safe_subtract(&(old_instance->indicator), 1);
+		counter_safe_subtract(&(old_instance->active_indicator), (uint32_t)seat->pointer.click);
 		old_instance->dirty = true;
 
 		need_frame = true;
@@ -466,7 +466,7 @@ static void pointer_process_motion (struct Lava_seat *seat)
 				new_instance->item->type == TYPE_BUTTON ? CURSOR_POINTER : CURSOR_DEFAULT);
 
 		new_instance->indicator++;
-		new_instance->active_indicator += seat->pointer.click;
+		new_instance->active_indicator += (uint32_t)seat->pointer.click;
 		new_instance->dirty = true;
 
 		need_frame = true;
@@ -538,7 +538,7 @@ static void pointer_handle_button (void *data, struct wl_pointer *wl_pointer,
 		if ( seat->pointer.item_instance == NULL )
 			return;
 
-		seat->pointer.item_instance->active_indicator--;
+		counter_safe_subtract(&(seat->pointer.item_instance->active_indicator), 1);
 		seat->pointer.item_instance->dirty = true;
 
 		item_interaction(seat->pointer.item_instance->item,
@@ -663,8 +663,8 @@ static void seat_release_pointer (struct Lava_seat *seat)
 {
 	if ( seat->pointer.item_instance != NULL )
 	{
-		seat->pointer.item_instance->indicator--;
-		seat->pointer.item_instance->active_indicator -= seat->pointer.click;
+		counter_safe_subtract(&(seat->pointer.item_instance->indicator), 1);
+		counter_safe_subtract(&(seat->pointer.item_instance->active_indicator), (uint32_t)seat->pointer.click);
 		seat->pointer.item_instance->dirty = true;
 		bar_instance_schedule_frame(seat->pointer.instance);
 		seat->pointer.item_instance = NULL;

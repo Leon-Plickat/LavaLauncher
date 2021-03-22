@@ -63,6 +63,8 @@ struct Lava_item
 
 	image_t *img;
 	struct wl_list commands;
+
+	char *associated_app_id;
 };
 
 struct Lava_item_instance
@@ -71,8 +73,10 @@ struct Lava_item_instance
 	int32_t x, y;
 	uint32_t w, h;
 
-	int indicator;
-	int active_indicator;
+	uint32_t indicator;
+	uint32_t active_indicator;
+	uint32_t toplevel_exists_indicator;
+	uint32_t toplevel_activated_indicator;
 
 	/** Is the item displayed on this bar instance? */
 	bool active;

@@ -24,6 +24,9 @@
 #include<stdint.h>
 #include<wayland-client.h>
 
+#include "wlr-foreign-toplevel-management-unstable-v1-protocol.h"
+#include "wlr-layer-shell-unstable-v1-protocol.h"
+
 struct Lava_item;
 struct Lava_bar;
 
@@ -42,6 +45,9 @@ struct Lava_context
 	/* Optional Wayland interfaces */
 	struct zriver_status_manager_v1 *river_status_manager;
 	bool need_river_status;
+	struct zwlr_foreign_toplevel_manager_v1 *foreign_toplevel_manager;
+	struct wl_list toplevels;
+	bool need_foreign_toplevel;
 
 	/* Which input devices do we need? */
 	bool need_keyboard;

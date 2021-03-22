@@ -40,6 +40,7 @@
 #include"seat.h"
 #include"output.h"
 #include"event-loop.h"
+#include"foreign-toplevel-management.h"
 
 
 /**************
@@ -50,47 +51,61 @@
 static void registry_handle_global (void *data, struct wl_registry *registry,
 		uint32_t name, const char *interface, uint32_t version)
 {
-	if (! strcmp(interface, wl_compositor_interface.name))
+	if ( strcmp(interface, wl_compositor_interface.name) == 0 )
 	{
 		log_message(2, "[registry] Get wl_compositor.\n");
 		context.compositor = wl_registry_bind(registry, name,
 				&wl_compositor_interface, 4);
 	}
-	else if (! strcmp(interface, wl_shm_interface.name))
+	else if ( strcmp(interface, wl_shm_interface.name) == 0 )
 	{
 		log_message(2, "[registry] Get wl_shm.\n");
 		context.shm = wl_registry_bind(registry, name,
 				&wl_shm_interface, 1);
 	}
-	else if (! strcmp(interface, zwlr_layer_shell_v1_interface.name))
+	else if ( strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0 )
 	{
 		log_message(2, "[registry] Get zwlr_layer_shell_v1.\n");
 		context.layer_shell = wl_registry_bind(registry, name,
 				&zwlr_layer_shell_v1_interface, 1);
 	}
-	else if (! strcmp(interface, zxdg_output_manager_v1_interface.name))
+	else if ( strcmp(interface, zxdg_output_manager_v1_interface.name) == 0 )
 	{
 		log_message(2, "[registry] Get zxdg_output_manager_v1.\n");
 		context.xdg_output_manager = wl_registry_bind(registry, name,
 				&zxdg_output_manager_v1_interface, 3);
 	}
-	else if (! strcmp(interface, wl_seat_interface.name))
+	else if ( strcmp(interface, wl_seat_interface.name) == 0 )
 	{
 		if (! create_seat( registry, name, interface, version))
 			goto error;
 	}
-	else if (! strcmp(interface, wl_output_interface.name))
+	else if ( strcmp(interface, wl_output_interface.name) == 0 )
 	{
 		struct wl_output *wl_output = wl_registry_bind(registry, name,
 			&wl_output_interface, version);
 		if (! create_output(registry, name, wl_output))
 			goto error;
 	}
-	else if (! strcmp(interface, zriver_status_manager_v1_interface.name))
+	else if ( strcmp(interface, zriver_status_manager_v1_interface.name) == 0)
 	{
 		if (context.need_river_status)
 			context.river_status_manager = wl_registry_bind(registry, name,
 				&zriver_status_manager_v1_interface, 1);
+	}
+	else if ( strcmp(interface, zwlr_foreign_toplevel_manager_v1_interface.name) == 0 )
+	{
+		/* Binding the foreign_toplevel_manager in the initial registry
+		 * burst means that it might be bound before the outputs, which
+		 * causes the toplevel.output_enter event to not be send, but
+		 * we don't actually use that, so whatever.
+		 */
+		if (context.need_foreign_toplevel)
+		{
+			context.foreign_toplevel_manager = wl_registry_bind(context.registry,
+					name, &zwlr_foreign_toplevel_manager_v1_interface, version);
+			init_foreign_toplevel_management();
+		}
 	}
 
 	return;
@@ -138,12 +153,14 @@ static char *check_for_required_interfaces (void)
 	if ( context.shm == NULL )
 		return "wl_shm";
 	if ( context.layer_shell == NULL )
-		return "zwlr_layershell_v1";
+		return "wlr_layershell_v1";
 	if ( context.xdg_output_manager == NULL )
-		return "zxdg_output_manager";
+		return "xdg_output_manager";
 
 	if ( context.need_river_status && context.river_status_manager == NULL )
-		return "zriver_status_v1";
+		return "river_status_v1";
+	if ( context.need_foreign_toplevel && context.foreign_toplevel_manager == NULL )
+		return "wlr_foreign_toplevel_management_v1";
 
 	return NULL;
 }
@@ -174,6 +191,7 @@ static void sync_handle_done (void *data, struct wl_callback *wl_callback, uint3
 	wl_list_for_each(op, &context.outputs, link)
 		if ( op->status == OUTPUT_STATUS_UNCONFIGURED )
 			configure_output(op);
+
 }
 
 static const struct wl_callback_listener sync_callback_listener = {
@@ -237,6 +255,10 @@ static void finish_wayland (void)
 	wl_list_for_each_safe(output, otemp, &context.outputs, link)
 		destroy_output(output);
 
+	struct Lava_toplevel *toplevel, *ttemp;
+	wl_list_for_each_safe(toplevel, ttemp, &context.toplevels, link)
+		destroy_toplevel(toplevel);
+
 	log_message(2, "[registry] Destroying Wayland objects.\n");
 
 	DESTROY(context.layer_shell, zwlr_layer_shell_v1_destroy);
@@ -247,6 +269,7 @@ static void finish_wayland (void)
 	DESTROY(context.xdg_output_manager, zxdg_output_manager_v1_destroy);
 
 	DESTROY(context.river_status_manager, zriver_status_manager_v1_destroy);
+	DESTROY(context.foreign_toplevel_manager, zwlr_foreign_toplevel_manager_v1_destroy);
 
 	log_message(2, "[registry] Diconnecting from server.\n");
 	wl_display_disconnect(context.display);

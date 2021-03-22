@@ -28,13 +28,20 @@
 #define FOR_ARRAY(A, B) \
 	for (size_t B = 0; B < (sizeof(A) / sizeof(A[0])); B++)
 
-/* Helper macro to try allocate something. */
+/* Helper macros to try allocate something. */
 #define TRY_NEW(A, B, C) \
 	A *B = calloc(1, sizeof(A)); \
 	if ( B == NULL ) \
 	{ \
 		log_message(0, "ERROR: Can not allocate.\n"); \
 		return C; \
+	}
+#define NEW(A, B) \
+	A *B = calloc(1, sizeof(A)); \
+	if ( B == NULL ) \
+	{ \
+		log_message(0, "ERROR: Can not allocate.\n"); \
+		return; \
 	}
 
 /* Helper macro to destroy something if it is not NULL. */
@@ -63,6 +70,7 @@ bool is_boolean_true (const char *str);
 bool is_boolean_false (const char *str);
 bool set_boolean (bool *b, const char *value);
 uint32_t count_tokens (const char *arg);
+void counter_safe_subtract (uint32_t *counter, uint32_t subtract);
 
 #endif
 

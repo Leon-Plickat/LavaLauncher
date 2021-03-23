@@ -107,7 +107,7 @@ struct Lava_event_source inotify_source = {
  *  Signal event source  *
  *                       *
  *************************/
-#if WATCH_CONFIG
+#if HANDLE_SIGNALS
 static bool signal_source_init (struct pollfd *fd)
 {
 	log_message(1, "[loop] Setting up signalfd event source.\n");

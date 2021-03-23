@@ -258,3 +258,15 @@ void init_foreign_toplevel_management (void)
 	zwlr_foreign_toplevel_manager_v1_add_listener(context.foreign_toplevel_manager,
 			&toplevel_manager_listener, NULL);
 }
+
+struct Lava_toplevel *find_toplevel_with_app_id (const char *app_id)
+{
+	if ( app_id == NULL )
+		return NULL;
+	struct Lava_toplevel *toplevel;
+	wl_list_for_each(toplevel, &context.toplevels, link)
+		if ( toplevel->current.app_id != NULL && strcmp(app_id, toplevel->current.app_id) == 0 )
+			return toplevel;
+	return NULL;
+}
+

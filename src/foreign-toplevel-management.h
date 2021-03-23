@@ -39,6 +39,7 @@ struct Lava_toplevel
 
 void init_foreign_toplevel_management (void);
 void destroy_toplevel (struct Lava_toplevel *toplevel);
+struct Lava_toplevel *find_toplevel_with_app_id (const char *app_id);
 
 #endif
 

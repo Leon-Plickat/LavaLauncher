@@ -225,14 +225,39 @@ Every instance of this section will add a configurattion set.
 Every instance of this section will add a button to the bar.
 
 *command* = <string>
-	Set the shell command for left-, right-, middle-click and touch
-	interactions.
+	Bind a command to left-, right-, middle-click and touch interactions.
+
+	By default the command string is interpreted as a shell command and,
+	uppon activation of the button, executed with *sh(1)*.
+
+	Additionally, a set of meta commands is available, causing special
+	behaviour. Meta commands can be used instead of or in combination with
+	shell commands, but meta commands must always be the first part of the
+	command string. The following meta commands are available.
+
+	- *@toplevel-activate* If a toplevel matching the associated app-id of
+	  the button is found, it is activated ("focused"), otherwise the shell
+	  command is executed.
+	- *@toplevel-close* If a toplevel matching the associated app-id of
+	  the button is found, it is closed, otherwise the shell command is
+	  executed.
+	- *@exit* LavaLauncher will exit.
+	- *@reload* LavaLauncher will reload.
+
+	LavaLauncher sets the following environmental variables for the executed
+	shell commands. As an example, they could be used as arguments for
+	launched programs.
+	
+	- *$LAVALAUNCHER_OUTPUT_NAME* The name of the output the button has been
+	  clicked on.
+	- *$LAVALAUNCHER_OUTPUT_SCALE* The scale of the output the button has
+	  been clicked on.
 
 *command[*<bind>*]* = <string>
-	Bind a shell command to a specific interaction plus modifier combination.
-	This combination is defined by *<bind>*, which is a string containing an
-	interaction name as well as optionally one or multiple modifier names,
-	separated by *+*.
+	Advanced bind, allows binding a command to a specific interaction plus
+	modifier combination. This combination is defined by *<bind>*, which is
+	a string containing an interaction name as well as optionally one or
+	multiple modifier names, separated by *+*.
 
 	The possible interaction types are the following.
 
@@ -273,19 +298,6 @@ Every instance of this section will add a spacer to the bar.
 *length* = <size>
 	Length of the spacer.
 
-## COMMANDS
-Commands are executed using *sh(1)*.
-
-LavaLauncher sets some environmental variables for the processes it launches.
-Since all commands are executed via a shell, they can be used as arguments for
-the commands.
-
-*$LAVALAUNCHER_OUTPUT_NAME*
-	The name of the output the button has been clicked on.
-
-*$LAVALAUNCHER_OUTPUT_SCALE*
-	The scale of the output the button has been clicked on.
-
 ## COLOURS
 LavaLauncher can parse hex code colours and read RGB values directly, supporting
 the following formats.
@@ -317,9 +329,10 @@ LavaLauncher support PNG images and, if enabled at compile time, SVG images. It
 is recommended to use square images.
 
 ## EXAMPLE CONFIGURATION
-This is a simple configuration example, demonstrating a bar with two buttons
+This is a simple configuration example, demonstrating a bar with three buttons
 and an additional configuration set. The second button uses advanced command
-binds.
+binds. The third button implements the common "focus or spawn" functionality
+for firefox.
 
 ```
 [global-settings]
@@ -347,6 +360,11 @@ command[mouse-left]  = another-useful-script.sh
 command[mouse-right] = another-useful-script.sh
 command[scroll-up]   = volume up;
 command[scroll-down] = volume down;
+
+[item:button]
+toplevel-app-id = firefox
+image-path = firefox.png
+command = @toplevel-activate firefox
 ```
 
 

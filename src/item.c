@@ -35,6 +35,7 @@
 #include"util.h"
 #include"bar.h"
 #include"output.h"
+#include"foreign-toplevel-management.h"
 #include"types/image_t.h"
 
 /* Helper macro to reduce error handling boiler plate code. */
@@ -99,30 +100,13 @@ static void item_command_exec_first_fork (struct Lava_bar_instance *instance, co
 static void execute_item_command (struct Lava_item_command *cmd, struct Lava_bar_instance *instance)
 {
 	const char *command = cmd->command;
-
+	if ( command == NULL )
+		return;
 	log_message(1, "[item] Executing command: %s\n", command);
-
-	/* Developer options meant for testing. Intentionally not documented. */
-	if (! strcmp(command, "exit"))
-	{
-		log_message(1, "[item] Triggering exit. "
-			"This is a developer option not intended for actual usage.\n");
-		context.loop   = false;
-		context.reload = false;
-		return;
-	}
-	else if (! strcmp(command, "reload"))
-	{
-		log_message(1, "[item] Triggering reload. "
-			"This is a developer option not intended for actual usage.\n");
-		context.loop   = false;
-		context.reload = true;
-		return;
-	}
-
 	item_command_exec_first_fork(instance, command);
 }
 
+/** Tries to find a matching command and returns it, otherwise returns NULL. */
 static struct Lava_item_command *find_item_command (struct Lava_item *item,
 		enum Interaction_type type, uint32_t modifiers, uint32_t special,
 		bool allow_universal)
@@ -135,18 +119,72 @@ static struct Lava_item_command *find_item_command (struct Lava_item *item,
 	return NULL;
 }
 
+/** Tries to find a matching command and overwrite it, otherwise create a new one. */
 static bool item_add_command (struct Lava_item *item, const char *command,
 		enum Interaction_type type, uint32_t modifiers, uint32_t special)
 {
-	TRY_NEW(struct Lava_item_command, cmd, false);
+	struct Lava_item_command *cmd = find_item_command(item, type, modifiers,
+			special, false);
 
-	cmd->type      = type;
-	cmd->modifiers = modifiers;
-	cmd->special   = special;
+	if ( cmd == NULL )
+	{
+		cmd = calloc(1, sizeof(struct Lava_item_command));
+		if ( cmd == NULL )
+		{
+			log_message(0, "ERROR: Can not allocte.\n");
+			return false;
+		}
 
+		cmd->type      = type;
+		cmd->modifiers = modifiers;
+		cmd->special   = special;
+		cmd->command   = NULL;
+
+		wl_list_insert(&item->commands, &cmd->link);
+	}
+
+	/* Parse meta action, if any. */
+	if ( *command == '@' )
+	{
+		struct
+		{
+			const char *name;
+			enum Meta_action action;
+		} actions[] = {
+			// TODO: @maximize-toplevel @unmaximize-toplevel @togglemaximize-toplevel,
+			//       -> same for fullscreen and minimize
+			//       @close-all try to close /all/ toplevels with matching app_id
+			{ .name = "@activate-toplevel", .action = META_ACTION_TOPLEVEL_ACTIVATE },
+			{ .name = "@close-toplevel",    .action = META_ACTION_TOPLEVEL_CLOSE    },
+			{ .name = "@reload",            .action = META_ACTION_RELOAD            },
+			{ .name = "@exit",              .action = META_ACTION_EXIT              },
+		};
+
+		FOR_ARRAY(actions, i) if (string_starts_with(command, actions[i].name))
+		{
+			cmd->action = actions[i].action;
+
+			/* Check if command only contains the meta action. */
+			if ( strlen(command) == strlen(actions[i].name) )
+			{
+				free_if_set(cmd->command);
+				cmd->command = NULL;
+			}
+			else
+				set_string(&cmd->command, (char *)command + strlen(actions[i].name));
+
+			return true;
+		}
+
+		/* If we could not match any meta action despite the command
+		 * string starting with ~, it may be part of the command itself,
+		 * so just fall through here.
+		 */
+	}
+
+	cmd->action = META_ACTION_NONE;
 	set_string(&cmd->command, (char *)command);
 
-	wl_list_insert(&item->commands, &cmd->link);
 	return true;
 }
 
@@ -316,15 +354,8 @@ static bool button_item_command_from_string (struct Lava_item *button,
 				goto error;
 			}
 
-			/* Try to find a fitting command and overwrite it.
-			 * If none has been found, create a new one.
-			 */
-			struct Lava_item_command *cmd = find_item_command(button,
-					type, modifiers, special, false);
-			if ( cmd == NULL )
-				return item_add_command(button, command, type, modifiers, special);
-			set_string(&cmd->command, (char *)command);
-			return true;
+			return item_add_command(button, (char *)command, type,
+					modifiers, special);
 		}
 		else if ( *ch == '[' )
 		{
@@ -365,22 +396,12 @@ error:
 
 static bool button_item_universal_command (struct Lava_item *button, const char *command)
 {
-	/* Try to find a universal command and overwrite it. If none has been
-	 * found, create a new one.
-	 */
-	struct Lava_item_command *cmd = find_item_command(button,
-			INTERACTION_UNIVERSAL, 0, 0, false);
-	if ( cmd == NULL )
-		return item_add_command(button, command, INTERACTION_UNIVERSAL, 0, 0);
-
 	/* Interaction type is universal, meaning the button can be activated
 	 * by both the pointer and touch.
 	 */
 	context.need_pointer = true;
 	context.need_touch = true;
-
-	set_string(&cmd->command, (char *)command);
-	return true;
+	return item_add_command(button, command, INTERACTION_UNIVERSAL, 0, 0);
 }
 
 static bool button_set_variable (struct Lava_item *button, const char *variable,
@@ -454,7 +475,8 @@ bool item_set_variable (struct Lava_item *item, const char *variable,
  *        *
  **********/
 void item_interaction (struct Lava_item *item, struct Lava_bar_instance *instance,
-		enum Interaction_type type, uint32_t modifiers, uint32_t special)
+		struct Lava_seat *seat, enum Interaction_type type,
+		uint32_t modifiers, uint32_t special)
 {
 	if ( item->type != TYPE_BUTTON )
 		return;
@@ -462,9 +484,51 @@ void item_interaction (struct Lava_item *item, struct Lava_bar_instance *instanc
 	log_message(1, "[item] Interaction: type=%d mod=%d spec=%d\n",
 			type, modifiers, special);
 
-	struct Lava_item_command *cmd;
-	if ( NULL != (cmd = find_item_command(item, type, modifiers, special, true)) )
-		execute_item_command(cmd, instance);
+	struct Lava_item_command *cmd = find_item_command(item, type, modifiers, special, true);
+	if ( cmd == NULL )
+		return;
+
+	struct Lava_toplevel *toplevel;
+	switch (cmd->action)
+	{
+		case META_ACTION_NONE:
+			execute_item_command(cmd, instance);
+			break;
+
+		case META_ACTION_TOPLEVEL_ACTIVATE:
+			toplevel = find_toplevel_with_app_id(item->associated_app_id);
+			if ( toplevel == NULL )
+				execute_item_command(cmd, instance);
+			else
+			{
+				log_message(2, "[item] Activating toplevel: app-id=%s\n", item->associated_app_id);
+				zwlr_foreign_toplevel_handle_v1_activate(toplevel->handle, seat->wl_seat);
+			}
+			break;
+
+		case META_ACTION_TOPLEVEL_CLOSE:
+			toplevel = find_toplevel_with_app_id(item->associated_app_id);
+			if ( toplevel == NULL )
+				execute_item_command(cmd, instance);
+			else
+			{
+				log_message(2, "[item] Closing toplevel: app-id=%s\n", item->associated_app_id);
+				zwlr_foreign_toplevel_handle_v1_close(toplevel->handle);
+			}
+			break;
+
+		case META_ACTION_RELOAD:
+			log_message(2, "[item] Triggering reload.\n");
+			context.loop   = false;
+			context.reload = true;
+			break;
+
+		case META_ACTION_EXIT:
+			log_message(2, "[item] Triggering exit.\n");
+			context.loop   = false;
+			context.reload = false;
+			break;
+	}
 }
 
 bool create_item (enum Item_type type)

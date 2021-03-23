@@ -99,7 +99,10 @@ void setenvf (const char *name, const char *fmt, ...)
 
 bool string_starts_with(const char *str, const char *prefix)
 {
-	return strncmp(prefix, str, strlen(prefix)) == 0;
+	const size_t len_str = strlen(str);
+	const size_t len_prefix = strlen(prefix);
+	const size_t min_len = len_str > len_prefix ? len_prefix : len_str;
+	return strncmp(prefix, str, min_len) == 0;
 }
 
 bool is_boolean_true (const char *str)

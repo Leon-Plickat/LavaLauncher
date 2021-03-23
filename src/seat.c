@@ -236,7 +236,7 @@ static void touch_handle_up (void *data, struct wl_touch *wl_touch,
 	log_message(1, "[input] Touch up.\n");
 
 	item_interaction(touchpoint->item_instance->item,
-			touchpoint->instance,
+			touchpoint->instance, seat,
 			INTERACTION_TOUCH,
 			seat->keyboard.modifiers, 0);
 	destroy_touchpoint(touchpoint);
@@ -542,7 +542,7 @@ static void pointer_handle_button (void *data, struct wl_pointer *wl_pointer,
 		seat->pointer.item_instance->dirty = true;
 
 		item_interaction(seat->pointer.item_instance->item,
-				seat->pointer.instance,
+				seat->pointer.instance, seat,
 				INTERACTION_MOUSE_BUTTON,
 				seat->keyboard.modifiers, button);
 	}
@@ -609,7 +609,7 @@ static void pointer_handle_frame (void *data, struct wl_pointer *wl_pointer)
 	{
 		for (uint32_t i = 0; i < seat->pointer.discrete_steps; i++)
 			item_interaction(seat->pointer.item_instance->item,
-					seat->pointer.instance,
+					seat->pointer.instance, seat,
 					INTERACTION_MOUSE_SCROLL,
 					seat->keyboard.modifiers, direction);
 
@@ -619,7 +619,7 @@ static void pointer_handle_frame (void *data, struct wl_pointer *wl_pointer)
 	else while ( abs(seat->pointer.value) > CONTINUOUS_SCROLL_THRESHHOLD )
 	{
 		item_interaction(seat->pointer.item_instance->item,
-				seat->pointer.instance,
+				seat->pointer.instance, seat,
 				INTERACTION_MOUSE_SCROLL,
 				seat->keyboard.modifiers, direction);
 		seat->pointer.value += value_change;

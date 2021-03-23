@@ -60,6 +60,9 @@ variable = value
 You can find explanation of all existing sections and variables following this
 introduction as well as an example configuration at the end of this section.
 
+Concepts, formats and other things will be explained only the first time they
+appear, so it is recommended you read this document in its entirety.
+
 ## [global-settings]
 In this section global settings can be configured.
 
@@ -73,8 +76,34 @@ In this section global settings can be configured.
 ## [config]
 Every instance of this section will add a configurattion set.
 
+Configuration sets define the current configuration of the bar. Multiple
+configuration sets can be defined. The first configuration set to be defined is
+considered the default one and all following sets will implicitly copy the
+defaults values unless overwritten.
+
+For every output, LavaLauncher tries to find a valid configuration set, based
+on the defined conditions. Only outputs for which a valid configuration set has
+been found will have a bar. The sets are evaluated in the same order they have
+been defined in. Whenever an outputs parameters are updated, configuration sets
+are re-evaluated and the outputs bar modified, created or destroyed accordingly.
+
+By default the condititions of a configuration set match every output. To make
+use of multiple configuration sets, you have to explicitly set the conditions
+of the default configuration set so it is not valid in the cases you want
+LavaLauncher to use another configuration set for.
+
+The following assignments can be made in this section.
+
 *background-colour* = <colour>
 	The background colour of the bar. Defaults to _0x000000_.
+
+	LavaLauncher can parse hex code colours and read RGB values directly,
+	supporting the following formats.
+
+	- *0xRRGGBB*
+	- *0xRRGGBBAA*
+	- *rgb(RRR,GGG,BBB)*
+	- *rgba(RRR,GGG,BBB,AAA)*
 
 *border-colour* = <colour>
 	The border colour of the bar. Defaults to _0xffffff_.
@@ -288,6 +317,9 @@ Every instance of this section will add a button to the bar.
 	The path to an image file, which will be used as the icon of the
 	button.
 
+	LavaLauncher support PNG images and, if enabled at compile time,
+	SVG images. It is recommended to use square images.
+
 *toplevel-app-id* = none|<string>
 	Toplevel app-id associated with this button. If set, this button will
 	have toplevel indicators. Defaults to _none_.
@@ -297,36 +329,6 @@ Every instance of this section will add a spacer to the bar.
 
 *length* = <size>
 	Length of the spacer.
-
-## COLOURS
-LavaLauncher can parse hex code colours and read RGB values directly, supporting
-the following formats.
-
-- *0xRRGGBB*
-- *0xRRGGBBAA*
-- *rgb(RRR,GGG,BBB)*
-- *rgba(RRR,GGG,BBB,AAA)*
-
-## CONFIGURATION SETS AND CONDITIONS
-Configuration sets define the current configuration of the bar. Multiple
-configuration sets can be defined. The first configuration set to be defined is
-considered to be the default one and all following sets will copy the defaults
-values unless overwritten.
-
-For every output, LavaLauncher tries to find a valid configuration set, based
-on the defined conditions. Only outputs for which a valid configuration set has
-been found will have a bar. The sets are evaluated in the same order they have
-been defined in. Whenever an outputs parameters are updated, configuration sets
-are re-evaluated and the outputs bar created, destroyed or modified accordingly.
-
-By default the condititions of a configuration set match every output. To make
-use of multiple configuration sets, you have to explicitly set the conditions
-of the default configuration set so it is not valid in the cases you want
-LavaLauncher to use another configuration set for.
-
-## IMAGES
-LavaLauncher support PNG images and, if enabled at compile time, SVG images. It
-is recommended to use square images.
 
 ## EXAMPLE CONFIGURATION
 This is a simple configuration example, demonstrating a bar with three buttons

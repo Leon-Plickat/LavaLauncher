@@ -265,13 +265,15 @@ Every instance of this section will add a button to the bar.
 	command string. The following meta commands are available.
 
 	- *@toplevel-activate* If a toplevel matching the associated app-id of
-	  the button is found, it is activated ("focused"), otherwise the shell
-	  command is executed.
+	  the button is found, it is activated ("focused"). Otherwise if a shell
+	  command has been provided it is executed.
 	- *@toplevel-close* If a toplevel matching the associated app-id of
-	  the button is found, it is closed, otherwise the shell command is
-	  executed.
-	- *@exit* LavaLauncher will exit.
-	- *@reload* LavaLauncher will reload.
+	  the button is found, it is closed. Otherwise if a shell command has
+	  been provided it is executed.
+	- *@exit* LavaLauncher will exit. If a shell command has been provided
+	  it will be executed beforehand.
+	- *@reload* LavaLauncher will reload. If a shell command has been
+	  provided it will be executed beforehand.
 
 	LavaLauncher sets the following environmental variables for the executed
 	shell commands. As an example, they could be used as arguments for

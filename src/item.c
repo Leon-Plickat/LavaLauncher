@@ -151,11 +151,11 @@ static bool item_add_command (struct Lava_item *item, const char *command,
 			const char *name;
 			enum Meta_action action;
 		} actions[] = {
-			// TODO: @maximize-toplevel @unmaximize-toplevel @togglemaximize-toplevel,
+			// TODO: @maximize-toplevel @unmaximize-toplevel @toggle-maximize-toplevel,
 			//       -> same for fullscreen and minimize
 			//       @close-all try to close /all/ toplevels with matching app_id
-			{ .name = "@activate-toplevel", .action = META_ACTION_TOPLEVEL_ACTIVATE },
-			{ .name = "@close-toplevel",    .action = META_ACTION_TOPLEVEL_CLOSE    },
+			{ .name = "@toplevel-activate", .action = META_ACTION_TOPLEVEL_ACTIVATE },
+			{ .name = "@toplevel-close",    .action = META_ACTION_TOPLEVEL_CLOSE    },
 			{ .name = "@reload",            .action = META_ACTION_RELOAD            },
 			{ .name = "@exit",              .action = META_ACTION_EXIT              },
 		};
@@ -177,7 +177,7 @@ static bool item_add_command (struct Lava_item *item, const char *command,
 		}
 
 		/* If we could not match any meta action despite the command
-		 * string starting with ~, it may be part of the command itself,
+		 * string starting with @, it may be part of the command itself,
 		 * so just fall through here.
 		 */
 	}
@@ -518,12 +518,14 @@ void item_interaction (struct Lava_item *item, struct Lava_bar_instance *instanc
 			break;
 
 		case META_ACTION_RELOAD:
+			execute_item_command(cmd, instance);
 			log_message(2, "[item] Triggering reload.\n");
 			context.loop   = false;
 			context.reload = true;
 			break;
 
 		case META_ACTION_EXIT:
+			execute_item_command(cmd, instance);
 			log_message(2, "[item] Triggering exit.\n");
 			context.loop   = false;
 			context.reload = false;

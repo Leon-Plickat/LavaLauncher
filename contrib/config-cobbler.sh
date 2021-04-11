@@ -31,6 +31,7 @@ global-settings
 
 bar
 {
+	alignment               = center;
 	background-colour       = "#202020";
 	border                  = 1 1 1 1;
 	cursor-name             = pointer;

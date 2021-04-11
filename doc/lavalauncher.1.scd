@@ -96,6 +96,10 @@ Every "bar" context will add a bar. The configuration changes in this context
 make up the default configuration set of the bar. The assignments possible in
 this context are as follows.
 
+*alignment*
+	Alignment of the buttons / bar. Can be "start", "center" or "end". The
+	default is "center".
+
 *background-colour*
 	The background colour of the bar. The default is "#000000".
 
@@ -188,18 +192,24 @@ this context are as follows.
 	all directions, or four integers, to set the individual top-, left-, right-
 	and bottom-margins. The default margin is 0.
 
-	Behold: Some compositors may not respect margins parallel to the bars
-	orientation in "default" mode. This is not a bug in LavaLauncher but a
-	(possible intentional) limitation of the compositor.
-
 *mode*
-	The display mode of the bar. Can be "default" or "full".
+	The display mode of the bar. Can be "default", "full" or "aggressive".
 
 	In "default" mode, the bar is sized just large enough to house all the
-	buttons.
+	buttons. In this mode, compositors may not respect margins parallel to the
+	bar or the exclusive zone, possibly even depending on the alignment. This
+	is not a bug in LavaLauncher but a limitation of your compositor.
 
 	In "full" mode, the bar spans the entire length of the edge it is docked
 	to.
+
+	The "aggressive" mode is visually identical to "normal" mode, however the
+	surface of the bar is sized and anchored more aggressively. This mode is
+	intended for compositors with faulty Layer-Shell implementations. If
+	LavaLauncher is not placed at the desired location or the exclusive zone or
+	margins parallel to the bar are ignored, this mode may help. Beware however
+	that it allows the compositor a lot less leeway when geometrically fitting
+	the bar onto the screen.
 
 *namespace*
 	The namespace of the Layer-Shell surface of the bar. Some compositors may

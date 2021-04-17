@@ -347,22 +347,24 @@ error:
 
 static bool button_item_universal_command (struct Lava_item *button, const char *command)
 {
-	/* Try to find a universal command and overwrite it. If none has been
-	 * found, create a new one.
-	 */
-	struct Lava_item_command *cmd = find_item_command(button,
-			INTERACTION_UNIVERSAL, 0, 0, false);
-	if ( cmd == NULL )
-		return item_add_command(button, command, INTERACTION_UNIVERSAL, 0, 0);
-
 	/* Interaction type is universal, meaning the button can be activated
 	 * by both the pointer and touch.
 	 */
 	context.need_pointer = true;
 	context.need_touch = true;
 
-	set_string(&cmd->command, (char *)command);
-	return true;
+	/* Try to find a universal command and overwrite it. If none has been
+	 * found, create a new one.
+	 */
+	struct Lava_item_command *cmd = find_item_command(button,
+			INTERACTION_UNIVERSAL, 0, 0, false);
+	if ( cmd != NULL )
+	{
+		set_string(&cmd->command, (char *)command);
+		return true;
+	}
+
+	return item_add_command(button, command, INTERACTION_UNIVERSAL, 0, 0);
 }
 
 static bool button_set_variable (struct Lava_item *button, const char *variable,

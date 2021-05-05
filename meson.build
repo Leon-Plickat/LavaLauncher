@@ -20,15 +20,13 @@ add_project_arguments(cc.get_supported_arguments([
   '-Wunreachable-code',
   '-Wformat',
   '-Wconversion',
+  '-Wsign-conversion',
   '-Wfloat-conversion',
+  '-Wunused-result',
 ]), language: 'c')
 
 if get_option('watch-config').enabled()
   add_project_arguments(cc.get_supported_arguments([ '-DWATCH_CONFIG' ]), language: 'c')
-endif
-
-if get_option('handle-signals').enabled()
-  add_project_arguments(cc.get_supported_arguments([ '-DHANDLE_SIGNALS' ]), language: 'c')
 endif
 
 version = '"@0@"'.format(meson.project_version())
@@ -54,11 +52,10 @@ librsvg           = dependency('librsvg-2.0', version: '>= 2.45.6', required: ge
 xkbcommon         = dependency('xkbcommon')
 
 if ['dragonfly', 'freebsd', 'netbsd', 'openbsd'].contains(host_machine.system())
-  libinotify      = dependency('libinotify', required: get_option('watch-config'))
-  libepoll        = dependency('epoll-shim', required: get_option('handle-signals'))
+  libinotify = dependency('libinotify', required: get_option('watch-config'))
+  add_project_arguments(cc.get_supported_arguments([ '-DBSD' ]), language: 'c')
 else
-  libinotify      = []
-  libepoll        = []
+  libinotify = []
 endif
 
 if librsvg.found()
@@ -70,7 +67,6 @@ subdir('doc')
 
 summary({
   'watch-config': get_option('watch-config').enabled(),
-  'handle-signals': get_option('handle-signals').enabled(),
   'man-pages': get_option('man-pages').enabled(),
   'librsvg': librsvg.found(),
 }, bool_yn: true)
@@ -83,11 +79,12 @@ executable(
     'src/config-parser.c',
     'src/event-loop.c',
     'src/foreign-toplevel-management.c',
+    'src/inotify-event-source.c',
     'src/item.c',
     'src/lavalauncher.c',
-    'src/misc-event-sources.c',
     'src/output.c',
     'src/seat.c',
+    'src/signal-event-source.c',
     'src/types/box_t.c',
     'src/types/buffer.c',
     'src/types/colour_t.c',
@@ -97,7 +94,6 @@ executable(
   ),
   dependencies: [
     cairo,
-    libepoll,
     libinotify,
     librsvg,
     realtime,

@@ -33,7 +33,10 @@
 #include"lavalauncher.h"
 #include"util.h"
 #include"wayland-connection.h"
-#include"misc-event-sources.h"
+#include"signal-event-source.h"
+#if WATCH_CONFIG
+#include"inotify-event-source.h"
+#endif
 
 /* The context is used basically everywhere. So instead of passing pointers
  * around, just have it global.
@@ -158,16 +161,11 @@ reload:
 	if (! event_loop_init(&loop, 3))
 		goto exit;
 	event_loop_add_event_source(&loop, &wayland_source);
-
 #if WATCH_CONFIG
 	if (context.watch)
 		event_loop_add_event_source(&loop, &inotify_source);
 #endif
-
-#if HANDLE_SIGNALS
 	event_loop_add_event_source(&loop, &signal_source);
-#endif
-
 	context.ret = event_loop_run(&loop) ? EXIT_SUCCESS : EXIT_FAILURE;
 
 	/* We only need to finish the event loop if it was successfully

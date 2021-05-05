@@ -1,4 +1,3 @@
 option('man-pages', type: 'feature', value: 'enabled', description: 'Generate and install man pages')
 option('watch-config', type: 'feature', value: 'enabled', description: 'Ability to watch configuration file')
-option('handle-signals', type: 'feature', value: 'enabled', description: 'Handle signals')
 option('librsvg', type: 'feature', value: 'auto', description: 'Use librsvg to support SVG images')

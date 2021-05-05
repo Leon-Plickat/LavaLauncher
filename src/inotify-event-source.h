@@ -17,13 +17,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAVALAUNCHER_MISC_EVENT_SOURCES_H
-#define LAVALAUNCHER_MISC_EVENT_SOURCES_H
+#ifndef LAVALAUNCHER_INOTIFY_H
+#define LAVALAUNCHER_INOTIFY_H
 
-struct Lava_ecent_source;
+struct Lava_event_source;
 
 extern struct Lava_event_source inotify_source;
-extern struct Lava_event_source signal_source;
 
 #endif
 

@@ -27,25 +27,12 @@
 #include<poll.h>
 #include<errno.h>
 
-#if WATCH_CONFIG
 #include<sys/inotify.h>
-#endif
-
-#if HANDLE_SIGNALS
-#include<sys/signalfd.h>
-#include<signal.h>
-#endif
 
 #include"lavalauncher.h"
 #include"event-loop.h"
 #include"util.h"
 
-/**************************
- *                        *
- *  Inotify event source  *
- *                        *
- **************************/
-#if WATCH_CONFIG
 static bool inotify_source_init (struct pollfd *fd)
 {
 	log_message(1, "[loop] Setting up inotify event source.\n");
@@ -100,92 +87,3 @@ struct Lava_event_source inotify_source = {
 	.handle_in  = inotify_source_handle_in,
 	.handle_out = inotify_source_handle_out
 };
-#endif
-
-/*************************
- *                       *
- *  Signal event source  *
- *                       *
- *************************/
-#if HANDLE_SIGNALS
-static bool signal_source_init (struct pollfd *fd)
-{
-	log_message(1, "[loop] Setting up signalfd event source.\n");
-
-	sigset_t mask;
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGINT);
-	sigaddset(&mask, SIGTERM);
-	sigaddset(&mask, SIGQUIT);
-	sigaddset(&mask, SIGUSR1);
-	sigaddset(&mask, SIGUSR2);
-
-	if ( sigprocmask(SIG_BLOCK, &mask, NULL) == -1 )
-	{
-		log_message(0, "ERROR: sigprocmask() failed.\n");
-		return false;
-	}
-
-	fd->events = POLLIN;
-	if ( -1 == (fd->fd = signalfd(-1, &mask, 0)) )
-	{
-		log_message(0, "ERROR: Unable to open signal fd.\n"
-				"ERROR: signalfd: %s\n", strerror(errno));
-		return false;
-	}
-
-	return true;
-}
-
-static bool signal_source_finish (struct pollfd *fd)
-{
-	if ( fd->fd != -1 )
-		close(fd->fd);
-	return true;
-}
-
-static bool signal_source_flush (struct pollfd *fd)
-{
-	return true;
-}
-
-static bool signal_source_handle_in (struct pollfd *fd)
-{
-	struct signalfd_siginfo fdsi;
-	if ( read(fd->fd, &fdsi, sizeof(struct signalfd_siginfo))
-			!= sizeof(struct signalfd_siginfo) )
-	{
-		log_message(0, "ERROR: Can not read signal info.\n");
-		return false;
-	}
-
-	if ( fdsi.ssi_signo == SIGINT || fdsi.ssi_signo == SIGQUIT )
-	{
-		log_message(1, "[loop] Received SIGTERM or SIGQUIT; Exiting.\n");
-		return false;
-	}
-	else if ( fdsi.ssi_signo == SIGUSR1 || fdsi.ssi_signo == SIGUSR2 )
-	{
-		log_message(1, "[loop] Received SIGUSR; Triggering reload.\n");
-		context.loop = false;
-		context.reload = true;
-		return false;
-	}
-
-	return true;
-}
-
-static bool signal_source_handle_out (struct pollfd *fd)
-{
-	return true;
-}
-
-struct Lava_event_source signal_source = {
-	.init       = signal_source_init,
-	.finish     = signal_source_finish,
-	.flush      = signal_source_flush,
-	.handle_in  = signal_source_handle_in,
-	.handle_out = signal_source_handle_out
-};
-#endif
-

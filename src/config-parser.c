@@ -24,7 +24,8 @@
 #include<string.h>
 #include<ctype.h>
 #include<unistd.h>
-#include<lib-infinitesimal.h>
+
+#include"lib-infinitesimal.h"
 
 #include"lavalauncher.h"
 #include"util.h"

@@ -1406,7 +1406,7 @@ bool create_bar_instance (struct Lava_bar *bar, struct Lava_bar_configuration *c
 	if ( NULL == (instance->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
 					context.layer_shell, instance->bar_surface,
 					output->wl_output, config->layer,
-					str_orelse(config->namespace, "LavaLauncher"))) )
+					str_orelse(config->namespace, "lhp.LavaLauncher"))) )
 	{
 		log_message(0, "ERROR: Compositor did not create layer_surface.\n");
 		return false;

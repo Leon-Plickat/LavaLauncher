@@ -214,8 +214,8 @@ this context are as follows.
 *namespace*
 	The namespace of the Layer-Shell surface of the bar. Some compositors may
 	treat Layer-Shell surfaces differently based on their namespace. The default
-	is "LavaLauncher". Note that this option only takes effect once on bar
-	createion.
+	is "lhp.LavaLauncher". Note that this option only takes effect once on bar
+	creation.
 
 *output*
 	Name of the output on which the bar should be displayed. Output names

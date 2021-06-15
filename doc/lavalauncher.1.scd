@@ -220,7 +220,7 @@ The following assignments can be made in this section.
 
 *namespace* = <string>
 	The namespace of the Layer-Shell surface of the bar. Defaults to
-	_LavaLauncher_.
+	_lhp.LavaLauncher_.
 
 	Some compositors may treat Layer-Shell surfaces differently based on
 	their namespace. 

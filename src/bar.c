@@ -1176,7 +1176,7 @@ struct Lava_bar_instance *create_bar_instance (struct Lava_output *output,
 	instance->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
 			context.layer_shell, instance->wl_surface,
 			output->wl_output, config->layer,
-			str_orelse(config->namespace, "LavaLauncher"));
+			str_orelse(config->namespace, "lhp.LavaLauncher"));
 
 
 	/* We draw when this surface gets a configure event. */
